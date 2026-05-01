@@ -69,7 +69,16 @@
 }
 
 .bento-card:hover .bento-description,
-.bento-card:hover .bento-title {
+.bento-card:hover .bento-title,
+.bento-card:hover .text-\[9px\],
+.bento-card:hover .text-\[10px\],
+.bento-card:hover .text-muted-foreground {
+  color: white !important;
+}
+
+.bento-card:hover .bento-icon {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
   color: white;
 }
 

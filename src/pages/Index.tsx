@@ -1,166 +1,299 @@
-import React, { useState } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import CategoryChips from '../components/CategoryChips';
-import { articles, Category } from '../data/mockArticles';
 import BreakingTicker from '../components/BreakingTicker';
-import CategoryStrip from '../components/CategoryStrip';
-import MagicBento from '../components/MagicBento';
-import { Clock, Bell } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { Button } from '../components/ui/button';
-import FeedCard from '../components/FeedCard';
-import InstagramFeed from '../components/InstagramFeed';
-import HeroCarousel from '../components/HeroCarousel';
+import { articles, Category, categoryEmojis } from '../data/mockArticles';
+import { getArticleImage, handleImageFallback } from '@/lib/utils';
+import { Clock, Zap, Bookmark, BookmarkCheck, ChevronRight, ArrowRight } from 'lucide-react';
+import { useReadingList } from '@/hooks/use-reading-list';
 
-const Index = () => {
-  const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
-  
-  const trendingArticles = articles.filter(a => a.trending);
-  const heroHeadlines = trendingArticles.slice(0, 3);
-  
-  // Ensure the grid has a healthy mix of content (at least 5 items)
-  const gridHeadlines = [
-    ...trendingArticles.slice(3),
-    ...articles.filter(a => !trendingArticles.includes(a)).slice(0, 5)
-  ].slice(0, 5);
+const CATEGORIES: Category[] = ["Politics", "Tech", "Business", "Cinema", "Local News", "Sports"];
 
-  const quickBriefings = articles.slice(0, 6);
-  const categories: Category[] = ["Politics", "Tech", "Business", "Cinema", "Local News", "Sports"];
+export default function Index() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedCat = (searchParams.get('category') as Category | 'All') || 'All';
+  const { toggleSave, isSaved } = useReadingList();
+
+  const setCategory = (cat: Category | 'All') => {
+    if (cat === 'All') searchParams.delete('category');
+    else searchParams.set('category', cat);
+    setSearchParams(searchParams);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const filtered   = selectedCat === 'All' ? articles : articles.filter(a => a.category === selectedCat);
+  const hero       = filtered[0];
+  const secondary  = filtered.slice(1, 4);
+  const feed       = filtered.slice(4);
+  const breaking   = articles.filter(a => (a as any).isBreaking).slice(0, 4);
+  const isFiltered = selectedCat !== 'All';
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/10 selection:text-primary">
-      {/* Universal Header Stack — Distribution Engine */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-2xl border-b border-black/5 shadow-glass-sm header-stack overflow-hidden">
+    <div className="min-h-screen bg-background text-foreground">
+
+      {/* ═══ FIXED HEADER ════════════════════════════════════════ */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border">
         <Navbar isInsideStack />
-        <CategoryChips selected={selectedCategory} onSelect={setSelectedCategory} isInsideStack />
+
+        {/* Category chips */}
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar px-4 py-2.5">
+          {(['All', ...CATEGORIES] as (Category | 'All')[]).map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategory(cat)}
+              className={`shrink-0 h-7 px-3 rounded-full text-xs font-semibold transition-colors press whitespace-nowrap
+                ${selectedCat === cat
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary/50 text-[hsl(var(--secondary-foreground))] hover:bg-secondary'}`}
+            >
+              {cat !== 'All' && <span className="mr-1 opacity-70">{categoryEmojis[cat as Category]}</span>}
+              {cat}
+            </button>
+          ))}
+        </div>
+
         <BreakingTicker />
       </div>
 
-      <main className="mx-auto max-w-[1280px] px-3.5 pt-[140px] pb-14 sm:px-6 sm:pt-[160px] sm:pb-16 lg:px-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-        
-        {selectedCategory === 'All' ? (
-          <div className="space-y-10 sm:space-y-14 lg:space-y-16">
-            {/* High Impact Hero - Direct Feed */}
-            <HeroCarousel articles={heroHeadlines} />
+      {/* ═══ MAIN CONTENT ═══════════════════════════════════════ */}
+      <main className="pb-safe" style={{ paddingTop: '130px' }}>
 
-            {/* In-Depth Architecture - Magic Bento Integration */}
-            <MagicBento articles={gridHeadlines} />
-
-            {/* Instagram Live Feed Integration */}
-            <InstagramFeed />
-
-            {/* Quick Summaries - 60sec Intelligence */}
-            <section className="rounded-3xl border border-black/5 bg-white p-5 shadow-glass-sm dark:border-white/5 dark:bg-white/[0.03] sm:p-8 lg:p-10">
-              <div className="mb-7 flex items-center gap-3 sm:mb-8">
-                <div className="h-10 w-10 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                  <Clock className="h-5 w-5 text-white" />
-                </div>
-                <div className="space-y-0.5">
-                  <h2 className="text-lg font-black uppercase tracking-tight text-foreground sm:text-xl">In 60 Seconds</h2>
-                  <p className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-widest opacity-60">Intelligence Sync</p>
-                </div>
-              </div>
-
-              
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
-                {quickBriefings.map((article) => (
-                  <div key={article.id} className="space-y-4 group">
-                    <Link to={`/article/${article.slug}`} className="block">
-                      <h3 className="text-lg font-black text-foreground/80 group-hover:text-primary transition-colors leading-tight">
-                        {article.title}
-                      </h3>
-                    </Link>
-                    <ul className="space-y-2">
-                      {article.content.points.slice(0, 2).map((point, i) => (
-                        <li key={i} className="flex gap-3 text-[13px] font-bold text-muted-foreground/60 leading-snug">
-                          <span className="shrink-0 text-primary opacity-40">•</span>
-                          {point}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Distribution Engine - Category Strips */}
-            <div className="space-y-12 sm:space-y-16 lg:space-y-20">
-              {categories.map((cat) => (
-                <CategoryStrip 
-                  key={cat} 
-                  category={cat} 
-                  articles={articles.filter(a => a.category === cat)} 
-                />
-              ))}
-            </div>
-
-            {/* Engagement Loop - Newsletter */}
-            <section className="relative overflow-hidden rounded-3xl border border-black/10 bg-primary p-6 shadow-2xl dark:border-white/10 dark:bg-primary/20 sm:p-10 lg:p-16 group">
-              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-50" />
-              <div className="relative z-10 grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-10">
-                <div className="space-y-6">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass bg-white/10 text-white text-[9px] font-black uppercase tracking-[0.3em]">
-                    <Bell className="h-3 w-3" />
-                    Daily Intelligence
-                  </div>
-                  <div className="space-y-3">
-                    <h3 className="text-3xl font-black tracking-tighter text-white leading-[1.02] sm:text-5xl sm:leading-[0.95]">
-                      The morning briefing.<br /><span className="text-white/40 italic">Zero noise.</span>
-                    </h3>
-                    <p className="text-base text-primary-foreground/70 font-bold max-w-md leading-tight">
-                      Structure, clarity, and precision delivered at 8 AM.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-2 transition-all focus-within:border-white/30 sm:flex-row">
-                  <input
-                    type="email"
-                    placeholder="ENTER EMAIL ADDRESS"
-                    className="flex-1 bg-transparent w-full h-11 px-4 text-[10px] font-black text-white placeholder:text-white/30 focus:outline-none uppercase tracking-widest"
-                  />
-                  <Button className="w-full sm:w-auto rounded-xl px-8 h-11 font-black bg-white text-primary hover:scale-[1.02] active:scale-95 transition-all text-[10px] uppercase tracking-widest shadow-xl">
-                    SUBSCRIBE
-                  </Button>
-                </div>
-              </div>
-            </section>
-
+        {/* ── Filtered header ───────────────────────────────── */}
+        {isFiltered && (
+          <div className="px-4 py-6 border-b border-border bg-[hsl(var(--surface))]">
+            <span className="overline text-primary">Sector</span>
+            <h1 className="text-3xl font-black tracking-tight mt-1">
+              {selectedCat}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {filtered.length} article{filtered.length !== 1 ? 's' : ''} found
+            </p>
           </div>
-        ) : (
-          /* Category Direct View fallback */
-          <div className="space-y-12 animate-in fade-in duration-700">
-             <div className="flex flex-col gap-4 border-b border-black/5 pb-12">
-               <div className="text-primary text-sm font-black uppercase tracking-[0.4em]">{selectedCategory}</div>
-               <h1 className="text-5xl sm:text-7xl font-black text-foreground tracking-tighter leading-none">{selectedCategory} Dossiers</h1>
-             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {articles.filter(a => a.category === selectedCategory).map((article) => (
-                <FeedCard key={article.id} article={article} />
+        )}
+
+        {/* ── Hero Article ──────────────────────────────────── */}
+        {hero && (
+          <div className="relative">
+            <Link to={`/article/${hero.slug}`} className="block press group">
+              <div className="relative overflow-hidden aspect-[4/3] sm:aspect-[16/8]">
+                <img
+                  src={getArticleImage(hero.thumbnail)}
+                  alt={hero.title}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                  loading="eager"
+                  onError={handleImageFallback}
+                />
+                {/* Deep scrim for legibility */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
+
+                {/* Content */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="inline-flex items-center h-5 px-2 rounded-sm text-2xs font-black uppercase tracking-widest bg-primary text-white">
+                      {hero.category}
+                    </span>
+                    {(hero as any).trending && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-secondary uppercase tracking-widest">
+                        <Zap className="h-2.5 w-2.5 fill-current" /> Trending
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="text-white font-black text-xl sm:text-3xl lg:text-4xl leading-tight tracking-tight max-w-2xl">
+                    {hero.title}
+                  </h2>
+                  <p className="text-white/60 text-sm font-medium mt-2 line-clamp-2 hidden sm:block max-w-xl">
+                    {hero.summary}
+                  </p>
+                  <div className="flex items-center gap-4 mt-4">
+                    <span className="flex items-center gap-1.5 text-white/50 text-xs font-medium">
+                      <Clock className="h-3 w-3" /> {hero.readTime}
+                    </span>
+                    <span className="text-white/30 text-xs font-bold uppercase tracking-widest group-hover:text-secondary transition-colors flex items-center gap-1">
+                      Read <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            {/* Save button */}
+            <button
+              onClick={() => toggleSave(hero)}
+              className="absolute top-4 right-4 h-8 w-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-primary transition-colors press"
+              aria-label="Save article"
+            >
+              {isSaved(hero.id)
+                ? <BookmarkCheck className="h-4 w-4 fill-current" />
+                : <Bookmark className="h-4 w-4" />}
+            </button>
+          </div>
+        )}
+
+        {/* ── Secondary 3-card strip ────────────────────────── */}
+        {secondary.length > 0 && (
+          <div className="border-b border-border">
+            <div className="flex overflow-x-auto no-scrollbar gap-0 divide-x divide-border">
+              {secondary.map((art, i) => (
+                <Link
+                  key={art.id}
+                  to={`/article/${art.slug}`}
+                  className="flex-1 min-w-[200px] sm:min-w-0 p-4 hover:bg-[hsl(var(--surface))] transition-colors press block"
+                >
+                  <div className="aspect-video rounded-lg overflow-hidden bg-secondary/30 mb-3">
+                    <img src={getArticleImage(art.thumbnail)} alt="" className="w-full h-full object-cover" onError={handleImageFallback} loading="lazy" />
+                  </div>
+                  <span className="tag mb-2">{art.category}</span>
+                  <p className="text-xs font-bold text-foreground leading-snug line-clamp-3 tracking-tight">{art.title}</p>
+                  <div className="flex items-center gap-1 mt-2 text-2xs text-muted-foreground font-medium">
+                    <Clock className="h-2.5 w-2.5" /> {art.readTime}
+                  </div>
+                </Link>
               ))}
             </div>
           </div>
         )}
 
-        <footer className="mt-14 border-t border-black/5 pt-10 dark:border-white/5 sm:mt-24 sm:pt-16">
-          <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-12">
-            <div className="space-y-6">
-              <div className="text-xl font-black tracking-tighter text-foreground uppercase">OPEN<span className="text-primary">VAARTHA</span></div>
-              <p className="text-[13px] font-bold text-muted-foreground leading-relaxed opacity-60">
-                Simple. Crisp. Unbiased. <br />South India's authoritative news architecture built for clarity.
-              </p>
+        {/* ── Breaking strip ────────────────────────────────── */}
+        {!isFiltered && breaking.length > 0 && (
+          <div className="border-b border-border">
+            <div className="section-header px-4">
+              <span className="overline flex items-center gap-1.5 text-primary">
+                <Zap className="h-3 w-3 fill-current" /> Breaking Now
+              </span>
+              <span className="text-2xs text-muted-foreground font-medium">Live updates</span>
             </div>
-             <div className="space-y-3">
-              <h5 className="text-[9px] font-black uppercase tracking-widest opacity-30 text-foreground">Verticals</h5>
-              <div className="flex flex-col gap-2">
-                {categories.map(c => <Link key={c} to="/" className="text-[11px] font-bold text-muted-foreground hover:text-primary transition-colors">{c}</Link>)}
-              </div>
+            <div className="flex overflow-x-auto no-scrollbar gap-3 px-4 py-3">
+              {breaking.map(art => (
+                <Link
+                  key={art.id}
+                  to={`/article/${art.slug}`}
+                  className="shrink-0 w-52 rounded-xl overflow-hidden border border-border hover:border-primary/40 transition-colors press block"
+                >
+                  <div className="aspect-[16/9] overflow-hidden">
+                    <img src={getArticleImage(art.thumbnail)} alt="" className="w-full h-full object-cover" onError={handleImageFallback} loading="lazy" />
+                  </div>
+                  <div className="p-3">
+                    <span className="tag mb-2">{art.category}</span>
+                    <p className="text-xs font-semibold leading-snug text-foreground line-clamp-2">{art.title}</p>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
-        </footer>
+        )}
 
+        {/* ── Main Vertical Feed ────────────────────────────── */}
+        <div>
+          <div className="section-header px-4">
+            <span className="overline">{isFiltered ? `${selectedCat} Stories` : 'All Stories'}</span>
+            <span className="text-2xs text-muted-foreground">{feed.length} articles</span>
+          </div>
+
+          {feed.map((art, i) => (
+            <div key={art.id} className="feed-item group">
+              {/* Index */}
+              <span className="text-xs font-black text-muted-foreground/25 w-5 shrink-0 tabular-nums mt-0.5 select-none">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+
+              {/* Content */}
+              <Link to={`/article/${art.slug}`} className="flex-1 min-w-0">
+                <span className="tag mb-2">{art.category}</span>
+                <h3 className="text-sm font-bold leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-3 tracking-tight">
+                  {art.title}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2 hidden sm:block">
+                  {art.summary}
+                </p>
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="flex items-center gap-1 text-2xs text-muted-foreground font-medium">
+                    <Clock className="h-2.5 w-2.5" /> {art.readTime}
+                  </span>
+                  {(art as any).trending && (
+                    <span className="flex items-center gap-1 text-2xs text-primary font-bold uppercase tracking-widest">
+                      <Zap className="h-2.5 w-2.5 fill-current" /> Trending
+                    </span>
+                  )}
+                </div>
+              </Link>
+
+              {/* Thumbnail + save */}
+              <div className="flex flex-col items-end gap-2 shrink-0">
+                <Link to={`/article/${art.slug}`} className="press block">
+                  <div className="w-20 h-16 sm:w-24 sm:h-18 rounded-lg overflow-hidden bg-secondary/30">
+                    <img src={getArticleImage(art.thumbnail)} alt="" className="w-full h-full object-cover" loading="lazy" onError={handleImageFallback} />
+                  </div>
+                </Link>
+                <button
+                  onClick={() => toggleSave(art)}
+                  className={`h-6 w-6 rounded-md flex items-center justify-center transition-colors press
+                    ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
+                  aria-label="Save"
+                >
+                  {isSaved(art.id) ? <BookmarkCheck className="h-3.5 w-3.5 fill-current" /> : <Bookmark className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Newsletter CTA ────────────────────────────────── */}
+        {!isFiltered && (
+          <div className="m-4 rounded-2xl gradient-maroon p-6 sm:p-8 shadow-maroon-lg">
+            <p className="overline text-white/70 mb-2">Daily Intelligence</p>
+            <h3 className="text-xl font-black text-white leading-tight mb-2">
+              The Morning Briefing. <span className="text-white/40">Zero noise.</span>
+            </h3>
+            <p className="text-sm text-white/60 mb-5">
+              Precise regional and national summaries delivered at 8 AM.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="email"
+                placeholder="your@email.com"
+                className="flex-1 h-10 px-4 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-secondary/60 transition-colors"
+              />
+              <button className="h-10 px-5 rounded-lg bg-secondary text-[hsl(var(--secondary-foreground))] text-xs font-black uppercase tracking-wider hover:bg-beige-200 active:bg-beige-400 transition-colors press shadow-sm whitespace-nowrap">
+                Subscribe
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Footer ───────────────────────────────────────── */}
+        <footer className="border-t border-border px-4 py-8 mt-4 bg-[hsl(var(--surface))]">
+          <div className="flex items-start gap-2 mb-6">
+            <div className="h-7 w-7 rounded-lg gradient-maroon flex items-center justify-center shrink-0 shadow-sm">
+              <span className="text-[9px] font-black text-white">OV</span>
+            </div>
+            <div>
+              <div className="font-black tracking-tight text-sm">Open<span className="text-primary">vaartha</span></div>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed max-w-xs">
+                South India's authoritative news intelligence platform.
+              </p>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <p className="overline mb-3">Sectors</p>
+            <div className="grid grid-cols-3 gap-y-2.5 gap-x-4">
+              {CATEGORIES.map(c => (
+                <button key={c} onClick={() => setCategory(c)} className="text-left text-xs font-medium text-muted-foreground hover:text-primary transition-colors press">
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="divider pt-4 flex justify-between text-2xs text-muted-foreground/50 font-medium">
+            <span>© 2026 Open Vaartha</span>
+            <span className="flex gap-4">
+              <span className="cursor-pointer hover:text-muted-foreground transition-colors">Privacy</span>
+              <span className="cursor-pointer hover:text-muted-foreground transition-colors">Terms</span>
+            </span>
+          </div>
+        </footer>
       </main>
     </div>
   );
-};
-
-export default Index;
+}

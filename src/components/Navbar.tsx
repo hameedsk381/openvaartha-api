@@ -1,244 +1,251 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { cn, getArticleImage, handleImageFallback } from "@/lib/utils";
-import { Search, Sun, Moon, Bookmark, User, Compass, Newspaper, LogOut, Bell, History } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { articles } from "@/data/mockArticles";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { Search, Sun, Moon, Bookmark, User, Home, X, ChevronRight, LogOut } from "lucide-react";
 import { useReadingList } from "@/hooks/use-reading-list";
+import { articles } from "@/data/mockArticles";
 
-const Navbar = ({ isInsideStack }: { isInsideStack?: boolean }) => {
-  const [isDark, setIsDark] = useState(true);
-  const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const { saved } = useReadingList();
-  const navigate = useNavigate();
+interface NavbarProps { isInsideStack?: boolean; }
+
+const Navbar = ({ isInsideStack }: NavbarProps) => {
+  const [isDark, setIsDark]       = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery]         = useState("");
+  const { saved }                 = useReadingList();
+  const navigate                  = useNavigate();
+  const location                  = useLocation();
 
   useEffect(() => {
-    const isDarkMode = document.documentElement.classList.contains("dark");
-    setIsDark(isDarkMode);
-
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setOpen((open) => !open);
-      }
-    };
-
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 8);
-    };
-
-    document.addEventListener("keydown", down);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      document.removeEventListener("keydown", down);
-      window.removeEventListener("scroll", handleScroll);
-    };
+    setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 
-  const toggleTheme = () => {
-    const newDark = !isDark;
-    setIsDark(newDark);
-    if (newDark) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setSearchOpen(o => !o); }
+      if (e.key === "Escape") { setSearchOpen(false); setQuery(""); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  const toggleDark = () => {
+    const next = !isDark;
+    document.documentElement.classList.toggle("dark", next);
+    setIsDark(next);
+  };
+
+  const filtered = query.trim().length > 1
+    ? articles.filter(a =>
+        a.title.toLowerCase().includes(query.toLowerCase()) ||
+        a.category.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 7)
+    : [];
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user_email');
+    navigate('/');
+    window.location.reload(); // Refresh to update auth state across components
   };
 
   return (
     <>
-      <nav
-        className={cn(
-          "z-50 transition-all duration-700",
-          !isInsideStack && "sticky top-0",
-          scrolled ? "glass border-b border-white/10 shadow-glass" : "bg-transparent border-b border-transparent"
-        )}
-        role="navigation"
-        aria-label="Main navigation"
-      >
-        <div className="mx-auto flex h-14 sm:h-[56px] max-w-[1280px] px-4 sm:px-6 lg:px-8 items-center justify-between">
-          {/* Branded Liquid Glass Logo — Authoritative Palette */}
-          <Link to="/" className="flex items-center gap-2 group" aria-label="Open Vaartha home">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg glass bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] transition-all duration-500 group-hover:scale-105 group-hover:shadow-glass group-active:scale-95">
-              <span className="text-sm font-bold italic leading-none">V</span>
-            </div>
-            <span className="text-base font-bold tracking-tighter text-foreground leading-none">
-              Open<span className="opacity-40 font-medium ml-0.5">Vaartha</span>
-            </span>
+      {/* ── Top Header ──────────────────────────────────────────── */}
+      <header className={cn(
+        "h-14 flex items-center justify-between px-4 sm:px-6",
+        isInsideStack ? "" : "border-b border-border"
+      )}>
+        {/* Wordmark */}
+        <Link to="/" className="flex items-center gap-2 press group">
+          <div className="h-7 w-7 rounded-lg gradient-maroon flex items-center justify-center shadow-sm shadow-primary/30 group-hover:shadow-maroon transition-shadow">
+            <span className="text-[9px] font-black text-white tracking-tight">OV</span>
+          </div>
+          <div className="flex items-baseline gap-0.5">
+            <span className="text-sm font-black text-foreground tracking-tight">Open</span>
+            <span className="text-sm font-black text-primary tracking-tight">vaartha</span>
+          </div>
+        </Link>
+
+        {/* Desktop nav links */}
+        <nav className="hidden md:flex items-center gap-1">
+          {["Politics","Tech","Business","Cinema","Sports"].map(cat => (
+            <button
+              key={cat}
+              onClick={() => navigate(`/?category=${cat}`)}
+              className="h-8 px-3 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors press"
+            >
+              {cat}
+            </button>
+          ))}
+        </nav>
+
+        {/* Right actions */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="h-9 px-3 rounded-lg flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors press text-xs font-medium"
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" />
+            <span className="hidden sm:inline text-xs text-muted-foreground/60">⌘K</span>
+          </button>
+
+          <button
+            onClick={toggleDark}
+            className="h-9 w-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors press"
+            aria-label="Toggle theme"
+          >
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+
+          <Link
+            to="/portal/saved"
+            className="hidden sm:flex h-9 w-9 rounded-lg items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors press relative"
+            aria-label="Saved articles"
+          >
+            <Bookmark className="h-4 w-4" />
+            {saved.length > 0 && (
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-primary rounded-full" />
+            )}
           </Link>
 
-          {/* Actions */}
-          <div className="flex items-center gap-1 sm:gap-1.5">
-            {/* Search Trigger */}
-            <button
-              onClick={() => setOpen(true)}
-              className="flex h-8 items-center gap-2 rounded-lg glass-thin bg-white/5 px-2.5 text-muted-foreground transition-all duration-300 hover:text-foreground hover:bg-white/10 active:scale-95"
-              aria-label="Search (Ctrl+K)"
-            >
-              <Search className="h-3.5 w-3.5" />
-              <span className="hidden md:inline text-[9px] font-bold opacity-40 uppercase tracking-tighter">
-                Search
-              </span>
-            </button>
-
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="flex h-8 w-8 items-center justify-center rounded-lg glass-thin bg-white/5 text-muted-foreground transition-all duration-300 hover:text-foreground hover:bg-white/10 active:scale-95"
-              aria-label="Toggle Theme"
-            >
-              {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-            </button>
-
-            <div className="hidden sm:flex items-center gap-1 ml-0.5">
-              {/* Reading List Drawer */}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <button className="relative flex h-8 w-8 items-center justify-center rounded-lg glass-thin bg-white/5 text-muted-foreground transition-all duration-300 hover:text-foreground hover:bg-white/10 active:scale-95">
-                    <Bookmark className="h-3.5 w-3.5" />
-                    {saved.length > 0 && (
-                      <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]" />
-                    )}
-                  </button>
-                </SheetTrigger>
-                <SheetContent className="w-full sm:max-w-md glass border-l border-white/10 p-0">
-                  <SheetHeader className="p-6 pb-4 border-b border-border/50">
-                    <SheetTitle className="text-lg font-bold tracking-tight">Saved Briefs</SheetTitle>
-                    <SheetDescription className="text-xs text-muted-foreground uppercase tracking-widest font-bold opacity-60">
-                      Reading List
-                    </SheetDescription>
-                  </SheetHeader>
-                  <div className="p-4 overflow-y-auto max-h-[calc(100vh-120px)] space-y-1">
-                    {saved.length === 0 ? (
-                      <div className="py-20 text-center opacity-40">
-                        <Bookmark className="h-10 w-10 mx-auto mb-4" />
-                        <p className="text-xs font-bold uppercase tracking-widest leading-none">No saved briefs</p>
-                      </div>
-                    ) : (
-                      saved.map((a) => (
-                        <Link
-                          key={a.id}
-                          to={`/article/${a.slug}`}
-                          className="flex gap-3 p-2.5 rounded-xl transition-all duration-500 hover:bg-white/5 group border border-transparent hover:border-white/10 shadow-sm"
-                        >
-                          <div className="h-14 w-14 rounded-lg overflow-hidden shrink-0 glass-thin">
-                            <img
-                              src={getArticleImage(a.thumbnail)}
-                              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                              alt=""
-                              onError={handleImageFallback}
-                            />
-                          </div>
-                          <div className="space-y-0.5 min-w-0">
-                            <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">{a.category}</span>
-                            <h4 className="text-[13px] font-bold leading-tight line-clamp-2 text-foreground/90">{a.title}</h4>
-                            <p className="text-[10px] text-muted-foreground font-medium opacity-60">{a.readTime} read</p>
-                          </div>
-                        </Link>
-                      ))
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
-
-              {/* Profile Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="h-8 w-8 rounded-lg overflow-hidden glass border-white/10 hover:border-white/20 transition-all duration-300 focus:outline-none shadow-sm active:scale-95 ml-1">
-                    <Avatar className="h-full w-full rounded-none">
-                      <AvatarImage src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100" />
-                      <AvatarFallback className="bg-muted text-[10px] font-bold uppercase">VP</AvatarFallback>
-                    </Avatar>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 mt-2 glass-thick border border-white/10 p-1.5 shadow-glass-lg" align="end">
-                  <DropdownMenuLabel className="p-2.5">
-                    <div className="flex flex-col gap-0.5">
-                      <p className="text-xs font-bold tracking-tight">Vignesh Prabhu</p>
-                      <p className="text-[10px] text-muted-foreground opacity-60">vignesh@openvaartha.com</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-white/10 my-1" />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem className="h-8 rounded-lg focus:bg-white/5 gap-2.5 cursor-pointer text-xs font-medium">
-                      <User className="h-3.5 w-3.5 opacity-60" /> <span>Account</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="h-8 rounded-lg focus:bg-white/5 gap-2.5 cursor-pointer text-xs font-medium">
-                      <History className="h-3.5 w-3.5 opacity-60" /> <span>History</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="h-8 rounded-lg focus:bg-white/5 gap-2.5 cursor-pointer text-xs font-medium">
-                      <Bell className="h-3.5 w-3.5 opacity-60" /> <span>Notifications</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator className="bg-white/10 my-1" />
-                  <DropdownMenuItem className="h-8 rounded-lg focus:bg-destructive/10 focus:text-destructive gap-2.5 cursor-pointer text-destructive text-xs font-bold">
-                    <LogOut className="h-3.5 w-3.5" /> <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+          {localStorage.getItem('token') ? (
+            <div className="flex items-center gap-1.5 ml-1">
+              <Link
+                to="/portal/dashboard"
+                className="hidden sm:flex h-9 w-9 rounded-full gradient-maroon items-center justify-center press shadow-sm shadow-primary/20 hover:shadow-maroon transition-shadow"
+                aria-label="Portal"
+              >
+                <User className="h-4 w-4 text-white" />
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="hidden sm:flex h-9 w-9 rounded-lg items-center justify-center text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors press"
+                aria-label="Log out"
+                title="Log out"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
             </div>
-          </div>
+          ) : (
+            <Link
+              to="/login"
+              className="hidden sm:flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-white text-xs font-black uppercase tracking-widest press hover:bg-primary/90 transition-all shadow-sm shadow-primary/20"
+            >
+              Sign In
+            </Link>
+          )}
+        </div>
+      </header>
+
+      {/* ── Mobile Bottom Navigation ──────────────────────────────── */}
+      <nav className="bottom-nav sm:hidden">
+        <div className="flex items-center justify-around h-14 px-2">
+          <BottomNavItem icon={<Home className="h-5 w-5" />}     label="Feed"   to="/"                       active={location.pathname === "/"} />
+          <BottomNavItem icon={<Search className="h-5 w-5" />}   label="Search" onClick={() => setSearchOpen(true)} active={false} />
+          <BottomNavItem
+            icon={
+              <div className="relative">
+                <Bookmark className="h-5 w-5" />
+                {saved.length > 0 && <span className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-primary text-white text-[7px] font-black rounded-full flex items-center justify-center">{saved.length > 9 ? "9+" : saved.length}</span>}
+              </div>
+            }
+            label="Saved"   to="/portal/saved"       active={location.pathname === "/portal/saved"} />
+          <BottomNavItem icon={<User className="h-5 w-5" />}     label="Portal" to="/portal/dashboard"        active={location.pathname.startsWith("/portal")} />
         </div>
       </nav>
 
-      {/* ⌘K Command Dialog */}
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <div className="glass shadow-glass">
-          <CommandInput placeholder="Search intelligence briefings..." className="border-none focus:ring-0" />
-          <CommandList className="scrollbar-hide px-2 pb-2">
-            <CommandEmpty>No results found.</CommandEmpty>
-            <CommandGroup heading="Topics">
-              {["Politics", "Tech", "Business", "Cinema", "Sports"].map(c => (
-                <CommandItem key={c} onSelect={() => { setOpen(false); navigate(`/?category=${c}`); }} className="rounded-lg hover:bg-white/5">
-                  <Newspaper className="mr-2 h-3.5 w-3.5 text-muted-foreground opacity-40" />
-                  <span className="font-semibold text-xs tracking-tight">{c}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-            <CommandSeparator className="bg-white/10 my-1" />
-            <CommandGroup heading="Trending Briefings">
-              {articles.slice(0, 5).map(a => (
-                <CommandItem key={a.id} onSelect={() => { setOpen(false); navigate(`/article/${a.slug}`); }} className="rounded-lg hover:bg-white/5">
-                  <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="font-bold text-[13px] tracking-tight leading-tight truncate">{a.title}</span>
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest opacity-40">{a.category} · {a.readTime}</span>
+      {/* ── Full-Screen Search ───────────────────────────────────── */}
+      {searchOpen && (
+        <div className="fixed inset-0 z-[100] bg-background flex flex-col">
+          {/* Input bar */}
+          <div className="flex items-center gap-3 h-14 px-4 border-b border-border bg-background">
+            <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+            <input
+              autoFocus
+              type="text"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Search articles, categories…"
+              className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground text-sm font-medium outline-none"
+            />
+            <button
+              onClick={() => { setSearchOpen(false); setQuery(""); }}
+              className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors press text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            {/* Empty state — show category shortcuts */}
+            {query.trim().length < 2 && (
+              <div className="p-4 space-y-5">
+                <div>
+                  <p className="overline mb-3">Browse Sectors</p>
+                  <div className="flex flex-wrap gap-2">
+                    {["Politics","Tech","Business","Cinema","Sports","Local News"].map(cat => (
+                      <button
+                        key={cat}
+                        onClick={() => { navigate(`/?category=${cat}`); setSearchOpen(false); setQuery(""); }}
+                        className="h-8 px-4 rounded-full text-xs font-bold border border-border hover:bg-primary hover:text-white hover:border-primary transition-colors press"
+                      >
+                        {cat}
+                      </button>
+                    ))}
                   </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
+                </div>
+                <div className="p-4 rounded-xl bg-[hsl(var(--surface))] border border-border">
+                  <p className="text-xs font-semibold text-muted-foreground">Tip: Use ⌘K to open search from anywhere</p>
+                </div>
+              </div>
+            )}
+
+            {/* Results */}
+            {filtered.length > 0 && (
+              <div>
+                <div className="section-header px-4">
+                  <span className="overline">{filtered.length} Result{filtered.length !== 1 ? 's' : ''}</span>
+                </div>
+                {filtered.map(article => (
+                  <button
+                    key={article.id}
+                    onClick={() => { navigate(`/article/${article.slug}`); setSearchOpen(false); setQuery(""); }}
+                    className="feed-item w-full text-left"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <span className="tag mb-1.5">{article.category}</span>
+                      <p className="text-sm font-semibold text-foreground leading-snug line-clamp-2">{article.title}</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {query.trim().length >= 2 && filtered.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-40 gap-2 text-center px-4">
+                <p className="text-sm font-semibold">No results for "{query}"</p>
+                <p className="overline">Try different keywords</p>
+              </div>
+            )}
+          </div>
         </div>
-      </CommandDialog>
+      )}
     </>
   );
+};
+
+/* ── Bottom Nav Item ─────────────────────────────────────────── */
+interface BNIProps { icon: React.ReactNode; label: string; to?: string; onClick?: () => void; active: boolean; }
+
+const BottomNavItem = ({ icon, label, to, onClick, active }: BNIProps) => {
+  const cls = cn(
+    "flex flex-col items-center justify-center gap-0.5 flex-1 h-full press transition-colors",
+    active ? "text-primary" : "text-muted-foreground"
+  );
+  if (to) return <Link to={to} className={cls}>{icon}<span className="text-[9px] font-bold tracking-wide">{label}</span></Link>;
+  return <button onClick={onClick} className={cls}>{icon}<span className="text-[9px] font-bold tracking-wide">{label}</span></button>;
 };
 
 export default Navbar;

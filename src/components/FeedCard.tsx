@@ -66,7 +66,9 @@ const FeedCard = ({ article, index = 0, variant = "grid" }: FeedCardProps) => {
         <div className={cn(
           "relative flex-1 flex flex-col justify-between transition-colors",
           "p-4 sm:p-6 lg:p-7",
-          variant === "grid" || variant === "hero" ? "bg-primary dark:bg-primary/10 text-white dark:text-foreground" : "bg-card text-foreground"
+          variant === "grid" || variant === "hero" 
+            ? "bg-primary text-primary-foreground" 
+            : "bg-card text-foreground"
         )}>
 
           <div className="space-y-3.5 sm:space-y-4">
