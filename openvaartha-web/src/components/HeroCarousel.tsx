@@ -41,7 +41,7 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
                       {article.category}
                     </span>
                     <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.3em] text-white/50 sm:text-[10px]">
-                      <Clock className="h-3 w-3 opacity-40" /> {article.readTime} Dispatch
+                      <Clock className="h-3 w-3 opacity-60" /> {article.readTime}
                     </div>
                     {article.trending && (
                       <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-primary sm:text-[10px]">

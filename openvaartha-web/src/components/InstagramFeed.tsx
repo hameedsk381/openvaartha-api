@@ -104,7 +104,7 @@ const InstagramFeed = () => {
                         </div>
                         <div className="flex flex-col">
                             <span className="text-xl font-black tracking-tighter text-foreground tabular-nums sm:text-2xl">{stats.posts}</span>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40">Dispatches</span>
+                            <span className="text-[11px] text-muted-foreground">Posts</span>
                         </div>
                         <div className="flex flex-col">
                             <span className="text-xl font-black tracking-tighter text-foreground tabular-nums sm:text-2xl">500k+</span>

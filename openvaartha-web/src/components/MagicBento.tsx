@@ -76,7 +76,7 @@ const ParticleCard: React.FC<BentoCardProps> = ({
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="text-[9px] font-black uppercase tracking-widest text-[#550000] dark:text-white/80">{article.category}</span>
             <div className="h-1 w-1 rounded-full bg-foreground/10 dark:bg-white/20" />
-            <span className="text-[9px] font-bold text-muted-foreground dark:text-white/40">{article.readTime} Dispatch</span>
+            <span className="text-[10px] text-muted-foreground dark:text-white/60">{article.readTime}</span>
           </div>
           <h3 className={cn(
             "bento-title font-black leading-[1.1] tracking-tighter transition-all duration-500 group-hover:translate-x-1",
@@ -116,7 +116,7 @@ const MagicBento: React.FC<MagicBentoProps> = ({ articles }) => {
     <section className="magic-bento-section w-full scroll-mt-40 py-8 sm:py-6">
       {/* Branding Marker */}
       <div className="mb-5 flex items-center gap-3 sm:mb-6">
-        <h2 className="text-[9px] font-black uppercase tracking-[0.28em] text-primary sm:text-[10px] sm:tracking-[0.4em]">Rapid Intelligence</h2>
+        <h2 className="text-xs font-semibold text-primary">Quick reads</h2>
         <div className="h-px flex-1 bg-gradient-to-r from-primary/20 via-primary/5 to-transparent" />
         <div className="h-1.5 w-1.5 rounded-full bg-primary" />
       </div>

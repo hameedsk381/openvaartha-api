@@ -55,16 +55,16 @@ export default function PortalDashboard() {
 
       {/* ── Welcome ─────────────────────────────────────── */}
       <div className="rounded-2xl gradient-maroon p-5 sm:p-6 shadow-maroon-lg">
-        <p className="text-xs font-semibold text-white/60 uppercase tracking-widest mb-1">Good morning</p>
-        <h1 className="text-2xl font-black text-white tracking-tight">
-          {user?.fullName?.split(' ')[0] || user?.fullName || "Intelligence Member"}.
+        <p className="text-xs font-medium text-white/70 mb-1">Good morning</p>
+        <h1 className="text-2xl font-bold text-white tracking-tight">
+          {user?.fullName?.split(' ')[0] || user?.fullName || "Reader"}.
         </h1>
-        <p className="text-sm text-white/50 mt-1">Your intelligence feed is up to date.</p>
+        <p className="text-sm text-white/70 mt-1">Your feed is up to date.</p>
         <Link
           to="/"
-          className="mt-4 inline-flex items-center gap-1.5 h-8 px-4 rounded-lg bg-secondary text-[hsl(var(--secondary-foreground))] text-xs font-black uppercase tracking-wider hover:bg-beige-200 transition-colors press"
+          className="mt-4 inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-secondary text-[hsl(var(--secondary-foreground))] text-sm font-semibold hover:bg-beige-200 transition-colors press"
         >
-          Browse Feed <ArrowUpRight className="h-3.5 w-3.5" />
+          Browse feed <ArrowUpRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 

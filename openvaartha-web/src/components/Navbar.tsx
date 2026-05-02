@@ -1,22 +1,49 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Search, Sun, Moon, Bookmark, User, Home, X, ChevronRight, LogOut } from "lucide-react";
+import { Search, Sun, Moon, Bookmark, User, Home, X, ChevronRight, LogOut, Radio } from "lucide-react";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { articles } from "@/data/mockArticles";
 
 interface NavbarProps { isInsideStack?: boolean; }
 
+const isTouchDevice = () =>
+  typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+
+const initDark = (): boolean => {
+  if (typeof window === "undefined") return false;
+  const stored = localStorage.getItem("theme");
+  if (stored) return stored === "dark";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+};
+
+const LANGS = [
+  { code: "en", label: "EN" },
+  { code: "te", label: "తె" },
+  { code: "ta", label: "த" },
+  { code: "kn", label: "ಕ" },
+] as const;
+type LangCode = typeof LANGS[number]["code"];
+
 const Navbar = ({ isInsideStack }: NavbarProps) => {
-  const [isDark, setIsDark]       = useState(false);
+  const [isDark, setIsDark]       = useState(initDark);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery]         = useState("");
+  const [lang, setLang]           = useState<LangCode>(() =>
+    (localStorage.getItem("ui-lang") as LangCode | null) ?? "en"
+  );
   const { saved }                 = useReadingList();
   const navigate                  = useNavigate();
   const location                  = useLocation();
+  const hasBreaking               = articles.some(a => a.isBreaking);
+
+  const switchLang = (code: LangCode) => {
+    setLang(code);
+    localStorage.setItem("ui-lang", code);
+  };
 
   useEffect(() => {
-    setIsDark(document.documentElement.classList.contains("dark"));
+    document.documentElement.classList.toggle("dark", isDark);
   }, []);
 
   useEffect(() => {
@@ -31,6 +58,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
   const toggleDark = () => {
     const next = !isDark;
     document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("theme", next ? "dark" : "light");
     setIsDark(next);
   };
 
@@ -81,13 +109,30 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
 
         {/* Right actions */}
         <div className="flex items-center gap-1">
+          {/* Language switcher */}
+          <div className="hidden sm:flex items-center border border-border rounded-lg overflow-hidden mr-1">
+            {LANGS.map(({ code, label }) => (
+              <button
+                key={code}
+                onClick={() => switchLang(code)}
+                className={cn(
+                  "h-7 px-2 text-[11px] font-medium transition-colors",
+                  lang === code ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted"
+                )}
+                aria-label={`Switch to ${label}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           <button
             onClick={() => setSearchOpen(true)}
             className="h-9 px-3 rounded-lg flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors press text-xs font-medium"
             aria-label="Search"
           >
             <Search className="h-4 w-4" />
-            <span className="hidden sm:inline text-xs text-muted-foreground/60">⌘K</span>
+            {!isTouchDevice() && <span className="hidden sm:inline text-xs text-muted-foreground/60">⌘K</span>}
           </button>
 
           <button
@@ -140,18 +185,26 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
 
       {/* ── Mobile Bottom Navigation ──────────────────────────────── */}
       <nav className="bottom-nav sm:hidden">
-        <div className="flex items-center justify-around h-14 px-2">
-          <BottomNavItem icon={<Home className="h-5 w-5" />}     label="Feed"   to="/"                       active={location.pathname === "/"} />
-          <BottomNavItem icon={<Search className="h-5 w-5" />}   label="Search" onClick={() => setSearchOpen(true)} active={false} />
+        <div className="flex items-center justify-around h-14 px-1">
+          <BottomNavItem icon={<Home className="h-5 w-5" />} label="Feed" to="/" active={location.pathname === "/"} />
+          <BottomNavItem icon={<Search className="h-5 w-5" />} label="Search" onClick={() => setSearchOpen(true)} active={false} />
+          <BottomNavItem
+            icon={
+              <div className="relative">
+                <Radio className="h-5 w-5" />
+                {hasBreaking && <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-red-500 rounded-full" />}
+              </div>
+            }
+            label="Live" to="/live" active={location.pathname === "/live"} />
           <BottomNavItem
             icon={
               <div className="relative">
                 <Bookmark className="h-5 w-5" />
-                {saved.length > 0 && <span className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-primary text-white text-[7px] font-black rounded-full flex items-center justify-center">{saved.length > 9 ? "9+" : saved.length}</span>}
+                {saved.length > 0 && <span className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-primary text-white text-[7px] font-semibold rounded-full flex items-center justify-center">{saved.length > 9 ? "9+" : saved.length}</span>}
               </div>
             }
-            label="Saved"   to="/portal/saved"       active={location.pathname === "/portal/saved"} />
-          <BottomNavItem icon={<User className="h-5 w-5" />}     label="Portal" to="/portal/dashboard"        active={location.pathname.startsWith("/portal")} />
+            label="Saved" to="/portal/saved" active={location.pathname === "/portal/saved"} />
+          <BottomNavItem icon={<User className="h-5 w-5" />} label="Portal" to="/portal/dashboard" active={location.pathname.startsWith("/portal")} />
         </div>
       </nav>
 
@@ -182,7 +235,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
             {query.trim().length < 2 && (
               <div className="p-4 space-y-5">
                 <div>
-                  <p className="overline mb-3">Browse Sectors</p>
+                  <p className="text-xs font-semibold text-foreground mb-3">Browse categories</p>
                   <div className="flex flex-wrap gap-2">
                     {["Politics","Tech","Business","Cinema","Sports","Local News"].map(cat => (
                       <button
@@ -195,9 +248,11 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
                     ))}
                   </div>
                 </div>
-                <div className="p-4 rounded-xl bg-[hsl(var(--surface))] border border-border">
-                  <p className="text-xs font-semibold text-muted-foreground">Tip: Use ⌘K to open search from anywhere</p>
-                </div>
+                {!isTouchDevice() && (
+                  <div className="p-4 rounded-xl bg-[hsl(var(--surface))] border border-border">
+                    <p className="text-xs text-muted-foreground">Tip: Press <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs font-mono">⌘K</kbd> to open search from anywhere</p>
+                  </div>
+                )}
               </div>
             )}
 

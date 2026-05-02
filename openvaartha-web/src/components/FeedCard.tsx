@@ -96,11 +96,11 @@ const FeedCard = ({ article, index = 0, variant = "grid" }: FeedCardProps) => {
             "mt-5 flex items-center justify-between gap-3 border-t border-current/10 pt-4 sm:mt-8 sm:pt-6",
           )}>
             <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] uppercase font-black tracking-widest opacity-40">Intelligence</span>
-              <span className="text-xs font-bold tabular-nums">{article.readTime} Dispatch</span>
+              <span className="text-[11px] text-muted-foreground">Read time</span>
+              <span className="text-xs font-medium tabular-nums">{article.readTime}</span>
             </div>
-            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest group/link">
-              Read More <ChevronRight className="h-3 w-3 group-hover/link:translate-x-1 transition-transform" />
+            <div className="flex items-center gap-1.5 text-xs font-medium group/link">
+              Read more <ChevronRight className="h-3 w-3 group-hover/link:translate-x-1 transition-transform" />
             </div>
           </div>
         </div>

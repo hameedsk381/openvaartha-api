@@ -32,46 +32,43 @@ const CategoryPage = () => {
         
         {/* Category Header */}
         <header className="mb-12 flex flex-col gap-6 border-b border-black/5 pb-10 sm:mb-16 sm:pb-12">
-          <div className="flex items-center gap-4">
-            <span className="text-4xl leading-none grayscale brightness-50">{categoryEmojis[currentCategory]}</span>
-            <div className="space-y-1">
-              <h1 className="text-5xl font-black leading-none tracking-tighter text-foreground sm:text-6xl lg:text-7xl">
-                {formatHeader(currentCategory)}
-              </h1>
-              <p className="text-[11px] font-black uppercase tracking-[0.5em] text-muted-foreground opacity-30">Vertical Dossiers & Intelligence</p>
-            </div>
+          <div className="space-y-1">
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+              {formatHeader(currentCategory)}
+            </h1>
+            <p className="text-sm text-muted-foreground">Latest in {currentCategory.toLowerCase()}</p>
           </div>
-          
-          <p className="max-w-2xl text-lg font-bold leading-relaxed text-muted-foreground italic sm:text-xl">
-            Authoritative reporting on {currentCategory.toLowerCase()} across South India’s major corridors. Zero-fluff dispatches.
+
+          <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            Reporting on {currentCategory.toLowerCase()} across South India.
           </p>
         </header>
 
-        {/* Featured Story - Mini Homepage Style */}
+        {/* Featured Story */}
         <section className="mb-16 sm:mb-20 lg:mb-24">
           <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-12">
-            <div className="aspect-[16/9] overflow-hidden rounded-[2rem] border border-black/5 shadow-glass-lg sm:rounded-[3rem] lg:col-span-7 group">
-              <img 
-                src={getArticleImage(featured.thumbnail)} 
-                alt={featured.title} 
-                className="w-full h-full object-cover group-hover:scale-105 transition-all duration-1000 grayscale brightness-90 group-hover:grayscale-0"
+            <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-black/5 lg:col-span-7 group">
+              <img
+                src={getArticleImage(featured.thumbnail)}
+                alt={featured.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 onError={handleImageFallback}
               />
             </div>
-            <div className="space-y-6 lg:col-span-5 lg:space-y-8">
-               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass bg-primary/10 text-primary text-[9px] font-black uppercase tracking-[0.3em]">
+            <div className="space-y-5 lg:col-span-5 lg:space-y-6">
+               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
                 <Sparkles className="h-3.5 w-3.5" />
-                Featured Dispatch
+                Featured
               </div>
-              <h2 className="text-3xl font-black leading-[1.02] tracking-tighter text-foreground sm:text-4xl lg:text-5xl lg:leading-[0.95]">
+              <h2 className="text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl lg:text-4xl">
                 {featured.title}
               </h2>
-              <p className="text-base font-bold leading-relaxed text-muted-foreground sm:text-lg">
+              <p className="text-base leading-relaxed text-muted-foreground">
                 {featured.summary}
               </p>
               <Link to={`/article/${featured.slug}`}>
-                <Button className="h-11 rounded-xl bg-primary px-8 text-[11px] font-black uppercase tracking-widest text-white shadow-glass transition-all hover:scale-[1.02] active:scale-95 sm:h-12 sm:px-10">
-                  Read Analysis
+                <Button className="h-11 rounded-lg bg-primary px-6 text-sm font-semibold text-white transition-all hover:bg-primary/90 active:scale-95">
+                  Read article
                 </Button>
               </Link>
             </div>

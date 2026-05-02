@@ -138,7 +138,7 @@ export const articles: Article[] = [
     trending: true,
     thumbnail: "/thumbnails/hyderabad_ai.png",
     publishedAt: "2026-04-02T06:00:00Z",
-    author: "Tech Dossier Team",
+    author: "Tech Desk",
     sources: ["NASSCOM Report", "Telangana IT Dept"],
     content: {
       tldr: "Hyderabad's AI startup ecosystem has grown 340% in 3 years, overtaking Bengaluru in growth rate.",
@@ -275,7 +275,7 @@ export const articles: Article[] = [
     language: "en",
     thumbnail: "https://images.unsplash.com/photo-1629652320041-c2c555e68101?auto=format&fit=crop&w=1600&q=80",
     publishedAt: "2026-03-27T13:00:00Z",
-    author: "Tech Dossier Team",
+    author: "Tech Desk",
     sources: ["AP IT Minister", "NASSCOM"],
     content: {
       tldr: "Visakhapatnam's new IT corridor has attracted TCS, Infosys, and Wipro.",

@@ -24,12 +24,12 @@ const TrendingPage = () => {
         {/* Engagement Analytics Header */}
         <header className="mb-24 flex flex-col items-center text-center space-y-8 pb-20 border-b border-black/5 relative overflow-hidden group">
            <div className="absolute inset-0 bg-primary/[0.02] opacity-50 z-0" />
-           <div className="flex items-center gap-3 relative z-10 px-4 py-1.5 rounded-full glass bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.4em] shadow-glass-sm animate-float">
-             <BarChart3 className="h-4 w-4" /> Real-time Analytics
+           <div className="flex items-center gap-2 relative z-10 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+             <BarChart3 className="h-3.5 w-3.5" /> Real-time
            </div>
-           <div className="space-y-4 relative z-10">
-             <h1 className="text-5xl sm:text-8xl font-black text-foreground tracking-[-0.08em] leading-none">THE MOMENTUM</h1>
-             <p className="text-[11px] font-black uppercase tracking-[0.6em] text-muted-foreground opacity-30">Engagement Loop Intelligence</p>
+           <div className="space-y-3 relative z-10">
+             <h1 className="text-4xl sm:text-6xl font-bold text-foreground tracking-tight leading-tight">Trending</h1>
+             <p className="text-sm text-muted-foreground">Most-read stories right now</p>
            </div>
         </header>
 

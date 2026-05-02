@@ -26,22 +26,22 @@ const LiveUpdatesPage = () => {
         {/* Live Event Header */}
         <header className="mb-24 flex flex-col items-center text-center space-y-10 pb-20 border-b border-black/5 relative overflow-hidden group">
            <div className="absolute inset-0 bg-primary/[0.03] opacity-30 z-0" />
-           <div className="flex items-center gap-2.5 relative z-10 px-4 py-1.5 rounded-full glass bg-black text-white text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">
-             <RefreshCw className="h-4 w-4 animate-spin" /> {eventStatus}
+           <div className="flex items-center gap-2 relative z-10 px-3 py-1 rounded-full bg-red-600 text-white text-xs font-semibold">
+             <RefreshCw className="h-3.5 w-3.5 animate-spin" /> {eventStatus}
            </div>
-           <div className="space-y-4 relative z-10">
-             <h1 className="text-4xl sm:text-7xl font-black text-foreground tracking-[-0.06em] leading-none uppercase">THE REAL TIME FEED</h1>
-             <p className="text-[11px] font-black uppercase tracking-[0.6em] text-muted-foreground opacity-30">Pulse of Regional Intelligence</p>
+           <div className="space-y-3 relative z-10">
+             <h1 className="text-4xl sm:text-6xl font-bold text-foreground tracking-tight leading-tight">Live updates</h1>
+             <p className="text-sm text-muted-foreground">Real-time coverage as the story develops</p>
            </div>
         </header>
 
-        {/* Live Timeline Engine */}
-        <section className="space-y-16">
-          <div className="flex items-center justify-between border-b border-black/5 pb-8 mb-12">
-             <h3 className="text-sm font-black uppercase tracking-[0.3em] text-foreground opacity-30">Chronological Stream</h3>
-             <div className="flex items-center gap-3 text-[10px] font-black text-primary uppercase tracking-widest">
-               <Bell className="h-3.5 w-3.5 animate-bounce" /> Get Real-time Alerts
-             </div>
+        {/* Timeline */}
+        <section className="space-y-12">
+          <div className="flex items-center justify-between border-b border-black/5 pb-6 mb-8">
+             <h3 className="text-sm font-semibold text-foreground">Timeline</h3>
+             <button className="flex items-center gap-2 text-xs font-medium text-primary">
+               <Bell className="h-3.5 w-3.5" /> Get alerts
+             </button>
           </div>
 
           <div className="space-y-12">
@@ -65,9 +65,9 @@ const LiveUpdatesPage = () => {
                   <div className="flex-1 pb-12">
                     <div className="space-y-3">
                        <div className="flex items-center gap-3">
-                         <span className="text-sm font-black text-primary uppercase tracking-widest">{update.time} IST</span>
+                         <span className="text-xs font-medium text-primary tabular-nums">{update.time} IST</span>
                          {update.type === 'major' && (
-                           <div className="px-2 py-0.5 rounded bg-primary/5 text-[8px] font-black text-primary border border-primary/10 uppercase tracking-widest">Major Update</div>
+                           <div className="px-2 py-0.5 rounded bg-primary/10 text-[10px] font-semibold text-primary">Major update</div>
                          )}
                        </div>
                        <p className={cn(
@@ -86,13 +86,13 @@ const LiveUpdatesPage = () => {
 
         {/* Informational Dense Link Back */}
         <section className="mt-48 pt-24 border-t-2 border-primary/5">
-           <h3 className="text-sm font-black uppercase tracking-[0.4em] text-foreground opacity-30 mb-8 px-4">Deep Dives on Related Topics</h3>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+           <h3 className="text-sm font-semibold text-foreground mb-6 px-4">Related coverage</h3>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              {articles.slice(0, 2).map((a) => (
-                <div key={a.id} className="p-8 rounded-[2.5rem] glass-thin border-black/5 hover:bg-black/5 transition-all">
-                   <h4 className="text-xl font-black text-foreground/80 leading-tight mb-4 tracking-tight">{a.title}</h4>
-                   <Link to={`/article/${a.slug}`} className="text-[10px] font-black text-primary uppercase tracking-widest group flex items-center gap-2">
-                     Read Full Dispatch <span className="group-hover:translate-x-1 transition-transform">→</span>
+                <div key={a.id} className="p-6 rounded-2xl border border-black/5 hover:bg-black/5 transition-colors">
+                   <h4 className="text-lg font-semibold text-foreground leading-snug mb-3 tracking-tight">{a.title}</h4>
+                   <Link to={`/article/${a.slug}`} className="text-xs font-medium text-primary group flex items-center gap-1.5">
+                     Read article <span className="group-hover:translate-x-1 transition-transform">→</span>
                    </Link>
                 </div>
              ))}

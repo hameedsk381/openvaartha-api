@@ -34,8 +34,8 @@ export function PortalLayout({ children }: { children: ReactNode }) {
         <aside className="hidden sm:flex flex-col w-52 shrink-0 border-r border-border sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto portal-scroll">
           {/* Sidebar header */}
           <div className="px-4 py-5 border-b border-border">
-            <p className="overline text-primary mb-0.5">Intelligence Hub</p>
-            <p className="text-xs text-muted-foreground">Your personal portal</p>
+            <p className="text-xs font-semibold text-primary mb-0.5">My Portal</p>
+            <p className="text-xs text-muted-foreground">Saved articles & settings</p>
           </div>
 
           {/* Nav items */}

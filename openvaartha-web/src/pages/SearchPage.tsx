@@ -69,47 +69,47 @@ const SearchPage = () => {
         {/* Results Interface */}
         <section className="min-h-[400px]">
            {!query && selectedCategory === 'All' ? (
-             <div className="flex flex-col items-center justify-center pt-24 space-y-12 opacity-10">
-                <Search className="h-32 w-32" />
-                <p className="text-xl font-black uppercase tracking-[0.5em]">Enter Intelligence Query</p>
+             <div className="flex flex-col items-center justify-center pt-24 space-y-6 opacity-30">
+                <Search className="h-16 w-16" />
+                <p className="text-base text-muted-foreground">Search articles, topics, or categories</p>
              </div>
            ) : results.length > 0 ? (
-             <div className="space-y-16">
-               <div className="flex items-end justify-between border-b border-black/5 pb-8">
+             <div className="space-y-12">
+               <div className="flex items-end justify-between border-b border-black/5 pb-6">
                  <div className="space-y-1">
-                   <h2 className="text-sm font-black uppercase tracking-[0.4em] text-foreground opacity-30">Matched Dispatches</h2>
-                   <div className="text-2xl font-black text-foreground tracking-tighter">{results.length} results for "{query || selectedCategory}"</div>
+                   <h2 className="text-sm font-medium text-muted-foreground">Results</h2>
+                   <div className="text-xl font-bold text-foreground tracking-tight">{results.length} results for "{query || selectedCategory}"</div>
                  </div>
-                 <div className="flex items-center gap-4 text-[9px] font-black opacity-30 uppercase tracking-widest">
-                    <Calendar className="h-3 w-3" /> 2026 Archive
+                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Calendar className="h-3 w-3" /> Archive
                  </div>
                </div>
-               
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                  {results.map((article) => (
                     <FeedCard key={article.id} article={article} />
                  ))}
                </div>
              </div>
            ) : (
-             <div className="flex flex-col items-center justify-center pt-24 space-y-8 text-center">
-                <Hash className="h-16 w-16 text-primary opacity-10" />
-                <div className="space-y-2">
-                  <p className="text-xl font-black uppercase tracking-tighter">No Intelligence Matched</p>
-                  <p className="text-sm font-bold text-muted-foreground opacity-60 italic">Refine terms or search by category filters.</p>
+             <div className="flex flex-col items-center justify-center pt-24 space-y-4 text-center">
+                <Hash className="h-12 w-12 text-primary opacity-30" />
+                <div className="space-y-1">
+                  <p className="text-base font-semibold">No results found</p>
+                  <p className="text-sm text-muted-foreground">Try different keywords or filters.</p>
                 </div>
              </div>
            )}
         </section>
 
-        {/* Related Searches - Navigation support */}
+        {/* Suggested searches */}
         {results.length > 0 && (
-          <section className="mt-48 pt-24 border-t border-black/5">
-             <div className="space-y-8">
-                <h3 className="text-sm font-black uppercase tracking-[0.4em] text-foreground opacity-30">Suggested Intelligence</h3>
-                <div className="flex flex-wrap gap-4">
+          <section className="mt-32 pt-16 border-t border-black/5">
+             <div className="space-y-6">
+                <h3 className="text-sm font-semibold text-foreground">Suggested searches</h3>
+                <div className="flex flex-wrap gap-2">
                   {['Andhra Budget', 'IIT Madras AI', 'Tesla Investment', 'MS Dhoni Retirement'].map(s => (
-                    <button key={s} onClick={() => setQuery(s)} className="group flex items-center gap-2 px-6 py-3 bg-black/[0.02] border border-black/5 rounded-2xl text-[11px] font-black uppercase tracking-widest text-foreground/40 hover:bg-primary/5 hover:text-primary hover:border-primary/10 transition-all">
+                    <button key={s} onClick={() => setQuery(s)} className="group flex items-center gap-2 px-4 py-2 bg-black/5 border border-black/5 rounded-full text-xs font-medium text-foreground/70 hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-colors">
                       {s} <Search className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
                   ))}
