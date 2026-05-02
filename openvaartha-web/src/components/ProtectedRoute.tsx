@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 interface ProtectedRouteProps {
@@ -6,20 +6,18 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const location = useLocation();
-  const isAuthenticated = !!localStorage.getItem('token');
-  
-  // Public routes that don't require authentication
-  const publicRoutes = ['/login', '/register'];
-  const isPublicRoute = publicRoutes.includes(location.pathname);
+  const location   = useLocation();
+  const isAuthed   = !!localStorage.getItem('token');
+  const isPortal   = location.pathname.startsWith('/portal');
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
-  if (!isAuthenticated && !isPublicRoute) {
-    // Redirect to login if not authenticated and trying to access a protected route
+  // Only portal routes require auth — news and content are public
+  if (!isAuthed && isPortal) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (isAuthenticated && isPublicRoute) {
-    // Redirect to home if already authenticated and trying to access login/register
+  // Authenticated users sent to /login or /register go home
+  if (isAuthed && isAuthPage) {
     return <Navigate to="/" replace />;
   }
 
