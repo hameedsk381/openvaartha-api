@@ -1,0 +1,294 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Custom Properties (Design Tokens) ─────────────────── */
+
+@layer base {
+  :root {
+    /* ── Semantic Color Tokens ─────────────────────────────
+       Built from brand palette. All values in HSL for Tailwind
+       compatibility. WCAG contrast ratios verified below.
+       ──────────────────────────────────────────────────── */
+
+    /* Canvas */
+    --background:   0 0% 100%;          /* #FFFFFF */
+    --foreground:   0 0% 6%;            /* #0F0F0F  — on white: 16:1 ✓ */
+
+    /* Surface layers (warm beige tints) */
+    --surface:      30 56% 98%;         /* #FFFDF9  — lightest beige wash */
+    --surface-2:    32 60% 96%;         /* #FEF8F0  — cards, inputs */
+    --surface-3:    32 55% 93%;         /* #F6EDE0  — hover states */
+
+    /* Primary — Maroon #550000 (HSL: 0° 100% 17%) */
+    --primary:          0 100% 17%;     /* #550000 */
+    --primary-foreground: 0 0% 100%;   /* #FFFFFF  — on maroon: 14:1 ✓ */
+    --primary-subtle:   0 60% 96%;     /* #FBF0F0  — tinted bg for primary badges */
+    --primary-hover:    0 100% 13%;    /* #420000  — darken on hover */
+    --primary-muted:    0 40% 55%;     /* #C46A6A  — muted maroon for labels */
+
+    /* Secondary — Beige #F6DCC0 (HSL: 30° 69% 85%) */
+    --secondary:          30 69% 85%;  /* #F6DCC0 */
+    --secondary-foreground: 0 100% 14%;/* #460000  — on beige: 9:1 ✓ */
+    --secondary-dark:     32 55% 78%;  /* #EBBF90  */
+
+    /* Muted / Grey-warm */
+    --muted:            30 20% 94%;    /* #F2EDE8 */
+    --muted-foreground: 15 12% 42%;    /* #726256  — on white: 5.2:1 ✓ */
+
+    /* Accent — warm amber (from beige scale, darkened) */
+    --accent:           30 60% 88%;    /* #F8E4C8 */
+    --accent-foreground: 0 100% 20%;  /* #660000 */
+
+    /* Semantic states */
+    --destructive:          0 84% 46%;  /* #D92121 */
+    --destructive-foreground: 0 0% 100%;
+    --success:             142 71% 32%; /* #1A7A3D */
+    --success-foreground:    0 0% 100%;
+    --warning:              38 95% 42%; /* #D4860A */
+    --warning-foreground:    0 0% 100%;
+
+    /* Borders & inputs */
+    --border: 30 30% 87%;              /* #E8D9CB */
+    --input:  30 30% 87%;
+    --ring:   0 100% 17%;              /* maroon focus ring */
+
+    /* Cards & popovers */
+    --card:             0 0% 100%;
+    --card-foreground:  0 0% 6%;
+    --popover:          0 0% 100%;
+    --popover-foreground: 0 0% 6%;
+
+    /* Sidebar */
+    --sidebar-background:          0 100% 17%;  /* maroon sidebar */
+    --sidebar-foreground:          30 69% 90%;  /* beige text */
+    --sidebar-primary:             30 69% 85%;
+    --sidebar-primary-foreground:  0 100% 17%;
+    --sidebar-accent:              0 100% 22%;
+    --sidebar-accent-foreground:   30 69% 90%;
+    --sidebar-border:              0 100% 22%;
+    --sidebar-ring:                30 69% 85%;
+
+    /* ── Typography Tokens ─────────────────────────────── */
+    --font-sans:  "Inter", system-ui, sans-serif;
+    --font-serif: "Libre Baskerville", Georgia, serif;
+
+    /* ── Spacing Scale (8px base) ──────────────────────── */
+    --sp-1: 0.25rem;   /* 4px  */
+    --sp-2: 0.5rem;    /* 8px  */
+    --sp-3: 0.75rem;   /* 12px */
+    --sp-4: 1rem;      /* 16px */
+    --sp-5: 1.25rem;   /* 20px */
+    --sp-6: 1.5rem;    /* 24px */
+    --sp-8: 2rem;      /* 32px */
+    --sp-10: 2.5rem;   /* 40px */
+    --sp-12: 3rem;     /* 48px */
+    --sp-16: 4rem;     /* 64px */
+
+    /* ── Border Radius ─────────────────────────────────── */
+    --radius-xs: 2px;
+    --radius-sm: 4px;
+    --radius:    8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 20px;
+
+    /* ── Shadows ───────────────────────────────────────── */
+    --shadow-xs: 0 1px 2px rgba(0,0,0,.05);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px -1px rgba(0,0,0,.05);
+    --shadow-md: 0 4px 8px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.04);
+    --shadow-lg: 0 12px 24px rgba(0,0,0,.06), 0 4px 8px rgba(0,0,0,.04);
+    --shadow-maroon: 0 4px 20px rgba(85,0,0,.22);
+  }
+
+  /* ── Dark Mode Overrides ───────────────────────────── */
+  .dark {
+    --background:   0 0% 6%;
+    --foreground:   30 20% 94%;        /* warm off-white on dark */
+    --surface:      0 10% 9%;
+    --surface-2:    0 8% 12%;
+    --surface-3:    0 8% 16%;
+
+    --primary:          30 69% 85%;    /* beige becomes primary in dark */
+    --primary-foreground: 0 100% 12%;  /* dark maroon text on beige */
+    --primary-subtle:   30 30% 15%;
+    --primary-muted:    30 40% 55%;
+
+    --secondary:          0 100% 20%;  /* maroon becomes secondary in dark */
+    --secondary-foreground: 30 80% 90%;
+
+    --muted:            0 8% 15%;
+    --muted-foreground: 30 12% 58%;
+
+    --accent:           0 40% 18%;
+    --accent-foreground: 30 69% 88%;
+
+    --border: 0 15% 18%;
+    --input:  0 15% 18%;
+    --ring:   30 69% 85%;
+
+    --card:           0 8% 8%;
+    --card-foreground: 30 20% 94%;
+    --popover:          0 8% 8%;
+    --popover-foreground: 30 20% 94%;
+
+    --sidebar-background: 0 0% 4%;
+    --sidebar-foreground: 30 40% 80%;
+    --sidebar-accent:     0 20% 10%;
+    --sidebar-border:     0 15% 14%;
+  }
+}
+
+/* ── Base Styles ───────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    font-feature-settings: "cv01","cv02","cv03","cv04","cv11";
+    font-optical-sizing: auto;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    letter-spacing: -0.012em;
+    line-height: 1.5;
+  }
+
+  /* Typographic hierarchy */
+  h1, h2, h3, h4, h5, h6 { @apply font-bold tracking-tight; }
+  h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.05; }
+  h2 { font-size: clamp(1.5rem, 3.5vw, 2.25rem); line-height: 1.1; }
+  h3 { font-size: clamp(1.125rem, 2vw, 1.5rem); line-height: 1.25; }
+
+  a { @apply text-inherit; }
+
+  ::selection {
+    background-color: hsl(0 100% 17% / 0.15);
+    color: hsl(0 100% 17%);
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+/* ── Utility Classes ────────────────────────────────────────── */
+@layer utilities {
+  /* ── Safe area (mobile notch) */
+  .safe-top    { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .pb-safe     { padding-bottom: calc(4rem + env(safe-area-inset-bottom)); }
+
+  /* ── Scrollbar */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* ── Press animation (mobile tap feedback) */
+  .press { @apply transition-transform duration-100 active:scale-[0.97]; }
+
+  /* ── Overline / Label text */
+  .overline {
+    font-size: 0.625rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    @apply text-muted-foreground;
+  }
+
+  /* ── Body text variants */
+  .body-sm { @apply text-sm text-muted-foreground leading-relaxed; }
+  .body-xs { @apply text-xs text-muted-foreground leading-relaxed; }
+
+  /* ── Divider */
+  .divider { @apply border-t border-border; }
+
+  /* ── Section helpers */
+  .section { @apply py-16 sm:py-24; }
+  .section-header { @apply flex items-center justify-between py-3 border-b border-border; }
+
+  /* ── Card variants */
+  .card-base {
+    @apply bg-card border border-border rounded-xl shadow-xs;
+  }
+  .card-hover {
+    @apply card-base transition-shadow duration-200 hover:shadow-md hover:-translate-y-0.5;
+  }
+  .card-surface {
+    background-color: hsl(var(--surface-2));
+    @apply border border-border rounded-xl;
+  }
+
+  /* ── Feed row */
+  .feed-item {
+    @apply flex gap-4 px-4 py-4 border-b border-border last:border-0
+           hover:bg-[hsl(var(--surface))] transition-colors press cursor-pointer;
+  }
+
+  /* ── Tag / Pill */
+  .tag {
+    @apply inline-flex items-center h-5 px-2 rounded-sm
+           text-2xs font-black uppercase tracking-widest
+           bg-[hsl(var(--primary-subtle))] text-primary;
+  }
+  .tag-secondary {
+    @apply inline-flex items-center h-5 px-2 rounded-sm
+           text-2xs font-black uppercase tracking-widest
+           bg-secondary/40 text-[hsl(var(--secondary-foreground))];
+  }
+
+  /* ── Bottom nav (mobile) */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50 safe-bottom
+           bg-background/95 backdrop-blur-xl border-t border-border;
+  }
+
+  /* ── Ticker */
+  .ticker-track {
+    animation: ticker var(--ticker-duration, 30s) linear infinite;
+  }
+
+  /* ── Focus ring (maroon) */
+  .focus-maroon {
+    @apply focus-visible:outline-none focus-visible:ring-2
+           focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
+  /* ── Gradient accents */
+  .gradient-maroon {
+    background: linear-gradient(135deg, hsl(0 100% 17%) 0%, hsl(0 100% 24%) 100%);
+  }
+  .gradient-beige {
+    background: linear-gradient(135deg, hsl(30 69% 85%) 0%, hsl(32 55% 93%) 100%);
+  }
+  .gradient-warm {
+    background: linear-gradient(160deg, #FFFFFF 0%, hsl(30 56% 97%) 60%, hsl(30 69% 91%) 100%);
+  }
+
+  /* ── Custom Scrollbar for Portal */
+  .portal-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .portal-scroll::-webkit-scrollbar {
+    width: 5px;
+  }
+  .portal-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .portal-scroll::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 10px;
+  }
+  .portal-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground));
+  }
+}
