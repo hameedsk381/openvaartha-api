@@ -59,12 +59,12 @@ export default function Index() {
           className="overflow-hidden transition-[max-height,opacity] duration-300"
           style={{ maxHeight: collapsed ? 0 : 120, opacity: collapsed ? 0 : 1 }}
         >
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar px-4 py-2.5">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 py-2.5">
             {(['All', ...CATEGORIES] as (Category | 'All')[]).map(cat => (
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
-                className={`shrink-0 h-7 px-3 rounded-full text-xs font-medium transition-colors press whitespace-nowrap
+                className={`shrink-0 h-9 px-4 rounded-full text-sm font-medium transition-colors press whitespace-nowrap
                   ${selectedCat === cat
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-secondary/50 text-[hsl(var(--secondary-foreground))] hover:bg-secondary'}`}
@@ -222,16 +222,16 @@ export default function Index() {
                 <h3 className="text-sm font-bold leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-3 tracking-tight">
                   {art.title}
                 </h3>
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-2 hidden sm:block">
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                   {art.summary}
                 </p>
                 <div className="flex items-center gap-3 mt-2">
-                  <span className="flex items-center gap-1 text-2xs text-muted-foreground font-medium">
-                    <Clock className="h-2.5 w-2.5" /> {art.readTime}
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" /> {art.readTime}
                   </span>
                   {(art as any).trending && (
-                    <span className="flex items-center gap-1 text-2xs text-primary font-bold uppercase tracking-widest">
-                      <Zap className="h-2.5 w-2.5 fill-current" /> Trending
+                    <span className="flex items-center gap-1 text-xs text-primary font-medium">
+                      <Zap className="h-3 w-3 fill-current" /> Trending
                     </span>
                   )}
                 </div>
@@ -240,17 +240,17 @@ export default function Index() {
               {/* Thumbnail + save */}
               <div className="flex flex-col items-end gap-2 shrink-0">
                 <Link to={`/article/${art.slug}`} className="press block">
-                  <div className="w-20 h-16 sm:w-24 sm:h-18 rounded-lg overflow-hidden bg-secondary/30">
+                  <div className="w-24 h-20 sm:w-28 sm:h-24 rounded-lg overflow-hidden bg-secondary/30">
                     <img src={getArticleImage(art.thumbnail)} alt="" className="w-full h-full object-cover" loading="lazy" onError={handleImageFallback} />
                   </div>
                 </Link>
                 <button
                   onClick={() => toggleSave(art)}
-                  className={`h-6 w-6 rounded-md flex items-center justify-center transition-colors press
+                  className={`h-9 w-9 rounded-lg flex items-center justify-center transition-colors press
                     ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
                   aria-label="Save"
                 >
-                  {isSaved(art.id) ? <BookmarkCheck className="h-3.5 w-3.5 fill-current" /> : <Bookmark className="h-3.5 w-3.5" />}
+                  {isSaved(art.id) ? <BookmarkCheck className="h-4 w-4 fill-current" /> : <Bookmark className="h-4 w-4" />}
                 </button>
               </div>
             </div>
@@ -273,9 +273,9 @@ export default function Index() {
 
           <div className="mb-6">
             <p className="text-xs font-semibold text-foreground mb-3">Categories</p>
-            <div className="grid grid-cols-3 gap-y-2.5 gap-x-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-4">
               {CATEGORIES.map(c => (
-                <button key={c} onClick={() => setCategory(c)} className="text-left text-xs font-medium text-muted-foreground hover:text-primary transition-colors press">
+                <button key={c} onClick={() => setCategory(c)} className="text-left text-sm font-medium text-muted-foreground hover:text-primary transition-colors py-1 press">
                   {c}
                 </button>
               ))}

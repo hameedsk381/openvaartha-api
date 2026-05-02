@@ -78,23 +78,23 @@ const CategoryPage = () => {
         {/* Filters & Latest Feed */}
         <section className="space-y-8 sm:space-y-10 lg:space-y-12">
           <div className="flex flex-col justify-between gap-5 border-b border-black/5 pb-6 sm:flex-row sm:items-center sm:gap-6 sm:pb-8">
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-1">
               {(['Latest', 'Popular', 'Explained'] as const).map((opt) => (
                 <button
                   key={opt}
                   onClick={() => setFilter(opt)}
-                  className={`text-[10px] font-black uppercase tracking-widest transition-all ${
-                    filter === opt ? 'text-primary scale-110' : 'text-muted-foreground opacity-40 hover:opacity-100'
+                  className={`h-9 px-4 rounded-lg text-sm font-medium transition-colors ${
+                    filter === opt ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   {opt}
                 </button>
               ))}
             </div>
-            
-            <div className="flex items-center gap-4 text-[9px] font-black opacity-30 uppercase tracking-widest">
-              <TrendingUp className="h-3 w-3" />
-              {categoryArticles.length} Briefings Tracked
+
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <TrendingUp className="h-3.5 w-3.5" />
+              {categoryArticles.length} articles
             </div>
           </div>
 
@@ -105,24 +105,24 @@ const CategoryPage = () => {
           </div>
         </section>
 
-        {/* Subtopics Backbone - Informational density */}
-        <section className="mt-20 border-t border-black/5 pt-12 sm:mt-32 sm:pt-16 lg:mt-48 lg:pt-24">
-           <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-10 lg:gap-16">
-              <div className="space-y-6">
-                <h3 className="text-sm font-black uppercase tracking-[0.4em] text-foreground opacity-30">Subtopics</h3>
+        {/* Subtopics */}
+        <section className="mt-16 border-t border-black/5 pt-10 sm:mt-20">
+           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-foreground">Subtopics</h3>
                 <div className="flex flex-wrap gap-2">
                   {['AI', 'Startups', 'Semiconductors', 'Policy'].map(t => (
-                    <span key={t} className="px-4 py-2 bg-black/5 rounded-full text-[10px] font-black uppercase tracking-widest text-foreground/40 border border-black/5">
+                    <span key={t} className="h-8 px-3 flex items-center bg-muted rounded-full text-xs font-medium text-foreground/60 border border-black/5">
                       {t}
                     </span>
                   ))}
                 </div>
               </div>
-              
-              <div className="rounded-[2rem] border border-black/5 bg-black/[0.02] p-6 sm:p-8 md:col-span-2 lg:rounded-[3rem] lg:p-12">
-                 <h3 className="text-xl font-black text-foreground tracking-tighter uppercase mb-6">Expertise Desk</h3>
-                 <p className="text-sm font-bold text-muted-foreground leading-relaxed max-w-xl opacity-60">
-                   Our {currentCategory.toLowerCase()} desk covers the intersection of regional policy and global shifts. Every dispatch is vetted by regional experts to ensure zero noise.
+
+              <div className="rounded-2xl border border-black/5 bg-black/[0.02] p-5 sm:p-6 md:col-span-2">
+                 <h3 className="text-base font-semibold text-foreground mb-3">{currentCategory} desk</h3>
+                 <p className="text-sm text-muted-foreground leading-relaxed max-w-xl">
+                   Our {currentCategory.toLowerCase()} team covers regional policy and global shifts. Every story is verified by regional reporters.
                  </p>
               </div>
            </div>

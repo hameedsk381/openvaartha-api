@@ -19,7 +19,7 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex">
           {articles.map((article, index) => (
-            <div key={article.id} className="relative min-h-[520px] flex-[0_0_100%] min-w-0 sm:min-h-0 sm:aspect-[21/10] lg:aspect-[21/8.5]">
+            <div key={article.id} className="relative min-h-[380px] flex-[0_0_100%] min-w-0 sm:min-h-0 sm:aspect-[21/10] lg:aspect-[21/8.5]">
               {/* Background with subtle zoom on hover */}
               <div className="absolute inset-0 overflow-hidden">
                 <img
@@ -59,12 +59,12 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
 
                   <div className="flex flex-wrap items-center gap-4 pt-3 sm:pt-4">
                     <Link to={`/article/${article.slug}`}>
-                      <Button className="h-11 rounded-2xl bg-white px-8 text-[11px] font-black uppercase tracking-[0.2em] text-black shadow-2xl transition-all hover:scale-[1.05] hover:bg-white active:scale-95 sm:h-12 sm:px-10 sm:text-xs">
-                        Explore Full Report
+                      <Button className="h-11 rounded-xl bg-white px-6 text-sm font-semibold text-black shadow-lg transition-all hover:bg-white/90 active:scale-95">
+                        Read article
                       </Button>
                     </Link>
-                    <Link to="/" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-white/30 transition-all hover:gap-4 hover:text-white group/link">
-                      VIEW FEED <ChevronRight className="h-4 w-4 transition-transform group-hover/link:translate-x-1" />
+                    <Link to="/" className="flex items-center gap-2 text-sm font-medium text-white/50 transition-all hover:text-white group/link">
+                      View feed <ChevronRight className="h-4 w-4 transition-transform group-hover/link:translate-x-1" />
                     </Link>
                   </div>
                 </div>
@@ -74,12 +74,6 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
         </div>
       </div>
 
-      {/* Decorative Branding */}
-      <div className="absolute bottom-10 right-10 z-20 pointer-events-none hidden lg:block">
-        <div className="px-5 py-2 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 text-[9px] font-black text-white/20 uppercase tracking-[0.5em] shadow-2xl">
-          SOUTH SCOOP INTELLIGENCE HUB
-        </div>
-      </div>
     </section>
   );
 };

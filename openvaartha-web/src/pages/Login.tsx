@@ -196,7 +196,7 @@ export default function Login() {
                     type="email"
                     placeholder="name@example.com"
                     autoComplete="email"
-                    className="w-full pl-9 pr-3 py-2.5 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    className="w-full h-11 pl-9 pr-3 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                 </div>
                 {loginForm.formState.errors.email && (
@@ -216,7 +216,7 @@ export default function Login() {
                     type={showPwd ? 'text' : 'password'}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    className="w-full pl-9 pr-10 py-2.5 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    className="w-full h-11 pl-9 pr-10 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                   <button
                     type="button"
@@ -253,7 +253,7 @@ export default function Login() {
                     type="text"
                     placeholder="Your name"
                     autoComplete="name"
-                    className="w-full pl-9 pr-3 py-2.5 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    className="w-full h-11 pl-9 pr-3 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                 </div>
                 {regForm.formState.errors.fullName && (
@@ -270,7 +270,7 @@ export default function Login() {
                     type="email"
                     placeholder="name@example.com"
                     autoComplete="email"
-                    className="w-full pl-9 pr-3 py-2.5 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    className="w-full h-11 pl-9 pr-3 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                 </div>
                 {regForm.formState.errors.email && (
@@ -287,7 +287,7 @@ export default function Login() {
                     type={showPwd ? 'text' : 'password'}
                     placeholder="Min. 6 characters"
                     autoComplete="new-password"
-                    className="w-full pl-9 pr-10 py-2.5 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    className="w-full h-11 pl-9 pr-10 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                   <button
                     type="button"
@@ -311,7 +311,7 @@ export default function Login() {
                     type={showCPwd ? 'text' : 'password'}
                     placeholder="Re-enter password"
                     autoComplete="new-password"
-                    className="w-full pl-9 pr-10 py-2.5 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    className="w-full h-11 pl-9 pr-10 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                   <button
                     type="button"

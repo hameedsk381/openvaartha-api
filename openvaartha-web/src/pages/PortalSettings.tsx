@@ -181,21 +181,21 @@ export default function PortalSettings() {
             <input 
               type="password" 
               placeholder="Current password"
-              className="w-full px-3 py-2 bg-secondary/30 border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full h-11 px-3 bg-secondary/30 border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
               value={passwordData.current}
               onChange={e => setPasswordData(p => ({ ...p, current: e.target.value }))}
             />
             <input 
               type="password" 
               placeholder="New password"
-              className="w-full px-3 py-2 bg-secondary/30 border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full h-11 px-3 bg-secondary/30 border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
               value={passwordData.new}
               onChange={e => setPasswordData(p => ({ ...p, new: e.target.value }))}
             />
             <button 
               onClick={handlePasswordChange}
               disabled={isUpdating || !passwordData.new || !passwordData.current}
-              className="w-full py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+              className="w-full h-11 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center"
             >
               {isUpdating ? <Loader2 className="h-3 w-3 animate-spin mx-auto" /> : "Update Password"}
             </button>

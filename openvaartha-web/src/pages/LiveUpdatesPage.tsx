@@ -21,10 +21,10 @@ const LiveUpdatesPage = () => {
     <div className="min-h-screen bg-background text-foreground font-sans">
       <Navbar />
       
-      <main className="mx-auto max-w-[900px] pt-32 sm:pt-48 pb-24 px-6 sm:px-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-        
+      <main className="mx-auto max-w-[900px] pt-20 sm:pt-28 pb-24 px-4 sm:px-8 animate-in fade-in duration-700">
+
         {/* Live Event Header */}
-        <header className="mb-24 flex flex-col items-center text-center space-y-10 pb-20 border-b border-black/5 relative overflow-hidden group">
+        <header className="mb-8 flex flex-col items-center text-center space-y-4 pb-8 border-b border-black/5 relative overflow-hidden">
            <div className="absolute inset-0 bg-primary/[0.03] opacity-30 z-0" />
            <div className="flex items-center gap-2 relative z-10 px-3 py-1 rounded-full bg-red-600 text-white text-xs font-semibold">
              <RefreshCw className="h-3.5 w-3.5 animate-spin" /> {eventStatus}
@@ -36,34 +36,33 @@ const LiveUpdatesPage = () => {
         </header>
 
         {/* Timeline */}
-        <section className="space-y-12">
-          <div className="flex items-center justify-between border-b border-black/5 pb-6 mb-8">
+        <section className="space-y-6">
+          <div className="flex items-center justify-between border-b border-black/5 pb-4 mb-4">
              <h3 className="text-sm font-semibold text-foreground">Timeline</h3>
-             <button className="flex items-center gap-2 text-xs font-medium text-primary">
+             <button className="flex items-center gap-2 text-xs font-medium text-primary h-9 px-3 rounded-lg hover:bg-muted transition-colors">
                <Bell className="h-3.5 w-3.5" /> Get alerts
              </button>
           </div>
 
-          <div className="space-y-12">
+          <div className="space-y-6">
             {updates.map((update, i) => (
               <div key={update.id} className="relative group">
-                {/* Visual Line connector */}
                 {i !== updates.length - 1 && (
-                  <div className="absolute top-12 left-6 w-px h-[calc(100%+3rem)] bg-black/5" />
+                  <div className="absolute top-11 left-5 w-px h-[calc(100%+1.5rem)] bg-black/5" />
                 )}
-                
-                <div className="flex gap-10">
+
+                <div className="flex gap-4">
                   <div className="flex-none">
                     <div className={cn(
-                      "h-12 w-12 rounded-2xl flex items-center justify-center border font-bold text-xs tabular-nums transition-all group-hover:scale-110 group-hover:rotate-6",
-                      update.type === 'major' ? "bg-primary border-primary/5 text-white shadow-glass-sm" : "bg-black/[0.02] border-black/5 text-black/40"
+                      "h-10 w-10 rounded-xl flex items-center justify-center border transition-colors",
+                      update.type === 'major' ? "bg-primary border-primary/5 text-white" : "bg-black/[0.02] border-black/5 text-black/40"
                     )}>
                       {update.type === 'major' ? <Zap className="h-4 w-4 fill-white" /> : <Clock className="h-4 w-4" />}
                     </div>
                   </div>
-                  
-                  <div className="flex-1 pb-12">
-                    <div className="space-y-3">
+
+                  <div className="flex-1 pb-6">
+                    <div className="space-y-2">
                        <div className="flex items-center gap-3">
                          <span className="text-xs font-medium text-primary tabular-nums">{update.time} IST</span>
                          {update.type === 'major' && (
@@ -71,7 +70,7 @@ const LiveUpdatesPage = () => {
                          )}
                        </div>
                        <p className={cn(
-                         "text-xl sm:text-2xl font-bold tracking-tight leading-snug transition-colors",
+                         "text-base sm:text-lg font-semibold leading-snug transition-colors",
                          update.type === 'major' ? "text-foreground" : "text-foreground/70"
                        )}>
                          {update.text}
@@ -84,8 +83,8 @@ const LiveUpdatesPage = () => {
           </div>
         </section>
 
-        {/* Informational Dense Link Back */}
-        <section className="mt-48 pt-24 border-t-2 border-primary/5">
+        {/* Related coverage */}
+        <section className="mt-16 pt-10 border-t border-black/5">
            <h3 className="text-sm font-semibold text-foreground mb-6 px-4">Related coverage</h3>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              {articles.slice(0, 2).map((a) => (

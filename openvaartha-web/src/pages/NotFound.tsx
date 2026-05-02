@@ -12,10 +12,10 @@ const NotFound = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-6 selection:bg-blue-500 selection:text-white">
       <div className="text-center max-w-md relative z-10">
-        <div className="mb-10 relative">
+        <div className="mb-10 relative overflow-hidden">
           <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full scale-150 animate-pulse" />
           <WifiOff className="h-20 w-20 mx-auto text-blue-500/40 relative z-10" />
-          <span className="text-[120px] sm:text-[160px] font-black text-foreground/[0.03] tracking-tighter leading-none block mt-[-60px] relative z-0">404</span>
+          <span className="text-[96px] sm:text-[140px] font-black text-foreground/[0.03] tracking-tighter leading-none block mt-[-40px] relative z-0">404</span>
         </div>
         <div className="space-y-3">
           <span className="text-xs font-medium text-blue-500">404</span>

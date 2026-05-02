@@ -121,58 +121,49 @@ const MagicBento: React.FC<MagicBentoProps> = ({ articles }) => {
         <div className="h-1.5 w-1.5 rounded-full bg-primary" />
       </div>
 
-      <div className="magic-bento-grid grid grid-cols-1 md:grid-cols-4 gap-3 auto-rows-[160px]">
-        {/* Main Feature - Large */}
+      <div className="magic-bento-grid grid grid-cols-1 md:grid-cols-4 gap-3 md:auto-rows-[160px]">
         {articles[0] && (
-          <ParticleCard 
+          <ParticleCard
             article={articles[0]}
-            label="MAJOR DISPATCH"
+            label="Featured"
             color="hsl(355, 100%, 20%)"
-            className="md:col-span-2 md:row-span-3"
+            className="min-h-[200px] md:min-h-0 md:col-span-2 md:row-span-3"
             icon={<Zap size={24} />}
           />
         )}
-        
-        {/* Supporting 1 */}
         {articles[1] && (
-          <ParticleCard 
+          <ParticleCard
             article={articles[1]}
-            label="TRENDING"
+            label="Trending"
             color="hsl(35, 100%, 40%)"
-            className="md:col-span-2 md:row-span-1"
+            className="min-h-[140px] md:min-h-0 md:col-span-2 md:row-span-1"
             icon={<TrendingUp size={20} />}
           />
         )}
-
-        {/* Supporting 2 */}
         {articles[2] && (
-          <ParticleCard 
+          <ParticleCard
             article={articles[2]}
-            label="NETWORK"
+            label="National"
             color="hsl(210, 100%, 45%)"
-            className="md:col-span-1 md:row-span-2"
+            className="min-h-[140px] md:min-h-0 md:col-span-1 md:row-span-2"
             icon={<Globe size={20} />}
           />
         )}
-
-        {/* Supporting 3 */}
         {articles[3] && (
-          <ParticleCard 
+          <ParticleCard
             article={articles[3]}
-            label="SECURE"
+            label="Regional"
             color="hsl(260, 100%, 35%)"
-            className="md:col-span-1 md:row-span-2"
+            className="min-h-[140px] md:min-h-0 md:col-span-1 md:row-span-2"
             icon={<Shield size={20} />}
           />
         )}
-        
-        {/* Supporting 4 */}
         {articles[4] && (
-          <ParticleCard 
+          <ParticleCard
             article={articles[4]}
-            label="MARKETS"
+            label="Markets"
             color="hsl(140, 100%, 25%)"
-            className="md:col-span-2 md:row-span-1"
+            className="min-h-[140px] md:min-h-0 md:col-span-2 md:row-span-1"
             icon={<Briefcase size={20} />}
           />
         )}

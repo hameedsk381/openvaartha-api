@@ -164,7 +164,7 @@ const ArticlePage = () => {
                   key={label}
                   onClick={() => setTextSizeIdx(i)}
                   className={cn(
-                    "h-8 w-9 text-xs font-medium transition-colors",
+                    "h-11 w-11 text-sm font-medium transition-colors",
                     textSizeIdx === i
                       ? "bg-primary text-white"
                       : "text-muted-foreground hover:bg-muted"

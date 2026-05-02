@@ -47,7 +47,7 @@ export function PortalLayout({ children }: { children: ReactNode }) {
                   key={path}
                   to={path}
                   className={cn(
-                    "flex items-center gap-3 mx-2 px-3 h-10 rounded-lg text-sm font-medium transition-all press",
+                    "flex items-center gap-3 mx-2 px-3 h-11 rounded-lg text-sm font-medium transition-all press",
                     active
                       ? "bg-primary text-primary-foreground shadow-maroon"
                       : "text-muted-foreground hover:bg-[hsl(var(--surface))] hover:text-foreground"
@@ -63,8 +63,8 @@ export function PortalLayout({ children }: { children: ReactNode }) {
           {/* Sidebar footer */}
           <div className="p-3 border-t border-border space-y-2">
             <div className="rounded-xl gradient-beige p-3 border border-secondary">
-              <p className="text-[10px] font-black text-[#550000] uppercase tracking-wider mb-1">Pro Plan</p>
-              <p className="text-xs text-[#550000]/70 leading-snug font-medium">Unlimited access to all intelligence sectors</p>
+              <p className="text-[10px] font-semibold text-[#550000] uppercase tracking-wider mb-1">Pro Plan</p>
+              <p className="text-xs text-[#550000]/70 leading-snug">Unlimited reading, no ads</p>
             </div>
             <button
               onClick={() => {
@@ -73,7 +73,7 @@ export function PortalLayout({ children }: { children: ReactNode }) {
                 navigate('/');
                 window.location.reload();
               }}
-              className="flex items-center gap-3 w-full px-3 h-10 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-all press"
+              className="flex items-center gap-3 w-full px-3 h-11 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-all press"
             >
               <LogOut className="h-4 w-4 shrink-0" />
               Sign Out

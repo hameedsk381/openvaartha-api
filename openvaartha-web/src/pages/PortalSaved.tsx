@@ -50,7 +50,7 @@ export default function PortalSaved() {
 
               <button
                 onClick={() => remove(article.id)}
-                className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors press shrink-0 mt-0.5"
+                className="h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors press shrink-0 mt-0.5"
                 aria-label="Remove"
               >
                 <Trash2 className="h-3.5 w-3.5" />

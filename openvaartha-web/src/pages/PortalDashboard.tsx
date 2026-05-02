@@ -62,7 +62,7 @@ export default function PortalDashboard() {
         <p className="text-sm text-white/70 mt-1">Your feed is up to date.</p>
         <Link
           to="/"
-          className="mt-4 inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-secondary text-[hsl(var(--secondary-foreground))] text-sm font-semibold hover:bg-beige-200 transition-colors press"
+          className="mt-4 inline-flex items-center gap-1.5 h-11 px-4 rounded-lg bg-secondary text-[hsl(var(--secondary-foreground))] text-sm font-semibold hover:bg-beige-200 transition-colors press"
         >
           Browse feed <ArrowUpRight className="h-3.5 w-3.5" />
         </Link>
