@@ -1,133 +1,265 @@
-import React, { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { articles, Category, categoryEmojis } from '../data/mockArticles';
+import { articles, Category } from '../data/mockArticles';
 import Navbar from '../components/Navbar';
-import CategoryChips from '../components/CategoryChips';
-import FeedCard from '../components/FeedCard';
-import { Filter, TrendingUp, Sparkles, LayoutGrid, List } from 'lucide-react';
-import { Button } from '../components/ui/button';
+import { Clock, Flame, ArrowUpRight, Bookmark, BookmarkCheck } from 'lucide-react';
 import { getArticleImage, handleImageFallback } from '../lib/utils';
+import { useReadingList } from '@/hooks/use-reading-list';
+
+const relativeTime = (iso: string) => {
+  const h = Math.round((Date.now() - new Date(iso).getTime()) / 3_600_000);
+  if (h < 1) return 'Just now';
+  if (h < 24) return `${h}h ago`;
+  return `${Math.round(h / 24)}d ago`;
+};
+
+const SUBTOPICS: Record<Category, string[]> = {
+  Politics: ['Andhra', 'Telangana', 'Karnataka', 'Tamil Nadu', 'Kerala', 'Policy'],
+  Tech: ['AI', 'Startups', 'Semiconductors', 'Policy', 'Cybersecurity'],
+  Business: ['Markets', 'Manufacturing', 'EVs', 'Real Estate', 'Trade'],
+  Cinema: ['Tollywood', 'Kollywood', 'Sandalwood', 'Mollywood', 'Reviews'],
+  'Local News': ['Civic', 'Transport', 'Weather', 'Crime', 'Heritage'],
+  Sports: ['Cricket', 'IPL', 'Football', 'Athletics', 'Kabaddi'],
+};
 
 const CategoryPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
-  const [filter, setFilter] = useState<'Latest' | 'Popular' | 'Explained'>('Latest');
-  
-  // Convert slug back to Category type
-  const currentCategory = articles.find(a => 
-    a.category.toLowerCase().replace(' ', '-') === categoryId
-  )?.category || 'Politics' as Category;
+  const [filter, setFilter] = useState<'Latest' | 'Popular' | 'Trending'>('Latest');
+  const { toggleSave, isSaved } = useReadingList();
 
-  const categoryArticles = articles.filter(a => a.category === currentCategory);
-  const featured = categoryArticles.find(a => a.trending) || categoryArticles[0];
-  const others = categoryArticles.filter(a => a.id !== featured.id);
+  const currentCategory = useMemo<Category>(() => {
+    return (
+      articles.find(a => a.category.toLowerCase().replace(' ', '-') === categoryId)?.category ||
+      ('Politics' as Category)
+    );
+  }, [categoryId]);
 
-  const formatHeader = (cat: string) => cat.toUpperCase();
+  const list = useMemo(() => {
+    const base = articles.filter(a => a.category === currentCategory);
+    if (filter === 'Popular') return [...base].sort((a, b) => Number(!!b.trending) - Number(!!a.trending));
+    if (filter === 'Trending') return base.filter(a => a.trending);
+    return [...base].sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt));
+  }, [currentCategory, filter]);
+
+  const featured = list[0];
+  const secondary = list.slice(1, 3);
+  const rest = list.slice(3);
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
-      <CategoryChips selected={currentCategory} onSelect={() => {}} />
-      
-      <main className="mx-auto max-w-[1440px] px-4 pt-16 pb-20 sm:px-8 sm:pt-24 sm:pb-24 lg:px-16 animate-in fade-in duration-1000">
-        
-        {/* Category Header */}
-        <header className="mb-12 flex flex-col gap-6 border-b border-black/5 pb-10 sm:mb-16 sm:pb-12">
-          <div className="space-y-1">
-            <h1 className="text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              {formatHeader(currentCategory)}
-            </h1>
-            <p className="text-sm text-muted-foreground">Latest in {currentCategory.toLowerCase()}</p>
-          </div>
 
-          <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Reporting on {currentCategory.toLowerCase()} across South India.
-          </p>
-        </header>
+      <main className="pt-20 sm:pt-24 pb-16">
+        <div className="max-w-screen-2xl mx-auto">
 
-        {/* Featured Story */}
-        <section className="mb-16 sm:mb-20 lg:mb-24">
-          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-12">
-            <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-black/5 lg:col-span-7 group">
-              <img
-                src={getArticleImage(featured.thumbnail)}
-                alt={featured.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                onError={handleImageFallback}
-              />
-            </div>
-            <div className="space-y-5 lg:col-span-5 lg:space-y-6">
-               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
-                <Sparkles className="h-3.5 w-3.5" />
-                Featured
-              </div>
-              <h2 className="text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-                {featured.title}
-              </h2>
-              <p className="text-base leading-relaxed text-muted-foreground">
-                {featured.summary}
-              </p>
-              <Link to={`/article/${featured.slug}`}>
-                <Button className="h-11 rounded-lg bg-primary px-6 text-sm font-semibold text-white transition-all hover:bg-primary/90 active:scale-95">
-                  Read article
-                </Button>
+          {/* Section masthead */}
+          <header className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14 border-b border-border bg-[hsl(var(--surface))]">
+            <div className="flex items-center gap-2 mb-3">
+              <Link to="/" className="overline text-muted-foreground hover:text-primary transition-colors">
+                Open Vaartha
               </Link>
+              <span className="text-muted-foreground/50">/</span>
+              <span className="overline text-primary">Section</span>
             </div>
-          </div>
-        </section>
+            <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.02]">
+              {currentCategory}
+            </h1>
+            <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-4 max-w-2xl leading-relaxed">
+              Independent reporting on {currentCategory.toLowerCase()} across South India — verified by regional desks.
+            </p>
 
-        {/* Filters & Latest Feed */}
-        <section className="space-y-8 sm:space-y-10 lg:space-y-12">
-          <div className="flex flex-col justify-between gap-5 border-b border-black/5 pb-6 sm:flex-row sm:items-center sm:gap-6 sm:pb-8">
-            <div className="flex items-center gap-1">
-              {(['Latest', 'Popular', 'Explained'] as const).map((opt) => (
-                <button
-                  key={opt}
-                  onClick={() => setFilter(opt)}
-                  className={`h-9 px-4 rounded-lg text-sm font-medium transition-colors ${
-                    filter === opt ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted'
-                  }`}
+            {/* Subtopic chips */}
+            <div className="mt-6 flex flex-wrap gap-2">
+              {SUBTOPICS[currentCategory]?.map(t => (
+                <span
+                  key={t}
+                  className="h-8 px-3 inline-flex items-center rounded-full text-xs font-medium border border-border text-muted-foreground bg-background hover:border-primary hover:text-primary transition-colors cursor-pointer"
                 >
-                  {opt}
-                </button>
+                  {t}
+                </span>
               ))}
             </div>
+          </header>
 
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <TrendingUp className="h-3.5 w-3.5" />
-              {categoryArticles.length} articles
-            </div>
-          </div>
+          {/* Featured spread */}
+          {featured && (
+            <section className="border-b border-border">
+              <div className="grid grid-cols-1 lg:grid-cols-12">
+                <Link
+                  to={`/article/${featured.slug}`}
+                  className="lg:col-span-8 lg:border-r lg:border-border block group press"
+                >
+                  <div className="relative aspect-[16/10] sm:aspect-[16/9] overflow-hidden bg-[hsl(var(--surface-2))]">
+                    <img
+                      src={getArticleImage(featured.thumbnail)}
+                      alt={featured.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                      onError={handleImageFallback}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 lg:p-10 text-white">
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="overline text-secondary">Featured</span>
+                        <span className="h-1 w-1 rounded-full bg-white/40" />
+                        <span className="text-[11px] font-medium tracking-wide">{relativeTime(featured.publishedAt)}</span>
+                        {featured.trending && (
+                          <>
+                            <span className="h-1 w-1 rounded-full bg-white/40" />
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary">
+                              <Flame className="h-3 w-3 fill-current" /> Trending
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold leading-[1.05] tracking-tight max-w-3xl">
+                        {featured.title}
+                      </h2>
+                      <p className="text-white/80 text-sm sm:text-base mt-3 line-clamp-2 max-w-2xl leading-relaxed">
+                        {featured.summary}
+                      </p>
+                      <span className="inline-flex items-center gap-1.5 mt-5 text-xs font-semibold uppercase tracking-[0.18em] group-hover:text-secondary transition-colors">
+                        Read article <ArrowUpRight className="h-3.5 w-3.5" />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8 lg:grid-cols-3 lg:gap-12">
-            {others.map((article) => (
-              <FeedCard key={article.id} article={article} />
-            ))}
-          </div>
-        </section>
+                <aside className="lg:col-span-4 flex flex-col">
+                  <div className="px-4 sm:px-6 py-4 lg:py-5 border-b border-border">
+                    <span className="overline text-primary">Also in {currentCategory}</span>
+                  </div>
+                  {secondary.map((art, i) => (
+                    <Link
+                      key={art.id}
+                      to={`/article/${art.slug}`}
+                      className={`group press flex gap-4 px-4 sm:px-6 py-4 hover:bg-[hsl(var(--surface))] transition-colors ${
+                        i !== secondary.length - 1 ? 'border-b border-border' : ''
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <span className="overline text-primary">{relativeTime(art.publishedAt)}</span>
+                        <h4 className="font-serif text-base font-bold leading-snug tracking-tight mt-1 group-hover:text-primary transition-colors line-clamp-3">
+                          {art.title}
+                        </h4>
+                        <span className="flex items-center gap-1 mt-2 text-[11px] text-muted-foreground font-medium">
+                          <Clock className="h-3 w-3" /> {art.readTime}
+                        </span>
+                      </div>
+                      <div className="w-24 h-20 sm:w-28 sm:h-24 shrink-0 overflow-hidden rounded-md bg-[hsl(var(--surface-2))]">
+                        <img
+                          src={getArticleImage(art.thumbnail)}
+                          alt=""
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          onError={handleImageFallback}
+                          loading="lazy"
+                        />
+                      </div>
+                    </Link>
+                  ))}
+                </aside>
+              </div>
+            </section>
+          )}
 
-        {/* Subtopics */}
-        <section className="mt-16 border-t border-black/5 pt-10 sm:mt-20">
-           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">Subtopics</h3>
-                <div className="flex flex-wrap gap-2">
-                  {['AI', 'Startups', 'Semiconductors', 'Policy'].map(t => (
-                    <span key={t} className="h-8 px-3 flex items-center bg-muted rounded-full text-xs font-medium text-foreground/60 border border-black/5">
-                      {t}
-                    </span>
+          {/* Filter bar + feed */}
+          <section className="px-4 sm:px-6 lg:px-10 py-8 sm:py-12">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-5 border-b border-border">
+              <div>
+                <span className="overline text-primary">Sort</span>
+                <div className="mt-2 flex items-center gap-1 border border-border rounded-md overflow-hidden w-fit">
+                  {(['Latest', 'Popular', 'Trending'] as const).map(opt => (
+                    <button
+                      key={opt}
+                      onClick={() => setFilter(opt)}
+                      className={`h-10 px-4 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                        filter === opt ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted'
+                      }`}
+                    >
+                      {opt}
+                    </button>
                   ))}
                 </div>
               </div>
-
-              <div className="rounded-2xl border border-black/5 bg-black/[0.02] p-5 sm:p-6 md:col-span-2">
-                 <h3 className="text-base font-semibold text-foreground mb-3">{currentCategory} desk</h3>
-                 <p className="text-sm text-muted-foreground leading-relaxed max-w-xl">
-                   Our {currentCategory.toLowerCase()} team covers regional policy and global shifts. Every story is verified by regional reporters.
-                 </p>
+              <div className="font-serif italic text-sm text-muted-foreground">
+                {list.length} {list.length === 1 ? 'story' : 'stories'} in this section
               </div>
-           </div>
-        </section>
+            </div>
 
+            {rest.length === 0 ? (
+              <div className="py-16 text-center">
+                <p className="font-serif italic text-muted-foreground">No more stories to show.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
+                {rest.map(art => (
+                  <article key={art.id} className="group">
+                    <Link to={`/article/${art.slug}`} className="block press">
+                      <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
+                        <img
+                          src={getArticleImage(art.thumbnail)}
+                          alt=""
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                          onError={handleImageFallback}
+                          loading="lazy"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="overline text-primary">{art.category}</span>
+                        <span className="h-1 w-1 rounded-full bg-border" />
+                        <span className="text-[10px] text-muted-foreground font-medium">
+                          {relativeTime(art.publishedAt)}
+                        </span>
+                      </div>
+                      <h3 className="font-serif text-lg sm:text-xl font-bold leading-snug tracking-tight group-hover:text-primary transition-colors line-clamp-3">
+                        {art.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                        {art.summary}
+                      </p>
+                    </Link>
+                    <div className="flex items-center justify-between mt-3">
+                      <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-medium">
+                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {art.readTime}</span>
+                        <span>·</span>
+                        <span className="truncate">{art.author}</span>
+                      </div>
+                      <button
+                        onClick={() => toggleSave(art)}
+                        className={`h-9 w-9 rounded-md flex items-center justify-center transition-colors press
+                          ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
+                        aria-label="Save"
+                      >
+                        {isSaved(art.id)
+                          ? <BookmarkCheck className="h-4 w-4 fill-current" />
+                          : <Bookmark className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Desk note */}
+          <section className="border-t border-border bg-[hsl(var(--surface))]">
+            <div className="px-4 sm:px-6 lg:px-10 py-12 sm:py-16 max-w-3xl">
+              <p className="overline text-primary mb-3">Editor's note</p>
+              <h3 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight">
+                The {currentCategory.toLowerCase()} desk
+              </h3>
+              <p className="font-serif text-base sm:text-lg text-muted-foreground mt-4 leading-relaxed">
+                Our {currentCategory.toLowerCase()} team covers regional shifts and the people driving them. Every story
+                is verified by reporters on the ground — never automated, never sponsored.
+              </p>
+              <Link
+                to="/"
+                className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary hover:underline underline-offset-4"
+              >
+                More from Open Vaartha <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </section>
+        </div>
       </main>
     </div>
   );

@@ -1,99 +1,178 @@
-import React from 'react';
-import { articles, Article } from '../data/mockArticles';
+import { articles } from '../data/mockArticles';
 import Navbar from '../components/Navbar';
-import FeedCard from '../components/FeedCard';
-import { Info, HelpCircle, ArrowRight, Zap, Target, History } from 'lucide-react';
+import { ArrowUpRight, Compass, Clock, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getArticleImage, handleImageFallback } from '../lib/utils';
 
+const relativeTime = (iso: string) => {
+  const h = Math.round((Date.now() - new Date(iso).getTime()) / 3_600_000);
+  if (h < 24) return `${Math.max(h, 1)}h ago`;
+  return `${Math.round(h / 24)}d ago`;
+};
+
 const ExplainersPage = () => {
-  const explainers = articles.slice(0, 5); // Mock explainers
+  const lead = articles[0];
+  const featured = articles.slice(1, 3);
+  const more = articles.slice(3);
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/5">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
-      
-      <main className="mx-auto max-w-[1440px] px-4 pt-20 pb-24 sm:px-8 sm:pt-28 lg:px-16 animate-in fade-in duration-700">
 
-        {/* Header */}
-        <header className="mb-10 sm:mb-16 flex flex-col items-center text-center space-y-4 pb-8 sm:pb-12 border-b border-black/5">
-           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
-             <HelpCircle className="h-3.5 w-3.5" /> Deep dives
-           </div>
-           <div className="space-y-3">
-             <h1 className="text-4xl sm:text-5xl font-bold text-foreground tracking-tight leading-tight">Explainers</h1>
-             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-               Complexity simplified. Regional shifts and context, beyond the headlines.
-             </p>
-           </div>
-        </header>
+      <main className="pt-20 sm:pt-24 pb-16">
+        <div className="max-w-screen-2xl mx-auto">
 
-        {/* Featured explainers */}
-        <section className="mb-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {explainers.slice(0, 2).map((article) => (
-             <div key={article.id} className="rounded-2xl border border-black/5 bg-black/[0.02] p-5 sm:p-6 transition-colors hover:bg-black/[0.04] group">
-                <div className="space-y-5">
-                   <span className="text-xs font-medium text-primary">{article.category}</span>
-                   <h2 className="text-xl sm:text-2xl font-bold leading-snug text-foreground transition-colors group-hover:text-primary tracking-tight">
-                      {article.title}
-                   </h2>
+          {/* Masthead */}
+          <header className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14 border-b border-border bg-[hsl(var(--surface))]">
+            <div className="flex items-center gap-2 mb-3">
+              <Compass className="h-4 w-4 text-primary" />
+              <span className="overline text-primary">Deep dives · Context</span>
+            </div>
+            <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.02]">
+              Explainers
+            </h1>
+            <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-4 max-w-2xl leading-relaxed">
+              The "why" behind the headline. Long-form context on the policies, people and shifts shaping South India.
+            </p>
+          </header>
 
-                   <div className="space-y-4 border-t border-black/5 pt-4">
-                      <div className="space-y-2">
-                         <div className="flex items-center gap-2 text-xs font-semibold text-primary/60">
-                            <Zap className="h-3.5 w-3.5" /> What happened
-                         </div>
-                         <p className="text-sm leading-relaxed text-muted-foreground">{article.summary}</p>
-                      </div>
-
-                      <div className="space-y-2">
-                         <div className="flex items-center gap-2 text-xs font-semibold text-primary/60">
-                            <Target className="h-3.5 w-3.5" /> Why it matters
-                         </div>
-                         <p className="text-sm leading-relaxed text-muted-foreground">{article.content.tldr}</p>
-                      </div>
-                   </div>
-
-                   <Link to={`/article/${article.slug}`} className="inline-flex items-center gap-2 text-xs font-semibold text-primary hover:gap-3 transition-all">
-                      Read full explainer <ArrowRight className="h-3.5 w-3.5" />
-                   </Link>
-                </div>
-             </div>
-          ))}
-        </section>
-
-        {/* More explainers */}
-        <section className="space-y-6">
-          <div className="flex items-center gap-4">
-            <h3 className="text-sm font-semibold text-foreground">More explainers</h3>
-            <div className="h-px flex-1 bg-black/5" />
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {articles.slice(5).map((article) => (
-              <div key={article.id} className="space-y-3 group">
-                 <div className="aspect-video rounded-xl overflow-hidden bg-black/5 border border-black/5">
+          {/* Lead explainer */}
+          {lead && (
+            <section className="border-b border-border">
+              <Link
+                to={`/article/${lead.slug}`}
+                className="group press block"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-12">
+                  <div className="lg:col-span-7 aspect-[16/10] sm:aspect-[16/9] lg:aspect-auto overflow-hidden bg-[hsl(var(--surface-2))]">
                     <img
-                      src={getArticleImage(article.thumbnail)}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      alt={article.title}
+                      src={getArticleImage(lead.thumbnail)}
+                      alt={lead.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                       onError={handleImageFallback}
                     />
-                 </div>
-                 <div className="space-y-1.5">
-                   <span className="text-xs font-medium text-primary">{article.category}</span>
-                   <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors leading-snug tracking-tight">
-                     {article.title}
-                   </h3>
-                 </div>
-                 <Link to={`/article/${article.slug}`} className="inline-flex items-center h-9 px-4 bg-muted hover:bg-primary hover:text-white rounded-lg text-xs font-semibold transition-all">
-                    Read explainer
-                 </Link>
-              </div>
-            ))}
-          </div>
-        </section>
+                  </div>
+                  <div className="lg:col-span-5 lg:border-l lg:border-border p-6 sm:p-10 lg:p-12 flex flex-col justify-center">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="overline text-primary">The deep dive</span>
+                      <span className="h-1 w-1 rounded-full bg-border" />
+                      <span className="text-[11px] text-muted-foreground font-medium">{relativeTime(lead.publishedAt)}</span>
+                    </div>
+                    <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold leading-[1.05] tracking-tight group-hover:text-primary transition-colors">
+                      {lead.title}
+                    </h2>
+                    <p className="font-serif text-base sm:text-lg text-muted-foreground mt-4 leading-relaxed line-clamp-4">
+                      {lead.content.tldr}
+                    </p>
+                    <div className="mt-6 flex items-center gap-4 text-[11px] text-muted-foreground font-medium">
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {lead.readTime} read</span>
+                      <span>·</span>
+                      <span className="truncate">{lead.author}</span>
+                    </div>
+                    <span className="mt-7 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary group-hover:underline underline-offset-4 self-start">
+                      Read the explainer <ArrowUpRight className="h-3.5 w-3.5" />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            </section>
+          )}
 
+          {/* Two featured Q&A-style cards */}
+          {featured.length > 0 && (
+            <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
+              <div className="flex items-baseline justify-between mb-8 pb-5 border-b border-border">
+                <div>
+                  <span className="overline text-primary">In focus</span>
+                  <h3 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight mt-1">
+                    Two big questions
+                  </h3>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
+                {featured.map((art) => (
+                  <Link
+                    key={art.id}
+                    to={`/article/${art.slug}`}
+                    className="group press block bg-[hsl(var(--surface))] rounded-lg border border-border p-6 sm:p-8 hover:border-primary/40 transition-colors"
+                  >
+                    <span className="overline text-primary">{art.category}</span>
+                    <h2 className="font-serif text-xl sm:text-2xl font-bold leading-snug tracking-tight mt-3 group-hover:text-primary transition-colors">
+                      {art.title}
+                    </h2>
+
+                    <div className="mt-6 space-y-5">
+                      <div>
+                        <p className="overline text-muted-foreground mb-2 flex items-center gap-1.5">
+                          <Target className="h-3 w-3" /> What happened
+                        </p>
+                        <p className="font-serif text-sm sm:text-base text-foreground/80 leading-relaxed">
+                          {art.summary}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="overline text-muted-foreground mb-2 flex items-center gap-1.5">
+                          <Compass className="h-3 w-3" /> Why it matters
+                        </p>
+                        <p className="font-serif text-sm sm:text-base text-foreground/80 leading-relaxed">
+                          {art.content.tldr}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span className="mt-7 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary group-hover:underline underline-offset-4">
+                      Read the full explainer <ArrowUpRight className="h-3.5 w-3.5" />
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* More explainers grid */}
+          <section className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
+            <div className="flex items-baseline justify-between mb-8 pb-5 border-b border-border">
+              <div>
+                <span className="overline text-primary">Library</span>
+                <h3 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight mt-1">
+                  More explainers
+                </h3>
+              </div>
+              <span className="font-serif italic text-sm text-muted-foreground">{more.length} pieces</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
+              {more.map((art) => (
+                <Link key={art.id} to={`/article/${art.slug}`} className="group press block">
+                  <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
+                    <img
+                      src={getArticleImage(art.thumbnail)}
+                      alt={art.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                      onError={handleImageFallback}
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="overline text-primary">{art.category}</span>
+                    <span className="h-1 w-1 rounded-full bg-border" />
+                    <span className="text-[10px] text-muted-foreground font-medium">{art.readTime}</span>
+                  </div>
+                  <h3 className="font-serif text-lg font-bold leading-snug tracking-tight group-hover:text-primary transition-colors line-clamp-3">
+                    {art.title}
+                  </h3>
+                  <p className="font-serif text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                    {art.summary}
+                  </p>
+                  <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-primary group-hover:underline underline-offset-4">
+                    Read explainer <ArrowUpRight className="h-3 w-3" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        </div>
       </main>
     </div>
   );

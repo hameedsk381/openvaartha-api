@@ -1,27 +1,15 @@
 import { useParams, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { articles, Article } from "@/data/mockArticles";
+import { articles } from "@/data/mockArticles";
 import Navbar from "@/components/Navbar";
-import FeedCard from "@/components/FeedCard";
 import {
-  Share2, Bookmark, Check, ChevronRight, ArrowLeft,
-  Clock, Calendar, Sparkles, ArrowUpRight,
-  User, ExternalLink, History, Info,
-  Zap
+  Share2, Bookmark, BookmarkCheck, ArrowLeft, ArrowUpRight,
+  Clock, Sparkles, User, ExternalLink, History, Type, Flame,
 } from "lucide-react";
 import { cn, getArticleImage, handleImageFallback } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { toast } from "sonner";
 import InstagramEmbed from "@/components/InstagramEmbed";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 
 const timeAgo = (dateStr: string): string => {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -29,12 +17,10 @@ const timeAgo = (dateStr: string): string => {
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
 };
 
 const TEXT_SIZES = ["text-base", "text-lg", "text-xl"] as const;
-type TextSize = typeof TEXT_SIZES[number];
 const TEXT_SIZE_LABELS = ["A−", "A", "A+"];
 
 const ArticlePage = () => {
@@ -47,24 +33,21 @@ const ArticlePage = () => {
   });
   const textSize = TEXT_SIZES[textSizeIdx];
 
-  const cycleTextSize = (dir: 1 | -1) => {
-    const next = Math.max(0, Math.min(TEXT_SIZES.length - 1, textSizeIdx + dir));
-    setTextSizeIdx(next);
-    localStorage.setItem("article-text-size", String(next));
+  const cycleTextSize = (i: number) => {
+    setTextSizeIdx(i);
+    localStorage.setItem("article-text-size", String(i));
   };
 
   const article = articles.find((a) => a.slug === slug);
-  
+
   useEffect(() => {
     window.scrollTo(0, 0);
-    const handleScroll = () => {
-      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = (window.scrollY / totalHeight) * 100;
-      setScrollProgress(progress);
+    const onScroll = () => {
+      const total = document.documentElement.scrollHeight - window.innerHeight;
+      setScrollProgress(total > 0 ? (window.scrollY / total) * 100 : 0);
     };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, [slug]);
 
   if (!article) {
@@ -72,8 +55,8 @@ const ArticlePage = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="mx-auto max-w-2xl px-5 py-24 text-center">
-          <p className="text-muted-foreground text-sm mb-6">Article not found.</p>
-          <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold text-foreground hover:translate-x-1 transition-all">
+          <p className="font-serif italic text-muted-foreground mb-6">Article not found.</p>
+          <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold hover:translate-x-1 transition-all">
             <ArrowLeft className="h-4 w-4" /> Back to feed
           </Link>
         </div>
@@ -81,251 +64,451 @@ const ArticlePage = () => {
     );
   }
 
-  const recommendations = articles.filter((a) => a.id !== article.id && a.category === article.category).slice(0, 2);
+  const recommendations = articles
+    .filter((a) => a.id !== article.id && a.category === article.category)
+    .slice(0, 3);
+
+  const moreFromOV = articles.filter((a) => a.id !== article.id).slice(0, 4);
 
   const publishedDate = new Date(article.publishedAt).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
-  
-  const lastUpdatedDate = article.lastUpdated ? new Date(article.lastUpdated).toLocaleTimeString("en-IN", {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-  }) : null;
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({ title: article.title, url: window.location.href }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard");
+    }
+  };
+
+  const bodyParas = article.content.body.split("\n\n");
 
   return (
-    <div className="relative min-h-screen bg-background selection:bg-primary/10 selection:text-primary pb-24 sm:pb-32">
-      {/* Progress Bar */}
-      <div className="fixed top-0 left-0 right-0 z-[60] h-1 bg-black/5">
-        <div className="h-full bg-primary transition-[width] duration-300 ease-out" style={{ width: `${scrollProgress}%` }} />
+    <div className="relative min-h-screen bg-background selection:bg-primary/15 selection:text-primary pb-20">
+      {/* Reading progress */}
+      <div className="fixed top-0 left-0 right-0 z-[60] h-0.5 bg-black/5 dark:bg-white/5">
+        <div
+          className="h-full bg-primary transition-[width] duration-150 ease-out"
+          style={{ width: `${scrollProgress}%` }}
+        />
       </div>
 
       <Navbar />
 
-      <main className="relative z-10 mx-auto max-w-[680px] px-6 sm:px-8 pt-24 sm:pt-32" role="main">
-        {/* Trust Header */}
-        <div className="mb-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-           {/* Category & Status */}
-          <div className="flex items-center gap-3">
-            <span className="px-2.5 py-1 bg-primary text-white text-[11px] font-semibold rounded-full">
-              {article.category}
-            </span>
-            {article.isBreaking && (
-              <span className="flex items-center gap-1.5 px-2.5 py-1 bg-black text-white text-[11px] font-semibold rounded-full">
-                <Zap className="h-3 w-3 fill-white" /> Breaking
+      <main className="relative z-10 pt-20 sm:pt-24" role="main">
+
+        {/* ── Breadcrumb / back ─────────────────────────────── */}
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-4">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground hover:text-primary transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to feed
+          </Link>
+        </div>
+
+        {/* ── Editorial header ─────────────────────────────── */}
+        <header className="border-y border-border bg-[hsl(var(--surface))]">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-16">
+            <div className="flex items-center gap-3 mb-5">
+              <Link
+                to={`/?category=${article.category}`}
+                className="overline text-primary hover:underline underline-offset-4"
+              >
+                {article.category}
+              </Link>
+              <span className="h-1 w-1 rounded-full bg-border" />
+              <span className="text-[11px] text-muted-foreground font-medium tracking-wide">
+                {timeAgo(article.publishedAt)}
               </span>
-            )}
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl font-bold text-foreground tracking-tight leading-[1.1]">
-            {article.title}
-          </h1>
-
-          <div className="flex flex-wrap items-center justify-between gap-y-4 pt-4 border-t border-black/5 pb-6">
-            {/* Author + dates */}
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-black/5 flex items-center justify-center">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[11px] text-muted-foreground">By</span>
-                  <span className="text-sm font-medium text-foreground">{article.author}</span>
-                </div>
-              </div>
-
-              <div className="flex flex-col">
-                <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" /> Published
-                </span>
-                <span className="text-sm font-medium text-foreground tabular-nums">
-                  {publishedDate} · <span className="text-muted-foreground">{timeAgo(article.publishedAt)}</span>
-                </span>
-              </div>
-
-              {article.lastUpdated && (
-                <div className="flex flex-col">
-                  <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                    <History className="h-3 w-3" /> Updated
+              {article.isBreaking && (
+                <>
+                  <span className="h-1 w-1 rounded-full bg-border" />
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-primary">
+                    Breaking
                   </span>
-                  <span className="text-sm font-medium text-primary tabular-nums">
-                    {timeAgo(article.lastUpdated)}
+                </>
+              )}
+              {article.trending && (
+                <>
+                  <span className="h-1 w-1 rounded-full bg-border" />
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary">
+                    <Flame className="h-3 w-3 fill-current" /> Trending
                   </span>
-                </div>
+                </>
               )}
             </div>
 
-            {/* Text size control */}
-            <div className="flex items-center gap-1 border border-border rounded-lg overflow-hidden">
-              {TEXT_SIZE_LABELS.map((label, i) => (
+            <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] text-foreground">
+              {article.title}
+            </h1>
+
+            <p className="font-serif text-lg sm:text-xl text-muted-foreground mt-5 sm:mt-6 leading-relaxed max-w-3xl">
+              {article.summary}
+            </p>
+
+            {/* Byline */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mt-8 sm:mt-10 pt-6 border-t border-border">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full gradient-maroon flex items-center justify-center shadow-sm">
+                  <User className="h-4 w-4 text-white" />
+                </div>
+                <div className="leading-tight">
+                  <div className="overline">By</div>
+                  <div className="text-sm font-bold text-foreground">{article.author}</div>
+                  <div className="text-[11px] text-muted-foreground font-serif italic mt-0.5">
+                    {publishedDate}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {article.lastUpdated && (
+                  <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-primary font-semibold mr-2">
+                    <History className="h-3 w-3" /> Updated {timeAgo(article.lastUpdated)}
+                  </span>
+                )}
                 <button
-                  key={label}
-                  onClick={() => setTextSizeIdx(i)}
-                  className={cn(
-                    "h-11 w-11 text-sm font-medium transition-colors",
-                    textSizeIdx === i
-                      ? "bg-primary text-white"
-                      : "text-muted-foreground hover:bg-muted"
-                  )}
-                  aria-label={`Text size ${label}`}
+                  onClick={handleShare}
+                  className="h-10 w-10 sm:h-10 sm:w-auto sm:px-4 rounded-full border border-border flex items-center justify-center sm:gap-2 hover:bg-primary hover:text-white hover:border-primary transition-colors press"
+                  aria-label="Share"
                 >
-                  {label}
+                  <Share2 className="h-4 w-4" />
+                  <span className="hidden sm:inline text-xs font-semibold uppercase tracking-wider">Share</span>
                 </button>
-              ))}
+                <button
+                  onClick={() => toggleSave(article)}
+                  className={cn(
+                    "h-10 w-10 sm:h-10 sm:w-auto sm:px-4 rounded-full border flex items-center justify-center sm:gap-2 transition-colors press",
+                    isSaved(article.id)
+                      ? "bg-primary text-white border-primary"
+                      : "border-border hover:bg-primary hover:text-white hover:border-primary"
+                  )}
+                  aria-label="Save"
+                >
+                  {isSaved(article.id)
+                    ? <BookmarkCheck className="h-4 w-4 fill-current" />
+                    : <Bookmark className="h-4 w-4" />}
+                  <span className="hidden sm:inline text-xs font-semibold uppercase tracking-wider">
+                    {isSaved(article.id) ? "Saved" : "Save"}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
+        </header>
+
+        {/* ── Featured image ───────────────────────────────── */}
+        <figure className="border-b border-border bg-[hsl(var(--surface-2))]">
+          <div className="max-w-6xl mx-auto">
+            <img
+              src={getArticleImage(article.thumbnail)}
+              alt={article.title}
+              className="w-full aspect-[16/9] sm:aspect-[21/9] object-cover"
+              onError={handleImageFallback}
+            />
+            <figcaption className="px-4 sm:px-6 lg:px-10 py-3 text-[11px] font-serif italic text-muted-foreground border-t border-border bg-background">
+              {article.title} · {article.category}
+            </figcaption>
+          </div>
+        </figure>
+
+        {/* ── Article body + sticky aside ──────────────────── */}
+        <div className="max-w-screen-2xl mx-auto grid grid-cols-1 lg:grid-cols-12 px-4 sm:px-6 lg:px-10 py-10 sm:py-16 gap-x-12">
+
+          {/* Sticky aside (desktop) */}
+          <aside className="hidden lg:block lg:col-span-3">
+            <div className="sticky top-28 space-y-6">
+              <div>
+                <p className="overline mb-3">In this article</p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" /> {article.readTime} read
+                </div>
+              </div>
+
+              <div className="border-t border-border pt-5">
+                <p className="overline mb-3 flex items-center gap-1.5"><Type className="h-3 w-3" /> Text size</p>
+                <div className="flex border border-border rounded-md overflow-hidden">
+                  {TEXT_SIZE_LABELS.map((label, i) => (
+                    <button
+                      key={label}
+                      onClick={() => cycleTextSize(i)}
+                      className={cn(
+                        "flex-1 h-10 text-sm font-medium transition-colors",
+                        textSizeIdx === i ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted"
+                      )}
+                      aria-label={`Text size ${label}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-border pt-5">
+                <p className="overline mb-3">Share this story</p>
+                <button
+                  onClick={handleShare}
+                  className="w-full h-10 px-4 rounded-md border border-border flex items-center justify-center gap-2 hover:bg-primary hover:text-white hover:border-primary transition-colors press"
+                >
+                  <Share2 className="h-4 w-4" />
+                  <span className="text-xs font-semibold uppercase tracking-wider">Share</span>
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          {/* Main column */}
+          <article className="lg:col-span-7 lg:col-start-4 max-w-2xl">
+
+            {/* Mobile text-size control */}
+            <div className="lg:hidden mb-6 flex items-center justify-between border-b border-border pb-4">
+              <span className="overline flex items-center gap-1.5"><Type className="h-3 w-3" /> Text size</span>
+              <div className="flex border border-border rounded-md overflow-hidden">
+                {TEXT_SIZE_LABELS.map((label, i) => (
+                  <button
+                    key={label}
+                    onClick={() => cycleTextSize(i)}
+                    className={cn(
+                      "h-9 w-10 text-sm font-medium transition-colors",
+                      textSizeIdx === i ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* TLDR */}
+            <div className="border-l-4 border-primary pl-5 sm:pl-6 mb-10">
+              <p className="overline text-primary flex items-center gap-1.5 mb-3">
+                <Sparkles className="h-3 w-3" /> The takeaway
+              </p>
+              <p className="font-serif text-xl sm:text-2xl font-medium text-foreground leading-snug">
+                {article.content.tldr}
+              </p>
+            </div>
+
+            {/* Key points */}
+            <section className="mb-12 p-6 sm:p-8 rounded-lg bg-[hsl(var(--surface))] border border-border">
+              <p className="overline text-primary mb-5">Key points</p>
+              <ol className="space-y-4">
+                {article.content.points.map((point, i) => (
+                  <li key={i} className="flex gap-4">
+                    <span className="font-serif text-xl font-bold text-primary tabular-nums leading-none w-7 shrink-0 pt-0.5">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <p className="text-base text-foreground leading-relaxed">{point}</p>
+                  </li>
+                ))}
+              </ol>
+            </section>
+
+            {/* Body */}
+            <div className="space-y-6 sm:space-y-7">
+              {bodyParas.map((para, i) => (
+                <p
+                  key={i}
+                  className={cn(
+                    textSize,
+                    "font-serif text-foreground leading-[1.7] transition-[font-size]",
+                    i === 0 &&
+                      "first-letter:font-serif first-letter:text-6xl sm:first-letter:text-7xl first-letter:font-bold first-letter:text-primary first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:leading-[0.85]"
+                  )}
+                >
+                  {para}
+                </p>
+              ))}
+            </div>
+
+            {/* Timeline */}
+            {article.content.timeline && article.content.timeline.length > 0 && (
+              <section className="mt-14 pt-10 border-t border-border">
+                <p className="overline text-primary mb-2">How this unfolded</p>
+                <h3 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight mb-8">Timeline</h3>
+                <ol className="relative border-l-2 border-border pl-6 space-y-7">
+                  {article.content.timeline.map((item, i) => (
+                    <li key={i} className="relative">
+                      <span className="absolute -left-[31px] top-1 h-4 w-4 rounded-full bg-background border-2 border-primary" />
+                      <div className="font-serif italic text-xs text-primary uppercase tracking-wider mb-1">
+                        {item.date}
+                      </div>
+                      <p className="font-serif text-base sm:text-lg text-foreground leading-snug">
+                        {item.event}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
+
+            {/* Explainer */}
+            {article.content.explainer && article.content.explainer.length > 0 && (
+              <section className="mt-14 pt-10 border-t border-border">
+                <p className="overline text-primary mb-2">Questions answered</p>
+                <h3 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight mb-8">In plain English</h3>
+                <dl className="space-y-7">
+                  {article.content.explainer.map((qa, i) => (
+                    <div key={i}>
+                      <dt className="font-serif text-lg font-bold text-foreground mb-2">{qa.question}</dt>
+                      <dd className="text-base text-muted-foreground leading-relaxed">{qa.answer}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            )}
+
+            {/* Instagram */}
+            {article.instagramUrl && (
+              <section className="mt-14 pt-10 border-t border-border">
+                <p className="overline text-primary mb-5">From social</p>
+                <InstagramEmbed url={article.instagramUrl} />
+              </section>
+            )}
+
+            {/* Sources */}
+            {article.sources && article.sources.length > 0 && (
+              <section className="mt-14 pt-10 border-t border-border">
+                <p className="overline text-primary mb-2 flex items-center gap-1.5">
+                  <ExternalLink className="h-3 w-3" /> Sources & references
+                </p>
+                <h3 className="font-serif italic text-sm text-muted-foreground mb-5">
+                  This story drew on the following primary sources.
+                </h3>
+                <ul className="flex flex-wrap gap-2">
+                  {article.sources.map((source, i) => (
+                    <li
+                      key={i}
+                      className="px-3 py-2 bg-[hsl(var(--surface))] rounded-md text-xs font-medium text-foreground border border-border"
+                    >
+                      {source}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {/* End mark */}
+            <div className="mt-12 pt-8 border-t border-border flex items-center gap-3">
+              <span className="h-2 w-2 rounded-full bg-primary" />
+              <span className="overline">End of article</span>
+            </div>
+          </article>
+
+          {/* Right sticky rail (desktop) — Read next */}
+          <aside className="hidden lg:block lg:col-span-2">
+            <div className="sticky top-28">
+              <p className="overline mb-4">Read next</p>
+              <ol className="space-y-5">
+                {moreFromOV.slice(0, 3).map((a, i) => (
+                  <li key={a.id}>
+                    <Link to={`/article/${a.slug}`} className="group block press">
+                      <div className="font-serif text-2xl font-bold text-primary/30 group-hover:text-primary transition-colors leading-none mb-2">
+                        {String(i + 1).padStart(2, "0")}
+                      </div>
+                      <p className="font-serif text-sm font-bold leading-snug tracking-tight group-hover:text-primary transition-colors line-clamp-3">
+                        {a.title}
+                      </p>
+                      <span className="text-[10px] text-muted-foreground font-medium mt-1.5 inline-block">
+                        {a.readTime}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </aside>
         </div>
 
-        {/* Summary */}
-        <section className="mb-12 p-6 sm:p-8 bg-black/[0.03] rounded-2xl border border-black/5">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-primary text-xs font-semibold">
-              <Sparkles className="h-4 w-4" /> Summary
+        {/* ── Related stories ──────────────────────────────── */}
+        {recommendations.length > 0 && (
+          <section className="border-t border-border bg-[hsl(var(--surface))]">
+            <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-12 sm:py-16">
+              <div className="flex items-end justify-between mb-8">
+                <div>
+                  <p className="overline text-primary">More on {article.category}</p>
+                  <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight mt-1">
+                    Continue reading
+                  </h2>
+                </div>
+                <Link
+                  to={`/?category=${article.category}`}
+                  className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground hover:text-primary transition-colors"
+                >
+                  All {article.category} <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                {recommendations.map((a) => (
+                  <Link key={a.id} to={`/article/${a.slug}`} className="group press block">
+                    <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
+                      <img
+                        src={getArticleImage(a.thumbnail)}
+                        alt=""
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                        loading="lazy"
+                        onError={handleImageFallback}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="overline text-primary">{a.category}</span>
+                      <span className="h-1 w-1 rounded-full bg-border" />
+                      <span className="text-[10px] text-muted-foreground font-medium">
+                        {timeAgo(a.publishedAt)}
+                      </span>
+                    </div>
+                    <h3 className="font-serif text-lg font-bold leading-snug tracking-tight group-hover:text-primary transition-colors line-clamp-3">
+                      {a.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                      {a.summary}
+                    </p>
+                  </Link>
+                ))}
+              </div>
             </div>
-            <p className="text-lg sm:text-xl font-medium text-foreground leading-snug">
-              {article.content.tldr}
+          </section>
+        )}
+
+        {/* ── Newsletter ───────────────────────────────────── */}
+        <section className="border-t border-border">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-10 py-14 sm:py-20 text-center">
+            <p className="overline text-primary mb-3">The Briefing</p>
+            <h3 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight">
+              South India, in your inbox by sunrise.
+            </h3>
+            <p className="font-serif italic text-muted-foreground mt-4 leading-relaxed max-w-xl mx-auto">
+              A free morning digest of the stories that matter — curated, never automated.
+            </p>
+            <form
+              onSubmit={(e) => { e.preventDefault(); toast.success("Subscribed (demo)"); }}
+              className="mt-8 flex flex-col sm:flex-row gap-2 max-w-md mx-auto"
+            >
+              <input
+                type="email"
+                required
+                placeholder="your@email.com"
+                className="flex-1 h-12 px-4 rounded-md bg-[hsl(var(--surface))] border border-border text-foreground placeholder:text-muted-foreground/60 text-sm focus:outline-none focus:border-primary transition-colors"
+              />
+              <button
+                type="submit"
+                className="h-12 px-6 rounded-md bg-primary text-white text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors press"
+              >
+                Subscribe <ArrowUpRight className="h-4 w-4" />
+              </button>
+            </form>
+            <p className="text-[11px] text-muted-foreground/60 mt-4 font-serif italic">
+              No spam. Unsubscribe any time.
             </p>
           </div>
         </section>
-
-        {/* Key points */}
-        <section className="mb-12 space-y-6">
-          <h2 className="text-sm font-semibold text-foreground">Key points</h2>
-          <div className="grid grid-cols-1 gap-4">
-            {article.content.points.map((point, i) => (
-              <div key={i} className="flex gap-4">
-                <div className="h-7 w-7 shrink-0 flex items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                  {i + 1}
-                </div>
-                <p className="text-base text-foreground leading-relaxed pt-0.5">{point}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Featured Image */}
-        <figure className="mb-12 rounded-2xl overflow-hidden border border-black/5">
-          <img
-            src={getArticleImage(article.thumbnail)}
-            alt={article.title}
-            className="w-full aspect-[16/9] object-cover"
-            onError={handleImageFallback}
-          />
-        </figure>
-
-        {/* Full Article */}
-        <div className="mb-20">
-          <div className="space-y-6">
-            {article.content.body.split("\n\n").map((para, i) => (
-              <p key={i} className={cn(textSize, "text-foreground leading-relaxed transition-[font-size]")}>
-                {para}
-              </p>
-            ))}
-          </div>
-        </div>
-
-        {/* Article Timeline */}
-        {article.content.timeline && (
-          <section className="mb-20 p-8 bg-primary/5 rounded-2xl border border-primary/10">
-            <h3 className="text-lg font-semibold text-primary mb-8">Timeline</h3>
-            <div className="space-y-6">
-              {article.content.timeline.map((item, i) => (
-                <div key={i} className="flex gap-4 relative">
-                  {i !== article.content.timeline!.length - 1 && (
-                    <div className="absolute top-7 left-2.5 w-px h-10 bg-primary/20" />
-                  )}
-                  <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center shrink-0 mt-0.5">
-                    <div className="h-1.5 w-1.5 rounded-full bg-white" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-xs font-medium text-primary">{item.date}</div>
-                    <p className="text-base text-foreground">{item.event}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Instagram */}
-        {article.instagramUrl && (
-          <section className="mb-20">
-            <h3 className="text-sm font-semibold text-foreground mb-6">From social</h3>
-            <InstagramEmbed url={article.instagramUrl} />
-          </section>
-        )}
-
-        {/* Sources */}
-        {article.sources && (
-          <section className="mb-20 py-10 border-t border-black/5">
-            <div className="flex items-center gap-2 mb-6">
-              <ExternalLink className="h-4 w-4 text-primary" />
-              <h3 className="text-sm font-semibold text-foreground">Sources</h3>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {article.sources.map((source, i) => (
-                <div key={i} className="px-3 py-1.5 bg-black/5 rounded-lg text-xs font-medium text-foreground/70 border border-black/5">
-                  {source}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Related Articles */}
-        <section className="pt-16 border-t border-black/5">
-          <div className="flex items-end justify-between mb-8">
-            <h2 className="text-2xl font-bold text-foreground tracking-tight">Related stories</h2>
-            <Link to="/" className="text-xs font-medium text-primary hover:gap-2 transition-all flex items-center gap-1">
-              Back to feed <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
-            {recommendations.map((a) => (
-              <FeedCard key={a.id} article={a} />
-            ))}
-          </div>
-        </section>
-
-        {/* Newsletter — after related, contextually relevant */}
-        <div className="mt-16 rounded-2xl gradient-maroon p-6 sm:p-8">
-          <p className="text-xs font-medium text-white/70 mb-1">Daily newsletter</p>
-          <h3 className="text-lg font-bold text-white mb-1">The morning briefing</h3>
-          <p className="text-sm text-white/70 mb-4">Regional and national news, summarised. Delivered every morning at 8 AM.</p>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              type="email"
-              placeholder="your@email.com"
-              className="flex-1 h-10 px-4 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-secondary/60 transition-colors"
-            />
-            <button className="h-10 px-5 rounded-lg bg-secondary text-[hsl(var(--secondary-foreground))] text-sm font-semibold hover:bg-beige-200 transition-colors whitespace-nowrap">
-              Subscribe
-            </button>
-          </div>
-          <p className="text-[11px] text-white/40 mt-3">No spam. Unsubscribe any time.</p>
-        </div>
-
       </main>
     </div>
   );
 };
-
-const ArrowRight = ({ className }: { className?: string }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="3" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    className={className}
-  >
-    <path d="M5 12h14" />
-    <path d="m12 5 7 7-7 7" />
-  </svg>
-);
 
 export default ArticlePage;

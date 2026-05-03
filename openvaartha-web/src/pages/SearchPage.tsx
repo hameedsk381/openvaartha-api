@@ -1,123 +1,212 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { articles, Category } from '../data/mockArticles';
 import Navbar from '../components/Navbar';
-import FeedCard from '../components/FeedCard';
-import { Search, Filter, Calendar, X, Hash } from 'lucide-react';
+import { Search, X, Hash, Clock, ArrowUpRight } from 'lucide-react';
+import { getArticleImage, handleImageFallback } from '@/lib/utils';
+
+const relativeTime = (iso: string) => {
+  const h = Math.round((Date.now() - new Date(iso).getTime()) / 3_600_000);
+  if (h < 24) return `${Math.max(h, 1)}h ago`;
+  return `${Math.round(h / 24)}d ago`;
+};
+
+const SUGGESTED = ['Andhra Budget', 'IIT Madras AI', 'Bengaluru Metro', 'MS Dhoni', 'Tamil Nadu EV'];
+const CATEGORIES: (Category | 'All')[] = ['All', 'Politics', 'Tech', 'Business', 'Cinema', 'Local News', 'Sports'];
+
+const Highlight = ({ text, q }: { text: string; q: string }) => {
+  if (!q) return <>{text}</>;
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="bg-[hsl(var(--primary-subtle))] text-primary px-0.5 rounded-sm">
+        {text.slice(idx, idx + q.length)}
+      </mark>
+      {text.slice(idx + q.length)}
+    </>
+  );
+};
 
 const SearchPage = () => {
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
-  
+
   const results = useMemo(() => {
     if (!query && selectedCategory === 'All') return [];
+    const q = query.trim().toLowerCase();
     return articles.filter(a => {
-      const matchQuery = a.title.toLowerCase().includes(query.toLowerCase()) || 
-                          a.content.body.toLowerCase().includes(query.toLowerCase());
-      const matchCategory = selectedCategory === 'All' || a.category === selectedCategory;
-      return matchQuery && matchCategory;
+      const matchQ = !q
+        || a.title.toLowerCase().includes(q)
+        || a.summary.toLowerCase().includes(q)
+        || a.content.body.toLowerCase().includes(q);
+      const matchC = selectedCategory === 'All' || a.category === selectedCategory;
+      return matchQ && matchC;
     });
   }, [query, selectedCategory]);
 
-  const categories: (Category | 'All')[] = ["All", "Politics", "Tech", "Business", "Cinema", "Local News", "Sports"];
+  const isEmpty = !query && selectedCategory === 'All';
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
-      
-      <main className="mx-auto max-w-[1440px] pt-20 sm:pt-28 pb-24 px-4 sm:px-8 lg:px-16 animate-in fade-in duration-700">
 
-        {/* Search interface */}
-        <section className="mb-10 sm:mb-16 space-y-4">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search articles and topics…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="w-full h-14 pl-12 pr-12 text-base text-foreground placeholder:text-muted-foreground bg-muted/40 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-              autoFocus
-            />
-            {query && (
-              <button
-                onClick={() => setQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
-              >
-                <X className="h-4 w-4 text-muted-foreground" />
-              </button>
-            )}
-          </div>
+      <main className="pt-20 sm:pt-24 pb-16">
+        <div className="max-w-screen-2xl mx-auto">
 
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-            <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1 pr-1">
-              <Filter className="h-3 w-3" />
-            </span>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`shrink-0 h-9 px-4 rounded-full text-sm font-medium transition-colors ${
-                  selectedCategory === cat ? 'bg-primary text-white' : 'bg-muted text-foreground/70 hover:bg-muted/80'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </section>
+          {/* Masthead */}
+          <header className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14 border-b border-border bg-[hsl(var(--surface))]">
+            <span className="overline text-primary">Archive · Search</span>
+            <h1 className="font-serif text-4xl sm:text-6xl font-bold tracking-tight leading-[1.02] mt-3">
+              The archive
+            </h1>
+            <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-3 max-w-2xl leading-relaxed">
+              Every story Open Vaartha has filed — searchable by headline, body, or section.
+            </p>
 
-        {/* Results Interface */}
-        <section className="min-h-[400px]">
-           {!query && selectedCategory === 'All' ? (
-             <div className="flex flex-col items-center justify-center pt-24 space-y-6 opacity-30">
-                <Search className="h-16 w-16" />
-                <p className="text-base text-muted-foreground">Search articles, topics, or categories</p>
-             </div>
-           ) : results.length > 0 ? (
-             <div className="space-y-12">
-               <div className="flex items-end justify-between border-b border-black/5 pb-6">
-                 <div className="space-y-1">
-                   <h2 className="text-sm font-medium text-muted-foreground">Results</h2>
-                   <div className="text-xl font-bold text-foreground tracking-tight">{results.length} results for "{query || selectedCategory}"</div>
-                 </div>
-                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" /> Archive
-                 </div>
-               </div>
+            <div className="relative mt-7 max-w-3xl">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search headlines, topics, regions…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full h-14 pl-12 pr-14 font-serif text-base sm:text-lg text-foreground placeholder:text-muted-foreground/60 bg-background border border-border rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                autoFocus
+              />
+              {query && (
+                <button
+                  onClick={() => setQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center rounded-md hover:bg-muted transition-colors"
+                  aria-label="Clear"
+                >
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+              )}
+            </div>
 
-               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                 {results.map((article) => (
-                    <FeedCard key={article.id} article={article} />
-                 ))}
-               </div>
-             </div>
-           ) : (
-             <div className="flex flex-col items-center justify-center pt-24 space-y-4 text-center">
-                <Hash className="h-12 w-12 text-primary opacity-30" />
-                <div className="space-y-1">
-                  <p className="text-base font-semibold">No results found</p>
-                  <p className="text-sm text-muted-foreground">Try different keywords or filters.</p>
-                </div>
-             </div>
-           )}
-        </section>
+            <div className="mt-5 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+              <span className="overline text-muted-foreground shrink-0 pr-1">Section</span>
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`shrink-0 h-9 px-4 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors border ${
+                    selectedCategory === cat
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-primary'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </header>
 
-        {/* Suggested searches */}
-        {results.length > 0 && (
-          <section className="mt-32 pt-16 border-t border-black/5">
-             <div className="space-y-6">
-                <h3 className="text-sm font-semibold text-foreground">Suggested searches</h3>
-                <div className="flex flex-wrap gap-2">
-                  {['Andhra Budget', 'IIT Madras AI', 'Tesla Investment', 'MS Dhoni Retirement'].map(s => (
-                    <button key={s} onClick={() => setQuery(s)} className="group flex items-center gap-2 h-10 px-4 bg-muted rounded-full text-sm font-medium text-foreground/70 hover:bg-primary/10 hover:text-primary transition-colors">
-                      {s} <Search className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+          {/* Results */}
+          <section className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14 min-h-[400px]">
+
+            {isEmpty ? (
+              <div className="max-w-3xl">
+                <p className="overline text-primary mb-3">Try a topic</p>
+                <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight">
+                  Suggested searches
+                </h2>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {SUGGESTED.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setQuery(s)}
+                      className="group inline-flex items-center gap-2 h-10 px-4 rounded-full border border-border bg-background text-sm font-medium hover:border-primary hover:text-primary transition-colors"
+                    >
+                      <Hash className="h-3.5 w-3.5 opacity-50 group-hover:opacity-100" />
+                      {s}
                     </button>
                   ))}
                 </div>
-             </div>
-          </section>
-        )}
 
+                <div className="mt-12 pt-8 border-t border-border">
+                  <p className="overline text-muted-foreground mb-4">Browse by section</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {CATEGORIES.filter(c => c !== 'All').map(c => (
+                      <button
+                        key={c}
+                        onClick={() => setSelectedCategory(c)}
+                        className="group text-left p-5 rounded-lg border border-border bg-background hover:border-primary hover:bg-[hsl(var(--surface))] transition-colors press"
+                      >
+                        <div className="font-serif text-lg font-bold tracking-tight group-hover:text-primary transition-colors">
+                          {c}
+                        </div>
+                        <span className="text-[11px] text-muted-foreground font-medium mt-1 inline-flex items-center gap-1">
+                          {articles.filter(a => a.category === c).length} stories
+                          <ArrowUpRight className="h-3 w-3" />
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : results.length === 0 ? (
+              <div className="max-w-2xl py-12 text-center mx-auto">
+                <p className="overline text-muted-foreground mb-3">No matches</p>
+                <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight">
+                  Nothing in the archive for "{query || selectedCategory}".
+                </h2>
+                <p className="font-serif italic text-muted-foreground mt-3">
+                  Try different keywords or remove the section filter.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-end justify-between mb-8 pb-5 border-b border-border">
+                  <div>
+                    <span className="overline text-primary">Results</span>
+                    <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight mt-1">
+                      {results.length} {results.length === 1 ? 'story' : 'stories'} for "{query || selectedCategory}"
+                    </h2>
+                  </div>
+                </div>
+
+                <ol className="divide-y divide-border">
+                  {results.map((art) => (
+                    <li key={art.id} className="group flex gap-4 sm:gap-6 py-5 sm:py-6 hover:bg-[hsl(var(--surface))] transition-colors">
+                      <Link to={`/article/${art.slug}`} className="flex-1 min-w-0 press">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="overline text-primary">{art.category}</span>
+                          <span className="h-1 w-1 rounded-full bg-border" />
+                          <span className="text-[10px] text-muted-foreground font-medium">{relativeTime(art.publishedAt)}</span>
+                        </div>
+                        <h3 className="font-serif text-lg sm:text-xl font-bold leading-snug tracking-tight group-hover:text-primary transition-colors line-clamp-2">
+                          <Highlight text={art.title} q={query} />
+                        </h3>
+                        <p className="font-serif text-sm sm:text-base text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                          <Highlight text={art.summary} q={query} />
+                        </p>
+                        <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground font-medium">
+                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {art.readTime}</span>
+                          <span>·</span>
+                          <span className="truncate">{art.author}</span>
+                        </div>
+                      </Link>
+                      <Link to={`/article/${art.slug}`} className="press hidden sm:block shrink-0">
+                        <div className="w-32 h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
+                          <img
+                            src={getArticleImage(art.thumbnail)}
+                            alt=""
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            onError={handleImageFallback}
+                            loading="lazy"
+                          />
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+              </>
+            )}
+          </section>
+        </div>
       </main>
     </div>
   );

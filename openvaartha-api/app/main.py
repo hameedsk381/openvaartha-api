@@ -1,5 +1,8 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from app.config import settings
 from app.api.v1 import articles, categories, users, search, newsletter
 
@@ -26,20 +29,19 @@ app.include_router(search.router, prefix="/api/v1/search", tags=["Search"])
 app.include_router(newsletter.router, prefix="/api/v1/newsletter", tags=["Newsletter"])
 
 
-@app.get("/")
-def root():
-    """Root endpoint."""
-    return {
-        "message": "Welcome to OpenVaartha API",
-        "version": settings.APP_VERSION,
-        "docs": "/docs"
-    }
-
-
 @app.get("/health")
 def health_check():
-    """Health check endpoint."""
     return {"status": "healthy"}
+
+
+# Serve React SPA — mount after API routes so /api/* is never shadowed
+_dist = os.path.join(os.path.dirname(__file__), "..", "static")
+if os.path.isdir(_dist):
+    app.mount("/assets", StaticFiles(directory=os.path.join(_dist, "assets")), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    def serve_spa(full_path: str):
+        return FileResponse(os.path.join(_dist, "index.html"))
 
 
 if __name__ == "__main__":
