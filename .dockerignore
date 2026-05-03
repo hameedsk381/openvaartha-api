@@ -1,0 +1,16 @@
+**/node_modules
+**/.git
+**/__pycache__
+**/*.py[cod]
+**/*.egg-info
+**/dist
+**/build
+**/.env
+**/.env.local
+**/venv
+**/ENV
+**/.DS_Store
+**/Thumbs.db
+**/*.log
+**/mongo-data
+openvaartha-web/.vite

@@ -4,11 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { Mail, Lock, User as UserIcon, Loader2, Eye, EyeOff } from 'lucide-react';
-import { articles } from '@/data/mockArticles';
-import { getArticleImage, handleImageFallback } from '@/lib/utils';
-
-/* ── Schemas ─────────────────────────────────────────────── */
+import { Mail, Lock, User as UserIcon, Loader2, Eye, EyeOff, ArrowLeft, Quote } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -28,25 +24,18 @@ const registerSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 type RegisterValues = z.infer<typeof registerSchema>;
 
-/* ── Teasers (left panel) ────────────────────────────────── */
-const teasers = articles.filter(a => a.thumbnail).slice(0, 3);
-
-/* ── Component ───────────────────────────────────────────── */
 export default function Login() {
-  const navigate   = useNavigate();
-  const location   = useLocation();
-  const from       = (location.state as any)?.from?.pathname || '/';
-  const initMode   = new URLSearchParams(location.search).get('mode') === 'register'
-    ? 'register' : 'login';
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || '/';
+  const initMode = new URLSearchParams(location.search).get('mode') === 'register' ? 'register' : 'login';
 
-  const [mode, setMode]         = useState<'login' | 'register'>(initMode);
+  const [mode, setMode] = useState<'login' | 'register'>(initMode);
   const [isLoading, setLoading] = useState(false);
-  const [showPwd, setShowPwd]   = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
   const [showCPwd, setShowCPwd] = useState(false);
 
-  /* login form */
   const loginForm = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
-  /* register form */
   const regForm = useForm<RegisterValues>({ resolver: zodResolver(registerSchema) });
 
   const onLogin = async (data: LoginValues) => {
@@ -67,7 +56,7 @@ export default function Login() {
       const result = await res.json();
       localStorage.setItem('token', result.access_token);
       localStorage.setItem('user_email', data.email);
-      toast.success('Welcome back!');
+      toast.success('Welcome back.');
       navigate(from, { replace: true });
     } catch (e: any) {
       toast.error(e.message);
@@ -102,246 +91,262 @@ export default function Login() {
     }
   };
 
-  return (
-    <div className="min-h-screen flex">
-      {/* ── Left: Brand panel ───────────────────────────────── */}
-      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden bg-[hsl(var(--primary))] flex-col justify-between p-12">
-        {/* Brand */}
-        <Link to="/" className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-xl bg-white/10 flex items-center justify-center">
-            <span className="text-xs font-bold text-white tracking-tight">OV</span>
-          </div>
-          <span className="text-lg font-bold text-white tracking-tight">
-            Open<span className="text-white/50">vaartha</span>
-          </span>
-        </Link>
+  const inputCls =
+    "w-full h-12 pl-11 pr-3 bg-background border border-border rounded-md text-sm font-serif placeholder:text-muted-foreground/60 placeholder:font-sans focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all";
 
-        {/* Headline */}
-        <div className="space-y-4">
-          <p className="text-white/50 text-sm font-medium">South India's news platform</p>
-          <h2 className="text-4xl font-bold text-white leading-tight tracking-tight max-w-sm">
-            Stay informed on what matters in your region
-          </h2>
+  return (
+    <div className="min-h-screen flex bg-background text-foreground">
+
+      {/* Left — editorial brand panel */}
+      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-primary text-white flex-col justify-between p-12 xl:p-16">
+        <div className="absolute inset-0 opacity-[0.07] bg-[radial-gradient(circle_at_30%_20%,white,transparent_50%)]" />
+        <div className="absolute inset-0 opacity-[0.04] bg-[radial-gradient(circle_at_80%_80%,white,transparent_50%)]" />
+
+        <div className="relative">
+          <Link to="/" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/70 hover:text-white transition-colors mb-12">
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to feed
+          </Link>
+
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="h-11 w-11 rounded-lg bg-white/10 flex items-center justify-center backdrop-blur-sm">
+              <span className="font-black text-white tracking-tight">OV</span>
+            </div>
+            <span className="font-serif text-2xl font-bold tracking-tight">
+              Open<span className="text-secondary">vaartha</span>
+            </span>
+          </Link>
         </div>
 
-        {/* Article teasers */}
-        <div className="space-y-3">
-          {teasers.map(art => (
-            <div key={art.id} className="flex gap-3 items-start p-3 rounded-xl bg-white/[0.06]">
-              <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-white/10">
-                <img
-                  src={getArticleImage(art.thumbnail)}
-                  alt=""
-                  className="w-full h-full object-cover opacity-80"
-                  onError={handleImageFallback}
-                />
-              </div>
-              <div className="min-w-0">
-                <span className="text-[10px] font-semibold text-white/40 uppercase tracking-wider">{art.category}</span>
-                <p className="text-sm font-medium text-white/80 leading-snug line-clamp-2 mt-0.5">{art.title}</p>
-              </div>
-            </div>
-          ))}
-          <p className="text-xs text-white/30 text-center pt-1">Sign in to read these stories and more</p>
+        <div className="relative">
+          <Quote className="h-10 w-10 text-secondary mb-6" />
+          <p className="font-serif text-3xl xl:text-4xl font-bold leading-[1.15] tracking-tight max-w-xl">
+            "The best journalism doesn't shout. It clarifies — patiently, accurately, in the voice of the region it covers."
+          </p>
+          <div className="mt-8 flex items-center gap-3">
+            <div className="h-px w-10 bg-secondary" />
+            <span className="font-serif italic text-sm text-white/70">The Open Vaartha editorial promise</span>
+          </div>
+        </div>
+
+        <div className="relative grid grid-cols-3 gap-6 pt-8 border-t border-white/15">
+          <div>
+            <div className="font-serif text-3xl font-bold">5</div>
+            <div className="text-[11px] uppercase tracking-wider text-white/60 font-semibold mt-1">Languages</div>
+          </div>
+          <div>
+            <div className="font-serif text-3xl font-bold">120+</div>
+            <div className="text-[11px] uppercase tracking-wider text-white/60 font-semibold mt-1">Reporters</div>
+          </div>
+          <div>
+            <div className="font-serif text-3xl font-bold">0</div>
+            <div className="text-[11px] uppercase tracking-wider text-white/60 font-semibold mt-1">Paywalls</div>
+          </div>
         </div>
       </div>
 
-      {/* ── Right: Auth form ─────────────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-background">
-        <div className="w-full max-w-sm space-y-8">
+      {/* Right — form */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md">
 
           {/* Mobile logo */}
-          <div className="lg:hidden flex justify-center">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded-xl gradient-maroon flex items-center justify-center">
-                <span className="text-xs font-bold text-white">OV</span>
+          <div className="lg:hidden flex justify-center mb-8">
+            <Link to="/" className="flex items-center gap-2.5">
+              <div className="h-10 w-10 rounded-lg gradient-maroon flex items-center justify-center">
+                <span className="text-xs font-black text-white">OV</span>
               </div>
-              <span className="text-base font-bold tracking-tight">Open<span className="text-primary">vaartha</span></span>
+              <span className="font-serif text-lg font-bold tracking-tight">
+                Open<span className="text-primary">vaartha</span>
+              </span>
             </Link>
           </div>
 
-          {/* Tab toggle */}
-          <div className="flex bg-muted rounded-xl p-1">
+          <div className="mb-8">
+            <span className="overline text-primary">{mode === 'login' ? 'Welcome back' : 'Join us'}</span>
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight mt-2 leading-tight">
+              {mode === 'login' ? 'Sign in to continue reading.' : 'Create your reader account.'}
+            </h1>
+            <p className="font-serif italic text-sm text-muted-foreground mt-3">
+              {mode === 'login'
+                ? 'Pick up where you left off — your saved stories, settings and language preferences are waiting.'
+                : 'Free, forever. Save stories, follow sections, get the morning briefing.'}
+            </p>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex border border-border rounded-md overflow-hidden mb-8">
             <button
               onClick={() => setMode('login')}
-              className={`flex-1 h-9 rounded-lg text-sm font-semibold transition-all ${
-                mode === 'login'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+              className={`flex-1 h-11 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                mode === 'login' ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted'
               }`}
             >
               Sign in
             </button>
             <button
               onClick={() => setMode('register')}
-              className={`flex-1 h-9 rounded-lg text-sm font-semibold transition-all ${
-                mode === 'register'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+              className={`flex-1 h-11 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                mode === 'register' ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted'
               }`}
             >
               Create account
             </button>
           </div>
 
-          {/* ── Login form ── */}
-          {mode === 'login' && (
+          {mode === 'login' ? (
             <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-5">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground">Email</label>
+                <label className="overline text-muted-foreground">Email</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <input
                     {...loginForm.register('email')}
                     type="email"
                     placeholder="name@example.com"
                     autoComplete="email"
-                    className="w-full h-11 pl-9 pr-3 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    className={inputCls}
                   />
                 </div>
                 {loginForm.formState.errors.email && (
-                  <p className="text-xs text-red-600">{loginForm.formState.errors.email.message}</p>
+                  <p className="text-xs text-destructive font-medium">{loginForm.formState.errors.email.message}</p>
                 )}
               </div>
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-foreground">Password</label>
-                  <button type="button" className="text-xs text-primary hover:underline">Forgot password?</button>
+                  <label className="overline text-muted-foreground">Password</label>
+                  <button type="button" className="text-[11px] font-semibold uppercase tracking-wider text-primary hover:underline underline-offset-4">
+                    Forgot?
+                  </button>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <input
                     {...loginForm.register('password')}
                     type={showPwd ? 'text' : 'password'}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    className="w-full h-11 pl-9 pr-10 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    className={`${inputCls} pr-12`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPwd(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
                   >
                     {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
                 {loginForm.formState.errors.password && (
-                  <p className="text-xs text-red-600">{loginForm.formState.errors.password.message}</p>
+                  <p className="text-xs text-destructive font-medium">{loginForm.formState.errors.password.message}</p>
                 )}
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-11 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full h-12 rounded-md bg-primary text-white text-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 press"
               >
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign in'}
               </button>
             </form>
-          )}
-
-          {/* ── Register form ── */}
-          {mode === 'register' && (
+          ) : (
             <form onSubmit={regForm.handleSubmit(onRegister)} className="space-y-5">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground">Full name</label>
+                <label className="overline text-muted-foreground">Full name</label>
                 <div className="relative">
-                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <input
                     {...regForm.register('fullName')}
                     type="text"
                     placeholder="Your name"
                     autoComplete="name"
-                    className="w-full h-11 pl-9 pr-3 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    className={inputCls}
                   />
                 </div>
                 {regForm.formState.errors.fullName && (
-                  <p className="text-xs text-red-600">{regForm.formState.errors.fullName.message}</p>
+                  <p className="text-xs text-destructive font-medium">{regForm.formState.errors.fullName.message}</p>
                 )}
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground">Email</label>
+                <label className="overline text-muted-foreground">Email</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <input
                     {...regForm.register('email')}
                     type="email"
                     placeholder="name@example.com"
                     autoComplete="email"
-                    className="w-full h-11 pl-9 pr-3 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    className={inputCls}
                   />
                 </div>
                 {regForm.formState.errors.email && (
-                  <p className="text-xs text-red-600">{regForm.formState.errors.email.message}</p>
+                  <p className="text-xs text-destructive font-medium">{regForm.formState.errors.email.message}</p>
                 )}
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground">Password</label>
+                <label className="overline text-muted-foreground">Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <input
                     {...regForm.register('password')}
                     type={showPwd ? 'text' : 'password'}
                     placeholder="Min. 6 characters"
                     autoComplete="new-password"
-                    className="w-full h-11 pl-9 pr-10 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    className={`${inputCls} pr-12`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPwd(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
                   >
                     {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
                 {regForm.formState.errors.password && (
-                  <p className="text-xs text-red-600">{regForm.formState.errors.password.message}</p>
+                  <p className="text-xs text-destructive font-medium">{regForm.formState.errors.password.message}</p>
                 )}
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground">Confirm password</label>
+                <label className="overline text-muted-foreground">Confirm password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <input
                     {...regForm.register('confirmPassword')}
                     type={showCPwd ? 'text' : 'password'}
                     placeholder="Re-enter password"
                     autoComplete="new-password"
-                    className="w-full h-11 pl-9 pr-10 bg-background border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    className={`${inputCls} pr-12`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowCPwd(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
                   >
                     {showCPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
                 {regForm.formState.errors.confirmPassword && (
-                  <p className="text-xs text-red-600">{regForm.formState.errors.confirmPassword.message}</p>
+                  <p className="text-xs text-destructive font-medium">{regForm.formState.errors.confirmPassword.message}</p>
                 )}
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-11 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full h-12 rounded-md bg-primary text-white text-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 press"
               >
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create account'}
               </button>
             </form>
           )}
 
-          {/* Terms */}
-          <p className="text-xs text-muted-foreground text-center leading-relaxed">
+          <p className="text-[11px] text-muted-foreground text-center leading-relaxed mt-8 font-serif italic">
             By continuing, you agree to our{' '}
-            <button className="underline hover:text-foreground transition-colors">Terms of Service</button>
+            <button className="underline underline-offset-4 hover:text-primary transition-colors not-italic font-sans">Terms</button>
             {' '}and{' '}
-            <button className="underline hover:text-foreground transition-colors">Privacy Policy</button>.
+            <button className="underline underline-offset-4 hover:text-primary transition-colors not-italic font-sans">Privacy Policy</button>.
           </p>
         </div>
       </div>

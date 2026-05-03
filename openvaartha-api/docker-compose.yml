@@ -1,8 +1,8 @@
-version: '3.8'
-
 services:
   api:
-    build: .
+    build:
+      context: ..
+      dockerfile: openvaartha-api/Dockerfile
     ports:
       - "8000:8000"
     environment:
@@ -16,8 +16,6 @@ services:
     depends_on:
       - mongo
       - redis
-    volumes:
-      - ./app:/app/app
     networks:
       - openvaartha-network
 

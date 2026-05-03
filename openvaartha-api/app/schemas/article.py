@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, AliasGenerator
+from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
 from typing import Optional, List
 from datetime import datetime
