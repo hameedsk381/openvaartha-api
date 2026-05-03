@@ -1,1 +1,0 @@
-# OpenVaartha Backend Package
