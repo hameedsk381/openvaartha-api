@@ -74,7 +74,7 @@ const ParticleCard: React.FC<BentoCardProps> = ({
         
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-[9px] font-black uppercase tracking-widest text-[#550000] dark:text-white/80">{article.category}</span>
+            <span className="text-[9px] font-black uppercase tracking-widest text-primary">{article.category}</span>
             <div className="h-1 w-1 rounded-full bg-foreground/10 dark:bg-white/20" />
             <span className="text-[10px] text-muted-foreground dark:text-white/60">{article.readTime}</span>
           </div>
