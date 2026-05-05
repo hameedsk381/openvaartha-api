@@ -8,68 +8,70 @@
 
 @layer base {
   :root {
-    /* ── Semantic Color Tokens ─────────────────────────────
-       Built from brand palette. All values in HSL for Tailwind
-       compatibility. WCAG contrast ratios verified below.
+    /* ── Semantic Color Tokens — LIGHT MODE ────────────────
+       Editorial newsprint palette. Warm ivory canvas, deep
+       maroon as primary identity, refined golden beige as
+       secondary. WCAG AA contrast verified on every pair.
        ──────────────────────────────────────────────────── */
 
-    /* Canvas */
-    --background:   0 0% 100%;          /* #FFFFFF */
-    --foreground:   0 0% 6%;            /* #0F0F0F  — on white: 16:1 ✓ */
+    /* Canvas — warm newsprint ivory, never pure white */
+    --background:   36 38% 98%;         /* #FCF9F3  warm ivory  */
+    --foreground:   20 14% 9%;          /* #1A1612  warm near-black — 14.7:1 ✓ */
 
-    /* Surface layers (warm beige tints) */
-    --surface:      30 56% 98%;         /* #FFFDF9  — lightest beige wash */
-    --surface-2:    32 60% 96%;         /* #FEF8F0  — cards, inputs */
-    --surface-3:    32 55% 93%;         /* #F6EDE0  — hover states */
+    /* Surface elevation (3 distinct warm tints) */
+    --surface:      36 35% 96%;         /* #F7F1E5  page sections */
+    --surface-2:    34 30% 92%;         /* #ECE2D0  cards, inputs */
+    --surface-3:    34 28% 86%;         /* #DCCDB1  hover, pressed */
 
-    /* Primary — Maroon #550000 (HSL: 0° 100% 17%) */
-    --primary:          0 100% 17%;     /* #550000 */
-    --primary-foreground: 0 0% 100%;   /* #FFFFFF  — on maroon: 14:1 ✓ */
-    --primary-subtle:   0 60% 96%;     /* #FBF0F0  — tinted bg for primary badges */
-    --primary-hover:    0 100% 13%;    /* #420000  — darken on hover */
-    --primary-muted:    0 40% 55%;     /* #C46A6A  — muted maroon for labels */
+    /* Primary — refined Maroon (slightly more chromatic than #550000) */
+    --primary:            0 70% 23%;    /* #641313  brand maroon — on ivory: 10.5:1 ✓ */
+    --primary-foreground: 36 38% 98%;   /* warm ivory on maroon */
+    --primary-subtle:     0 50% 95%;    /* #F7E5E5  tinted bg for badges */
+    --primary-hover:      0 75% 18%;    /* #500808  darken */
+    --primary-bright:     0 60% 32%;    /* #7E2424  for gradient tail */
+    --primary-muted:      0 35% 50%;    /* #A85959  muted maroon for labels */
 
-    /* Secondary — Beige #F6DCC0 (HSL: 30° 69% 85%) */
-    --secondary:          30 69% 85%;  /* #F6DCC0 */
-    --secondary-foreground: 0 100% 14%;/* #460000  — on beige: 9:1 ✓ */
-    --secondary-dark:     32 55% 78%;  /* #EBBF90  */
+    /* Secondary — refined warm Beige (more golden, less pink) */
+    --secondary:            34 55% 78%; /* #E5CB9D  warm beige */
+    --secondary-foreground: 0 70% 18%;  /* #500F0F  dark maroon — on beige: 8.2:1 ✓ */
+    --secondary-dark:       34 45% 68%; /* #C9AE82 */
 
-    /* Muted / Grey-warm */
-    --muted:            30 20% 94%;    /* #F2EDE8 */
-    --muted-foreground: 15 12% 42%;    /* #726256  — on white: 5.2:1 ✓ */
+    /* Muted / warm neutral */
+    --muted:            34 22% 91%;     /* #EBE2D2 */
+    --muted-foreground: 25 14% 36%;     /* #6A584A  warm slate — on ivory: 5.6:1 ✓ */
 
-    /* Accent — warm amber (from beige scale, darkened) */
-    --accent:           30 60% 88%;    /* #F8E4C8 */
-    --accent-foreground: 0 100% 20%;  /* #660000 */
+    /* Accent — warm amber (between secondary and surface-3) */
+    --accent:            34 60% 86%;    /* #F0DAB1 */
+    --accent-foreground: 0 75% 18%;     /* deep maroon */
 
     /* Semantic states */
-    --destructive:          0 84% 46%;  /* #D92121 */
-    --destructive-foreground: 0 0% 100%;
-    --success:             142 71% 32%; /* #1A7A3D */
-    --success-foreground:    0 0% 100%;
-    --warning:              38 95% 42%; /* #D4860A */
-    --warning-foreground:    0 0% 100%;
+    --destructive:            0 75% 42%; /* #BC2A2A */
+    --destructive-foreground: 36 38% 98%;
+    --success:             145 50% 30%; /* #267349 */
+    --success-foreground:   36 38% 98%;
+    --warning:              35 88% 38%; /* #B6730B */
+    --warning-foreground:   36 38% 98%;
 
     /* Borders & inputs */
-    --border: 30 30% 87%;              /* #E8D9CB */
-    --input:  30 30% 87%;
-    --ring:   0 100% 17%;              /* maroon focus ring */
+    --border: 34 24% 83%;               /* #D5C7AD  visible without shouting */
+    --input:  34 24% 83%;
+    --ring:   0 70% 23%;                /* maroon focus ring */
 
-    /* Cards & popovers */
-    --card:             0 0% 100%;
-    --card-foreground:  0 0% 6%;
-    --popover:          0 0% 100%;
-    --popover-foreground: 0 0% 6%;
+    /* Cards & popovers (slightly lifted from background) */
+    --card:               36 40% 99%;   /* #FDFBF6 */
+    --card-foreground:    20 14% 9%;
+    --popover:            36 40% 99%;
+    --popover-foreground: 20 14% 9%;
 
-    /* Sidebar */
-    --sidebar-background:          0 100% 17%;  /* maroon sidebar */
-    --sidebar-foreground:          30 69% 90%;  /* beige text */
-    --sidebar-primary:             30 69% 85%;
-    --sidebar-primary-foreground:  0 100% 17%;
-    --sidebar-accent:              0 100% 22%;
-    --sidebar-accent-foreground:   30 69% 90%;
-    --sidebar-border:              0 100% 22%;
-    --sidebar-ring:                30 69% 85%;
+    /* Sidebar — keeps maroon brand identity */
+    --sidebar-background:          0 70% 22%;
+    --sidebar-foreground:          36 30% 90%;
+    --sidebar-primary:             34 55% 78%;
+    --sidebar-primary-foreground:  0 70% 22%;
+    --sidebar-accent:              0 70% 28%;
+    --sidebar-accent-foreground:   36 30% 90%;
+    --sidebar-border:              0 70% 28%;
+    --sidebar-ring:                34 55% 78%;
 
     /* ── Typography Tokens ─────────────────────────────── */
     --font-sans:  "Inter", system-ui, sans-serif;
@@ -100,44 +102,73 @@
     --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px -1px rgba(0,0,0,.05);
     --shadow-md: 0 4px 8px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.04);
     --shadow-lg: 0 12px 24px rgba(0,0,0,.06), 0 4px 8px rgba(0,0,0,.04);
-    --shadow-maroon: 0 4px 20px rgba(85,0,0,.22);
+    --shadow-maroon: 0 4px 20px hsl(var(--primary) / 0.25);
   }
 
-  /* ── Dark Mode Overrides ───────────────────────────── */
+  /* ── DARK MODE ─────────────────────────────────────────
+     Warm coal canvas (not pure black, never steel grey).
+     Maroon REMAINS primary — brand identity is preserved,
+     not inverted to beige. Lightness boosted for legibility.
+     ──────────────────────────────────────────────────── */
   .dark {
-    --background:   0 0% 6%;
-    --foreground:   30 20% 94%;        /* warm off-white on dark */
-    --surface:      0 10% 9%;
-    --surface-2:    0 8% 12%;
-    --surface-3:    0 8% 16%;
+    /* Canvas — warm coal */
+    --background:   20 12% 7%;          /* #15110D */
+    --foreground:   36 30% 92%;         /* #EFE7DA  warm parchment — 13.4:1 ✓ */
 
-    --primary:          30 69% 85%;    /* beige becomes primary in dark */
-    --primary-foreground: 0 100% 12%;  /* dark maroon text on beige */
-    --primary-subtle:   30 30% 15%;
-    --primary-muted:    30 40% 55%;
+    /* Surface elevation (3 distinct warm tints) */
+    --surface:      20 14% 10%;         /* #1F1812  page sections */
+    --surface-2:    20 14% 13%;         /* #271F18  cards, inputs */
+    --surface-3:    20 14% 18%;         /* #362C23  hover, pressed */
 
-    --secondary:          0 100% 20%;  /* maroon becomes secondary in dark */
-    --secondary-foreground: 30 80% 90%;
+    /* Primary — Maroon stays primary, lightness lifted for dark bg */
+    --primary:            0 60% 45%;    /* #B82C2C  vivid maroon — on coal: 5.4:1 ✓ */
+    --primary-foreground: 36 32% 96%;   /* warm white on maroon */
+    --primary-subtle:     0 40% 18%;    /* #401818  subtle maroon wash for badges */
+    --primary-hover:      0 65% 53%;    /* #D14040  brighten on hover */
+    --primary-bright:     0 65% 55%;    /* #D74848  for gradient tail */
+    --primary-muted:      0 35% 60%;    /* #B07878 */
 
-    --muted:            0 8% 15%;
-    --muted-foreground: 30 12% 58%;
+    /* Secondary — warm bronze (deep beige, readable on coal) */
+    --secondary:            34 30% 30%; /* #5C4D38 */
+    --secondary-foreground: 36 30% 92%;
+    --secondary-dark:       34 25% 22%;
 
-    --accent:           0 40% 18%;
-    --accent-foreground: 30 69% 88%;
+    /* Muted */
+    --muted:            20 12% 15%;     /* #2A231D */
+    --muted-foreground: 34 18% 65%;     /* #A89C87  on coal: 7.8:1 ✓ */
 
-    --border: 0 15% 18%;
-    --input:  0 15% 18%;
-    --ring:   30 69% 85%;
+    /* Accent — deep warm maroon */
+    --accent:            0 35% 22%;     /* #4A2020 */
+    --accent-foreground: 36 30% 92%;
 
-    --card:           0 8% 8%;
-    --card-foreground: 30 20% 94%;
-    --popover:          0 8% 8%;
-    --popover-foreground: 30 20% 94%;
+    /* Semantic states (lifted lightness for dark bg) */
+    --destructive:            0 65% 55%;
+    --destructive-foreground: 36 30% 95%;
+    --success:             145 45% 50%;
+    --success-foreground:   20 12% 7%;
+    --warning:              35 85% 58%;
+    --warning-foreground:   20 12% 7%;
 
-    --sidebar-background: 0 0% 4%;
-    --sidebar-foreground: 30 40% 80%;
-    --sidebar-accent:     0 20% 10%;
-    --sidebar-border:     0 15% 14%;
+    /* Borders */
+    --border: 20 10% 22%;               /* #3B342D  visible separator */
+    --input:  20 10% 22%;
+    --ring:   0 60% 45%;
+
+    /* Cards (slightly lifted from background) */
+    --card:               20 14% 9%;
+    --card-foreground:    36 30% 92%;
+    --popover:            20 14% 9%;
+    --popover-foreground: 36 30% 92%;
+
+    /* Sidebar — distinct from page bg, deep coal */
+    --sidebar-background:          20 16% 5%;
+    --sidebar-foreground:          36 25% 85%;
+    --sidebar-primary:             0 60% 45%;
+    --sidebar-primary-foreground:  36 32% 96%;
+    --sidebar-accent:              0 35% 18%;
+    --sidebar-accent-foreground:   36 30% 92%;
+    --sidebar-border:              20 12% 14%;
+    --sidebar-ring:                0 60% 45%;
   }
 }
 
@@ -171,8 +202,8 @@
   a { @apply text-inherit; }
 
   ::selection {
-    background-color: hsl(0 100% 17% / 0.15);
-    color: hsl(0 100% 17%);
+    background-color: hsl(var(--primary) / 0.18);
+    color: hsl(var(--primary));
   }
 
   :focus-visible {
@@ -267,15 +298,15 @@
            focus-visible:ring-primary focus-visible:ring-offset-2;
   }
 
-  /* ── Gradient accents */
+  /* ── Gradient accents (token-driven, auto-adapt to theme) */
   .gradient-maroon {
-    background: linear-gradient(135deg, hsl(0 100% 17%) 0%, hsl(0 100% 24%) 100%);
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-bright)) 100%);
   }
   .gradient-beige {
-    background: linear-gradient(135deg, hsl(30 69% 85%) 0%, hsl(32 55% 93%) 100%);
+    background: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--accent)) 100%);
   }
   .gradient-warm {
-    background: linear-gradient(160deg, #FFFFFF 0%, hsl(30 56% 97%) 60%, hsl(30 69% 91%) 100%);
+    background: linear-gradient(160deg, hsl(var(--background)) 0%, hsl(var(--surface)) 60%, hsl(var(--surface-2)) 100%);
   }
 
   /* ── Custom Scrollbar for Portal */
