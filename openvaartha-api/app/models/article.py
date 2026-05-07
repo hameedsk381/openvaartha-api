@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from uuid import uuid4
@@ -34,6 +34,7 @@ class Article(BaseModel):
     language: str = "en"
     is_trending: bool = False
     is_breaking: bool = False
+    is_editor_pick: bool = False
     thumbnail_url: Optional[str] = None
     instagram_url: Optional[str] = None
     published_at: datetime
@@ -43,3 +44,11 @@ class Article(BaseModel):
     updated_at: Optional[datetime] = None
     content: Optional[ArticleContent] = None
     sources: Optional[List[ArticleSource]] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def map_mongo_id(cls, data):
+        if isinstance(data, dict) and "_id" in data and "id" not in data:
+            data = data.copy()
+            data["id"] = data["_id"]
+        return data

@@ -4,10 +4,11 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List
 from uuid import UUID
 from app.database import get_db
-from app.schemas.user import User as UserSchema, UserCreate, UserLogin, Token, UserUpdate
+from app.schemas.user import User as UserSchema, UserCreate, UserLogin, Token, UserUpdate, RefreshTokenRequest
 from app.schemas.article import Article as ArticleSchema
 from app.services import auth_service, user_service
 from app.core.dependencies import get_current_user
+from app.core.security import decode_token
 from app.models.user import User as UserModel
 
 router = APIRouter()
@@ -40,6 +41,21 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncIOMot
     
     tokens = auth_service.create_tokens(user)
     return tokens
+
+
+@router.post("/refresh", response_model=Token)
+async def refresh_access_token(token_data: RefreshTokenRequest, db: AsyncIOMotorDatabase = Depends(get_db)):
+    """Exchange a valid refresh token for a fresh token pair."""
+    payload = decode_token(token_data.refresh_token)
+    user_id = payload.get("sub") if payload else None
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+
+    user = await auth_service.get_user_by_id(db, user_id)
+    if not user or not user.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+
+    return auth_service.create_tokens(user)
 
 
 @router.get("/me", response_model=UserSchema)
@@ -116,3 +132,26 @@ async def remove_from_reading_list(
         raise HTTPException(status_code=404, detail="Article not in reading list")
     
     return {"message": "Article removed from reading list"}
+
+
+@router.get("/me/history", response_model=List[ArticleSchema])
+async def get_reading_history(
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """Get the authenticated user's reading history."""
+    return await user_service.get_reading_history(db, current_user.id)
+
+
+@router.post("/me/history/{article_id}")
+async def add_to_reading_history(
+    article_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """Record that the authenticated user read an article."""
+    success = await user_service.add_to_reading_history(db, current_user.id, article_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    return {"message": "Article added to reading history"}

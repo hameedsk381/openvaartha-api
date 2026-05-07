@@ -22,7 +22,6 @@ def test_settings():
     return Settings(
         MONGODB_URL="mongodb://localhost:27017",
         DATABASE_NAME="openvaartha_test",
-        SECRET_KEY="test-secret-key",
         JWT_SECRET_KEY="test-jwt-secret-key",
     )
 
@@ -43,7 +42,7 @@ async def db(mongo_client, test_settings):
     # Clean collections before each test
     collections = [
         "users", "articles", "categories", "newsletter_subscribers",
-        "reading_lists", "sources", "article_content", "article_sources"
+        "reading_lists", "reading_history", "sources", "article_content", "article_sources"
     ]
     for collection in collections:
         await db[collection].delete_many({})

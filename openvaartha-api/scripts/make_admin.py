@@ -1,9 +1,14 @@
 from pymongo import MongoClient
 import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from app.config import settings
 
 def make_admin(email):
-    client = MongoClient("mongodb://localhost:27017/")
-    db = client["openvaartha"]
+    client = MongoClient(settings.MONGODB_URL)
+    db = client[settings.DATABASE_NAME]
     
     result = db["users"].update_one(
         {"email": email},
@@ -16,5 +21,7 @@ def make_admin(email):
         print(f"User with email {email} not found.")
 
 if __name__ == "__main__":
-    email = "mohammadasifkhanparchuru349@gmail.com"
+    if len(sys.argv) != 2:
+        raise SystemExit("Usage: python scripts/make_admin.py user@example.com")
+    email = sys.argv[1]
     make_admin(email)

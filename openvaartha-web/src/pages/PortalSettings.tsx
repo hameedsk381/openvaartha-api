@@ -34,6 +34,10 @@ export default function PortalSettings() {
       if (response.ok) {
         const data = await response.json();
         setUser(data);
+        setAppearance({
+          theme: data.theme || localStorage.getItem('theme') || 'System default',
+          fontSize: data.fontSize || localStorage.getItem('font-size') || 'Medium',
+        });
       }
     } catch (err) {
       console.error("Failed to fetch user profile", err);
@@ -112,7 +116,7 @@ export default function PortalSettings() {
     }
   };
 
-  const updateAppearance = (type: 'theme' | 'fontSize', value: string) => {
+  const updateAppearance = async (type: 'theme' | 'fontSize', value: string) => {
     setAppearance(p => ({ ...p, [type]: value }));
     localStorage.setItem(type === 'theme' ? 'theme' : 'font-size', value);
     
@@ -133,8 +137,28 @@ export default function PortalSettings() {
 
     // Dispatch event for App.tsx or other components to listen
     window.dispatchEvent(new Event('appearance-change'));
-    
-    toast.success(`${type} preference saved`);
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:8000/api/v1/users/me', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(type === 'theme' ? { theme: value } : { font_size: value })
+      });
+
+      if (response.ok) {
+        const updatedUser = await response.json();
+        setUser(updatedUser);
+        toast.success(`${type} preference saved`);
+      } else {
+        toast.error("Preference saved locally only");
+      }
+    } catch (err) {
+      toast.error("Preference saved locally only");
+    }
   };
 
   if (isLoading) {

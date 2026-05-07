@@ -38,6 +38,7 @@ class ArticleBase(BaseModel):
     language: str = "en"
     is_trending: bool = False
     is_breaking: bool = False
+    is_editor_pick: bool = False
     thumbnail_url: Optional[str] = None
     instagram_url: Optional[str] = None
     published_at: datetime
@@ -62,6 +63,7 @@ class ArticleUpdate(BaseModel):
     language: Optional[str] = None
     is_trending: Optional[bool] = None
     is_breaking: Optional[bool] = None
+    is_editor_pick: Optional[bool] = None
     thumbnail_url: Optional[str] = None
     instagram_url: Optional[str] = None
     published_at: Optional[datetime] = None

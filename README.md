@@ -1,74 +1,111 @@
-# Open Vaartha
+# OpenVaartha
 
-South India's news platform — a monorepo containing the FastAPI backend and the React reader UI. The web app is built into the API image and served as static files, so a single container ships the whole product.
+OpenVaartha is a production-oriented monorepo for a FastAPI news API, React reader UI, MongoDB, Redis, and Celery worker. The React app is built into the API image and served by FastAPI, so production compose exposes one public HTTP service.
 
-## Repo layout
+## Structure
 
-```
+```text
 .
-├── openvaartha-api/         FastAPI backend (Python 3.11, MongoDB, Redis, Celery)
+├── docker-compose.yml          Production compose stack
+├── .env.example                Single environment template for compose
+├── .dockerignore
+├── .gitignore
+├── openvaartha-api/            FastAPI backend
 │   ├── app/
-│   │   ├── api/v1/          Versioned route modules
-│   │   ├── core/            Security, dependencies
-│   │   ├── models/          MongoEngine documents
-│   │   ├── schemas/         Pydantic request/response models
-│   │   ├── services/        Business logic
-│   │   ├── tasks/           Celery tasks
-│   │   ├── utils/
+│   │   ├── api/v1/             Versioned HTTP routes
+│   │   ├── core/               Auth and request dependencies
+│   │   ├── models/             Internal Pydantic domain models
+│   │   ├── schemas/            Request/response schemas
+│   │   ├── services/           Business logic and persistence access
+│   │   ├── tasks/              Celery app and task modules
 │   │   ├── config.py
 │   │   ├── database.py
-│   │   └── main.py          App factory + SPA static mount
-│   ├── scripts/             seed_data, setup_admin
+│   │   └── main.py
+│   ├── scripts/                Operational scripts
 │   ├── tests/
-│   ├── Dockerfile           Multi-stage: web build → api + static
-│   ├── requirements.txt
-│   ├── pytest.ini
-│   ├── .env.example
-│   └── .env.test
-│
-├── openvaartha-web/         React + Vite + Tailwind reader UI
-│   ├── public/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── hooks/
-│   │   ├── data/
-│   │   ├── lib/
-│   │   └── index.css
-│   ├── package.json
-│   ├── tailwind.config.ts
-│   └── vite.config.ts
-│
-├── docker-compose.yml       Orchestrates api + mongo + redis
-├── .dockerignore
-└── .gitignore
+│   ├── Dockerfile              Multi-stage web build plus API runtime
+│   └── requirements.txt
+└── openvaartha-web/            React, Vite, Tailwind frontend
+    ├── public/
+    ├── src/
+    │   ├── components/
+    │   ├── hooks/
+    │   ├── lib/
+    │   └── pages/
+    └── package.json
 ```
 
-## Quick start (Docker)
+## Production Deploy
 
-The compose file at the repo root builds the React app inside the API image.
+1. Create the runtime environment file:
 
 ```bash
-cp openvaartha-api/.env.example openvaartha-api/.env  # edit secrets
-docker compose up --build
+cp .env.example .env
 ```
 
-The combined service is then on **http://localhost:8000** — both the React UI and the `/api/v1/*` JSON endpoints are served from the same origin.
+2. Edit `.env` and replace every placeholder secret. At minimum set:
 
-## Local development
+```text
+JWT_SECRET_KEY
+MONGO_INITDB_ROOT_PASSWORD
+MONGODB_URL
+REDIS_PASSWORD
+REDIS_URL
+CELERY_BROKER_URL
+CELERY_RESULT_BACKEND
+ADMIN_EMAILS
+CORS_ORIGINS
+```
 
-Run the API and web app independently for fast iteration.
+3. Build and start the stack:
 
-**API**
+```bash
+docker compose up --build -d
+```
+
+4. Check health:
+
+```bash
+docker compose ps
+curl http://localhost:8000/health
+```
+
+The public app and API are served from `http://localhost:${API_PORT}`. MongoDB and Redis are internal-only services in compose and are not published to the host.
+
+## Services
+
+- `api`: FastAPI app serving `/api/v1/*` and the built React SPA.
+- `worker`: Celery worker using the same image and centralized env.
+- `mongo`: persistent MongoDB volume `mongo-data`.
+- `redis`: persistent Redis volume `redis-data`, password-protected.
+
+## Admin Access
+
+Admin promotion is environment-driven. Add comma-separated emails to `ADMIN_EMAILS`, then register those users normally. Existing users can be promoted with:
+
+```bash
+docker compose exec api python scripts/make_admin.py admin@example.com
+```
+
+For bootstrap creation, pass credentials through env:
+
+```bash
+docker compose exec -e ADMIN_EMAIL=admin@example.com -e ADMIN_PASSWORD='change-me' api python scripts/setup_admin.py
+```
+
+## Local Development
+
+Backend:
 
 ```bash
 cd openvaartha-api
-python -m venv venv && source venv/bin/activate     # or .\venv\Scripts\activate on Windows
+python -m venv .venv
+.\.venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-**Web**
+Frontend:
 
 ```bash
 cd openvaartha-web
@@ -76,18 +113,17 @@ npm install
 npm run dev
 ```
 
-In dev the web app runs on Vite's port (5173) and proxies API calls to `http://localhost:8000`.
+For local backend runs, the settings loader supports `openvaartha-api/.env`, but the root `.env` remains the final override so compose and local runs share the same production contract.
 
-## Tests
+## Verification
 
 ```bash
 cd openvaartha-api
-pytest
+python -m compileall app scripts
+python -m pytest
+
+cd ../openvaartha-web
+npm run build
 ```
 
-## Conventions
-
-- **Python**: snake_case modules, Pydantic v2 schemas with `to_camel` alias generator so JSON stays camelCase.
-- **TypeScript**: PascalCase components, camelCase hooks (`use-*`), kebab-case file names for utilities.
-- **Imports**: web app uses `@/` path alias mapped to `src/`.
-- **Styling**: Tailwind with design tokens in `src/index.css`; serif (Libre Baskerville) for headlines, Inter for UI.
+The full backend test suite expects MongoDB on `localhost:27017`.

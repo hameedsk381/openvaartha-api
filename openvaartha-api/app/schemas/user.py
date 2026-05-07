@@ -23,6 +23,8 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     password: Optional[str] = None
     current_password: Optional[str] = None
+    theme: Optional[str] = None
+    font_size: Optional[str] = None
 
     class Config:
         alias_generator = to_camel
@@ -36,6 +38,8 @@ class User(UserBase):
     role: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+    theme: Optional[str] = None
+    font_size: Optional[str] = None
 
     class Config:
         alias_generator = to_camel
@@ -52,6 +56,14 @@ class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+    class Config:
+        alias_generator = to_camel
+        populate_by_name = True
 
 
 class TokenData(BaseModel):

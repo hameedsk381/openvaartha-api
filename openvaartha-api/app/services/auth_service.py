@@ -29,16 +29,17 @@ async def create_user(db: AsyncIOMotorDatabase, user_data: UserCreate):
     hashed_password = get_password_hash(user_data.password)
     
     user_id = str(uuid4())
-    role = user_data.role or "user"
+    requested_role = (user_data.role or "user").lower()
+    is_configured_admin = user_data.email.lower() in settings.admin_email_set
+    role = "admin" if is_configured_admin else ("user" if requested_role == "admin" else requested_role)
     user_doc = {
         "_id": user_id,
-        "id": user_id,
         "email": user_data.email,
         "full_name": user_data.full_name,
         "hashed_password": hashed_password,
         "is_active": True,
-        "is_admin": role.lower() == "admin" and user_data.email == "hameedullahshaik@hamathopc.in",
-        "role": role if user_data.email == "hameedullahshaik@hamathopc.in" or role.lower() != "admin" else "user",
+        "is_admin": is_configured_admin,
+        "role": role,
         "created_at": datetime.utcnow()
     }
     

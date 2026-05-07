@@ -12,6 +12,7 @@ articles_collection = db["articles"]
 categories_collection = db["categories"]
 newsletter_subscribers_collection = db["newsletter_subscribers"]
 reading_lists_collection = db["reading_lists"]
+reading_history_collection = db["reading_history"]
 sources_collection = db["sources"]
 
 

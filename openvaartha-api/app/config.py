@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Set
 
 
 class Settings(BaseSettings):
@@ -9,9 +9,8 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     
     # Security
-    SECRET_KEY: str = "your-super-secret-key-change-in-production"
-    ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ADMIN_EMAILS: str = ""
     
     # Database
     MONGODB_URL: str = "mongodb://127.0.0.1:27017"
@@ -19,6 +18,7 @@ class Settings(BaseSettings):
     
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
+    CACHE_TTL_SECONDS: int = 300
     
     # JWT
     JWT_SECRET_KEY: str = "your-jwt-secret-key-change-in-production"
@@ -43,6 +43,14 @@ class Settings(BaseSettings):
     @property
     def allowed_origins(self) -> List[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+
+    @property
+    def admin_email_set(self) -> Set[str]:
+        return {
+            email.strip().lower()
+            for email in self.ADMIN_EMAILS.split(",")
+            if email.strip()
+        }
     
     # Celery
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"
@@ -52,8 +60,9 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     
     class Config:
-        env_file = ".env"
+        env_file = (".env", "../.env")
         case_sensitive = True
+        extra = "ignore"
 
 
 settings = Settings()

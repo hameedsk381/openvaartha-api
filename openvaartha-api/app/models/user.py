@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 from typing import Optional
 from datetime import datetime
 from uuid import uuid4
@@ -15,3 +15,13 @@ class User(BaseModel):
     role: str = "user"  # user, editor, admin
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = None
+    theme: Optional[str] = None
+    font_size: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def map_mongo_id(cls, data):
+        if isinstance(data, dict) and "_id" in data and "id" not in data:
+            data = data.copy()
+            data["id"] = data["_id"]
+        return data

@@ -8,14 +8,18 @@ from pymongo import MongoClient
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.core.security import get_password_hash
+from app.config import settings
 
 def setup_admin():
-    client = MongoClient("mongodb://127.0.0.1:27017/")
-    db = client["openvaartha"]
+    client = MongoClient(settings.MONGODB_URL)
+    db = client[settings.DATABASE_NAME]
     users_collection = db["users"]
     
-    admin_email = "hameedullahshaik@hamathopc.in"
-    admin_password = "openvaartha@admin49"
+    admin_email = os.getenv("ADMIN_EMAIL")
+    admin_password = os.getenv("ADMIN_PASSWORD")
+    if not admin_email or not admin_password:
+        raise RuntimeError("ADMIN_EMAIL and ADMIN_PASSWORD are required")
+
     hashed_password = get_password_hash(admin_password)
     
     # 1. Remove admin access from everyone else
@@ -43,7 +47,6 @@ def setup_admin():
         user_id = str(uuid.uuid4())
         new_admin = {
             "_id": user_id,
-            "id": user_id,
             "email": admin_email,
             "hashed_password": hashed_password,
             "full_name": "System Administrator",

@@ -46,19 +46,7 @@ async def get_explainer_articles(
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
     """Get articles with explainer content (in-depth analysis)."""
-    articles_with_content = await db["article_content"].find({
-        "$or": [
-            {"explainer": {"$ne": None, "$not": {"$size": 0}}},
-            {"timeline": {"$ne": None, "$not": {"$size": 0}}}
-        ]
-    }).to_list(length=None)
-    
-    article_ids = [ac["article_id"] for ac in articles_with_content]
-    
-    cursor = db["articles"].find({"_id": {"$in": article_ids}}).sort("published_at", -1).skip(skip).limit(limit)
-    articles = await cursor.to_list(length=limit)
-    
-    return [await article_service._populate_article_extras(db, a) for a in articles]
+    return await article_service.get_explainer_articles(db, skip=skip, limit=limit)
 
 
 @router.get("/live-updates")
@@ -107,8 +95,7 @@ async def get_editor_picks(
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
     """Get editor's choice articles (curated picks)."""
-    articles = await db["articles"].find({"is_trending": True}).sort("published_at", -1).limit(limit).to_list(length=None)
-    return [await article_service._populate_article_extras(db, a) for a in articles]
+    return await article_service.get_editor_pick_articles(db, limit=limit)
 
 
 @router.get("/{id_or_slug}", response_model=Article)

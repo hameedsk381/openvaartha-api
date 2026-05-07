@@ -5,6 +5,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.config import settings
 from app.api.v1 import articles, categories, users, search, newsletter
+from app.database import db
+from app.services.article_service import ensure_article_indexes
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -32,6 +34,11 @@ app.include_router(newsletter.router, prefix="/api/v1/newsletter", tags=["Newsle
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
+
+
+@app.on_event("startup")
+async def startup_indexes():
+    await ensure_article_indexes(db)
 
 
 # Serve React SPA — mount after API routes so /api/* is never shadowed
