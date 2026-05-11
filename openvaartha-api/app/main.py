@@ -1,12 +1,21 @@
 import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+
+from app.api.v1 import articles, categories, newsletter, search, users
 from app.config import settings
-from app.api.v1 import articles, categories, users, search, newsletter
+from app.core.rate_limit import limiter
 from app.database import db
 from app.services.article_service import ensure_article_indexes
+from app.services.category_service import ensure_category_indexes
+
+# Block known-unsafe production configs at import time.
+settings.assert_safe_for_production()
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -14,13 +23,19 @@ app = FastAPI(
     description="OpenVaartha News Aggregation API",
 )
 
-# CORS middleware
+# Wire the SlowAPI limiter so per-route @limiter.limit decorators take effect.
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS — origins are an explicit allowlist; ``assert_safe_for_production``
+# already rejected wildcards in production.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
+    expose_headers=["Content-Disposition"],
 )
 
 # Include routers
@@ -39,6 +54,7 @@ def health_check():
 @app.on_event("startup")
 async def startup_indexes():
     await ensure_article_indexes(db)
+    await ensure_category_indexes(db)
 
 
 # Serve React SPA — mount after API routes so /api/* is never shadowed

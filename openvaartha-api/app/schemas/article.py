@@ -2,7 +2,8 @@ from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
 from typing import Optional, List
 from datetime import datetime
-from uuid import UUID
+
+from app.models.article import ArticleStatus
 
 
 class ArticleContentBase(BaseModel):
@@ -21,6 +22,20 @@ class ArticleContentCreate(ArticleContentBase):
     pass
 
 
+class ArticleContentUpdate(BaseModel):
+    """Partial update for nested article content. All fields optional so the
+    admin form can patch any subset without nulling siblings."""
+    tldr: Optional[str] = None
+    points: Optional[List[str]] = None
+    body: Optional[str] = None
+    timeline: Optional[List[dict]] = None
+    explainer: Optional[List[dict]] = None
+
+    class Config:
+        alias_generator = to_camel
+        populate_by_name = True
+
+
 class ArticleContent(ArticleContentBase):
     article_id: str
 
@@ -36,6 +51,7 @@ class ArticleBase(BaseModel):
     category_id: str
     read_time: str
     language: str = "en"
+    status: ArticleStatus = ArticleStatus.DRAFT
     is_trending: bool = False
     is_breaking: bool = False
     is_editor_pick: bool = False
@@ -61,6 +77,7 @@ class ArticleUpdate(BaseModel):
     category_id: Optional[str] = None
     read_time: Optional[str] = None
     language: Optional[str] = None
+    status: Optional[ArticleStatus] = None
     is_trending: Optional[bool] = None
     is_breaking: Optional[bool] = None
     is_editor_pick: Optional[bool] = None
@@ -69,7 +86,7 @@ class ArticleUpdate(BaseModel):
     published_at: Optional[datetime] = None
     last_updated: Optional[datetime] = None
     author: Optional[str] = None
-    content: Optional[ArticleContentCreate] = None
+    content: Optional[ArticleContentUpdate] = None
 
     class Config:
         alias_generator = to_camel
@@ -81,7 +98,7 @@ class Article(ArticleBase):
     slug: str
     created_at: datetime
     updated_at: Optional[datetime] = None
-    category: str = "" # Default to empty string, will be populated with category name
+    category: str = ""  # Default to empty string, will be populated with category name
     content: Optional[ArticleContent] = None
 
     class Config:
