@@ -1,7 +1,17 @@
 from pydantic import BaseModel, Field, model_validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime
+from enum import Enum
 from uuid import uuid4
+
+
+class ArticleStatus(str, Enum):
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    ARCHIVED = "archived"
+
+
+PUBLIC_STATUS = ArticleStatus.PUBLISHED.value
 
 
 class ArticleContent(BaseModel):
@@ -32,6 +42,7 @@ class Article(BaseModel):
     category_id: str
     read_time: str
     language: str = "en"
+    status: ArticleStatus = ArticleStatus.DRAFT
     is_trending: bool = False
     is_breaking: bool = False
     is_editor_pick: bool = False

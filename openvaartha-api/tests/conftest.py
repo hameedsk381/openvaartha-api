@@ -54,6 +54,20 @@ async def db(mongo_client, test_settings):
         await db[collection].delete_many({})
 
 
+@pytest.fixture(scope="function", autouse=True)
+def reset_rate_limiter():
+    """Clear SlowAPI in-memory state so per-IP limits don't leak across tests."""
+    from app.core.rate_limit import limiter
+
+    storage = getattr(limiter, "_storage", None) or getattr(limiter, "storage", None)
+    if storage and hasattr(storage, "reset"):
+        try:
+            storage.reset()
+        except Exception:
+            pass
+    yield
+
+
 @pytest.fixture(scope="function")
 async def client(db):
     """Create test client."""

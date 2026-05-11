@@ -1,13 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Optional
+
 from app.database import get_db
 from app.schemas.article import Article, ArticleCreate, ArticleUpdate
 from app.services import article_service
-from app.core.dependencies import get_current_active_admin
+from app.core.dependencies import get_current_active_admin, get_current_user_optional
+from app.core.rate_limit import limiter, MUTATION_LIMIT
 from app.models.user import User as UserModel
 
 router = APIRouter()
+
+
+def _caller_can_see_unpublished(current_user: Optional[UserModel]) -> bool:
+    return bool(current_user and current_user.is_admin)
 
 
 @router.get("/", response_model=List[Article])
@@ -15,16 +21,27 @@ async def list_articles(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     category_id: Optional[str] = None,
-    db: AsyncIOMotorDatabase = Depends(get_db)
+    include_unpublished: bool = Query(False, description="Admin-only: include drafts/archived."),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Optional[UserModel] = Depends(get_current_user_optional),
 ):
-    """Get all articles with pagination and optional category filter."""
-    return await article_service.get_articles(db, skip=skip, limit=limit, category_id=category_id)
+    """List articles. Drafts/archived are visible only to authenticated admins."""
+    if include_unpublished and not _caller_can_see_unpublished(current_user):
+        raise HTTPException(status_code=403, detail="Admin required to see unpublished articles")
+
+    return await article_service.get_articles(
+        db,
+        skip=skip,
+        limit=limit,
+        category_id=category_id,
+        include_unpublished=include_unpublished,
+    )
 
 
 @router.get("/trending", response_model=List[Article])
 async def get_trending_articles(
     limit: int = Query(10, ge=1, le=50),
-    db: AsyncIOMotorDatabase = Depends(get_db)
+    db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Get trending articles."""
     return await article_service.get_trending_articles(db, limit=limit)
@@ -33,7 +50,7 @@ async def get_trending_articles(
 @router.get("/breaking", response_model=List[Article])
 async def get_breaking_articles(
     limit: int = Query(5, ge=1, le=20),
-    db: AsyncIOMotorDatabase = Depends(get_db)
+    db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Get breaking news articles."""
     return await article_service.get_breaking_articles(db, limit=limit)
@@ -43,7 +60,7 @@ async def get_breaking_articles(
 async def get_explainer_articles(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    db: AsyncIOMotorDatabase = Depends(get_db)
+    db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Get articles with explainer content (in-depth analysis)."""
     return await article_service.get_explainer_articles(db, skip=skip, limit=limit)
@@ -52,95 +69,112 @@ async def get_explainer_articles(
 @router.get("/live-updates")
 async def get_live_updates(
     limit: int = Query(20, ge=1, le=100),
-    db: AsyncIOMotorDatabase = Depends(get_db)
+    db: AsyncIOMotorDatabase = Depends(get_db),
 ):
-    """Get live timeline updates for developing stories."""
-    breaking_articles = await db["articles"].find({"is_breaking": True}).sort("published_at", -1).limit(limit).to_list(length=None)
-    
+    """Get live timeline updates for developing stories (published only)."""
+    breaking_cursor = db["articles"].find({
+        "is_breaking": True,
+        "$or": [{"status": "published"}, {"status": {"$exists": False}}],
+    }).sort("published_at", -1).limit(limit)
+    breaking_articles = await breaking_cursor.to_list(length=None)
+
     updates = []
     for article in breaking_articles:
-        update_type = "major"
-        
         updates.append({
             "id": str(article["_id"]),
             "time": article["published_at"].strftime("%H:%M") if article.get("published_at") else "00:00",
             "text": article["summary"],
-            "type": update_type,
+            "type": "major",
             "title": article["title"],
             "slug": article["slug"],
-            "published_at": article.get("published_at")
+            "published_at": article.get("published_at"),
         })
-        
+
         content = await db["article_content"].find_one({"article_id": article["_id"]})
         if content and content.get("timeline"):
             for timeline_item in content["timeline"]:
                 updates.append({
                     "id": f"{article['_id']}-{timeline_item.get('date', '')}",
-                    "time": timeline_item.get('date', ''),
-                    "text": timeline_item.get('event', ''),
+                    "time": timeline_item.get("date", ""),
+                    "text": timeline_item.get("event", ""),
                     "type": "major",
                     "title": article["title"],
                     "slug": article["slug"],
-                    "published_at": article.get("published_at")
+                    "published_at": article.get("published_at"),
                 })
-    
-    updates.sort(key=lambda x: str(x.get('published_at', '')), reverse=True)
-    
+
+    updates.sort(key=lambda x: str(x.get("published_at", "")), reverse=True)
     return updates[:limit]
 
 
 @router.get("/editor-picks", response_model=List[Article])
 async def get_editor_picks(
     limit: int = Query(10, ge=1, le=50),
-    db: AsyncIOMotorDatabase = Depends(get_db)
+    db: AsyncIOMotorDatabase = Depends(get_db),
 ):
-    """Get editor's choice articles (curated picks)."""
+    """Get editor's choice articles (published only)."""
     return await article_service.get_editor_pick_articles(db, limit=limit)
 
 
 @router.get("/{id_or_slug}", response_model=Article)
-async def get_article(id_or_slug: str, db: AsyncIOMotorDatabase = Depends(get_db)):
-    """Get a single article by ID or slug."""
-    # Try slug first
-    article = await article_service.get_article_by_slug(db, slug=id_or_slug)
+async def get_article(
+    id_or_slug: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Optional[UserModel] = Depends(get_current_user_optional),
+):
+    """Get a single article by ID or slug. Drafts and archived posts are only
+    visible to authenticated admins."""
+    include_unpublished = _caller_can_see_unpublished(current_user)
+
+    article = await article_service.get_article_by_slug(
+        db, slug=id_or_slug, include_unpublished=include_unpublished
+    )
     if not article:
-        # Try ID
-        article = await article_service.get_article_by_id(db, article_id=id_or_slug)
-        
+        article = await article_service.get_article_by_id(
+            db, article_id=id_or_slug, include_unpublished=include_unpublished
+        )
+
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
     return article
 
 
 @router.post("/", response_model=Article)
+@limiter.limit(MUTATION_LIMIT)
 async def create_article(
+    request: Request,
     article_data: ArticleCreate,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_admin)
+    current_user: UserModel = Depends(get_current_active_admin),
 ):
-    """Create a new article (admin only)."""
+    """Create a new article (admin only). Defaults to draft if status omitted."""
     return await article_service.create_article(db, article_data)
 
 
 @router.put("/{article_id}", response_model=Article)
+@limiter.limit(MUTATION_LIMIT)
 async def update_article(
+    request: Request,
     article_id: str,
     article_data: ArticleUpdate,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_admin)
+    current_user: UserModel = Depends(get_current_active_admin),
 ):
     """Update an existing article (admin only)."""
-    article = await article_service.update_article(db, article_id, article_data)
-    if not article:
+    # Look up without status filter so admins can edit drafts.
+    existing = await article_service.get_article_by_id(db, article_id, include_unpublished=True)
+    if not existing:
         raise HTTPException(status_code=404, detail="Article not found")
-    return article
+    return await article_service.update_article(db, article_id, article_data)
 
 
 @router.delete("/{article_id}")
+@limiter.limit(MUTATION_LIMIT)
 async def delete_article(
+    request: Request,
     article_id: str,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_admin)
+    current_user: UserModel = Depends(get_current_active_admin),
 ):
     """Delete an article (admin only)."""
     success = await article_service.delete_article(db, article_id)

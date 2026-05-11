@@ -3,10 +3,14 @@ from typing import List, Optional, Any
 from uuid import uuid4
 from datetime import datetime
 import json
+from fastapi import HTTPException, status
 from pymongo.errors import OperationFailure
 from redis import asyncio as redis_async
 from redis.exceptions import RedisError
+
 from app.config import settings
+from app.core.sanitize import sanitize_html, sanitize_points, sanitize_text
+from app.models.article import ArticleStatus, PUBLIC_STATUS
 
 _redis_client: Optional[redis_async.Redis] = None
 
@@ -62,6 +66,7 @@ async def invalidate_article_caches() -> None:
     except RedisError:
         return
 
+
 def generate_slug(title: str) -> str:
     """Generate a URL-friendly slug from title."""
     slug = title.lower()
@@ -86,125 +91,199 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
     """Create article indexes used by search and integrity-sensitive lookups."""
     await db["articles"].create_index([("title", "text"), ("summary", "text")], name="articles_text_search")
     await db["articles"].create_index("slug", unique=True)
+    await db["articles"].create_index("status")
     await db["article_content"].create_index("article_id")
     await db["reading_history"].create_index([("user_id", 1), ("article_id", 1)], unique=True)
+    # Backfill: documents created before the status field defaulted to draft
+    # would be invisible to the public list. Treat un-tagged docs as published
+    # so existing inventories migrate cleanly.
+    await db["articles"].update_many(
+        {"status": {"$exists": False}},
+        {"$set": {"status": PUBLIC_STATUS}},
+    )
+
+
+def _public_query(extra: Optional[dict] = None) -> dict:
+    """Build a query that matches published articles, treating legacy
+    docs without a ``status`` field as published for backward compatibility."""
+    query: dict = {
+        "$or": [
+            {"status": PUBLIC_STATUS},
+            {"status": {"$exists": False}},
+        ]
+    }
+    if extra:
+        for key, value in extra.items():
+            query[key] = value
+    return query
+
 
 async def _populate_article_extras(db: AsyncIOMotorDatabase, article: dict) -> dict:
     """Populate category name and nested content for an article doc."""
     if not article:
         return article
-        
-    # Convert _id to id if needed
+
     if "_id" in article and "id" not in article:
         article["id"] = article["_id"]
-        
-    # Fetch category name
+
+    # Older docs predate the status field — assume published so they remain visible.
+    article.setdefault("status", PUBLIC_STATUS)
+
     if "category_id" in article:
         category = await db["categories"].find_one({"_id": article["category_id"]})
         if category:
             article["category"] = category["name"]
         else:
             article["category"] = "General"
-            
-    # Fetch content
+
     content = await db["article_content"].find_one({"article_id": article["_id"]})
     if content:
         article["content"] = content
-        
+
     return article
 
-async def get_articles(db: AsyncIOMotorDatabase, skip: int = 0, limit: int = 20, category_id: Optional[str] = None):
-    """Get all articles with optional filtering."""
-    key = _cache_key("list", skip=skip, limit=limit, category_id=category_id or "")
-    cached = await _get_cached_list(key)
-    if cached is not None:
-        return cached
 
-    query = {}
+async def get_articles(
+    db: AsyncIOMotorDatabase,
+    skip: int = 0,
+    limit: int = 20,
+    category_id: Optional[str] = None,
+    include_unpublished: bool = False,
+):
+    """Get articles. Public callers see only published items;
+    callers in admin contexts may opt in to all statuses."""
+    key = _cache_key(
+        "list",
+        skip=skip,
+        limit=limit,
+        category_id=category_id or "",
+        scope="all" if include_unpublished else "public",
+    )
+    if not include_unpublished:
+        cached = await _get_cached_list(key)
+        if cached is not None:
+            return cached
+
+    query: dict = {} if include_unpublished else _public_query()
     if category_id:
         query["category_id"] = category_id
-    
+
     cursor = db["articles"].find(query).sort("published_at", -1).skip(skip).limit(limit)
     articles = await cursor.to_list(length=limit)
-    
-    populated_articles = []
-    for article in articles:
-        populated_articles.append(await _populate_article_extras(db, article))
-        
-    await _set_cached_list(key, populated_articles)
-    return populated_articles
+
+    populated = [await _populate_article_extras(db, a) for a in articles]
+    if not include_unpublished:
+        await _set_cached_list(key, populated)
+    return populated
+
 
 async def get_trending_articles(db: AsyncIOMotorDatabase, limit: int = 10):
-    """Get trending articles."""
+    """Get trending articles (published only)."""
     key = _cache_key("trending", limit=limit)
     cached = await _get_cached_list(key)
     if cached is not None:
         return cached
 
-    cursor = db["articles"].find({"is_trending": True}).sort("published_at", -1).limit(limit)
+    cursor = db["articles"].find(_public_query({"is_trending": True})).sort("published_at", -1).limit(limit)
     articles = await cursor.to_list(length=limit)
-    
+
     populated = [await _populate_article_extras(db, a) for a in articles]
     await _set_cached_list(key, populated)
     return populated
 
+
 async def get_breaking_articles(db: AsyncIOMotorDatabase, limit: int = 5):
-    """Get breaking news articles."""
+    """Get breaking news articles (published only)."""
     key = _cache_key("breaking", limit=limit)
     cached = await _get_cached_list(key)
     if cached is not None:
         return cached
 
-    cursor = db["articles"].find({"is_breaking": True}).sort("published_at", -1).limit(limit)
+    cursor = db["articles"].find(_public_query({"is_breaking": True})).sort("published_at", -1).limit(limit)
     articles = await cursor.to_list(length=limit)
-    
+
     populated = [await _populate_article_extras(db, a) for a in articles]
     await _set_cached_list(key, populated)
     return populated
 
+
 async def get_editor_pick_articles(db: AsyncIOMotorDatabase, limit: int = 10):
-    """Get editor-curated articles."""
-    cursor = db["articles"].find({"is_editor_pick": True}).sort("published_at", -1).limit(limit)
+    """Get editor-curated articles (published only)."""
+    cursor = db["articles"].find(_public_query({"is_editor_pick": True})).sort("published_at", -1).limit(limit)
     articles = await cursor.to_list(length=limit)
     return [await _populate_article_extras(db, a) for a in articles]
 
+
 async def get_explainer_articles(db: AsyncIOMotorDatabase, skip: int = 0, limit: int = 20):
-    """Get articles with explainer or timeline content."""
+    """Get articles with explainer or timeline content (published only)."""
     articles_with_content = await db["article_content"].find({
         "$or": [
             {"explainer": {"$ne": None, "$not": {"$size": 0}}},
-            {"timeline": {"$ne": None, "$not": {"$size": 0}}}
+            {"timeline": {"$ne": None, "$not": {"$size": 0}}},
         ]
     }).to_list(length=None)
 
     article_ids = [content["article_id"] for content in articles_with_content]
-    cursor = db["articles"].find({"_id": {"$in": article_ids}}).sort("published_at", -1).skip(skip).limit(limit)
+    query = _public_query({"_id": {"$in": article_ids}})
+    cursor = db["articles"].find(query).sort("published_at", -1).skip(skip).limit(limit)
     articles = await cursor.to_list(length=limit)
     return [await _populate_article_extras(db, a) for a in articles]
 
-async def get_article_by_slug(db: AsyncIOMotorDatabase, slug: str):
-    """Get a single article by slug."""
-    article = await db["articles"].find_one({"slug": slug})
+
+async def get_article_by_slug(
+    db: AsyncIOMotorDatabase,
+    slug: str,
+    include_unpublished: bool = False,
+):
+    """Get a single article by slug. Drafts/archived are hidden unless caller is admin."""
+    if include_unpublished:
+        article = await db["articles"].find_one({"slug": slug})
+    else:
+        article = await db["articles"].find_one(_public_query({"slug": slug}))
     return await _populate_article_extras(db, article)
 
-async def get_article_by_id(db: AsyncIOMotorDatabase, article_id: str):
-    """Get a single article by ID."""
-    article = await db["articles"].find_one({"_id": article_id})
+
+async def get_article_by_id(
+    db: AsyncIOMotorDatabase,
+    article_id: str,
+    include_unpublished: bool = False,
+):
+    """Get a single article by ID. Drafts/archived are hidden unless caller is admin."""
+    if include_unpublished:
+        article = await db["articles"].find_one({"_id": article_id})
+    else:
+        article = await db["articles"].find_one(_public_query({"_id": article_id}))
     return await _populate_article_extras(db, article)
+
+
+async def _assert_category_exists(db: AsyncIOMotorDatabase, category_id: str) -> None:
+    if not await db["categories"].find_one({"_id": str(category_id)}, {"_id": 1}):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unknown category_id: {category_id}",
+        )
+
 
 async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
-    """Create a new article."""
+    """Create a new article. Defaults to draft. Body and summary are sanitized."""
+    await _assert_category_exists(db, article_data.category_id)
+
     slug = await generate_unique_slug(db, article_data.title)
     article_id = str(uuid4())
-    
+
+    article_status = getattr(article_data, "status", ArticleStatus.DRAFT)
+    if hasattr(article_status, "value"):
+        article_status = article_status.value
+
     article_doc = {
         "_id": article_id,
         "slug": slug,
-        "title": article_data.title,
-        "summary": article_data.summary,
+        "title": sanitize_text(article_data.title),
+        "summary": sanitize_text(article_data.summary),
         "category_id": str(article_data.category_id),
         "read_time": article_data.read_time,
         "language": article_data.language,
+        "status": article_status,
         "is_trending": article_data.is_trending,
         "is_breaking": article_data.is_breaking,
         "is_editor_pick": article_data.is_editor_pick,
@@ -212,44 +291,77 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
         "instagram_url": article_data.instagram_url,
         "published_at": article_data.published_at,
         "last_updated": article_data.last_updated or datetime.utcnow(),
-        "author": article_data.author,
-        "created_at": datetime.utcnow()
+        "author": sanitize_text(article_data.author),
+        "created_at": datetime.utcnow(),
     }
-    
+
     await db["articles"].insert_one(article_doc)
-    
+
     if article_data.content:
         content_doc = {
             "article_id": article_id,
-            "tldr": article_data.content.tldr,
-            "points": article_data.content.points,
-            "body": article_data.content.body,
+            "tldr": sanitize_text(article_data.content.tldr),
+            "points": sanitize_points(article_data.content.points) or [],
+            "body": sanitize_html(article_data.content.body),
             "timeline": article_data.content.timeline,
-            "explainer": article_data.content.explainer
+            "explainer": article_data.content.explainer,
         }
         await db["article_content"].insert_one(content_doc)
-    
+
     await invalidate_article_caches()
-    return await get_article_by_id(db, article_id)
+    return await get_article_by_id(db, article_id, include_unpublished=True)
+
+
+_PLAIN_TEXT_FIELDS = {"title", "summary", "author"}
+
 
 async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data: Any):
-    """Update an existing article."""
+    """Update an existing article. Only fields the caller actually sent are touched.
+
+    Partial nested-content updates are merged with ``$set`` on dotted paths so
+    omitted keys don't wipe their siblings.
+    """
     update_dict = article_data.model_dump(exclude_unset=True)
     content_data = update_dict.pop("content", None)
-    
+
+    if "category_id" in update_dict:
+        await _assert_category_exists(db, update_dict["category_id"])
+
+    if "status" in update_dict and hasattr(update_dict["status"], "value"):
+        update_dict["status"] = update_dict["status"].value
+
+    for field in _PLAIN_TEXT_FIELDS:
+        if field in update_dict and update_dict[field] is not None:
+            update_dict[field] = sanitize_text(update_dict[field])
+
     if update_dict:
         update_dict["last_updated"] = datetime.utcnow()
+        update_dict["updated_at"] = datetime.utcnow()
         await db["articles"].update_one({"_id": article_id}, {"$set": update_dict})
-        
+
     if content_data:
-        await db["article_content"].update_one(
-            {"article_id": article_id},
-            {"$set": content_data},
-            upsert=True
-        )
-    
+        sanitized_content: dict[str, Any] = {}
+        for key, value in content_data.items():
+            if value is None:
+                continue
+            if key == "body":
+                sanitized_content[key] = sanitize_html(value)
+            elif key == "tldr":
+                sanitized_content[key] = sanitize_text(value)
+            elif key == "points":
+                sanitized_content[key] = sanitize_points(value) or []
+            else:
+                sanitized_content[key] = value
+        if sanitized_content:
+            await db["article_content"].update_one(
+                {"article_id": article_id},
+                {"$set": sanitized_content, "$setOnInsert": {"article_id": article_id}},
+                upsert=True,
+            )
+
     await invalidate_article_caches()
-    return await get_article_by_id(db, article_id)
+    return await get_article_by_id(db, article_id, include_unpublished=True)
+
 
 async def delete_article(db: AsyncIOMotorDatabase, article_id: str):
     """Delete an article."""
@@ -260,16 +372,17 @@ async def delete_article(db: AsyncIOMotorDatabase, article_id: str):
         return True
     return False
 
+
 async def search_articles(db: AsyncIOMotorDatabase, query: str, skip: int = 0, limit: int = 20):
-    """Search articles by title and summary using MongoDB text search."""
+    """Search published articles by title and summary."""
     await ensure_article_indexes(db)
     try:
         cursor = db["articles"].find(
-            {"$text": {"$search": query}},
-            {"score": {"$meta": "textScore"}}
+            _public_query({"$text": {"$search": query}}),
+            {"score": {"$meta": "textScore"}},
         ).sort([("score", {"$meta": "textScore"}), ("published_at", -1)]).skip(skip).limit(limit)
         articles = await cursor.to_list(length=limit)
     except OperationFailure:
         return []
-    
+
     return [await _populate_article_extras(db, a) for a in articles]
