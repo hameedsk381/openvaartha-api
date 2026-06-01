@@ -71,17 +71,16 @@ Generate a complete news article with this exact JSON structure:
     try:
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
-        async with client.aio as aclient:
-            response = await aclient.models.generate_content(
-                model=settings.GEMINI_MODEL,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=SYSTEM_PROMPT,
-                    response_mime_type="application/json",
-                    temperature=0.7,
-                    max_output_tokens=2048,
-                ),
-            )
+        response = await client.aio.models.generate_content(
+            model=settings.GEMINI_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_PROMPT,
+                response_mime_type="application/json",
+                temperature=0.7,
+                max_output_tokens=2048,
+            ),
+        )
 
         content = response.text
         if not content:
