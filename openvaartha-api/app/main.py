@@ -85,7 +85,7 @@ if os.path.isdir(_dist):
     _pwa_files = [
         "sw.js", "manifest.webmanifest", "registerSW.js", "offline.html",
         "icon.svg", "logo.jpg", "pwa-192x192.png", "pwa-512x512.png",
-        "favicon.ico", "robots.txt", "news-fallback.svg", "placeholder.svg",
+        "robots.txt", "news-fallback.svg", "placeholder.svg",
     ]
     for _name in _pwa_files:
         _path = os.path.join(_dist, _name)

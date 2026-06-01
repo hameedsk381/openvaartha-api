@@ -83,12 +83,8 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
         "h-14 flex items-center justify-between px-4 sm:px-6",
         isInsideStack ? "" : "border-b border-border"
       )}>
-        <Link to="/" className="flex items-center gap-2 press group">
-          <img src="/logo.jpg" alt="Open Vaartha" className="h-7 w-7 rounded-lg object-cover shadow-sm shadow-primary/30 group-hover:shadow-maroon transition-shadow" />
-          <div className="flex items-baseline gap-0.5">
-            <span className="text-sm font-black text-foreground tracking-tight">Open</span>
-            <span className="text-sm font-black text-primary tracking-tight">vaartha</span>
-          </div>
+        <Link to="/" className="press">
+          <img src="/logo.jpg" alt="Open Vaartha" className="h-9 w-9 rounded-lg object-cover" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">

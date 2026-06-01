@@ -43,11 +43,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         {/* Sidebar */}
         <aside className="hidden sm:flex flex-col w-56 shrink-0 border-r border-border bg-[hsl(var(--surface))] min-h-screen">
           <div className="px-4 py-5 border-b border-border">
-            <Link to="/" className="flex items-center gap-2 group">
-              <img src="/logo.jpg" alt="Open Vaartha" className="h-8 w-8 rounded-md object-cover" />
-              <span className="text-sm font-bold tracking-tight">
-                <span className="text-primary">Admin</span>
-              </span>
+            <Link to="/">
+              <img src="/logo.jpg" alt="Open Vaartha" className="h-9 w-9 rounded-md object-cover" />
             </Link>
             <p className="text-[11px] text-muted-foreground mt-1 font-medium">{user?.fullName || user?.email || "Loading..."}</p>
           </div>
