@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List
 
-from app.core.dependencies import get_current_user, get_current_user_optional
+from app.core.dependencies import get_current_moderator, get_current_user, get_current_user_optional
 from app.core.rate_limit import limiter, MUTATION_LIMIT
 from app.database import get_db
 from app.models.user import User as UserModel
@@ -97,10 +97,11 @@ async def delete_comment(
     db: AsyncIOMotorDatabase = Depends(get_db),
     current_user: UserModel = Depends(get_current_user),
 ):
-    """Delete own comment (auth required). Admins can delete any comment."""
+    """Delete own comment (auth required). Admins and moderators can delete any comment."""
+    can_moderate = current_user.is_admin or current_user.role == "moderator"
     try:
         success = await comment_service.delete_comment(
-            db, comment_id, current_user.id, is_admin=current_user.is_admin
+            db, comment_id, current_user.id, is_admin=can_moderate
         )
         if not success:
             raise HTTPException(status_code=404, detail="Comment not found")

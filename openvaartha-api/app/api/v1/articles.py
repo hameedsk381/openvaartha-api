@@ -6,7 +6,7 @@ from app.database import get_db
 from app.schemas.article import Article, ArticleCreate, ArticleUpdate
 from app.services import article_service
 from app.services.article_service import _public_query
-from app.core.dependencies import get_current_active_admin, get_current_user_optional
+from app.core.dependencies import get_current_active_admin, get_current_editor, get_current_user_optional
 from app.core.rate_limit import limiter, MUTATION_LIMIT
 from app.models.user import User as UserModel
 
@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 def _caller_can_see_unpublished(current_user: Optional[UserModel]) -> bool:
-    return bool(current_user and current_user.is_admin)
+    return bool(current_user and (current_user.is_admin or current_user.role == "editor"))
 
 
 @router.get("/")
@@ -170,7 +170,7 @@ async def create_article(
     request: Request,
     article_data: ArticleCreate,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_admin),
+    current_user: UserModel = Depends(get_current_editor),
 ):
     """Create a new article (admin only). Defaults to draft if status omitted."""
     return await article_service.create_article(db, article_data)
@@ -183,7 +183,7 @@ async def update_article(
     article_id: str,
     article_data: ArticleUpdate,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_admin),
+    current_user: UserModel = Depends(get_current_editor),
 ):
     """Update an existing article (admin only)."""
     # Look up without status filter so admins can edit drafts.
@@ -199,7 +199,7 @@ async def delete_article(
     request: Request,
     article_id: str,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_admin),
+    current_user: UserModel = Depends(get_current_editor),
 ):
     """Delete an article (admin only)."""
     success = await article_service.delete_article(db, article_id)

@@ -124,14 +124,14 @@ const App = () => {
             <Route path="/portal/settings" element={<PortalLayout><PortalSettings /></PortalLayout>} />
 
             {/* Admin Routes */}
-            <Route path="/admin" element={<AdminRoute><AdminLayout><AdminDashboard /></AdminLayout></AdminRoute>} />
-            <Route path="/admin/articles" element={<AdminRoute><AdminLayout><AdminArticles /></AdminLayout></AdminRoute>} />
-            <Route path="/admin/articles/new" element={<AdminRoute><AdminLayout><AdminArticleForm /></AdminLayout></AdminRoute>} />
-            <Route path="/admin/articles/:articleId/edit" element={<AdminRoute><AdminLayout><AdminArticleForm /></AdminLayout></AdminRoute>} />
-            <Route path="/admin/categories" element={<AdminRoute><AdminLayout><AdminCategories /></AdminLayout></AdminRoute>} />
-            <Route path="/admin/users" element={<AdminRoute><AdminLayout><AdminUsers /></AdminLayout></AdminRoute>} />
-            <Route path="/admin/comments" element={<AdminRoute><AdminLayout><AdminComments /></AdminLayout></AdminRoute>} />
-            <Route path="/admin/newsletter" element={<AdminRoute><AdminLayout><AdminNewsletter /></AdminLayout></AdminRoute>} />
+            <Route path="/admin" element={<AdminRoute roles={["admin"]}><AdminLayout><AdminDashboard /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/articles" element={<AdminRoute roles={["admin", "editor"]}><AdminLayout><AdminArticles /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/articles/new" element={<AdminRoute roles={["admin", "editor"]}><AdminLayout><AdminArticleForm /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/articles/:articleId/edit" element={<AdminRoute roles={["admin", "editor"]}><AdminLayout><AdminArticleForm /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/categories" element={<AdminRoute roles={["admin", "editor"]}><AdminLayout><AdminCategories /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/users" element={<AdminRoute roles={["admin"]}><AdminLayout><AdminUsers /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/comments" element={<AdminRoute roles={["admin", "moderator"]}><AdminLayout><AdminComments /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/newsletter" element={<AdminRoute roles={["admin"]}><AdminLayout><AdminNewsletter /></AdminLayout></AdminRoute>} />
 
             <Route path="*" element={<NotFound />} />
 

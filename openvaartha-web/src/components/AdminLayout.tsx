@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, FileText, FolderTree, Users, MessageSquare, Mail, ArrowLeft, LogOut } from "lucide-react";
@@ -8,27 +8,34 @@ interface NavItem {
   label: string;
   icon: typeof LayoutDashboard;
   path: string;
+  roles: string[];
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/admin" },
-  { label: "Articles", icon: FileText, path: "/admin/articles" },
-  { label: "Categories", icon: FolderTree, path: "/admin/categories" },
-  { label: "Users", icon: Users, path: "/admin/users" },
-  { label: "Comments", icon: MessageSquare, path: "/admin/comments" },
-  { label: "Newsletter", icon: Mail, path: "/admin/newsletter" },
+  { label: "Dashboard", icon: LayoutDashboard, path: "/admin", roles: ["admin"] },
+  { label: "Articles", icon: FileText, path: "/admin/articles", roles: ["admin", "editor"] },
+  { label: "Categories", icon: FolderTree, path: "/admin/categories", roles: ["admin", "editor"] },
+  { label: "Users", icon: Users, path: "/admin/users", roles: ["admin"] },
+  { label: "Comments", icon: MessageSquare, path: "/admin/comments", roles: ["admin", "moderator"] },
+  { label: "Newsletter", icon: Mail, path: "/admin/newsletter", roles: ["admin"] },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [userName, setUserName] = useState("");
+  const [user, setUser] = useState<{ fullName?: string; email?: string; role?: string; isAdmin?: boolean } | null>(null);
 
   useEffect(() => {
-    apiFetch<{ fullName?: string; email?: string }>("/users/me")
-      .then((u) => setUserName(u.fullName || u.email || ""))
+    apiFetch<{ fullName?: string; email?: string; role?: string; isAdmin?: boolean }>("/users/me")
+      .then(setUser)
       .catch(() => {});
   }, []);
+
+  const effectiveRole = user?.isAdmin ? "admin" : (user?.role || "user");
+  const visibleNavItems = useMemo(
+    () => NAV_ITEMS.filter((item) => item.roles.includes(effectiveRole)),
+    [effectiveRole]
+  );
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -44,11 +51,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <span className="text-primary">Admin</span>
               </span>
             </Link>
-            <p className="text-[11px] text-muted-foreground mt-1 font-medium">{userName || "Loading..."}</p>
+            <p className="text-[11px] text-muted-foreground mt-1 font-medium">{user?.fullName || user?.email || "Loading..."}</p>
           </div>
 
           <nav className="py-3 flex-1">
-            {NAV_ITEMS.map(({ label, icon: Icon, path }) => {
+            {visibleNavItems.map(({ label, icon: Icon, path }) => {
               const active = location.pathname === path || (path !== "/admin" && location.pathname.startsWith(path));
               return (
                 <Link
@@ -108,7 +115,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
         {/* Mobile bottom nav */}
         <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around h-14 border-t border-border bg-background px-1 safe-bottom">
-          {NAV_ITEMS.map(({ label, icon: Icon, path }) => {
+          {visibleNavItems.map(({ label, icon: Icon, path }) => {
             const active = location.pathname === path;
             return (
               <Link

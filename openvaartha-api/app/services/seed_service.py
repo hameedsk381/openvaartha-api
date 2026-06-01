@@ -14,10 +14,12 @@ async def ensure_admin_user(db: AsyncIOMotorDatabase) -> None:
     Idempotent — safe to call on every startup.
     """
     defaults = [
-        ("admin@openvaartha.com", "OpenVaartha Admin", "admin123", True, True),
-        ("user@openvaartha.com",  "Test Reader",       "user123",  True, False),
+        ("admin@openvaartha.com", "OpenVaartha Admin", "admin123", True, True, "admin"),
+        ("editor@openvaartha.com", "Test Editor", "editor123", True, False, "editor"),
+        ("moderator@openvaartha.com", "Test Moderator", "moderator123", True, False, "moderator"),
+        ("user@openvaartha.com",  "Test Reader",       "user123",  True, False, "user"),
     ]
-    for email, name, pw, active, is_admin in defaults:
+    for email, name, pw, active, is_admin, role in defaults:
         existing = await db["users"].find_one({"email": email})
         if existing:
             continue
@@ -31,7 +33,7 @@ async def ensure_admin_user(db: AsyncIOMotorDatabase) -> None:
             "hashed_password": _hash_password(pw),
             "is_active": active,
             "is_admin": is_admin,
-            "role": "admin" if is_admin else "user",
+            "role": role,
             "avatar_url": None,
             "created_at": datetime.now(timezone.utc),
         })

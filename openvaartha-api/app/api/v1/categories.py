@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List
 
-from app.core.dependencies import get_current_active_admin
+from app.core.dependencies import get_current_editor
 from app.core.rate_limit import limiter, MUTATION_LIMIT
 from app.database import get_db
 from app.models.user import User as UserModel
@@ -59,7 +59,7 @@ async def create_category(
     request: Request,
     category_data: CategoryCreate,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_admin),
+    current_user: UserModel = Depends(get_current_editor),
 ):
     """Create a new category (admin only)."""
     existing = await category_service.get_category_by_name(db, category_data.name)
@@ -78,7 +78,7 @@ async def update_category(
     category_id: str,
     payload: CategoryUpdate,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_admin),
+    current_user: UserModel = Depends(get_current_editor),
 ):
     """Update a category (admin only)."""
     updated = await category_service.update_category(db, category_id, payload)
@@ -93,7 +93,7 @@ async def delete_category(
     request: Request,
     category_id: str,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_admin),
+    current_user: UserModel = Depends(get_current_editor),
 ):
     """Delete a category (admin only). Refuses if articles still reference it."""
     success = await category_service.delete_category(db, category_id)
