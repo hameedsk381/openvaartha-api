@@ -1,10 +1,13 @@
 import json
+import logging
 from typing import Optional
 
 from google import genai
 from google.genai import types
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """You are a professional South Indian news journalist writing for Open Vaartha.
 Write factual, well-structured news articles in Indian English.
@@ -101,5 +104,6 @@ Generate a complete news article with this exact JSON structure:
             "category_id": data.get("category_id", ""),
         }
 
-    except Exception:
+    except Exception as e:
+        logger.error(f"Gemini AI generation failed: {e}", exc_info=True)
         return None
