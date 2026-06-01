@@ -44,7 +44,52 @@ export default function MDXBodyEditor({ value, onChange }: Props) {
   const isDark = useIsDark();
 
   return (
-    <div data-color-scheme={isDark ? "dark" : "light"}>
+    <div data-color-scheme={isDark ? "dark" : "light"} className="mdx-editor-wrapper">
+      <style>{`
+        .mdx-editor-wrapper .mdxeditor {
+          background: ${isDark ? "hsl(var(--surface))" : "#fff"};
+          border: 1px solid hsl(var(--border));
+          border-radius: 0.5rem;
+        }
+        .mdx-editor-wrapper .mdxeditor-toolbar {
+          background: ${isDark ? "hsl(var(--muted))" : "#f8f9fa"};
+          border-bottom: 1px solid hsl(var(--border));
+        }
+        .mdx-editor-wrapper .mdxeditor-toolbar button {
+          color: ${isDark ? "hsl(var(--foreground))" : "#333"};
+        }
+        .mdx-editor-wrapper .mdxeditor-toolbar button:hover {
+          background: ${isDark ? "hsl(var(--accent))" : "#e9ecef"};
+        }
+        .mdx-editor-wrapper .mdxeditor-rich-text-editor,
+        .mdx-editor-wrapper .cm-editor {
+          background: ${isDark ? "hsl(var(--surface))" : "#fff"};
+          color: ${isDark ? "hsl(var(--foreground))" : "#333"};
+        }
+        .mdx-editor-wrapper .mdxeditor-rich-text-editor .cm-editor .cm-scroller {
+          color: ${isDark ? "hsl(var(--foreground))" : "#333"};
+        }
+        .mdx-editor-wrapper .mdxeditor-rich-text-editor .cm-editor .cm-gutters {
+          background: ${isDark ? "hsl(var(--muted))" : "#f8f9fa"};
+          color: ${isDark ? "hsl(var(--muted-foreground))" : "#666"};
+        }
+        .mdx-editor-wrapper .mdxeditor-rich-text-editor .ͼ1 .cm-activeLine {
+          background: ${isDark ? "hsl(var(--accent) / 0.3)" : "rgba(0,0,0,0.03)"};
+        }
+        .mdx-editor-wrapper .mdxeditor-popup-container {
+          background: ${isDark ? "hsl(var(--surface))" : "#fff"};
+          border: 1px solid hsl(var(--border));
+          border-radius: 0.5rem;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .mdx-editor-wrapper .mdxeditor-popup-container input,
+        .mdx-editor-wrapper .mdxeditor-popup-container select {
+          background: ${isDark ? "hsl(var(--input))" : "#fff"};
+          color: ${isDark ? "hsl(var(--foreground))" : "#333"};
+          border: 1px solid hsl(var(--border));
+          border-radius: 0.375rem;
+        }
+      `}</style>
       <MDXEditor
         markdown={value}
         onChange={onChange}
