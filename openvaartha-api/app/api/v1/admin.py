@@ -73,6 +73,14 @@ async def list_users(
     return result
 
 
+class AdminUserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    is_admin: Optional[bool] = None
+    is_active: Optional[bool] = None
+    role: Optional[str] = None
+
+
 @router.put("/users/{user_id}", response_model=UserSchema)
 async def update_user(
     user_id: str,
@@ -137,15 +145,6 @@ async def list_subscribers(
         }
         for d in docs
     ]
-
-
-class AdminUserUpdate(BaseModel):
-    full_name: Optional[str] = None
-    email: Optional[str] = None
-    is_admin: Optional[bool] = None
-    is_active: Optional[bool] = None
-    role: Optional[str] = None
-
 
 class GenerateArticleRequest(BaseModel):
     topic: str
