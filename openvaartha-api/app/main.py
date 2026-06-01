@@ -13,6 +13,7 @@ from app.core.rate_limit import limiter
 from app.database import db
 from app.services.article_service import ensure_article_indexes
 from app.services.category_service import ensure_category_indexes
+from app.services.seed_service import ensure_admin_user
 
 # Block known-unsafe production configs at import time.
 settings.assert_safe_for_production()
@@ -60,6 +61,7 @@ def health_check():
 async def startup_indexes():
     await ensure_article_indexes(db)
     await ensure_category_indexes(db)
+    await ensure_admin_user(db)
 
 
 # Serve React SPA — mount after API routes so /api/* is never shadowed
