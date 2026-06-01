@@ -81,7 +81,8 @@ class Settings(BaseSettings):
         problems: list[str] = []
         if "change-in-production" in self.JWT_SECRET_KEY or len(self.JWT_SECRET_KEY) < 32:
             problems.append("JWT_SECRET_KEY is not set to a strong production value")
-        if "*" in self.CORS_ORIGINS:
+        origins_raw = self.CORS_ORIGINS or ""
+        if "*" in origins_raw.split(","):
             problems.append("CORS_ORIGINS must be an explicit list in production (wildcard rejected)")
         if not self.allowed_origins:
             problems.append("CORS_ORIGINS must contain at least one explicit origin in production")
