@@ -7,6 +7,7 @@ import { apiFetch } from "@/lib/api";
 import { ARTICLE_STATUSES, type Article, type ArticleStatus, type Category } from "./types";
 import { cn } from "@/lib/utils";
 import MDXBodyEditor from "@/components/MDXBodyEditor";
+import AIGenerateDialog from "@/components/AIGenerateDialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -253,11 +254,21 @@ export default function AdminArticleForm() {
           </Link>
           <h1 className="text-2xl font-bold tracking-tight">{isEditing ? "Edit article" : "New article"}</h1>
         </div>
-        <Button type="submit" disabled={mutation.isPending} className="gap-2">
-          {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Save
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-white/20 px-1.5 text-[10px] font-mono opacity-60">⌘S</kbd>
-        </Button>
+        <div className="flex items-center gap-2">
+          <AIGenerateDialog onApply={(data) => {
+            update("title", data.title);
+            update("summary", data.summary);
+            update("body", data.body);
+            update("tldr", data.tldr);
+            update("points", data.points.join("\n"));
+            if (data.category_id) update("categoryId", data.category_id);
+          }} />
+          <Button type="submit" disabled={mutation.isPending} className="gap-2">
+            {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Save
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-white/20 px-1.5 text-[10px] font-mono opacity-60">⌘S</kbd>
+          </Button>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-[1fr_340px] gap-8">

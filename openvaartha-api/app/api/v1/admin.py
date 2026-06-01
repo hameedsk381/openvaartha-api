@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from datetime import datetime
 from typing import List, Optional
+from pydantic import BaseModel
 
 from app.core.dependencies import get_current_active_admin
 from app.database import get_db
@@ -10,6 +11,7 @@ from app.schemas.article import Article as ArticleSchema
 from app.schemas.user import User as UserSchema
 from app.schemas.comment import Comment as CommentSchema
 from app.services import article_service, user_service
+from app.services.ai_service import generate_article
 
 router = APIRouter(dependencies=[Depends(get_current_active_admin)])
 
@@ -136,3 +138,30 @@ async def list_subscribers(
         }
         for d in docs
     ]
+
+
+class GenerateArticleRequest(BaseModel):
+    topic: str
+    style: str = "standard"
+    tone: str = "neutral"
+
+
+class GenerateArticleResponse(BaseModel):
+    title: str
+    summary: str
+    body: str
+    tldr: str
+    points: List[str]
+    category_id: str = ""
+
+
+@router.post("/ai/generate-article", response_model=GenerateArticleResponse)
+async def ai_generate_article(body: GenerateArticleRequest):
+    """Generate a complete article draft from a topic prompt using OpenAI."""
+    result = await generate_article(topic=body.topic, style=body.style, tone=body.tone)
+    if not result:
+        raise HTTPException(
+            status_code=503,
+            detail="AI generation failed. Check the OPENAI_API_KEY environment variable.",
+        )
+    return result
