@@ -27,9 +27,9 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # OpenAI
-    OPENAI_API_KEY: str = ""
-    OPENAI_MODEL: str = "gpt-4"
+    # Gemini
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.0-flash"
 
     # News APIs
     NEWS_API_KEY: str = ""

@@ -1,7 +1,8 @@
 import json
 from typing import Optional
 
-from openai import AsyncOpenAI
+from google import genai
+from google.genai import types
 
 from app.config import settings
 
@@ -32,7 +33,7 @@ async def generate_article(
     style: str = "standard",
     tone: str = "neutral",
 ) -> Optional[dict]:
-    """Generate a complete article draft from a topic prompt using OpenAI."""
+    """Generate a complete article draft from a topic prompt using Gemini."""
     theme_guide = {
         "standard": "Balanced news reporting with context and analysis.",
         "investigative": "Detail-oriented with background, data points, and sourcing.",
@@ -59,29 +60,33 @@ Style: {style_guide}
 Tone: {tone_guide}
 {source_block}Generate a complete news article as JSON with keys: title, summary, body, tldr, points, category_id."""
 
-    if not settings.OPENAI_API_KEY:
+    if not settings.GEMINI_API_KEY:
         return None
 
     try:
-        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-        response = await client.chat.completions.create(
-            model=settings.OPENAI_MODEL,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": prompt},
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.7,
-            max_tokens=2048,
+        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+
+        response = await client.aio.models.generate_content(
+            model=settings.GEMINI_MODEL,
+            contents=f"{SYSTEM_PROMPT}\n\n{prompt}",
+            config=types.GenerateContentConfig(
+                temperature=0.7,
+                max_output_tokens=2048,
+            ),
         )
 
-        content = response.choices[0].message.content
+        content = response.text
         if not content:
             return None
 
-        data = json.loads(content)
+        # Strip markdown fences if the model wraps JSON in ```json ... ```
+        cleaned = content.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("\n", 1)[-1]
+            cleaned = cleaned.rsplit("```", 1)[0].strip()
 
-        # Ensure minimum required fields
+        data = json.loads(cleaned)
+
         if not all(k in data for k in ("title", "summary", "body", "tldr", "points")):
             return None
 

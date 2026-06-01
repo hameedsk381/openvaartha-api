@@ -163,6 +163,6 @@ async def ai_generate_article(body: GenerateArticleRequest):
     if not result:
         raise HTTPException(
             status_code=503,
-            detail="AI generation failed. Check the OPENAI_API_KEY environment variable.",
+            detail="AI generation failed. Check the GEMINI_API_KEY environment variable.",
         )
     return result
