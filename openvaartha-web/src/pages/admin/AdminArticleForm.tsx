@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 type TimelineEntry = { date: string; event: string };
 type ExplainerEntry = { question: string; answer: string };
@@ -79,6 +80,25 @@ export default function AdminArticleForm() {
   const categoriesQuery = useQuery({
     queryKey: ["admin", "categories"],
     queryFn: () => apiFetch<Category[]>("/categories/"),
+  });
+
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [newCategory, setNewCategory] = useState({ name: "", emoji: "📰", colorCode: "#641313" });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<Category>("/categories/", {
+        method: "POST",
+        body: JSON.stringify(newCategory),
+      }),
+    onSuccess: (cat) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
+      setCategoryDialogOpen(false);
+      setNewCategory({ name: "", emoji: "📰", colorCode: "#641313" });
+      update("categoryId", cat.id);
+      toast.success("Category created");
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
 
   const articleQuery = useQuery({
@@ -419,6 +439,69 @@ export default function AdminArticleForm() {
                   {categoriesQuery.data?.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                   ))}
+                  <div className="border-t border-border mt-1 pt-1">
+                    <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
+                      <DialogTrigger asChild>
+                        <button
+                          type="button"
+                          onMouseDown={(e) => { e.preventDefault(); setCategoryDialogOpen(true); }}
+                          className="relative flex w-full cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Create new category
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create category</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <Field label="Name">
+                            <Input
+                              value={newCategory.name}
+                              onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                              placeholder="e.g. Technology"
+                            />
+                          </Field>
+                          <Field label="Emoji">
+                            <Input
+                              value={newCategory.emoji}
+                              onChange={(e) => setNewCategory({ ...newCategory, emoji: e.target.value })}
+                              placeholder="📰"
+                            />
+                          </Field>
+                          <Field label="Color">
+                            <div className="flex gap-2 items-center">
+                              <input
+                                type="color"
+                                value={newCategory.colorCode}
+                                onChange={(e) => setNewCategory({ ...newCategory, colorCode: e.target.value })}
+                                className="h-9 w-9 rounded cursor-pointer border border-border"
+                              />
+                              <Input
+                                value={newCategory.colorCode}
+                                onChange={(e) => setNewCategory({ ...newCategory, colorCode: e.target.value })}
+                                placeholder="#641313"
+                              />
+                            </div>
+                          </Field>
+                          <div className="flex justify-end gap-2 pt-2">
+                            <Button type="button" variant="outline" onClick={() => setCategoryDialogOpen(false)}>
+                              Cancel
+                            </Button>
+                            <Button
+                              type="button"
+                              onClick={() => createCategoryMutation.mutate()}
+                              disabled={!newCategory.name.trim() || createCategoryMutation.isPending}
+                            >
+                              {createCategoryMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                              Create
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </SelectContent>
               </Select>
             </Field>
