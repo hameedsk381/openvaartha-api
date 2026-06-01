@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FileText, Users, MessageSquare, Mail, TrendingUp, Zap, Plus, FolderTree, Loader2, ArrowUpRight } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 type DashboardStats = {
   articles: { total: number; published: number; drafts: number; archived: number; breaking: number; trending: number };
@@ -54,13 +55,11 @@ export default function AdminDashboard() {
           <p className="text-sm text-muted-foreground mt-1">Overview of your content and audience.</p>
         </div>
         <div className="flex gap-2">
-          <Link to="/admin/articles/new" className="h-10 px-4 rounded-md bg-primary text-white text-sm font-semibold inline-flex items-center gap-2 press">
-            <Plus className="h-4 w-4" />
-            New article
+          <Link to="/admin/articles/new">
+            <Button size="sm"><Plus className="h-4 w-4" /> New article</Button>
           </Link>
-          <Link to="/admin/categories" className="h-10 px-4 rounded-md border border-border text-sm font-semibold inline-flex items-center gap-2 text-muted-foreground hover:text-foreground press">
-            <FolderTree className="h-4 w-4" />
-            Categories
+          <Link to="/admin/categories">
+            <Button variant="outline" size="sm"><FolderTree className="h-4 w-4" /> Categories</Button>
           </Link>
         </div>
       </div>

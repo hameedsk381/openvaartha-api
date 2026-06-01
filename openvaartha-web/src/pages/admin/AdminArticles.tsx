@@ -4,6 +4,7 @@ import { Edit, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import type { Article } from "./types";
+import { Button } from "@/components/ui/button";
 
 export default function AdminArticles() {
   const queryClient = useQueryClient();
@@ -43,9 +44,11 @@ export default function AdminArticles() {
           <h1 className="text-2xl font-black tracking-tight">Articles</h1>
           <p className="text-sm text-muted-foreground mt-1">Create, edit, and remove published stories.</p>
         </div>
-        <Link to="/admin/articles/new" className="h-10 px-4 rounded-md bg-primary text-white text-sm font-semibold inline-flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          New article
+        <Link to="/admin/articles/new">
+          <Button>
+            <Plus className="h-4 w-4" />
+            New article
+          </Button>
         </Link>
       </div>
 
@@ -81,18 +84,23 @@ export default function AdminArticles() {
                 <span className="text-sm text-muted-foreground">{new Date(article.publishedAt).toLocaleDateString()}</span>
               </div>
               <div className="flex md:justify-end gap-2">
-                <Link to={`/admin/articles/${article.id}/edit`} className="h-10 w-10 rounded-md border border-border inline-flex items-center justify-center hover:bg-[hsl(var(--surface))]" aria-label="Edit article">
-                  <Edit className="h-4 w-4" />
+                <Link to={`/admin/articles/${article.id}/edit`}>
+                  <Button type="button" variant="outline" size="icon" aria-label="Edit article">
+                    <Edit className="h-4 w-4" />
+                  </Button>
                 </Link>
-                <button
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
                   onClick={() => {
                     if (window.confirm("Delete this article?")) deleteMutation.mutate(article.id);
                   }}
-                  className="h-10 w-10 rounded-md border border-border inline-flex items-center justify-center text-destructive hover:bg-[hsl(var(--destructive)/0.08)]"
                   aria-label="Delete article"
+                  className="text-destructive hover:text-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
-                </button>
+                </Button>
               </div>
             </div>
           ))}

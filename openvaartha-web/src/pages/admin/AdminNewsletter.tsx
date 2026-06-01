@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Mail, Download } from "lucide-react";
 import { apiFetch } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 type Subscriber = {
   id: string;
@@ -37,14 +38,10 @@ export default function AdminNewsletter() {
           <h1 className="text-2xl font-black tracking-tight">Newsletter</h1>
           <p className="text-sm text-muted-foreground mt-1">{subscribers.length} active subscribers</p>
         </div>
-        <button
-          onClick={exportCSV}
-          disabled={subscribers.length === 0}
-          className="h-10 px-4 rounded-md border border-border text-sm font-semibold inline-flex items-center gap-2 text-muted-foreground hover:text-foreground disabled:opacity-50 press"
-        >
+        <Button type="button" variant="outline" onClick={exportCSV} disabled={subscribers.length === 0}>
           <Download className="h-4 w-4" />
           Export CSV
-        </button>
+        </Button>
       </div>
 
       {isLoading ? (

@@ -4,6 +4,7 @@ import { Loader2, MessageSquare, Trash2, ChevronDown, ChevronUp, Search } from "
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 type Comment = {
   id: string;
@@ -55,18 +56,15 @@ export default function AdminComments() {
             {!showInactive && ` (${comments.filter((c) => c.isActive ?? c.is_active ?? true).length} active)`}
           </p>
         </div>
-        <button
+        <Button
+          type="button"
+          variant={showInactive ? "default" : "outline"}
+          size="sm"
           onClick={() => setShowInactive((v) => !v)}
-          className={cn(
-            "h-9 px-3 rounded-md text-xs font-semibold border transition-colors press inline-flex items-center gap-1.5",
-            showInactive
-              ? "bg-primary text-white border-primary"
-              : "border-border text-muted-foreground hover:text-foreground"
-          )}
         >
           {showInactive ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           {showInactive ? "Active only" : "Show deleted"}
-        </button>
+        </Button>
       </div>
 
       {isLoading ? (
@@ -97,15 +95,18 @@ export default function AdminComments() {
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-red-500 border border-red-200 rounded-sm px-1.5">Deleted</span>
                     )}
                     <span className="text-[11px] text-muted-foreground">{date ? new Date(date).toLocaleDateString() : ""}</span>
-                    <button
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
                       onClick={() => {
                         if (window.confirm("Delete this comment permanently?")) deleteMutation.mutate(comment.id);
                       }}
-                      className="h-8 w-8 rounded-md border border-border inline-flex items-center justify-center text-destructive hover:bg-destructive/5 press"
                       title="Delete comment"
+                      className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
                 <p className="text-sm text-foreground leading-relaxed">{comment.body}</p>

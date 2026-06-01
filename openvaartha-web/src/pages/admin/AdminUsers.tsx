@@ -4,6 +4,7 @@ import { Check, ChevronDown, Loader2, Shield, ShieldOff, Trash2, X } from "lucid
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 type AdminUser = {
   id: string;
@@ -113,40 +114,37 @@ export default function AdminUsers() {
                     </span>
                   </div>
                   <div className="flex items-center justify-end md:justify-end gap-1">
-                    <button
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => toggleAdmin(user)}
-                      className={cn(
-                        "h-9 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 border transition-colors press",
-                        isAdmin
-                          ? "border-primary/20 text-primary hover:bg-primary/5"
-                          : "border-border text-muted-foreground hover:text-primary hover:border-primary/30"
-                      )}
                       title={isAdmin ? "Remove admin" : "Make admin"}
                     >
                       {isAdmin ? <X className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
                       <span className="hidden sm:inline">{isAdmin ? "Demote" : "Promote"}</span>
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => toggleActive(user)}
-                      className={cn(
-                        "h-9 px-2.5 rounded-md text-xs font-semibold border transition-colors press",
-                        isActive
-                          ? "border-border text-muted-foreground hover:text-red-600 hover:border-red-300"
-                          : "border-green-200 text-green-700 hover:bg-green-50"
-                      )}
                       title={isActive ? "Deactivate" : "Activate"}
                     >
                       {isActive ? "Disable" : "Enable"}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
                       onClick={() => {
                         if (window.confirm(`Delete user "${user.email}"?`)) deleteMutation.mutate(user.id);
                       }}
-                      className="h-9 w-9 rounded-md border border-border inline-flex items-center justify-center text-destructive hover:bg-destructive/5 press"
                       title="Delete user"
+                      className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               );

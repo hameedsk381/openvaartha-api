@@ -314,6 +314,32 @@
     100% { transform: translateX(-50%); }
   }
 
+  /* ── Admin form inputs */
+  .input-admin {
+    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm
+           ring-offset-background placeholder:text-muted-foreground
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  textarea.input-admin {
+    @apply min-h-[80px];
+  }
+
+  /* ── Admin card section */
+  .admin-card {
+    @apply border border-border rounded-xl p-5 space-y-4;
+  }
+
+  /* ── Admin table header */
+  .admin-table-header {
+    @apply hidden md:grid gap-4 h-11 px-5 items-center border-b border-border bg-muted/50 text-xs font-semibold text-muted-foreground;
+  }
+
+  /* ── Admin table row */
+  .admin-table-row {
+    @apply block md:grid md:gap-4 md:items-center p-4 md:px-5;
+  }
+
   /* ── Focus ring (maroon) */
   .focus-maroon {
     @apply focus-visible:outline-none focus-visible:ring-2
