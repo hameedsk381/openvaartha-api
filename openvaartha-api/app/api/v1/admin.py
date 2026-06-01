@@ -76,12 +76,11 @@ async def list_users(
 @router.put("/users/{user_id}", response_model=UserSchema)
 async def update_user(
     user_id: str,
-    body: dict,
+    body: AdminUserUpdate,
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Update any user (admin only). Allows promoting to admin, deactivating, etc."""
-    allowed = {"full_name", "email", "is_admin", "is_active", "role"}
-    update_data = {k: v for k, v in body.items() if k in allowed and v is not None}
+    update_data = body.model_dump(exclude_unset=True, exclude_none=True)
 
     if not update_data:
         raise HTTPException(status_code=400, detail="No valid fields to update")
@@ -138,6 +137,14 @@ async def list_subscribers(
         }
         for d in docs
     ]
+
+
+class AdminUserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    is_admin: Optional[bool] = None
+    is_active: Optional[bool] = None
+    role: Optional[str] = None
 
 
 class GenerateArticleRequest(BaseModel):

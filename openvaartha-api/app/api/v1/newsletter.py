@@ -27,9 +27,7 @@ async def unsubscribe_newsletter(
     subscription: NewsletterSubscribe,
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
-    """Unsubscribe from the newsletter."""
-    success = await newsletter_service.unsubscribe(db, subscription.email)
-    if not success:
-        raise HTTPException(status_code=404, detail="Email not found in subscribers list")
-    
+    """Unsubscribe from the newsletter.
+    Always returns 200 to prevent email enumeration."""
+    await newsletter_service.unsubscribe(db, subscription.email)
     return {"message": "Successfully unsubscribed from newsletter", "email": subscription.email}

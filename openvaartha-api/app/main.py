@@ -10,6 +10,7 @@ from slowapi.errors import RateLimitExceeded
 from app.api.v1 import admin, articles, categories, comments, feeds, newsletter, search, users
 from app.config import settings
 from app.core.rate_limit import limiter
+from app.core.security_headers import SecurityHeadersMiddleware
 from app.database import db
 from app.services.article_service import ensure_article_indexes
 from app.services.category_service import ensure_category_indexes
@@ -38,6 +39,9 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "Accept"],
     expose_headers=["Content-Disposition"],
 )
+
+# Security headers — CSP, X-Frame-Options, HSTS, etc.
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Include routers
 app.include_router(articles.router, prefix="/api/v1/articles", tags=["Articles"])
