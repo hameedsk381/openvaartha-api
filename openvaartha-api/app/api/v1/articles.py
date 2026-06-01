@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from app.database import get_db
 from app.schemas.article import Article, ArticleCreate, ArticleUpdate
 from app.services import article_service
+from app.services.article_service import _public_query
 from app.core.dependencies import get_current_active_admin, get_current_user_optional
 from app.core.rate_limit import limiter, MUTATION_LIMIT
 from app.models.user import User as UserModel
@@ -16,7 +17,7 @@ def _caller_can_see_unpublished(current_user: Optional[UserModel]) -> bool:
     return bool(current_user and current_user.is_admin)
 
 
-@router.get("/", response_model=List[Article])
+@router.get("/")
 async def list_articles(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
@@ -26,7 +27,7 @@ async def list_articles(
     include_total: bool = Query(False, description="Return {items, total} instead of plain array"),
     db: AsyncIOMotorDatabase = Depends(get_db),
     current_user: Optional[UserModel] = Depends(get_current_user_optional),
-):
+) -> Union[List[Article], dict]:
     """List articles. Drafts/archived are visible only to authenticated admins."""
     if include_unpublished and not _caller_can_see_unpublished(current_user):
         raise HTTPException(status_code=403, detail="Admin required to see unpublished articles")
