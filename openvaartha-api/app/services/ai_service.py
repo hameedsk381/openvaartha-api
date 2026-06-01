@@ -8,7 +8,7 @@ from app.config import settings
 SYSTEM_PROMPT = """You are a professional South Indian news journalist writing for Open Vaartha.
 Write factual, well-structured news articles in Indian English.
 
-Given a topic, generate a complete news article with:
+Given a topic and optional source material, generate a complete news article with:
 - title: compelling but not clickbait
 - summary: 2-3 sentences for article cards
 - body: 4-6 short paragraphs of ~60 words each (markdown format, no H1)
@@ -17,14 +17,18 @@ Given a topic, generate a complete news article with:
 - category_id: "" (leave empty, user chooses)
 
 Rules:
-- Be specific — use realistic figures, dates, locations from South India
-- Never invent quotes. Use "said" attribution sparingly
-- Write in neutral, third-person journalistic tone
-- Return ONLY valid JSON, no markdown fences, no extra text"""
+- If source material is provided, base the article strictly on it — extract facts,
+  figures, quotes, and context from the source. Do not invent details outside it.
+- If only a topic is given, generate realistic specifics (figures, dates, locations
+  from South India) but never fabricate quotes.
+- Use "said" attribution sparingly and only when justified by source material.
+- Write in neutral, third-person journalistic tone.
+- Return ONLY valid JSON, no markdown fences, no extra text."""
 
 
 async def generate_article(
     topic: str,
+    source_content: Optional[str] = None,
     style: str = "standard",
     tone: str = "neutral",
 ) -> Optional[dict]:
@@ -43,11 +47,17 @@ async def generate_article(
         "narrative": "Storytelling style with scene-setting and narrative flow.",
     }.get(tone, "Neutral, objective, fact-based journalism.")
 
+    source_block = ""
+    if source_content and source_content.strip():
+        source_block = f"""Source material to base the article on (extract facts, quotes, and details from this):
+{source_content.strip()}
+
+"""
+
     prompt = f"""Topic: {topic}
 Style: {style_guide}
 Tone: {tone_guide}
-
-Generate a complete news article as JSON with keys: title, summary, body, tldr, points, category_id."""
+{source_block}Generate a complete news article as JSON with keys: title, summary, body, tldr, points, category_id."""
 
     if not settings.OPENAI_API_KEY:
         return None

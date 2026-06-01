@@ -142,6 +142,7 @@ async def list_subscribers(
 
 class GenerateArticleRequest(BaseModel):
     topic: str
+    source_content: Optional[str] = None
     style: str = "standard"
     tone: str = "neutral"
 
@@ -158,7 +159,7 @@ class GenerateArticleResponse(BaseModel):
 @router.post("/ai/generate-article", response_model=GenerateArticleResponse)
 async def ai_generate_article(body: GenerateArticleRequest):
     """Generate a complete article draft from a topic prompt using OpenAI."""
-    result = await generate_article(topic=body.topic, style=body.style, tone=body.tone)
+    result = await generate_article(topic=body.topic, source_content=body.source_content, style=body.style, tone=body.tone)
     if not result:
         raise HTTPException(
             status_code=503,
