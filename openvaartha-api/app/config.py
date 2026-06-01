@@ -29,7 +29,7 @@ class Settings(BaseSettings):
 
     # Gemini
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.0-flash"
+    GEMINI_MODEL: str = "gemini-3.5-flash-latest"
 
     # News APIs
     NEWS_API_KEY: str = ""
