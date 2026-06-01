@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -74,12 +72,13 @@
     --sidebar-ring:                34 55% 78%;
 
     /* ── Typography Tokens ───────────────────────────────
-       Sans: Inter — clean, warm, excellent screen readability
-       Serif: Source Serif 4 — variable optical size, friendly
-       on screens, pair with Libre Baskerville for headings
+       Sans: Inter — clean, warm, excellent screen readability.
+             Noto Sans for Telugu, Tamil, Kannada, Malayalam, Hindi.
+       Serif: Source Serif 4 — variable optical size, friendly on
+             screens. Noto Serif for Indian language article bodies.
        ──────────────────────────────────────────────────── */
-    --font-sans:  "Inter", system-ui, -apple-system, sans-serif;
-    --font-serif: "Source Serif 4", Georgia, "Libre Baskerville", serif;
+    --font-sans:  "Inter", "Noto Sans Telugu", "Noto Sans Tamil", "Noto Sans Kannada", "Noto Sans Malayalam", "Noto Sans Devanagari", system-ui, -apple-system, sans-serif;
+    --font-serif: "Source Serif 4", "Noto Serif Telugu", "Noto Serif Tamil", "Noto Serif Kannada", "Noto Serif Malayalam", Georgia, "Libre Baskerville", serif;
 
     /* ── Spacing Scale (8px base) ──────────────────────── */
     --sp-1: 0.25rem;   /* 4px  */

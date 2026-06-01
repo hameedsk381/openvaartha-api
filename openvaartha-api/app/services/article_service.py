@@ -5,6 +5,7 @@ from datetime import datetime
 import json
 from fastapi import HTTPException, status
 from pymongo.errors import OperationFailure
+from bson import ObjectId
 from redis import asyncio as redis_async
 from redis.exceptions import RedisError
 
@@ -125,21 +126,25 @@ async def _populate_article_extras(db: AsyncIOMotorDatabase, article: dict) -> d
     if not article:
         return article
 
-    if "_id" in article and "id" not in article:
-        article["id"] = article["_id"]
+    if "_id" in article:
+        article["id"] = str(article.pop("_id"))
 
     # Older docs predate the status field — assume published so they remain visible.
     article.setdefault("status", PUBLIC_STATUS)
 
     if "category_id" in article:
+        if isinstance(article["category_id"], ObjectId):
+            article["category_id"] = str(article["category_id"])
         category = await db["categories"].find_one({"_id": article["category_id"]})
         if category:
             article["category"] = category["name"]
         else:
             article["category"] = "General"
 
-    content = await db["article_content"].find_one({"article_id": article["_id"]})
+    content = await db["article_content"].find_one({"article_id": article.get("id")})
     if content:
+        if "_id" in content:
+            content["id"] = str(content.pop("_id"))
         article["content"] = content
 
     return article
