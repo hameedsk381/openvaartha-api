@@ -54,7 +54,7 @@ export default function Login() {
         throw new Error(err.detail || 'Invalid email or password');
       }
       const result = await res.json();
-      localStorage.setItem('access_token', result.access_token);
+      localStorage.setItem('token', result.access_token);
       localStorage.setItem('user_email', data.email);
       toast.success('Welcome back.');
       navigate(from, { replace: true });

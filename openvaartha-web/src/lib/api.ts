@@ -10,7 +10,7 @@ export class ApiError extends Error {
 }
 
 function getToken(): string | null {
-  return localStorage.getItem("access_token");
+  return localStorage.getItem("token");
 }
 
 export async function apiFetch<T>(
