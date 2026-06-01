@@ -24,7 +24,7 @@ Rules:
   from South India) but never fabricate quotes.
 - Use "said" attribution sparingly and only when justified by source material.
 - Write in neutral, third-person journalistic tone.
-- Return ONLY valid JSON, no markdown fences, no extra text."""
+- Return ONLY valid JSON."""
 
 
 async def generate_article(
@@ -50,15 +50,17 @@ async def generate_article(
 
     source_block = ""
     if source_content and source_content.strip():
-        source_block = f"""Source material to base the article on (extract facts, quotes, and details from this):
+        source_block = f"""
+Source material to base the article on (extract facts, quotes, and details from this):
 {source_content.strip()}
-
 """
 
     prompt = f"""Topic: {topic}
 Style: {style_guide}
-Tone: {tone_guide}
-{source_block}Generate a complete news article as JSON with keys: title, summary, body, tldr, points, category_id."""
+Tone: {tone_guide}{source_block}
+
+Generate a complete news article with this exact JSON structure:
+{{"title": "", "summary": "", "body": "", "tldr": "", "points": [], "category_id": ""}}"""
 
     if not settings.GEMINI_API_KEY:
         return None
@@ -66,26 +68,23 @@ Tone: {tone_guide}
     try:
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
-        response = await client.aio.models.generate_content(
-            model=settings.GEMINI_MODEL,
-            contents=f"{SYSTEM_PROMPT}\n\n{prompt}",
-            config=types.GenerateContentConfig(
-                temperature=0.7,
-                max_output_tokens=2048,
-            ),
-        )
+        async with client.aio as aclient:
+            response = await aclient.models.generate_content(
+                model=settings.GEMINI_MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT,
+                    response_mime_type="application/json",
+                    temperature=0.7,
+                    max_output_tokens=2048,
+                ),
+            )
 
         content = response.text
         if not content:
             return None
 
-        # Strip markdown fences if the model wraps JSON in ```json ... ```
-        cleaned = content.strip()
-        if cleaned.startswith("```"):
-            cleaned = cleaned.split("\n", 1)[-1]
-            cleaned = cleaned.rsplit("```", 1)[0].strip()
-
-        data = json.loads(cleaned)
+        data = json.loads(content.strip())
 
         if not all(k in data for k in ("title", "summary", "body", "tldr", "points")):
             return None
