@@ -56,6 +56,16 @@ async def get_breaking_articles(
     return await article_service.get_breaking_articles(db, limit=limit)
 
 
+@router.get("/{article_id}/related", response_model=List[Article])
+async def get_related(
+    article_id: str,
+    limit: int = Query(5, ge=1, le=20),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Get related articles (same category, fallback to recent)."""
+    return await article_service.get_related_articles(db, article_id, limit=limit)
+
+
 @router.get("/explainers", response_model=List[Article])
 async def get_explainer_articles(
     skip: int = Query(0, ge=0),

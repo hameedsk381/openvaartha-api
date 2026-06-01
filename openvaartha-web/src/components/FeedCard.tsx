@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { cn, getArticleImage, handleImageFallback } from "@/lib/utils";
-import type { Article } from "@/data/mockArticles";
+import type { Article } from "@/lib/types";
 import { ChevronRight, ArrowUpRight } from "lucide-react";
 
 interface FeedCardProps {

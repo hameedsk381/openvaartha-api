@@ -138,8 +138,8 @@ export default {
       // TYPOGRAPHY
       // ─────────────────────────────────────────────────────
       fontFamily: {
-        sans:  ["Inter", "system-ui", "sans-serif"],
-        serif: ["Libre Baskerville", "Georgia", "serif"],
+        sans:  ["Inter", "system-ui", "-apple-system", "sans-serif"],
+        serif: ["Source Serif 4", "Georgia", "Libre Baskerville", "serif"],
         mono:  ["JetBrains Mono", "Fira Code", "monospace"],
       },
       fontSize: {

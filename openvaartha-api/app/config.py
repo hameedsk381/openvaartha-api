@@ -39,6 +39,17 @@ class Settings(BaseSettings):
     INSTAGRAM_ACCESS_TOKEN: str = ""
     INSTAGRAM_USER_ID: str = ""
 
+    # SMTP (email sending)
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = "noreply@openvaartha.com"
+    SMTP_FROM_NAME: str = "OpenVaartha"
+
+    # Site URL (used for sitemaps, RSS feeds, and canonical links)
+    SITE_URL: str = "http://localhost:8000"
+
     # CORS — comma-separated list of EXACT origins. Wildcards (``*``) are
     # rejected outright in production because ``allow_credentials=True`` makes
     # wildcard origins both insecure and meaningless.

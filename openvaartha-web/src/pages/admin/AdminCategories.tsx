@@ -133,8 +133,8 @@ export default function AdminCategories() {
         </button>
       </form>
 
-      <div className="border border-border rounded-lg overflow-hidden">
-        <div className="grid grid-cols-[80px_1fr_180px_160px] gap-4 h-11 px-4 items-center border-b border-border bg-[hsl(var(--surface))] text-xs font-semibold text-muted-foreground">
+        <div className="border border-border rounded-lg overflow-hidden">
+        <div className="hidden md:grid grid-cols-[80px_1fr_180px_160px] gap-4 h-11 px-4 items-center border-b border-border bg-[hsl(var(--surface))] text-xs font-semibold text-muted-foreground">
           <span>Icon</span>
           <span>Name</span>
           <span>Color</span>
@@ -149,50 +149,59 @@ export default function AdminCategories() {
             return (
               <div
                 key={category.id}
-                className="grid grid-cols-[80px_1fr_180px_160px] gap-4 p-4 items-center"
+                className="block md:grid md:grid-cols-[80px_1fr_180px_160px] md:gap-4 md:items-center p-4"
               >
-                {isEditing ? (
-                  <input
-                    value={edit.emoji}
-                    onChange={(event) => setEdit({ ...edit, emoji: event.target.value })}
-                    className="input-admin"
-                  />
-                ) : (
-                  <span className="text-xl">{category.emoji}</span>
-                )}
-                {isEditing ? (
-                  <input
-                    value={edit.name}
-                    onChange={(event) => setEdit({ ...edit, name: event.target.value })}
-                    className="input-admin"
-                  />
-                ) : (
-                  <span className="text-sm font-semibold">{category.name}</span>
-                )}
-                {isEditing ? (
-                  <input
-                    type="color"
-                    value={edit.colorCode}
-                    onChange={(event) => setEdit({ ...edit, colorCode: event.target.value })}
-                    className="h-10 w-full rounded-md border border-border bg-background"
-                  />
-                ) : (
-                  <span className="text-sm text-muted-foreground flex items-center gap-2">
-                    <span
-                      className="h-4 w-4 rounded-sm border border-border"
-                      style={{ backgroundColor: category.colorCode }}
+                <div className="mb-1 md:mb-0 flex md:block items-center gap-2">
+                  <span className="text-xs text-muted-foreground md:hidden">Icon:</span>
+                  {isEditing ? (
+                    <input
+                      value={edit.emoji}
+                      onChange={(event) => setEdit({ ...edit, emoji: event.target.value })}
+                      className="input-admin"
                     />
-                    {category.colorCode}
-                  </span>
-                )}
-                <div className="flex items-center justify-end gap-2">
+                  ) : (
+                    <span className="text-xl">{category.emoji}</span>
+                  )}
+                </div>
+                <div className="mb-1 md:mb-0 flex md:block items-center gap-2">
+                  <span className="text-xs text-muted-foreground md:hidden">Name:</span>
+                  {isEditing ? (
+                    <input
+                      value={edit.name}
+                      onChange={(event) => setEdit({ ...edit, name: event.target.value })}
+                      className="input-admin"
+                    />
+                  ) : (
+                    <span className="text-sm font-semibold">{category.name}</span>
+                  )}
+                </div>
+                <div className="mb-2 md:mb-0 flex md:block items-center gap-2">
+                  <span className="text-xs text-muted-foreground md:hidden">Color:</span>
+                  {isEditing ? (
+                    <input
+                      type="color"
+                      value={edit.colorCode}
+                      onChange={(event) => setEdit({ ...edit, colorCode: event.target.value })}
+                      className="h-10 w-full max-w-[100px] rounded-md border border-border bg-background"
+                    />
+                  ) : (
+                    <span className="text-sm text-muted-foreground flex items-center gap-2">
+                      <span
+                        className="h-4 w-4 rounded-sm border border-border"
+                        style={{ backgroundColor: category.colorCode }}
+                      />
+                      {category.colorCode}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center justify-end md:justify-end gap-2">
                   {isEditing ? (
                     <>
                       <button
                         type="button"
                         onClick={() => updateMutation.mutate(category.id)}
                         disabled={isMutating || !edit.name.trim()}
-                        className="h-9 w-9 rounded-md bg-primary text-white inline-flex items-center justify-center disabled:opacity-50"
+                        className="h-10 w-10 rounded-md bg-primary text-white inline-flex items-center justify-center disabled:opacity-50"
                         aria-label="Save"
                       >
                         {isMutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
@@ -200,7 +209,7 @@ export default function AdminCategories() {
                       <button
                         type="button"
                         onClick={cancelEdit}
-                        className="h-9 w-9 rounded-md border border-border inline-flex items-center justify-center text-muted-foreground hover:bg-muted"
+                        className="h-10 w-10 rounded-md border border-border inline-flex items-center justify-center text-muted-foreground hover:bg-muted"
                         aria-label="Cancel"
                       >
                         <X className="h-4 w-4" />
@@ -211,7 +220,7 @@ export default function AdminCategories() {
                       <button
                         type="button"
                         onClick={() => startEdit(category)}
-                        className="h-9 w-9 rounded-md border border-border inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
+                        className="h-10 w-10 rounded-md border border-border inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
                         aria-label="Edit"
                       >
                         <Pencil className="h-4 w-4" />
@@ -220,7 +229,7 @@ export default function AdminCategories() {
                         type="button"
                         onClick={() => confirmDelete(category)}
                         disabled={isMutating}
-                        className="h-9 w-9 rounded-md border border-border inline-flex items-center justify-center text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                        className="h-10 w-10 rounded-md border border-border inline-flex items-center justify-center text-destructive hover:bg-destructive/10 disabled:opacity-50"
                         aria-label="Delete"
                       >
                         {isMutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}

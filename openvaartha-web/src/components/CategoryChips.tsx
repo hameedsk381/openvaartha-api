@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { cn } from "@/lib/utils";
-import type { Category } from "@/data/mockArticles";
-import { categoryEmojis } from "@/data/mockArticles";
+import type { CategoryName as Category } from "@/lib/types";
+import { categoryEmojis } from "@/lib/types";
 
 const categories: ("All" | Category)[] = ["All", "Politics", "Tech", "Business", "Cinema", "Local News", "Sports"];
 

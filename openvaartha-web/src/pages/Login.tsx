@@ -44,7 +44,7 @@ export default function Login() {
       const body = new URLSearchParams();
       body.append('username', data.email);
       body.append('password', data.password);
-      const res = await fetch('http://localhost:8000/api/v1/users/login', {
+      const res = await fetch('/api/v1/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body,
@@ -54,7 +54,7 @@ export default function Login() {
         throw new Error(err.detail || 'Invalid email or password');
       }
       const result = await res.json();
-      localStorage.setItem('token', result.access_token);
+      localStorage.setItem('access_token', result.access_token);
       localStorage.setItem('user_email', data.email);
       toast.success('Welcome back.');
       navigate(from, { replace: true });
@@ -68,7 +68,7 @@ export default function Login() {
   const onRegister = async (data: RegisterValues) => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:8000/api/v1/users/register', {
+      const res = await fetch('/api/v1/users/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -95,7 +95,7 @@ export default function Login() {
     "w-full h-12 pl-11 pr-3 bg-background border border-border rounded-md text-sm font-serif placeholder:text-muted-foreground/60 placeholder:font-sans focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all";
 
   return (
-    <div className="min-h-screen flex bg-background text-foreground">
+    <div className="min-h-screen flex bg-background text-foreground overflow-x-hidden">
 
       {/* Left — editorial brand panel */}
       <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-primary text-white flex-col justify-between p-12 xl:p-16">
@@ -214,9 +214,9 @@ export default function Login() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="overline text-muted-foreground">Password</label>
-                  <button type="button" className="text-[11px] font-semibold uppercase tracking-wider text-primary hover:underline underline-offset-4">
+                  <Link to="/forgot-password" className="text-[11px] font-semibold uppercase tracking-wider text-primary hover:underline underline-offset-4">
                     Forgot?
-                  </button>
+                  </Link>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

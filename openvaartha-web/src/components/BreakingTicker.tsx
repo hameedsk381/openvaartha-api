@@ -1,8 +1,8 @@
-import { articles } from '../data/mockArticles';
+import { useBreakingArticles } from '@/lib/api-hooks';
 import { Zap } from 'lucide-react';
 
 const BreakingTicker = () => {
-  const breaking = articles.filter(a => (a as any).isBreaking);
+  const { data: breaking = [] } = useBreakingArticles(10);
   if (breaking.length === 0) return null;
   const dur = `${Math.max(25, breaking.length * 9)}s`;
 

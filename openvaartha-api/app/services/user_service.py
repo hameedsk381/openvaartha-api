@@ -1,10 +1,13 @@
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Optional
-from uuid import UUID
-from datetime import datetime
+from uuid import uuid4, UUID
+from datetime import datetime, timedelta, timezone
 from app.models.user import User as UserModel
 from app.schemas.user import UserUpdate
 from app.services import article_service
+from app.core.security import get_password_hash
+from app.services.email_service import send_email, build_password_reset_email
+from app.config import settings
 
 async def update_user(db: AsyncIOMotorDatabase, user_id: str, user_data: dict) -> Optional[dict]:
     """Update user information."""
@@ -75,4 +78,51 @@ async def add_to_reading_history(db: AsyncIOMotorDatabase, user_id: str, article
         {"$set": {"read_at": datetime.utcnow()}},
         upsert=True
     )
+    return True
+
+
+async def create_password_reset_token(db: AsyncIOMotorDatabase, email: str) -> Optional[str]:
+    """Create a password reset token and send email. Returns None if email not found."""
+    user = await db["users"].find_one({"email": email})
+    if not user:
+        return None
+
+    token = str(uuid4())
+    await db["password_reset_tokens"].insert_one({
+        "token": token,
+        "user_id": user["_id"],
+        "email": email,
+        "expires_at": datetime.now(timezone.utc) + timedelta(hours=1),
+        "used": False,
+        "created_at": datetime.now(timezone.utc),
+    })
+
+    reset_url = f"{settings.SITE_URL.rstrip('/')}/reset-password?token={token}"
+    await send_email(
+        to=email,
+        subject="Reset your OpenVaartha password",
+        html_body=build_password_reset_email(reset_url),
+    )
+    return token
+
+
+async def verify_reset_token(db: AsyncIOMotorDatabase, token: str) -> Optional[dict]:
+    """Verify a reset token is valid and not expired. Returns the token doc or None."""
+    doc = await db["password_reset_tokens"].find_one({"token": token, "used": False})
+    if not doc:
+        return None
+    if doc["expires_at"].replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        return None
+    return doc
+
+
+async def reset_password(db: AsyncIOMotorDatabase, token: str, new_password: str) -> bool:
+    """Reset a user's password using a valid reset token."""
+    doc = await verify_reset_token(db, token)
+    if not doc:
+        return False
+
+    hashed = get_password_hash(new_password)
+    await db["users"].update_one({"_id": doc["user_id"]}, {"$set": {"hashed_password": hashed}})
+    await db["password_reset_tokens"].update_one({"token": token}, {"$set": {"used": True}})
     return True

@@ -3,12 +3,13 @@ import { useSearchParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import BreakingTicker from '../components/BreakingTicker';
 import FeedSkeleton from '../components/FeedSkeleton';
-import { articles, Category } from '../data/mockArticles';
 import { getArticleImage, handleImageFallback } from '@/lib/utils';
 import { Clock, Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame } from 'lucide-react';
 import { useReadingList } from '@/hooks/use-reading-list';
+import { useArticles, useTrendingArticles, useCategories } from '@/lib/api-hooks';
+import type { Article } from '@/lib/types';
 
-const CATEGORIES: Category[] = ["Politics", "Tech", "Business", "Cinema", "Local News", "Sports"];
+type CategoryName = string;
 
 const formatDateline = (d = new Date()) =>
   d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -25,11 +26,20 @@ const relativeTime = (iso: string) => {
 
 export default function Index() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const selectedCat = (searchParams.get('category') as Category | 'All') || 'All';
+  const selectedCat = searchParams.get('category') || 'All';
   const { toggleSave, isSaved } = useReadingList();
   const [collapsed, setCollapsed] = useState(false);
   const [switching, setSwitching] = useState(false);
   const switchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { data: categories = [] } = useCategories();
+  const { data: articlesData = [] } = useArticles({ limit: 50 });
+  const { data: trendingData = [] } = useTrendingArticles(5);
+
+  const CATEGORY_NAMES = useMemo(
+    () => categories.map((c) => c.name),
+    [categories],
+  );
 
   useEffect(() => {
     let lastY = 0;
@@ -42,7 +52,7 @@ export default function Index() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const setCategory = (cat: Category | 'All') => {
+  const setCategory = (cat: string) => {
     if (cat === selectedCat) return;
     setSwitching(true);
     if (switchTimer.current) clearTimeout(switchTimer.current);
@@ -53,20 +63,18 @@ export default function Index() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const filtered  = selectedCat === 'All' ? articles : articles.filter(a => a.category === selectedCat);
+  const filtered = selectedCat === 'All' ? articlesData : articlesData.filter(a => a.category === selectedCat);
   const isFiltered = selectedCat !== 'All';
 
-  const hero      = filtered[0];
-  const topRail   = filtered.slice(1, 4);     // right rail beside hero
-  const editor    = filtered.slice(4, 7);     // 3-up "Top Stories"
-  const feed      = filtered.slice(7);        // long list
-  const trending  = useMemo(() => articles.filter(a => a.trending).slice(0, 5), []);
-  const dateline  = useMemo(() => formatDateline(), []);
+  const hero = filtered[0];
+  const topRail = filtered.slice(1, 4);
+  const editor = filtered.slice(4, 7);
+  const feed = filtered.slice(7);
+  const trending = useMemo(() => trendingData.slice(0, 5), [trendingData]);
+  const dateline = useMemo(() => formatDateline(), []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-
-      {/* ═══ FIXED HEADER ════════════════════════════════════════ */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border">
         <Navbar isInsideStack />
 
@@ -75,7 +83,7 @@ export default function Index() {
           style={{ maxHeight: collapsed ? 0 : 120, opacity: collapsed ? 0 : 1 }}
         >
           <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 py-2.5 max-w-screen-2xl mx-auto">
-            {(['All', ...CATEGORIES] as (Category | 'All')[]).map(cat => (
+            {(['All', ...CATEGORY_NAMES] as string[]).map(cat => (
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
@@ -93,14 +101,11 @@ export default function Index() {
         </div>
       </div>
 
-      {/* ═══ MAIN CONTENT ═══════════════════════════════════════ */}
       <main
         className="pb-safe"
         style={{ paddingTop: collapsed ? '56px' : '130px', transition: 'padding-top 300ms' }}
       >
         <div className="max-w-screen-2xl mx-auto">
-
-          {/* ── Dateline / masthead strip ─────────────────────── */}
           <div className="px-4 sm:px-6 lg:px-10 py-3 sm:py-4 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <span className="hidden sm:inline-flex h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
@@ -115,7 +120,6 @@ export default function Index() {
             </div>
           </div>
 
-          {/* ── Filtered header ──────────────────────────────── */}
           {isFiltered && (
             <div className="px-4 sm:px-6 lg:px-10 py-6 border-b border-border">
               <span className="overline text-primary">Section</span>
@@ -128,12 +132,9 @@ export default function Index() {
             </div>
           )}
 
-          {/* ── Lead spread: hero + right rail ───────────────── */}
           {hero && (
             <section className="border-b border-border">
               <div className="grid grid-cols-1 lg:grid-cols-12">
-
-                {/* Lead story — large */}
                 <div className="lg:col-span-8 lg:border-r lg:border-border">
                   <Link
                     to={`/article/${hero.slug}`}
@@ -141,7 +142,7 @@ export default function Index() {
                   >
                     <div className="relative overflow-hidden aspect-[16/10] sm:aspect-[16/9] lg:aspect-[16/10] bg-[hsl(var(--surface-2))]">
                       <img
-                        src={getArticleImage(hero.thumbnail)}
+                        src={getArticleImage(hero.thumbnailUrl)}
                         alt={hero.title}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                         loading="eager"
@@ -150,7 +151,7 @@ export default function Index() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
                       <button
-                        onClick={(e) => { e.preventDefault(); toggleSave(hero); }}
+                        onClick={(e) => { e.preventDefault(); toggleSave(hero as any); }}
                         className="absolute top-4 right-4 h-10 w-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-primary transition-colors press"
                         aria-label="Save article"
                       >
@@ -164,7 +165,7 @@ export default function Index() {
                           <span className="overline text-secondary !text-[10px]">{hero.category}</span>
                           <span className="h-1 w-1 rounded-full bg-white/40" />
                           <span className="text-[11px] font-medium tracking-wide">{relativeTime(hero.publishedAt)}</span>
-                          {hero.trending && (
+                          {hero.isTrending && (
                             <>
                               <span className="h-1 w-1 rounded-full bg-white/40" />
                               <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary">
@@ -193,7 +194,6 @@ export default function Index() {
                   </Link>
                 </div>
 
-                {/* Right rail — 3 stacked top stories */}
                 <aside className="lg:col-span-4 flex flex-col">
                   <div className="px-4 sm:px-6 lg:px-6 py-4 lg:py-5 border-b border-border flex items-baseline justify-between">
                     <h3 className="font-serif italic text-sm tracking-tight text-foreground">
@@ -226,7 +226,7 @@ export default function Index() {
                       </div>
                       <div className="w-24 h-20 sm:w-28 sm:h-24 shrink-0 overflow-hidden rounded-md bg-[hsl(var(--surface-2))]">
                         <img
-                          src={getArticleImage(art.thumbnail)}
+                          src={getArticleImage(art.thumbnailUrl)}
                           alt=""
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           loading="lazy"
@@ -240,7 +240,6 @@ export default function Index() {
             </section>
           )}
 
-          {/* ── Editor's picks: 3-up image grid ──────────────── */}
           {editor.length > 0 && !switching && (
             <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-8 sm:py-12">
               <div className="flex items-baseline justify-between mb-6 sm:mb-8">
@@ -267,7 +266,7 @@ export default function Index() {
                   >
                     <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
                       <img
-                        src={getArticleImage(art.thumbnail)}
+                        src={getArticleImage(art.thumbnailUrl)}
                         alt=""
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                         loading="lazy"
@@ -298,9 +297,7 @@ export default function Index() {
             </section>
           )}
 
-          {/* ── Latest + sidebar ────────────────────────────── */}
           <section className="grid grid-cols-1 lg:grid-cols-12">
-            {/* Latest list */}
             <div className="lg:col-span-8 lg:border-r lg:border-border">
               <div className="px-4 sm:px-6 lg:px-10 py-5 border-b border-border flex items-baseline justify-between">
                 <div>
@@ -331,7 +328,7 @@ export default function Index() {
                         <span className="text-[10px] text-muted-foreground font-medium tracking-wide">
                           {relativeTime(art.publishedAt)}
                         </span>
-                        {art.trending && (
+                        {art.isTrending && (
                           <>
                             <span className="h-1 w-1 rounded-full bg-border" />
                             <span className="inline-flex items-center gap-1 text-[10px] text-primary font-semibold uppercase tracking-wide">
@@ -357,7 +354,7 @@ export default function Index() {
                       <Link to={`/article/${art.slug}`} className="press block">
                         <div className="w-24 h-20 sm:w-32 sm:h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
                           <img
-                            src={getArticleImage(art.thumbnail)}
+                            src={getArticleImage(art.thumbnailUrl)}
                             alt=""
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             loading="lazy"
@@ -366,7 +363,7 @@ export default function Index() {
                         </div>
                       </Link>
                       <button
-                        onClick={() => toggleSave(art)}
+                        onClick={() => toggleSave(art as any)}
                         className={`h-9 w-9 rounded-md flex items-center justify-center transition-colors press
                           ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
                         aria-label="Save"
@@ -379,7 +376,6 @@ export default function Index() {
               )}
             </div>
 
-            {/* Sidebar — Most read / Trending */}
             <aside className="lg:col-span-4">
               <div className="lg:sticky lg:top-[140px]">
                 <div className="px-4 sm:px-6 lg:px-6 py-5 border-b border-border flex items-baseline justify-between">
@@ -410,7 +406,6 @@ export default function Index() {
                   ))}
                 </ol>
 
-                {/* Newsletter card */}
                 <div className="mx-4 sm:mx-6 lg:mx-6 my-6 p-6 rounded-xl gradient-maroon text-white relative overflow-hidden">
                   <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent_60%)]" />
                   <span className="relative overline !text-secondary">The Briefing</span>
@@ -428,7 +423,6 @@ export default function Index() {
             </aside>
           </section>
 
-          {/* ── Footer ───────────────────────────────────────── */}
           <footer className="border-t border-border bg-[hsl(var(--surface))]">
             <div className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-10">
@@ -451,7 +445,7 @@ export default function Index() {
                 <div className="md:col-span-3">
                   <p className="overline mb-4">Sections</p>
                   <ul className="space-y-2.5">
-                    {CATEGORIES.map(c => (
+                    {CATEGORY_NAMES.map(c => (
                       <li key={c}>
                         <button
                           onClick={() => setCategory(c)}
@@ -484,7 +478,7 @@ export default function Index() {
               </div>
 
               <div className="divider pt-5 flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center text-xs text-muted-foreground">
-                <span className="font-serif italic">© {new Date().getFullYear()} Open Vaartha — All rights reserved.</span>
+                <span className="font-serif italic">© {new Date().getFullYear()} Open Vaartha — built by Hamathopc Pvt Ltd.</span>
                 <div className="flex gap-5">
                   <span className="cursor-pointer hover:text-primary transition-colors font-medium">Privacy</span>
                   <span className="cursor-pointer hover:text-primary transition-colors font-medium">Terms</span>

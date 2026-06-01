@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react';
-import { articles } from '../data/mockArticles';
+import { useMemo } from 'react';
 import Navbar from '../components/Navbar';
-import { Flame, Clock, ArrowUpRight, BarChart3, TrendingUp, Bookmark, BookmarkCheck } from 'lucide-react';
+import { Flame, Clock, ArrowUpRight, BarChart3, Bookmark, BookmarkCheck } from 'lucide-react';
 import { cn, getArticleImage, handleImageFallback } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useReadingList } from '@/hooks/use-reading-list';
+import { useTrendingArticles, useEditorPicks } from '@/lib/api-hooks';
 
 const relativeTime = (iso: string) => {
   const h = Math.round((Date.now() - new Date(iso).getTime()) / 3_600_000);
@@ -14,18 +14,12 @@ const relativeTime = (iso: string) => {
 };
 
 const TrendingPage = () => {
-  const [activeTab, setActiveTab] = useState<'24h' | '7d' | 'Shared'>('24h');
   const { toggleSave, isSaved } = useReadingList();
+  const { data: trendingData = [] } = useTrendingArticles(20);
+  const { data: editorPicks = [] } = useEditorPicks(5);
 
-  const currentList = useMemo(() => {
-    if (activeTab === 'Shared') return articles.slice(2, 8);
-    if (activeTab === '7d') return [...articles].sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt));
-    return articles.filter(a => a.trending);
-  }, [activeTab]);
-
-  const editorPicks = articles.slice(5, 9);
-  const lead = currentList[0];
-  const ranks = currentList.slice(1);
+  const lead = trendingData[0];
+  const ranks = trendingData.slice(1);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -33,8 +27,6 @@ const TrendingPage = () => {
 
       <main className="pt-20 sm:pt-24 pb-16">
         <div className="max-w-screen-2xl mx-auto">
-
-          {/* Masthead */}
           <header className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14 border-b border-border bg-[hsl(var(--surface))]">
             <div className="flex items-center gap-2 mb-3">
               <Flame className="h-4 w-4 text-primary fill-current" />
@@ -46,29 +38,10 @@ const TrendingPage = () => {
             <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-4 max-w-2xl leading-relaxed">
               The stories South India is reading, ranked by attention — refreshed every fifteen minutes.
             </p>
-
-            {/* Tabs */}
-            <div className="mt-7 flex items-center gap-1 border border-border rounded-md overflow-hidden w-fit bg-background">
-              {(['24h', '7d', 'Shared'] as const).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={cn(
-                    'h-10 px-5 text-xs font-semibold uppercase tracking-wider transition-colors',
-                    activeTab === tab ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted'
-                  )}
-                >
-                  {tab === '24h' ? 'Today' : tab === '7d' ? 'This week' : 'Most shared'}
-                </button>
-              ))}
-            </div>
           </header>
 
           <div className="grid grid-cols-1 lg:grid-cols-12">
-            {/* Main ranking column */}
             <section className="lg:col-span-8 lg:border-r lg:border-border">
-
-              {/* #1 lead */}
               {lead && (
                 <Link
                   to={`/article/${lead.slug}`}
@@ -77,7 +50,7 @@ const TrendingPage = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2">
                     <div className="aspect-[4/3] sm:aspect-auto overflow-hidden bg-[hsl(var(--surface-2))]">
                       <img
-                        src={getArticleImage(lead.thumbnail)}
+                        src={getArticleImage(lead.thumbnailUrl)}
                         alt=""
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                         onError={handleImageFallback}
@@ -110,7 +83,6 @@ const TrendingPage = () => {
                 </Link>
               )}
 
-              {/* Numbered list */}
               <ol>
                 {ranks.map((art, i) => (
                   <li
@@ -125,7 +97,7 @@ const TrendingPage = () => {
                         <span className="overline text-primary">{art.category}</span>
                         <span className="h-1 w-1 rounded-full bg-border" />
                         <span className="text-[10px] text-muted-foreground font-medium">{relativeTime(art.publishedAt)}</span>
-                        {art.trending && (
+                        {art.isTrending && (
                           <>
                             <span className="h-1 w-1 rounded-full bg-border" />
                             <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary">
@@ -148,7 +120,7 @@ const TrendingPage = () => {
                       <Link to={`/article/${art.slug}`} className="press block">
                         <div className="w-24 h-20 sm:w-28 sm:h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
                           <img
-                            src={getArticleImage(art.thumbnail)}
+                            src={getArticleImage(art.thumbnailUrl)}
                             alt=""
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             onError={handleImageFallback}
@@ -157,7 +129,7 @@ const TrendingPage = () => {
                         </div>
                       </Link>
                       <button
-                        onClick={() => toggleSave(art)}
+                        onClick={() => toggleSave(art as any)}
                         className={`h-9 w-9 rounded-md flex items-center justify-center transition-colors press
                           ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
                         aria-label="Save"
@@ -170,7 +142,6 @@ const TrendingPage = () => {
               </ol>
             </section>
 
-            {/* Sidebar */}
             <aside className="lg:col-span-4">
               <div className="lg:sticky lg:top-28">
                 <div className="px-4 sm:px-6 lg:px-6 py-5 border-b border-border">
@@ -178,7 +149,7 @@ const TrendingPage = () => {
                   <h3 className="font-serif text-xl font-bold tracking-tight mt-1">Hand-picked</h3>
                 </div>
                 <ol className="px-4 sm:px-6 lg:px-6 py-2">
-                  {editorPicks.map((a, i) => (
+                  {editorPicks.slice(0, 5).map((a, i) => (
                     <li key={a.id} className="border-b border-border last:border-0 py-4">
                       <Link to={`/article/${a.slug}`} className="group flex gap-3 press">
                         <span className="font-serif text-2xl font-bold text-primary/30 group-hover:text-primary transition-colors leading-none w-7 shrink-0 pt-0.5">

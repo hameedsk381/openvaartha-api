@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.api.v1 import articles, categories, newsletter, search, users
+from app.api.v1 import admin, articles, categories, comments, feeds, newsletter, search, users
 from app.config import settings
 from app.core.rate_limit import limiter
 from app.database import db
@@ -44,6 +44,11 @@ app.include_router(categories.router, prefix="/api/v1/categories", tags=["Catego
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(search.router, prefix="/api/v1/search", tags=["Search"])
 app.include_router(newsletter.router, prefix="/api/v1/newsletter", tags=["Newsletter"])
+app.include_router(comments.router, prefix="/api/v1/comments", tags=["Comments"])
+app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
+
+# Root-level routes (sitemap, RSS feeds) — must register before SPA catch-all
+app.include_router(feeds.router)
 
 
 @app.get("/health")
@@ -61,6 +66,21 @@ async def startup_indexes():
 _dist = os.path.join(os.path.dirname(__file__), "..", "static")
 if os.path.isdir(_dist):
     app.mount("/assets", StaticFiles(directory=os.path.join(_dist, "assets")), name="assets")
+
+    # PWA files — serve before catch-all so they aren't swallowed by index.html
+    _pwa_files = [
+        "sw.js", "manifest.webmanifest", "registerSW.js", "offline.html",
+        "icon.svg", "pwa-192x192.png", "pwa-512x512.png",
+        "favicon.ico", "robots.txt", "news-fallback.svg", "placeholder.svg",
+    ]
+    for _name in _pwa_files:
+        _path = os.path.join(_dist, _name)
+        if os.path.isfile(_path):
+
+            def _serve_static(_p=_path):
+                return FileResponse(_p)
+
+            app.get(f"/{_name}", include_in_schema=False)(_serve_static)
 
     @app.get("/{full_path:path}", include_in_schema=False)
     def serve_spa(full_path: str):

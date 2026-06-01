@@ -3,6 +3,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List
 
+from pydantic import BaseModel, EmailStr
+
 from app.core.dependencies import get_current_user
 from app.core.rate_limit import limiter, LOGIN_LIMIT, REFRESH_LIMIT, REGISTER_LIMIT
 from app.core.security import decode_token
@@ -187,3 +189,41 @@ async def add_to_reading_history(
         raise HTTPException(status_code=404, detail="Article not found")
 
     return {"message": "Article added to reading history"}
+
+
+# --- Password reset ---
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
+@router.post("/forgot-password")
+@limiter.limit(LOGIN_LIMIT)
+async def forgot_password(
+    request: Request,
+    body: ForgotPasswordRequest,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Send a password reset email if the email exists.
+    Always returns 200 to prevent email enumeration."""
+    await user_service.create_password_reset_token(db, body.email)
+    return {"message": "If that email is registered, a reset link has been sent"}
+
+
+@router.post("/reset-password")
+@limiter.limit(LOGIN_LIMIT)
+async def reset_password(
+    request: Request,
+    body: ResetPasswordRequest,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Reset password using a valid token."""
+    success = await user_service.reset_password(db, body.token, body.new_password)
+    if not success:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    return {"message": "Password reset successfully"}

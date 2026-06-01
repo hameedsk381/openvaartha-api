@@ -11,6 +11,7 @@ from redis.exceptions import RedisError
 from app.config import settings
 from app.core.sanitize import sanitize_html, sanitize_points, sanitize_text
 from app.models.article import ArticleStatus, PUBLIC_STATUS
+from app.services.comment_service import ensure_comment_indexes
 
 _redis_client: Optional[redis_async.Redis] = None
 
@@ -94,6 +95,7 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
     await db["articles"].create_index("status")
     await db["article_content"].create_index("article_id")
     await db["reading_history"].create_index([("user_id", 1), ("article_id", 1)], unique=True)
+    await ensure_comment_indexes(db)
     # Backfill: documents created before the status field defaulted to draft
     # would be invisible to the public list. Treat un-tagged docs as published
     # so existing inventories migrate cleanly.
@@ -386,3 +388,32 @@ async def search_articles(db: AsyncIOMotorDatabase, query: str, skip: int = 0, l
         return []
 
     return [await _populate_article_extras(db, a) for a in articles]
+
+
+async def get_related_articles(
+    db: AsyncIOMotorDatabase,
+    article_id: str,
+    limit: int = 5,
+):
+    """Get related articles (same category, exclude self, published only).
+    Falls back to most recent if not enough in the same category."""
+    article = await db["articles"].find_one({"_id": article_id}, {"category_id": 1})
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    category_id = article.get("category_id")
+    same_category = await db["articles"].find(
+        _public_query({"_id": {"$ne": article_id}, "category_id": category_id})
+    ).sort("published_at", -1).limit(limit).to_list(length=limit)
+
+    if len(same_category) >= limit:
+        return [await _populate_article_extras(db, a) for a in same_category]
+
+    seen = {article_id, *(a["_id"] for a in same_category)}
+    remaining = limit - len(same_category)
+    recent = await db["articles"].find(
+        _public_query({"_id": {"$nin": list(seen)}})
+    ).sort("published_at", -1).limit(remaining).to_list(length=remaining)
+
+    combined = same_category + recent
+    return [await _populate_article_extras(db, a) for a in combined]

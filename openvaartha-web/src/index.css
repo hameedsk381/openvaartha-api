@@ -73,9 +73,13 @@
     --sidebar-border:              0 70% 28%;
     --sidebar-ring:                34 55% 78%;
 
-    /* ── Typography Tokens ─────────────────────────────── */
-    --font-sans:  "Inter", system-ui, sans-serif;
-    --font-serif: "Libre Baskerville", Georgia, serif;
+    /* ── Typography Tokens ───────────────────────────────
+       Sans: Inter — clean, warm, excellent screen readability
+       Serif: Source Serif 4 — variable optical size, friendly
+       on screens, pair with Libre Baskerville for headings
+       ──────────────────────────────────────────────────── */
+    --font-sans:  "Inter", system-ui, -apple-system, sans-serif;
+    --font-serif: "Source Serif 4", Georgia, "Libre Baskerville", serif;
 
     /* ── Spacing Scale (8px base) ──────────────────────── */
     --sp-1: 0.25rem;   /* 4px  */
@@ -182,22 +186,27 @@
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
-    font-feature-settings: "cv01","cv02","cv03","cv04","cv11";
-    font-optical-sizing: auto;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
-    letter-spacing: -0.012em;
-    line-height: 1.5;
+    font-optical-sizing: auto;
+    font-feature-settings: "cv01","cv02","cv03","cv04","cv05","cv11","cv12","liga","kern";
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
   }
 
-  /* Typographic hierarchy */
-  h1, h2, h3, h4, h5, h6 { @apply font-bold tracking-tight; }
-  h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.05; }
-  h2 { font-size: clamp(1.5rem, 3.5vw, 2.25rem); line-height: 1.1; }
-  h3 { font-size: clamp(1.125rem, 2vw, 1.5rem); line-height: 1.25; }
+  /* Typographic hierarchy — serif for headings, warm editorial feel */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    @apply font-bold tracking-tight;
+  }
+  h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.08; letter-spacing: -0.025em; }
+  h2 { font-size: clamp(1.5rem, 3.5vw, 2.25rem); line-height: 1.15; letter-spacing: -0.02em; }
+  h3 { font-size: clamp(1.125rem, 2vw, 1.5rem); line-height: 1.3; letter-spacing: -0.015em; }
 
   a { @apply text-inherit; }
 
@@ -228,9 +237,10 @@
 
   /* ── Overline / Label text */
   .overline {
+    font-family: var(--font-sans);
     font-size: 0.625rem;
-    font-weight: 800;
-    letter-spacing: 0.14em;
+    font-weight: 700;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     @apply text-muted-foreground;
   }
@@ -238,6 +248,18 @@
   /* ── Body text variants */
   .body-sm { @apply text-sm text-muted-foreground leading-relaxed; }
   .body-xs { @apply text-xs text-muted-foreground leading-relaxed; }
+
+  /* ── Friendly article body — serif, generous leading, warm feel */
+  .article-body {
+    font-family: var(--font-serif);
+    font-optical-sizing: auto;
+    line-height: 1.8;
+    letter-spacing: 0.005em;
+    word-spacing: 0.03em;
+  }
+  .article-body p + p {
+    margin-top: 1.5em;
+  }
 
   /* ── Divider */
   .divider { @apply border-t border-border; }

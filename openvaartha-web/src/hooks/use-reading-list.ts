@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Article } from '@/data/mockArticles';
+import type { Article } from '@/lib/types';
 
 const GUEST_KEY = 'reading-list-guest';
 

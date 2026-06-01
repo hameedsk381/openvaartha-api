@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Search, Sun, Moon, Bookmark, User, Home, X, ChevronRight, LogOut, Radio } from "lucide-react";
 import { useReadingList } from "@/hooks/use-reading-list";
-import { articles } from "@/data/mockArticles";
+import { useSearch, useCategories } from "@/lib/api-hooks";
 
 interface NavbarProps { isInsideStack?: boolean; }
 
@@ -35,7 +35,11 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
   const { saved }                 = useReadingList();
   const navigate                  = useNavigate();
   const location                  = useLocation();
-  const hasBreaking               = articles.some(a => a.isBreaking);
+
+  const { data: searchResults = [] } = useSearch(query, 0, 7);
+  const { data: categories = [] } = useCategories();
+
+  const hasBreaking = searchResults.length > 0;
 
   const switchLang = (code: LangCode) => {
     setLang(code);
@@ -62,28 +66,23 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
     setIsDark(next);
   };
 
-  const filtered = query.trim().length > 1
-    ? articles.filter(a =>
-        a.title.toLowerCase().includes(query.toLowerCase()) ||
-        a.category.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 7)
-    : [];
+  const filtered = query.trim().length > 1 ? searchResults : [];
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user_email');
     navigate('/');
-    window.location.reload(); // Refresh to update auth state across components
+    window.location.reload();
   };
+
+  const categoryNames = useMemo(() => categories.map((c) => c.name), [categories]);
 
   return (
     <>
-      {/* ── Top Header ──────────────────────────────────────────── */}
       <header className={cn(
         "h-14 flex items-center justify-between px-4 sm:px-6",
         isInsideStack ? "" : "border-b border-border"
       )}>
-        {/* Wordmark */}
         <Link to="/" className="flex items-center gap-2 press group">
           <div className="h-7 w-7 rounded-lg gradient-maroon flex items-center justify-center shadow-sm shadow-primary/30 group-hover:shadow-maroon transition-shadow">
             <span className="text-[9px] font-black text-white tracking-tight">OV</span>
@@ -94,9 +93,8 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
           </div>
         </Link>
 
-        {/* Desktop nav links */}
         <nav className="hidden md:flex items-center gap-1">
-          {["Politics","Tech","Business","Cinema","Sports"].map(cat => (
+          {categoryNames.slice(0, 5).map(cat => (
             <button
               key={cat}
               onClick={() => navigate(`/?category=${cat}`)}
@@ -107,9 +105,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
           ))}
         </nav>
 
-        {/* Right actions */}
         <div className="flex items-center gap-0.5">
-          {/* Language switcher — desktop only */}
           <div className="hidden sm:flex items-center border border-border rounded-lg overflow-hidden mr-1">
             {LANGS.map(({ code, label }) => (
               <button
@@ -186,7 +182,6 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
         </div>
       </header>
 
-      {/* ── Mobile Bottom Navigation ──────────────────────────────── */}
       <nav className="bottom-nav sm:hidden">
         <div className="flex items-center justify-around h-16 px-1">
           <BottomNavItem icon={<Home className="h-5 w-5" />} label="Feed" to="/" active={location.pathname === "/"} />
@@ -211,10 +206,8 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
         </div>
       </nav>
 
-      {/* ── Full-Screen Search ───────────────────────────────────── */}
       {searchOpen && (
         <div className="fixed inset-0 z-[100] bg-background flex flex-col">
-          {/* Input bar */}
           <div className="flex items-center gap-3 h-14 px-4 border-b border-border bg-background">
             <Search className="h-5 w-5 text-muted-foreground shrink-0" />
             <input
@@ -234,13 +227,12 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {/* Empty state — show category shortcuts */}
             {query.trim().length < 2 && (
               <div className="p-4 space-y-5">
                 <div>
                   <p className="text-xs font-semibold text-foreground mb-3">Browse categories</p>
                   <div className="flex flex-wrap gap-2">
-                    {["Politics","Tech","Business","Cinema","Sports","Local News"].map(cat => (
+                    {categoryNames.map(cat => (
                       <button
                         key={cat}
                         onClick={() => { navigate(`/?category=${cat}`); setSearchOpen(false); setQuery(""); }}
@@ -259,7 +251,6 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
               </div>
             )}
 
-            {/* Results */}
             {filtered.length > 0 && (
               <div>
                 <div className="section-header px-4">
@@ -294,7 +285,6 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
   );
 };
 
-/* ── Bottom Nav Item ─────────────────────────────────────────── */
 interface BNIProps { icon: React.ReactNode; label: string; to?: string; onClick?: () => void; active: boolean; }
 
 const BottomNavItem = ({ icon, label, to, onClick, active }: BNIProps) => {

@@ -1,10 +1,11 @@
 import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
-import { articles } from "@/data/mockArticles";
+import { useArticles } from "@/lib/api-hooks";
 
 const NotFound = () => {
   const location = useLocation();
+  const { data: articles = [] } = useArticles({ limit: 3 });
 
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
@@ -14,7 +15,6 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Top dateline strip */}
       <div className="border-b border-border bg-[hsl(var(--surface))]">
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
@@ -31,8 +31,6 @@ const NotFound = () => {
 
       <main className="flex-1 flex items-center">
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-16 sm:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start w-full">
-
-          {/* Left — the editorial 404 */}
           <div className="lg:col-span-7">
             <span className="overline text-primary">Editorial note</span>
             <div className="font-serif text-[160px] sm:text-[220px] font-bold text-primary/15 leading-[0.85] tracking-tighter mt-2 select-none">
@@ -66,7 +64,6 @@ const NotFound = () => {
             </p>
           </div>
 
-          {/* Right — suggestions */}
           <aside className="lg:col-span-5">
             <div className="px-6 py-5 border-b border-border">
               <p className="overline text-primary">While you're here</p>

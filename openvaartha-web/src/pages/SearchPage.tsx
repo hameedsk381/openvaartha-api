@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { articles, Category } from '../data/mockArticles';
 import Navbar from '../components/Navbar';
 import { Search, X, Hash, Clock, ArrowUpRight } from 'lucide-react';
 import { getArticleImage, handleImageFallback } from '@/lib/utils';
+import { useSearch, useCategories, useArticles } from '@/lib/api-hooks';
 
 const relativeTime = (iso: string) => {
   const h = Math.round((Date.now() - new Date(iso).getTime()) / 3_600_000);
@@ -12,7 +12,6 @@ const relativeTime = (iso: string) => {
 };
 
 const SUGGESTED = ['Andhra Budget', 'IIT Madras AI', 'Bengaluru Metro', 'MS Dhoni', 'Tamil Nadu EV'];
-const CATEGORIES: (Category | 'All')[] = ['All', 'Politics', 'Tech', 'Business', 'Cinema', 'Local News', 'Sports'];
 
 const Highlight = ({ text, q }: { text: string; q: string }) => {
   if (!q) return <>{text}</>;
@@ -31,22 +30,24 @@ const Highlight = ({ text, q }: { text: string; q: string }) => {
 
 const SearchPage = () => {
   const [query, setQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+
+  const { data: categories = [] } = useCategories();
+  const { data: allArticles = [] } = useArticles({ limit: 200 });
+  const { data: searchResults = [] } = useSearch(query, 0, 50);
 
   const results = useMemo(() => {
-    if (!query && selectedCategory === 'All') return [];
-    const q = query.trim().toLowerCase();
-    return articles.filter(a => {
-      const matchQ = !q
-        || a.title.toLowerCase().includes(q)
-        || a.summary.toLowerCase().includes(q)
-        || a.content.body.toLowerCase().includes(q);
-      const matchC = selectedCategory === 'All' || a.category === selectedCategory;
-      return matchQ && matchC;
-    });
-  }, [query, selectedCategory]);
+    const source = query.trim() ? searchResults : allArticles;
+    if (selectedCategory === 'All') return source;
+    return source.filter((a) => a.category === selectedCategory);
+  }, [query, selectedCategory, searchResults, allArticles]);
 
   const isEmpty = !query && selectedCategory === 'All';
+
+  const categoryNames = useMemo(
+    () => categories.map((c) => c.name),
+    [categories],
+  );
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -54,8 +55,6 @@ const SearchPage = () => {
 
       <main className="pt-20 sm:pt-24 pb-16">
         <div className="max-w-screen-2xl mx-auto">
-
-          {/* Masthead */}
           <header className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14 border-b border-border bg-[hsl(var(--surface))]">
             <span className="overline text-primary">Archive · Search</span>
             <h1 className="font-serif text-4xl sm:text-6xl font-bold tracking-tight leading-[1.02] mt-3">
@@ -88,7 +87,7 @@ const SearchPage = () => {
 
             <div className="mt-5 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
               <span className="overline text-muted-foreground shrink-0 pr-1">Section</span>
-              {CATEGORIES.map((cat) => (
+              {(['All', ...categoryNames] as string[]).map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
@@ -104,9 +103,7 @@ const SearchPage = () => {
             </div>
           </header>
 
-          {/* Results */}
           <section className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14 min-h-[400px]">
-
             {isEmpty ? (
               <div className="max-w-3xl">
                 <p className="overline text-primary mb-3">Try a topic</p>
@@ -129,7 +126,7 @@ const SearchPage = () => {
                 <div className="mt-12 pt-8 border-t border-border">
                   <p className="overline text-muted-foreground mb-4">Browse by section</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {CATEGORIES.filter(c => c !== 'All').map(c => (
+                    {categoryNames.map(c => (
                       <button
                         key={c}
                         onClick={() => setSelectedCategory(c)}
@@ -139,7 +136,7 @@ const SearchPage = () => {
                           {c}
                         </div>
                         <span className="text-[11px] text-muted-foreground font-medium mt-1 inline-flex items-center gap-1">
-                          {articles.filter(a => a.category === c).length} stories
+                          {allArticles.filter(a => a.category === c).length} stories
                           <ArrowUpRight className="h-3 w-3" />
                         </span>
                       </button>
@@ -192,7 +189,7 @@ const SearchPage = () => {
                       <Link to={`/article/${art.slug}`} className="press hidden sm:block shrink-0">
                         <div className="w-32 h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
                           <img
-                            src={getArticleImage(art.thumbnail)}
+                            src={getArticleImage(art.thumbnailUrl)}
                             alt=""
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             onError={handleImageFallback}

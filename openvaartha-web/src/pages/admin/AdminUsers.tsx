@@ -1,0 +1,164 @@
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, ChevronDown, Loader2, Shield, ShieldOff, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
+import { cn } from "@/lib/utils";
+
+type AdminUser = {
+  id: string;
+  email: string;
+  fullName?: string;
+  full_name?: string;
+  role: string;
+  isAdmin?: boolean;
+  is_admin?: boolean;
+  isActive?: boolean;
+  is_active?: boolean;
+  createdAt?: string;
+  created_at?: string;
+};
+
+export default function AdminUsers() {
+  const queryClient = useQueryClient();
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ["admin", "users"],
+    queryFn: () => apiFetch<AdminUser[]>("/admin/users"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (userId: string) => apiFetch(`/admin/users/${userId}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      toast.success("User deleted");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const toggleAdmin = (user: AdminUser) => {
+    const isAdmin = user.isAdmin ?? user.is_admin ?? false;
+    apiFetch(`/admin/users/${user.id}`, {
+      method: "PUT",
+      body: JSON.stringify({ is_admin: !isAdmin }),
+    })
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+        toast.success(isAdmin ? "Admin rights removed" : "User promoted to admin");
+      })
+      .catch((e) => toast.error(e.message));
+  };
+
+  const toggleActive = (user: AdminUser) => {
+    const isActive = user.isActive ?? user.is_active ?? true;
+    apiFetch(`/admin/users/${user.id}`, {
+      method: "PUT",
+      body: JSON.stringify({ is_active: !isActive }),
+    })
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+        toast.success(isActive ? "User deactivated" : "User activated");
+      })
+      .catch((e) => toast.error(e.message));
+  };
+
+  return (
+    <div className="space-y-6 max-w-5xl">
+      <div>
+        <h1 className="text-2xl font-black tracking-tight">Users</h1>
+        <p className="text-sm text-muted-foreground mt-1">Manage registered users and admin access.</p>
+      </div>
+
+      <div className="border border-border rounded-lg overflow-hidden">
+        <div className="hidden md:grid grid-cols-[1fr_120px_100px_100px] gap-4 h-11 px-4 items-center border-b border-border bg-[hsl(var(--surface))] text-xs font-semibold text-muted-foreground">
+          <span>User</span>
+          <span>Role</span>
+          <span>Status</span>
+          <span className="text-right">Actions</span>
+        </div>
+        {isLoading ? (
+          <div className="h-32 flex items-center justify-center">
+            <Loader2 className="h-6 w-6 text-primary animate-spin" />
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {users.map((user) => {
+              const isAdmin = user.isAdmin ?? user.is_admin ?? false;
+              const isActive = user.isActive ?? user.is_active ?? true;
+              const name = user.fullName ?? user.full_name ?? "—";
+              return (
+                <div key={user.id} className="block md:grid md:grid-cols-[1fr_120px_100px_100px] md:gap-4 md:items-center p-4">
+                  <div className="mb-1 md:mb-0 min-w-0">
+                    <p className="text-sm font-semibold line-clamp-1">{name}</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                  <div className="mb-1 md:mb-0">
+                    <span className="text-xs text-muted-foreground md:hidden mr-2">Role:</span>
+                    <span className={cn(
+                      "text-xs font-semibold",
+                      isAdmin ? "text-primary" : "text-muted-foreground"
+                    )}>
+                      <span className="inline-flex items-center gap-1">
+                        {isAdmin ? <Shield className="h-3 w-3" /> : <ShieldOff className="h-3 w-3" />}
+                        {isAdmin ? "Admin" : "User"}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="mb-2 md:mb-0">
+                    <span className="text-xs text-muted-foreground md:hidden mr-2">Status:</span>
+                    <span className={cn(
+                      "text-xs font-semibold",
+                      isActive ? "text-green-600" : "text-red-600"
+                    )}>
+                      {isActive ? "Active" : "Disabled"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-end md:justify-end gap-1">
+                    <button
+                      onClick={() => toggleAdmin(user)}
+                      className={cn(
+                        "h-9 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 border transition-colors press",
+                        isAdmin
+                          ? "border-primary/20 text-primary hover:bg-primary/5"
+                          : "border-border text-muted-foreground hover:text-primary hover:border-primary/30"
+                      )}
+                      title={isAdmin ? "Remove admin" : "Make admin"}
+                    >
+                      {isAdmin ? <X className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
+                      <span className="hidden sm:inline">{isAdmin ? "Demote" : "Promote"}</span>
+                    </button>
+                    <button
+                      onClick={() => toggleActive(user)}
+                      className={cn(
+                        "h-9 px-2.5 rounded-md text-xs font-semibold border transition-colors press",
+                        isActive
+                          ? "border-border text-muted-foreground hover:text-red-600 hover:border-red-300"
+                          : "border-green-200 text-green-700 hover:bg-green-50"
+                      )}
+                      title={isActive ? "Deactivate" : "Activate"}
+                    >
+                      {isActive ? "Disable" : "Enable"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`Delete user "${user.email}"?`)) deleteMutation.mutate(user.id);
+                      }}
+                      className="h-9 w-9 rounded-md border border-border inline-flex items-center justify-center text-destructive hover:bg-destructive/5 press"
+                      title="Delete user"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+            {users.length === 0 && (
+              <div className="p-8 text-sm text-muted-foreground text-center">No users found.</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+

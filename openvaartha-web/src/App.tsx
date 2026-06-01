@@ -7,6 +7,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
+import ForgotPassword from "./pages/ForgotPassword.tsx";
+import ResetPassword from "./pages/ResetPassword.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import ArticlePage from "./pages/ArticlePage.tsx";
 import CategoryPage from "./pages/CategoryPage.tsx";
@@ -20,12 +22,29 @@ import PortalDashboard from "./pages/PortalDashboard.tsx";
 import PortalSaved from "./pages/PortalSaved.tsx";
 import PortalHistory from "./pages/PortalHistory.tsx";
 import PortalSettings from "./pages/PortalSettings.tsx";
+import AdminRoute from "./components/AdminRoute.tsx";
+import AdminLayout from "./components/AdminLayout.tsx";
+import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
+import AdminArticles from "./pages/admin/AdminArticles.tsx";
+import AdminArticleForm from "./pages/admin/AdminArticleForm.tsx";
+import AdminCategories from "./pages/admin/AdminCategories.tsx";
+import AdminUsers from "./pages/admin/AdminUsers.tsx";
+import AdminComments from "./pages/admin/AdminComments.tsx";
+import AdminNewsletter from "./pages/admin/AdminNewsletter.tsx";
+import InstallPWA from "./components/InstallPWA.tsx";
+import { toast } from "sonner";
 
 
 const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
+    // Online / offline toast
+    const handleOnline = () => toast.success("Back online");
+    const handleOffline = () => toast.error("You're offline. Cached stories still available.");
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
     // Apply Theme
     const applyTheme = () => {
       const theme = localStorage.getItem('theme') || 'System default';
@@ -69,6 +88,8 @@ const App = () => {
     window.addEventListener('appearance-change', handleUpdate);
 
     return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
       window.removeEventListener('storage', handleUpdate);
       window.removeEventListener('appearance-change', handleUpdate);
     };
@@ -86,6 +107,8 @@ const App = () => {
               <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/article/:slug" element={<ArticlePage />} />
             <Route path="/category/:categoryId" element={<CategoryPage />} />
             <Route path="/search" element={<SearchPage />} />
@@ -100,11 +123,22 @@ const App = () => {
             <Route path="/portal/history" element={<PortalLayout><PortalHistory /></PortalLayout>} />
             <Route path="/portal/settings" element={<PortalLayout><PortalSettings /></PortalLayout>} />
 
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminRoute><AdminLayout><AdminDashboard /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/articles" element={<AdminRoute><AdminLayout><AdminArticles /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/articles/new" element={<AdminRoute><AdminLayout><AdminArticleForm /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/articles/:articleId/edit" element={<AdminRoute><AdminLayout><AdminArticleForm /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/categories" element={<AdminRoute><AdminLayout><AdminCategories /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/users" element={<AdminRoute><AdminLayout><AdminUsers /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/comments" element={<AdminRoute><AdminLayout><AdminComments /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/newsletter" element={<AdminRoute><AdminLayout><AdminNewsletter /></AdminLayout></AdminRoute>} />
+
             <Route path="*" element={<NotFound />} />
 
             </Routes>
           </ProtectedRoute>
         </BrowserRouter>
+        <InstallPWA />
       </div>
     </TooltipProvider>
   </QueryClientProvider>

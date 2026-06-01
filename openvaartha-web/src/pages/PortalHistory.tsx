@@ -89,7 +89,7 @@ export default function PortalHistory() {
                   <CalendarDays className="h-3 w-3" /> {group}
                 </span>
               </div>
-              <div className="border border-border rounded-xl overflow-hidden divide-y divide-border mt-2 bg-white dark:bg-zinc-900">
+              <div className="border border-border rounded-xl overflow-hidden divide-y divide-border mt-2 bg-card">
                 {grouped[group].map((article) => (
                   <Link
                     key={article.id}

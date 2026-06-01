@@ -316,7 +316,7 @@ function SettingsSection({ label, icon: Icon, children }: { label: string; icon:
         <Icon className="h-3.5 w-3.5 text-primary" />
         <span className="overline text-primary">{label}</span>
       </div>
-      <div className="border border-border rounded-xl overflow-hidden divide-y divide-border bg-white dark:bg-zinc-900">
+      <div className="border border-border rounded-xl overflow-hidden divide-y divide-border bg-card">
         {children}
       </div>
     </div>

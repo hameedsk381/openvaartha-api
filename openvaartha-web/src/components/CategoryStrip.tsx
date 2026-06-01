@@ -1,5 +1,6 @@
 import React from 'react';
-import { Article, Category, categoryEmojis } from '../data/mockArticles';
+import type { Article, CategoryName as Category } from '@/lib/types';
+import { categoryEmojis } from '@/lib/types';
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import FeedCard from './FeedCard';

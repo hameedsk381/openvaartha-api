@@ -2,8 +2,8 @@ import { Instagram, ArrowUpRight, Heart, MessageCircle, RefreshCw } from 'lucide
 import { Button } from './ui/button';
 import { InstagramEmbed } from 'react-social-media-embed';
 import { useState, useEffect } from 'react';
-import { articles } from '../data/mockArticles';
 import { getArticleImage, handleImageFallback } from '../lib/utils';
+import { useArticles } from '@/lib/api-hooks';
 
 const InstagramFeed = () => {
     const [stats, setStats] = useState({
@@ -11,13 +11,13 @@ const InstagramFeed = () => {
         posts: "492",
         isLive: false
     });
+    const { data: articleData = [] } = useArticles({ limit: 6 });
 
     useEffect(() => {
         const fetchInstagramData = async () => {
             const token = import.meta.env.VITE_INSTAGRAM_ACCESS_TOKEN;
             
             if (token) {
-                // Official Meta Graph API
                 try {
                     const response = await fetch(`https://graph.instagram.com/me?fields=id,username,account_type,media_count,followers_count&access_token=${token}`);
                     const data = await response.json();
@@ -31,14 +31,13 @@ const InstagramFeed = () => {
                             posts: data.media_count.toString(),
                             isLive: true 
                         }));
-                        return; // Exit if successful
+                        return;
                     }
                 } catch (err) {
                     console.warn("Meta API failed, falling back to proxy.");
                 }
             }
 
-            // Fallback: Proxy Scraper (Current implementation)
             try {
                 const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://www.instagram.com/openvaartha/')}`);
                 const data = await response.json();
@@ -64,14 +63,13 @@ const InstagramFeed = () => {
         fetchInstagramData();
     }, []);
 
-    // Mock data for the social snapshots
     const posts = [
-        { id: 1, image: getArticleImage(articles[0]?.thumbnail), likes: "1.2k" },
-        { id: 2, image: getArticleImage(articles[1]?.thumbnail), likes: "850" },
-        { id: 3, image: getArticleImage(articles[2]?.thumbnail), likes: "2.4k" },
-        { id: 4, image: getArticleImage(articles[3]?.thumbnail), likes: "1.1k" },
-        { id: 5, image: getArticleImage(articles[4]?.thumbnail), likes: "920" },
-        { id: 6, image: getArticleImage(articles[5]?.thumbnail), likes: "3.1k" },
+        { id: 1, image: getArticleImage(articleData[0]?.thumbnailUrl), likes: "1.2k" },
+        { id: 2, image: getArticleImage(articleData[1]?.thumbnailUrl), likes: "850" },
+        { id: 3, image: getArticleImage(articleData[2]?.thumbnailUrl), likes: "2.4k" },
+        { id: 4, image: getArticleImage(articleData[3]?.thumbnailUrl), likes: "1.1k" },
+        { id: 5, image: getArticleImage(articleData[4]?.thumbnailUrl), likes: "920" },
+        { id: 6, image: getArticleImage(articleData[5]?.thumbnailUrl), likes: "3.1k" },
     ];
 
     return (

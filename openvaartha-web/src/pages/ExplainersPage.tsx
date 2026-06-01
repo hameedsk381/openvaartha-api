@@ -1,8 +1,8 @@
-import { articles } from '../data/mockArticles';
 import Navbar from '../components/Navbar';
 import { ArrowUpRight, Compass, Clock, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getArticleImage, handleImageFallback } from '../lib/utils';
+import { useExplainers } from '@/lib/api-hooks';
 
 const relativeTime = (iso: string) => {
   const h = Math.round((Date.now() - new Date(iso).getTime()) / 3_600_000);
@@ -11,9 +11,11 @@ const relativeTime = (iso: string) => {
 };
 
 const ExplainersPage = () => {
-  const lead = articles[0];
-  const featured = articles.slice(1, 3);
-  const more = articles.slice(3);
+  const { data: explainers = [] } = useExplainers(0, 20);
+
+  const lead = explainers[0];
+  const featured = explainers.slice(1, 3);
+  const more = explainers.slice(3);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -21,8 +23,6 @@ const ExplainersPage = () => {
 
       <main className="pt-20 sm:pt-24 pb-16">
         <div className="max-w-screen-2xl mx-auto">
-
-          {/* Masthead */}
           <header className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14 border-b border-border bg-[hsl(var(--surface))]">
             <div className="flex items-center gap-2 mb-3">
               <Compass className="h-4 w-4 text-primary" />
@@ -36,7 +36,6 @@ const ExplainersPage = () => {
             </p>
           </header>
 
-          {/* Lead explainer */}
           {lead && (
             <section className="border-b border-border">
               <Link
@@ -46,7 +45,7 @@ const ExplainersPage = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-12">
                   <div className="lg:col-span-7 aspect-[16/10] sm:aspect-[16/9] lg:aspect-auto overflow-hidden bg-[hsl(var(--surface-2))]">
                     <img
-                      src={getArticleImage(lead.thumbnail)}
+                      src={getArticleImage(lead.thumbnailUrl)}
                       alt={lead.title}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                       onError={handleImageFallback}
@@ -62,7 +61,7 @@ const ExplainersPage = () => {
                       {lead.title}
                     </h2>
                     <p className="font-serif text-base sm:text-lg text-muted-foreground mt-4 leading-relaxed line-clamp-4">
-                      {lead.content.tldr}
+                      {lead.content?.tldr || lead.summary}
                     </p>
                     <div className="mt-6 flex items-center gap-4 text-[11px] text-muted-foreground font-medium">
                       <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {lead.readTime} read</span>
@@ -78,7 +77,6 @@ const ExplainersPage = () => {
             </section>
           )}
 
-          {/* Two featured Q&A-style cards */}
           {featured.length > 0 && (
             <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
               <div className="flex items-baseline justify-between mb-8 pb-5 border-b border-border">
@@ -116,7 +114,7 @@ const ExplainersPage = () => {
                           <Compass className="h-3 w-3" /> Why it matters
                         </p>
                         <p className="font-serif text-sm sm:text-base text-foreground/80 leading-relaxed">
-                          {art.content.tldr}
+                          {art.content?.tldr || art.summary}
                         </p>
                       </div>
                     </div>
@@ -130,7 +128,6 @@ const ExplainersPage = () => {
             </section>
           )}
 
-          {/* More explainers grid */}
           <section className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
             <div className="flex items-baseline justify-between mb-8 pb-5 border-b border-border">
               <div>
@@ -147,7 +144,7 @@ const ExplainersPage = () => {
                 <Link key={art.id} to={`/article/${art.slug}`} className="group press block">
                   <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
                     <img
-                      src={getArticleImage(art.thumbnail)}
+                      src={getArticleImage(art.thumbnailUrl)}
                       alt={art.title}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                       onError={handleImageFallback}

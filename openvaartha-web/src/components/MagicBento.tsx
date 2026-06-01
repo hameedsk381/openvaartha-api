@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Zap, Shield, TrendingUp, Globe, Briefcase, ArrowUpRight } from 'lucide-react';
 import './MagicBento.css';
 import { cn, getArticleImage, handleImageFallback } from "@/lib/utils";
-import { Article } from "@/data/mockArticles";
+import type { Article } from "@/lib/types";
 
 export interface BentoCardProps {
   article: Article;

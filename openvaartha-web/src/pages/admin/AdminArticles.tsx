@@ -59,8 +59,8 @@ export default function AdminArticles() {
         </div>
         <div className="divide-y divide-border">
           {articles.map((article) => (
-            <div key={article.id} className="grid md:grid-cols-[1fr_110px_160px_120px_110px] gap-3 md:gap-4 p-4 md:items-center">
-              <div className="min-w-0">
+            <div key={article.id} className="block md:grid md:grid-cols-[1fr_110px_160px_120px_110px] md:gap-4 md:items-center p-4">
+              <div className="min-w-0 mb-1.5 md:mb-0">
                 <p className="text-sm font-semibold line-clamp-1">{article.title}</p>
                 <div className="flex flex-wrap gap-2 mt-1 text-xs text-muted-foreground">
                   {article.isBreaking ? <span>Breaking</span> : null}
@@ -68,18 +68,27 @@ export default function AdminArticles() {
                   {article.isEditorPick ? <span>Editor pick</span> : null}
                 </div>
               </div>
-              <div>{statusBadge(article.status)}</div>
-              <span className="text-sm text-muted-foreground">{article.category || "General"}</span>
-              <span className="text-sm text-muted-foreground">{new Date(article.publishedAt).toLocaleDateString()}</span>
+              <div className="mb-1 md:mb-0">
+                <span className="text-xs text-muted-foreground md:hidden mr-2">Status:</span>
+                {statusBadge(article.status)}
+              </div>
+              <div className="mb-1 md:mb-0">
+                <span className="text-xs text-muted-foreground md:hidden mr-2">Category:</span>
+                <span className="text-sm text-muted-foreground">{article.category || "General"}</span>
+              </div>
+              <div className="mb-2 md:mb-0">
+                <span className="text-xs text-muted-foreground md:hidden mr-2">Published:</span>
+                <span className="text-sm text-muted-foreground">{new Date(article.publishedAt).toLocaleDateString()}</span>
+              </div>
               <div className="flex md:justify-end gap-2">
-                <Link to={`/admin/articles/${article.id}/edit`} className="h-9 w-9 rounded-md border border-border inline-flex items-center justify-center hover:bg-[hsl(var(--surface))]" aria-label="Edit article">
+                <Link to={`/admin/articles/${article.id}/edit`} className="h-10 w-10 rounded-md border border-border inline-flex items-center justify-center hover:bg-[hsl(var(--surface))]" aria-label="Edit article">
                   <Edit className="h-4 w-4" />
                 </Link>
                 <button
                   onClick={() => {
                     if (window.confirm("Delete this article?")) deleteMutation.mutate(article.id);
                   }}
-                  className="h-9 w-9 rounded-md border border-border inline-flex items-center justify-center text-red-600 hover:bg-red-50"
+                  className="h-10 w-10 rounded-md border border-border inline-flex items-center justify-center text-destructive hover:bg-[hsl(var(--destructive)/0.08)]"
                   aria-label="Delete article"
                 >
                   <Trash2 className="h-4 w-4" />

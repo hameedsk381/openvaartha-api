@@ -1,10 +1,15 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { ARTICLE_STATUSES, type Article, type ArticleStatus, type Category } from "./types";
+import { cn } from "@/lib/utils";
+import MDXBodyEditor from "@/components/MDXBodyEditor";
+
+type TimelineEntry = { date: string; event: string };
+type ExplainerEntry = { question: string; answer: string };
 
 type FormState = {
   title: string;
@@ -23,6 +28,8 @@ type FormState = {
   tldr: string;
   points: string;
   body: string;
+  timeline: TimelineEntry[];
+  explainer: ExplainerEntry[];
 };
 
 const emptyForm: FormState = {
@@ -42,6 +49,8 @@ const emptyForm: FormState = {
   tldr: "",
   points: "",
   body: "",
+  timeline: [],
+  explainer: [],
 };
 
 const toDateInput = (value?: string) => {
@@ -88,6 +97,8 @@ export default function AdminArticleForm() {
       tldr: article.content?.tldr || "",
       points: article.content?.points?.join("\n") || "",
       body: article.content?.body || "",
+      timeline: article.content?.timeline?.filter((t): t is TimelineEntry => !!t) || [],
+      explainer: article.content?.explainer?.filter((e): e is ExplainerEntry => !!e) || [],
     });
   }, [articleQuery.data]);
 
@@ -115,6 +126,8 @@ export default function AdminArticleForm() {
       tldr: form.tldr,
       points: form.points.split("\n").map((point) => point.trim()).filter(Boolean),
       body: form.body,
+      timeline: form.timeline.length > 0 ? form.timeline : null,
+      explainer: form.explainer.length > 0 ? form.explainer : null,
     },
   }), [form]);
 
@@ -141,6 +154,38 @@ export default function AdminArticleForm() {
 
   const update = (field: keyof FormState, value: string | boolean) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const addTimelineEntry = () => {
+    setForm((current) => ({ ...current, timeline: [...current.timeline, { date: "", event: "" }] }));
+  };
+
+  const removeTimelineEntry = (index: number) => {
+    setForm((current) => ({ ...current, timeline: current.timeline.filter((_, i) => i !== index) }));
+  };
+
+  const updateTimelineEntry = (index: number, field: keyof TimelineEntry, value: string) => {
+    setForm((current) => {
+      const timeline = [...current.timeline];
+      timeline[index] = { ...timeline[index], [field]: value };
+      return { ...current, timeline };
+    });
+  };
+
+  const addExplainerEntry = () => {
+    setForm((current) => ({ ...current, explainer: [...current.explainer, { question: "", answer: "" }] }));
+  };
+
+  const removeExplainerEntry = (index: number) => {
+    setForm((current) => ({ ...current, explainer: current.explainer.filter((_, i) => i !== index) }));
+  };
+
+  const updateExplainerEntry = (index: number, field: keyof ExplainerEntry, value: string) => {
+    setForm((current) => {
+      const explainer = [...current.explainer];
+      explainer[index] = { ...explainer[index], [field]: value };
+      return { ...current, explainer };
+    });
   };
 
   const onSubmit = (event: FormEvent) => {
@@ -195,8 +240,75 @@ export default function AdminArticleForm() {
             <textarea value={form.points} onChange={(event) => update("points", event.target.value)} required rows={5} className="input-admin" placeholder="One point per line" />
           </Field>
           <Field label="Body">
-            <textarea value={form.body} onChange={(event) => update("body", event.target.value)} required rows={12} className="input-admin" />
+            <MDXBodyEditor value={form.body} onChange={(value) => update("body", value)} />
           </Field>
+
+          <div className="border border-border rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-muted-foreground">Timeline</span>
+              <button type="button" onClick={addTimelineEntry} className="h-7 px-2 rounded-md text-[11px] font-semibold border border-border inline-flex items-center gap-1 text-muted-foreground hover:text-foreground press">
+                <Plus className="h-3 w-3" /> Add entry
+              </button>
+            </div>
+            {form.timeline.length === 0 && (
+              <p className="text-xs text-muted-foreground italic">No timeline entries. Add key events and their timestamps.</p>
+            )}
+            <div className="space-y-2">
+              {form.timeline.map((entry, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <input
+                    value={entry.date}
+                    onChange={(e) => updateTimelineEntry(i, "date", e.target.value)}
+                    placeholder="Date/time (e.g. 10:00 AM)"
+                    className="input-admin w-32 shrink-0 text-xs"
+                  />
+                  <input
+                    value={entry.event}
+                    onChange={(e) => updateTimelineEntry(i, "event", e.target.value)}
+                    placeholder="Event description"
+                    className="input-admin flex-1 text-xs"
+                  />
+                  <button type="button" onClick={() => removeTimelineEntry(i)} className="h-8 w-8 rounded-md border border-border inline-flex items-center justify-center text-destructive hover:bg-destructive/5 shrink-0 press">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="border border-border rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-muted-foreground">Explainer Q&A</span>
+              <button type="button" onClick={addExplainerEntry} className="h-7 px-2 rounded-md text-[11px] font-semibold border border-border inline-flex items-center gap-1 text-muted-foreground hover:text-foreground press">
+                <Plus className="h-3 w-3" /> Add Q&A
+              </button>
+            </div>
+            {form.explainer.length === 0 && (
+              <p className="text-xs text-muted-foreground italic">No explainer entries. Add questions and answers for in-depth context.</p>
+            )}
+            <div className="space-y-3">
+              {form.explainer.map((entry, i) => (
+                <div key={i} className="border border-border rounded-md p-3 space-y-2 relative">
+                  <button type="button" onClick={() => removeExplainerEntry(i)} className="absolute top-2 right-2 h-6 w-6 rounded-md border border-border inline-flex items-center justify-center text-destructive hover:bg-destructive/5 press">
+                    <X className="h-3 w-3" />
+                  </button>
+                  <input
+                    value={entry.question}
+                    onChange={(e) => updateExplainerEntry(i, "question", e.target.value)}
+                    placeholder="Question"
+                    className="input-admin w-full text-sm pr-8"
+                  />
+                  <textarea
+                    value={entry.answer}
+                    onChange={(e) => updateExplainerEntry(i, "answer", e.target.value)}
+                    placeholder="Answer"
+                    rows={3}
+                    className="input-admin w-full text-xs"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
 
         <aside className="space-y-4">
@@ -235,6 +347,16 @@ export default function AdminArticleForm() {
             </Field>
             <Field label="Thumbnail URL">
               <input value={form.thumbnailUrl} onChange={(event) => update("thumbnailUrl", event.target.value)} className="input-admin" />
+              {form.thumbnailUrl && (
+                <div className="mt-2 rounded-md overflow-hidden border border-border bg-[hsl(var(--surface))]">
+                  <img
+                    src={form.thumbnailUrl}
+                    alt="Thumbnail preview"
+                    className="w-full h-32 object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                </div>
+              )}
             </Field>
             <Field label="Instagram URL">
               <input value={form.instagramUrl} onChange={(event) => update("instagramUrl", event.target.value)} className="input-admin" />

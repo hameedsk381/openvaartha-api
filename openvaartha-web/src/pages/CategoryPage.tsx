@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { articles, Category } from '../data/mockArticles';
 import Navbar from '../components/Navbar';
 import { Clock, Flame, ArrowUpRight, Bookmark, BookmarkCheck } from 'lucide-react';
 import { getArticleImage, handleImageFallback } from '../lib/utils';
 import { useReadingList } from '@/hooks/use-reading-list';
+import { useArticles, useCategories } from '@/lib/api-hooks';
 
 const relativeTime = (iso: string) => {
   const h = Math.round((Date.now() - new Date(iso).getTime()) / 3_600_000);
@@ -13,33 +13,27 @@ const relativeTime = (iso: string) => {
   return `${Math.round(h / 24)}d ago`;
 };
 
-const SUBTOPICS: Record<Category, string[]> = {
-  Politics: ['Andhra', 'Telangana', 'Karnataka', 'Tamil Nadu', 'Kerala', 'Policy'],
-  Tech: ['AI', 'Startups', 'Semiconductors', 'Policy', 'Cybersecurity'],
-  Business: ['Markets', 'Manufacturing', 'EVs', 'Real Estate', 'Trade'],
-  Cinema: ['Tollywood', 'Kollywood', 'Sandalwood', 'Mollywood', 'Reviews'],
-  'Local News': ['Civic', 'Transport', 'Weather', 'Crime', 'Heritage'],
-  Sports: ['Cricket', 'IPL', 'Football', 'Athletics', 'Kabaddi'],
-};
-
 const CategoryPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const [filter, setFilter] = useState<'Latest' | 'Popular' | 'Trending'>('Latest');
   const { toggleSave, isSaved } = useReadingList();
 
-  const currentCategory = useMemo<Category>(() => {
-    return (
-      articles.find(a => a.category.toLowerCase().replace(' ', '-') === categoryId)?.category ||
-      ('Politics' as Category)
+  const { data: categories = [] } = useCategories();
+  const { data: allArticles = [] } = useArticles({ limit: 50 });
+
+  const currentCategory = useMemo(() => {
+    const cat = categories.find(
+      (c) => c.name.toLowerCase().replace(/\s+/g, '-') === categoryId,
     );
-  }, [categoryId]);
+    return cat?.name || categoryId?.replace(/-/g, ' ') || 'Politics';
+  }, [categoryId, categories]);
 
   const list = useMemo(() => {
-    const base = articles.filter(a => a.category === currentCategory);
-    if (filter === 'Popular') return [...base].sort((a, b) => Number(!!b.trending) - Number(!!a.trending));
-    if (filter === 'Trending') return base.filter(a => a.trending);
+    const base = allArticles.filter((a) => a.category === currentCategory);
+    if (filter === 'Popular') return [...base].sort((a, b) => Number(!!b.isTrending) - Number(!!a.isTrending));
+    if (filter === 'Trending') return base.filter((a) => a.isTrending);
     return [...base].sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt));
-  }, [currentCategory, filter]);
+  }, [currentCategory, filter, allArticles]);
 
   const featured = list[0];
   const secondary = list.slice(1, 3);
@@ -51,8 +45,6 @@ const CategoryPage = () => {
 
       <main className="pt-20 sm:pt-24 pb-16">
         <div className="max-w-screen-2xl mx-auto">
-
-          {/* Section masthead */}
           <header className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14 border-b border-border bg-[hsl(var(--surface))]">
             <div className="flex items-center gap-2 mb-3">
               <Link to="/" className="overline text-muted-foreground hover:text-primary transition-colors">
@@ -67,21 +59,8 @@ const CategoryPage = () => {
             <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-4 max-w-2xl leading-relaxed">
               Independent reporting on {currentCategory.toLowerCase()} across South India — verified by regional desks.
             </p>
-
-            {/* Subtopic chips */}
-            <div className="mt-6 flex flex-wrap gap-2">
-              {SUBTOPICS[currentCategory]?.map(t => (
-                <span
-                  key={t}
-                  className="h-8 px-3 inline-flex items-center rounded-full text-xs font-medium border border-border text-muted-foreground bg-background hover:border-primary hover:text-primary transition-colors cursor-pointer"
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
           </header>
 
-          {/* Featured spread */}
           {featured && (
             <section className="border-b border-border">
               <div className="grid grid-cols-1 lg:grid-cols-12">
@@ -91,7 +70,7 @@ const CategoryPage = () => {
                 >
                   <div className="relative aspect-[16/10] sm:aspect-[16/9] overflow-hidden bg-[hsl(var(--surface-2))]">
                     <img
-                      src={getArticleImage(featured.thumbnail)}
+                      src={getArticleImage(featured.thumbnailUrl)}
                       alt={featured.title}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                       onError={handleImageFallback}
@@ -102,7 +81,7 @@ const CategoryPage = () => {
                         <span className="overline text-secondary">Featured</span>
                         <span className="h-1 w-1 rounded-full bg-white/40" />
                         <span className="text-[11px] font-medium tracking-wide">{relativeTime(featured.publishedAt)}</span>
-                        {featured.trending && (
+                        {featured.isTrending && (
                           <>
                             <span className="h-1 w-1 rounded-full bg-white/40" />
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary">
@@ -147,7 +126,7 @@ const CategoryPage = () => {
                       </div>
                       <div className="w-24 h-20 sm:w-28 sm:h-24 shrink-0 overflow-hidden rounded-md bg-[hsl(var(--surface-2))]">
                         <img
-                          src={getArticleImage(art.thumbnail)}
+                          src={getArticleImage(art.thumbnailUrl)}
                           alt=""
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           onError={handleImageFallback}
@@ -161,7 +140,6 @@ const CategoryPage = () => {
             </section>
           )}
 
-          {/* Filter bar + feed */}
           <section className="px-4 sm:px-6 lg:px-10 py-8 sm:py-12">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-5 border-b border-border">
               <div>
@@ -196,7 +174,7 @@ const CategoryPage = () => {
                     <Link to={`/article/${art.slug}`} className="block press">
                       <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
                         <img
-                          src={getArticleImage(art.thumbnail)}
+                          src={getArticleImage(art.thumbnailUrl)}
                           alt=""
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                           onError={handleImageFallback}
@@ -224,7 +202,7 @@ const CategoryPage = () => {
                         <span className="truncate">{art.author}</span>
                       </div>
                       <button
-                        onClick={() => toggleSave(art)}
+                        onClick={() => toggleSave(art as any)}
                         className={`h-9 w-9 rounded-md flex items-center justify-center transition-colors press
                           ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
                         aria-label="Save"
@@ -238,26 +216,6 @@ const CategoryPage = () => {
                 ))}
               </div>
             )}
-          </section>
-
-          {/* Desk note */}
-          <section className="border-t border-border bg-[hsl(var(--surface))]">
-            <div className="px-4 sm:px-6 lg:px-10 py-12 sm:py-16 max-w-3xl">
-              <p className="overline text-primary mb-3">Editor's note</p>
-              <h3 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight">
-                The {currentCategory.toLowerCase()} desk
-              </h3>
-              <p className="font-serif text-base sm:text-lg text-muted-foreground mt-4 leading-relaxed">
-                Our {currentCategory.toLowerCase()} team covers regional shifts and the people driving them. Every story
-                is verified by reporters on the ground — never automated, never sponsored.
-              </p>
-              <Link
-                to="/"
-                className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary hover:underline underline-offset-4"
-              >
-                More from Open Vaartha <ArrowUpRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
           </section>
         </div>
       </main>

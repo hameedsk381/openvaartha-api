@@ -1,7 +1,7 @@
 import React from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
-import { Article } from '../data/mockArticles';
+import type { Article } from '@/lib/types';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ArrowUpRight, Clock, Sparkles } from 'lucide-react';
 import { Button } from './ui/button';

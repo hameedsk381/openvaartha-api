@@ -1,0 +1,121 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { Loader2, MessageSquare, Trash2, ChevronDown, ChevronUp, Search } from "lucide-react";
+import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
+import { cn } from "@/lib/utils";
+
+type Comment = {
+  id: string;
+  articleId?: string;
+  article_id?: string;
+  body: string;
+  authorName?: string;
+  author_name?: string;
+  authorEmail?: string;
+  author_email?: string;
+  createdAt?: string;
+  created_at?: string;
+  isActive?: boolean;
+  is_active?: boolean;
+  likes?: string[];
+};
+
+export default function AdminComments() {
+  const queryClient = useQueryClient();
+  const [showInactive, setShowInactive] = useState(false);
+
+  const { data: comments = [], isLoading } = useQuery({
+    queryKey: ["admin", "comments", { showInactive }],
+    queryFn: () => apiFetch<Comment[]>("/admin/comments?limit=200"),
+  });
+
+  const displayed = showInactive ? comments : comments.filter((c) => {
+    const active = c.isActive ?? c.is_active ?? true;
+    return active;
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (commentId: string) =>
+      apiFetch(`/comments/${commentId}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "comments"] });
+      toast.success("Comment deleted");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  return (
+    <div className="space-y-6 max-w-5xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight">Comments</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {comments.length} total
+            {!showInactive && ` (${comments.filter((c) => c.isActive ?? c.is_active ?? true).length} active)`}
+          </p>
+        </div>
+        <button
+          onClick={() => setShowInactive((v) => !v)}
+          className={cn(
+            "h-9 px-3 rounded-md text-xs font-semibold border transition-colors press inline-flex items-center gap-1.5",
+            showInactive
+              ? "bg-primary text-white border-primary"
+              : "border-border text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {showInactive ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          {showInactive ? "Active only" : "Show deleted"}
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="h-48 flex items-center justify-center">
+          <Loader2 className="h-7 w-7 text-primary animate-spin" />
+        </div>
+      ) : displayed.length === 0 ? (
+        <div className="border border-dashed border-border rounded-xl flex flex-col items-center justify-center py-16 text-center space-y-3">
+          <MessageSquare className="h-8 w-8 text-primary/40" />
+          <p className="text-sm font-semibold text-foreground">No comments yet</p>
+        </div>
+      ) : (
+        <div className="border border-border rounded-lg overflow-hidden divide-y divide-border">
+          {displayed.map((comment) => {
+            const isActive = comment.isActive ?? comment.is_active ?? true;
+            const name = comment.authorName ?? comment.author_name ?? "Anonymous";
+            const email = comment.authorEmail ?? comment.author_email ?? "";
+            const date = comment.createdAt ?? comment.created_at ?? "";
+            return (
+              <div key={comment.id} className={cn("p-4 space-y-2", !isActive && "opacity-50")}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold line-clamp-1">{name}</p>
+                    {email && <p className="text-xs text-muted-foreground">{email}</p>}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {!isActive && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-red-500 border border-red-200 rounded-sm px-1.5">Deleted</span>
+                    )}
+                    <span className="text-[11px] text-muted-foreground">{date ? new Date(date).toLocaleDateString() : ""}</span>
+                    <button
+                      onClick={() => {
+                        if (window.confirm("Delete this comment permanently?")) deleteMutation.mutate(comment.id);
+                      }}
+                      className="h-8 w-8 rounded-md border border-border inline-flex items-center justify-center text-destructive hover:bg-destructive/5 press"
+                      title="Delete comment"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-sm text-foreground leading-relaxed">{comment.body}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
