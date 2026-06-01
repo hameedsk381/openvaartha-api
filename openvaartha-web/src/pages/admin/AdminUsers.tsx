@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronDown, Loader2, Shield, ShieldOff, Trash2, X } from "lucide-react";
+import { AlertCircle, Check, ChevronDown, Loader2, RotateCcw, Shield, ShieldOff, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 type AdminUser = {
   id: string;
@@ -22,7 +23,8 @@ type AdminUser = {
 
 export default function AdminUsers() {
   const queryClient = useQueryClient();
-  const { data: users = [], isLoading } = useQuery({
+  const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
+  const { data: users = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin", "users"],
     queryFn: () => apiFetch<AdminUser[]>("/admin/users"),
   });
@@ -76,6 +78,16 @@ export default function AdminUsers() {
           <span>Status</span>
           <span className="text-right">Actions</span>
         </div>
+        {isError && (
+          <div className="p-8 text-center space-y-3">
+            <AlertCircle className="h-8 w-8 text-destructive mx-auto" />
+            <p className="text-sm font-semibold text-destructive">Failed to load users</p>
+            <p className="text-xs text-muted-foreground">{(error as Error)?.message}</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <RotateCcw className="h-3.5 w-3.5" /> Retry
+            </Button>
+          </div>
+        )}
         {isLoading ? (
           <div className="h-32 flex items-center justify-center">
             <Loader2 className="h-6 w-6 text-primary animate-spin" />
@@ -137,9 +149,7 @@ export default function AdminUsers() {
                       type="button"
                       variant="outline"
                       size="icon"
-                      onClick={() => {
-                        if (window.confirm(`Delete user "${user.email}"?`)) deleteMutation.mutate(user.id);
-                      }}
+                      onClick={() => setDeleteTarget(user)}
                       title="Delete user"
                       className="text-destructive hover:text-destructive"
                     >
@@ -155,6 +165,15 @@ export default function AdminUsers() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete user"
+        description={deleteTarget ? `Delete user "${deleteTarget.fullName ?? deleteTarget.full_name ?? deleteTarget.email}"? This cannot be undone.` : ""}
+        confirmLabel="Delete"
+        onConfirm={() => { if (deleteTarget) { deleteMutation.mutate(deleteTarget.id); setDeleteTarget(null); } }}
+      />
     </div>
   );
 }

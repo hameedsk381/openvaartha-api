@@ -1,7 +1,7 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Plus, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { ARTICLE_STATUSES, type Article, type ArticleStatus, type Category } from "./types";
@@ -17,8 +17,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 type TimelineEntry = { date: string; event: string };
 type ExplainerEntry = { question: string; answer: string };
 
+const SLUG_CHARS = /[^a-z0-9-]+/g;
+
 type FormState = {
   title: string;
+  slug: string;
   summary: string;
   categoryId: string;
   readTime: string;
@@ -40,6 +43,7 @@ type FormState = {
 
 const emptyForm: FormState = {
   title: "",
+  slug: "",
   summary: "",
   categoryId: "",
   readTime: "3 min",
@@ -88,6 +92,7 @@ export default function AdminArticleForm() {
 
     setForm({
       title: article.title,
+      slug: article.slug || "",
       summary: article.summary,
       categoryId: article.categoryId,
       readTime: article.readTime,
@@ -116,6 +121,7 @@ export default function AdminArticleForm() {
 
   const payload = useMemo(() => ({
     title: form.title,
+    slug: form.slug || undefined,
     summary: form.summary,
     category_id: form.categoryId,
     read_time: form.readTime,
@@ -159,7 +165,13 @@ export default function AdminArticleForm() {
   });
 
   const update = (field: keyof FormState, value: string | boolean) => {
-    setForm((current) => ({ ...current, [field]: value }));
+    setForm((current) => {
+      const next = { ...current, [field]: value };
+      if (field === "title" && !current.slug && !articleId) {
+        next.slug = current.title.toLowerCase().replace(SLUG_CHARS, "-").replace(/^-+|-+$/g, "") || "article";
+      }
+      return next;
+    });
   };
 
   const addTimelineEntry = () => {
@@ -194,6 +206,22 @@ export default function AdminArticleForm() {
     });
   };
 
+  // Ctrl+S to save
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        if (!form.categoryId) {
+          toast.error("Create a category before publishing articles");
+          return;
+        }
+        mutation.mutate();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [form.categoryId, mutation.mutate]);
+
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (!form.categoryId) {
@@ -225,9 +253,10 @@ export default function AdminArticleForm() {
           </Link>
           <h1 className="text-2xl font-bold tracking-tight">{isEditing ? "Edit article" : "New article"}</h1>
         </div>
-        <Button type="submit" disabled={mutation.isPending}>
+        <Button type="submit" disabled={mutation.isPending} className="gap-2">
           {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Save
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-white/20 px-1.5 text-[10px] font-mono opacity-60">⌘S</kbd>
         </Button>
       </div>
 
@@ -238,6 +267,24 @@ export default function AdminArticleForm() {
           <CardSection title="Headline">
             <Field label="Title">
               <Input value={form.title} onChange={(e) => update("title", e.target.value)} required placeholder="Article headline" />
+            </Field>
+            <Field label="Slug">
+              <div className="flex gap-2">
+                <Input
+                  value={form.slug}
+                  onChange={(e) => update("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, ""))}
+                  placeholder="url-friendly-slug"
+                  className="font-mono text-xs"
+                />
+                {(form.slug || articleQuery.data?.slug) && (
+                  <Button type="button" variant="outline" size="icon" asChild>
+                    <a href={`/${form.slug || articleQuery.data?.slug}`} target="_blank" rel="noopener noreferrer" title="Preview article">
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </Button>
+                )}
+              </div>
+              <p className="text-[11px] text-muted-foreground">Auto-generated from title. Edit for SEO-friendly URLs.</p>
             </Field>
             <Field label="Summary">
               <Textarea value={form.summary} onChange={(e) => update("summary", e.target.value)} required rows={3} placeholder="Brief summary for cards and meta descriptions" />

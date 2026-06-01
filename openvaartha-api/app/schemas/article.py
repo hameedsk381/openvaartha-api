@@ -73,6 +73,7 @@ class ArticleCreate(ArticleBase):
 
 class ArticleUpdate(BaseModel):
     title: Optional[str] = None
+    slug: Optional[str] = None
     summary: Optional[str] = None
     category_id: Optional[str] = None
     read_time: Optional[str] = None

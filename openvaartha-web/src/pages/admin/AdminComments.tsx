@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Loader2, MessageSquare, Trash2, ChevronDown, ChevronUp, Search } from "lucide-react";
+import { AlertCircle, Loader2, MessageSquare, RotateCcw, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 type Comment = {
   id: string;
@@ -25,8 +26,9 @@ type Comment = {
 export default function AdminComments() {
   const queryClient = useQueryClient();
   const [showInactive, setShowInactive] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Comment | null>(null);
 
-  const { data: comments = [], isLoading } = useQuery({
+  const { data: comments = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin", "comments", { showInactive }],
     queryFn: () => apiFetch<Comment[]>("/admin/comments?limit=200"),
   });
@@ -67,6 +69,17 @@ export default function AdminComments() {
         </Button>
       </div>
 
+      {isError && (
+        <div className="border border-destructive/30 rounded-xl p-8 text-center space-y-3">
+          <AlertCircle className="h-8 w-8 text-destructive mx-auto" />
+          <p className="text-sm font-semibold text-destructive">Failed to load comments</p>
+          <p className="text-xs text-muted-foreground">{(error as Error)?.message}</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RotateCcw className="h-3.5 w-3.5" /> Retry
+          </Button>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="h-48 flex items-center justify-center">
           <Loader2 className="h-7 w-7 text-primary animate-spin" />
@@ -99,9 +112,7 @@ export default function AdminComments() {
                       type="button"
                       variant="outline"
                       size="icon"
-                      onClick={() => {
-                        if (window.confirm("Delete this comment permanently?")) deleteMutation.mutate(comment.id);
-                      }}
+                      onClick={() => setDeleteTarget(comment)}
                       title="Delete comment"
                       className="text-destructive hover:text-destructive"
                     >
@@ -115,6 +126,15 @@ export default function AdminComments() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete comment"
+        description={deleteTarget ? `Delete comment by "${deleteTarget.authorName ?? deleteTarget.author_name ?? "Anonymous"}"? This cannot be undone.` : ""}
+        confirmLabel="Delete"
+        onConfirm={() => { if (deleteTarget) { deleteMutation.mutate(deleteTarget.id); setDeleteTarget(null); } }}
+      />
     </div>
   );
 }

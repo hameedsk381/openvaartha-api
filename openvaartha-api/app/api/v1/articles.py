@@ -21,7 +21,9 @@ async def list_articles(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     category_id: Optional[str] = None,
+    search: Optional[str] = Query(None, description="Full-text search across title and summary"),
     include_unpublished: bool = Query(False, description="Admin-only: include drafts/archived."),
+    include_total: bool = Query(False, description="Return {items, total} instead of plain array"),
     db: AsyncIOMotorDatabase = Depends(get_db),
     current_user: Optional[UserModel] = Depends(get_current_user_optional),
 ):
@@ -29,13 +31,25 @@ async def list_articles(
     if include_unpublished and not _caller_can_see_unpublished(current_user):
         raise HTTPException(status_code=403, detail="Admin required to see unpublished articles")
 
-    return await article_service.get_articles(
+    items = await article_service.get_articles(
         db,
         skip=skip,
         limit=limit,
         category_id=category_id,
+        search=search,
         include_unpublished=include_unpublished,
     )
+
+    if not include_total:
+        return items
+
+    query: dict = {} if include_unpublished else _public_query()
+    if category_id:
+        query["category_id"] = category_id
+    if search:
+        query["$text"] = {"$search": search}
+    total = await db["articles"].count_documents(query)
+    return {"items": items, "total": total}
 
 
 @router.get("/trending", response_model=List[Article])

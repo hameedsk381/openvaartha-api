@@ -150,6 +150,7 @@ async def get_articles(
     skip: int = 0,
     limit: int = 20,
     category_id: Optional[str] = None,
+    search: Optional[str] = None,
     include_unpublished: bool = False,
 ):
     """Get articles. Public callers see only published items;
@@ -159,6 +160,7 @@ async def get_articles(
         skip=skip,
         limit=limit,
         category_id=category_id or "",
+        search=search or "",
         scope="all" if include_unpublished else "public",
     )
     if not include_unpublished:
@@ -169,6 +171,8 @@ async def get_articles(
     query: dict = {} if include_unpublished else _public_query()
     if category_id:
         query["category_id"] = category_id
+    if search:
+        query["$text"] = {"$search": search}
 
     cursor = db["articles"].find(query).sort("published_at", -1).skip(skip).limit(limit)
     articles = await cursor.to_list(length=limit)

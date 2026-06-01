@@ -1,12 +1,13 @@
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { AlertCircle, Check, Loader2, Pencil, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import type { Category } from "./types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 type DraftCategory = {
   name: string;
@@ -21,8 +22,9 @@ export default function AdminCategories() {
   const [draft, setDraft] = useState<DraftCategory>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [edit, setEdit] = useState<DraftCategory>(emptyDraft);
+  const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
 
-  const { data: categories = [], isLoading } = useQuery({
+  const { data: categories = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin", "categories"],
     queryFn: () => apiFetch<Category[]>("/categories/"),
   });
@@ -82,10 +84,7 @@ export default function AdminCategories() {
   };
 
   const confirmDelete = (category: Category) => {
-    if (!confirm(`Delete category "${category.name}"? Articles using it must be reassigned first.`)) {
-      return;
-    }
-    deleteMutation.mutate(category.id);
+    setDeleteTarget(category);
   };
 
   return (
@@ -94,6 +93,17 @@ export default function AdminCategories() {
         <h1 className="text-2xl font-bold tracking-tight">Categories</h1>
         <p className="text-sm text-muted-foreground mt-1">Manage sections used by articles.</p>
       </div>
+
+      {isError && (
+        <div className="border border-destructive/30 rounded-xl p-8 text-center space-y-3">
+          <AlertCircle className="h-8 w-8 text-destructive mx-auto" />
+          <p className="text-sm font-semibold text-destructive">Failed to load categories</p>
+          <p className="text-xs text-muted-foreground">{(error as Error)?.message}</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RotateCcw className="h-3.5 w-3.5" /> Retry
+          </Button>
+        </div>
+      )}
 
       <form onSubmit={onSubmit} className="border border-border rounded-xl p-5 grid md:grid-cols-[1fr_120px_140px_auto] gap-4 items-end">
         <div className="space-y-2">
@@ -195,6 +205,15 @@ export default function AdminCategories() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete category"
+        description={`Delete category "${deleteTarget?.name}"? Articles using it must be reassigned first.`}
+        confirmLabel="Delete"
+        onConfirm={() => { if (deleteTarget) { deleteMutation.mutate(deleteTarget.id); setDeleteTarget(null); } }}
+      />
     </div>
   );
 }
