@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["icon.svg", "favicon.ico", "robots.txt"],
+      includeAssets: ["icon.svg", "favicon.ico", "robots.txt", "logo.jpg"],
       manifest: {
         name: "Open Vaartha — South India's Authoritative News Platform",
         short_name: "Open Vaartha",

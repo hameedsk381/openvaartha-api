@@ -44,9 +44,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <aside className="hidden sm:flex flex-col w-56 shrink-0 border-r border-border bg-[hsl(var(--surface))] min-h-screen">
           <div className="px-4 py-5 border-b border-border">
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="h-8 w-8 rounded-md gradient-maroon flex items-center justify-center">
-                <span className="text-[10px] font-black text-white">OV</span>
-              </div>
+              <img src="/logo.jpg" alt="Open Vaartha" className="h-8 w-8 rounded-md object-cover" />
               <span className="text-sm font-bold tracking-tight">
                 <span className="text-primary">Admin</span>
               </span>

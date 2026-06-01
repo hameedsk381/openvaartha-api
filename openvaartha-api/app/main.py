@@ -76,7 +76,7 @@ if os.path.isdir(_dist):
     # PWA files — serve before catch-all so they aren't swallowed by index.html
     _pwa_files = [
         "sw.js", "manifest.webmanifest", "registerSW.js", "offline.html",
-        "icon.svg", "pwa-192x192.png", "pwa-512x512.png",
+        "icon.svg", "logo.jpg", "pwa-192x192.png", "pwa-512x512.png",
         "favicon.ico", "robots.txt", "news-fallback.svg", "placeholder.svg",
     ]
     for _name in _pwa_files:
