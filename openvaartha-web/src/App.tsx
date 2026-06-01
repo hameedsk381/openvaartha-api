@@ -47,18 +47,13 @@ const App = () => {
 
     // Apply Theme
     const applyTheme = () => {
-      const theme = localStorage.getItem('theme') || 'System default';
+      const theme = localStorage.getItem('theme') || 'Light';
       const root = window.document.documentElement;
       
       if (theme === 'Dark') {
         root.classList.add('dark');
-      } else if (theme === 'Light') {
-        root.classList.remove('dark');
       } else {
-        // System default
-        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (systemDark) root.classList.add('dark');
-        else root.classList.remove('dark');
+        root.classList.remove('dark');
       }
     };
 

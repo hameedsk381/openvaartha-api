@@ -17,7 +17,7 @@ export default function PortalSettings() {
   });
 
   const [appearance, setAppearance] = useState({
-    theme: localStorage.getItem('theme') || 'System default',
+    theme: localStorage.getItem('theme') || 'Light',
     fontSize: localStorage.getItem('font-size') || 'Medium',
   });
 
@@ -35,7 +35,7 @@ export default function PortalSettings() {
         const data = await response.json();
         setUser(data);
         setAppearance({
-          theme: data.theme || localStorage.getItem('theme') || 'System default',
+          theme: data.theme || localStorage.getItem('theme') || 'Light',
           fontSize: data.fontSize || localStorage.getItem('font-size') || 'Medium',
         });
       }
@@ -124,12 +124,7 @@ export default function PortalSettings() {
     const root = window.document.documentElement;
     if (type === 'theme') {
       if (value === 'Dark') root.classList.add('dark');
-      else if (value === 'Light') root.classList.remove('dark');
-      else {
-        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (systemDark) root.classList.add('dark');
-        else root.classList.remove('dark');
-      }
+      else root.classList.remove('dark');
     } else {
       const sizes: Record<string, string> = { 'Small': '14px', 'Medium': '16px', 'Large': '18px' };
       root.style.fontSize = sizes[value] || '16px';
@@ -232,7 +227,7 @@ export default function PortalSettings() {
         <SelectRow 
           label="Theme" 
           value={appearance.theme} 
-          options={['Light', 'Dark', 'System default']}
+          options={['Light', 'Dark']}
           onChange={(val) => updateAppearance('theme', val)}
         />
         <SelectRow 
