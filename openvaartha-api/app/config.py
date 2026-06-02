@@ -11,8 +11,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"  # development | staging | production
 
     # Security
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    ADMIN_EMAILS: str = ""  # Kept for backward compat; no longer auto-grants admin.
+    ADMIN_EMAILS: str = ""
 
     # Database
     MONGODB_URL: str = "mongodb://127.0.0.1:27017"
@@ -25,7 +24,22 @@ class Settings(BaseSettings):
     # JWT
     JWT_SECRET_KEY: str = "your-jwt-secret-key-change-in-production"
     JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    # Password reset
+    RESET_TOKEN_EXPIRE_HOURS: int = 1
+
+    # Rate limits
+    LOGIN_RATE_LIMIT: str = "10/minute"
+    REFRESH_RATE_LIMIT: str = "30/minute"
+    REGISTER_RATE_LIMIT: str = "5/minute"
+    MUTATION_RATE_LIMIT: str = "60/minute"
+
+    # AI generation
+    AI_TEMPERATURE: float = 0.7
+    AI_MAX_OUTPUT_TOKENS: int = 4096
+    AI_MAX_POINTS: int = 8
 
     # Gemini
     GEMINI_API_KEY: str = ""
@@ -91,10 +105,6 @@ class Settings(BaseSettings):
         if problems:
             joined = "; ".join(problems)
             raise RuntimeError(f"Refusing to start: {joined}")
-
-    # Celery
-    CELERY_BROKER_URL: str = "redis://localhost:6379/1"
-    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
 
     # Logging
     LOG_LEVEL: str = "INFO"

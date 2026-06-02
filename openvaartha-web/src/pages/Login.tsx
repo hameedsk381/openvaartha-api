@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { Mail, Lock, User as UserIcon, Loader2, Eye, EyeOff, ArrowLeft, Quote } from 'lucide-react';
+import { apiFetch } from '@/lib/api';
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -68,9 +69,8 @@ export default function Login() {
   const onRegister = async (data: RegisterValues) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/users/register', {
+      await apiFetch("/users/register", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: data.email,
           password: data.password,
@@ -78,10 +78,6 @@ export default function Login() {
           role: 'user',
         }),
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || 'Registration failed');
-      }
       toast.success('Account created. Please sign in.');
       setMode('login');
     } catch (e: any) {

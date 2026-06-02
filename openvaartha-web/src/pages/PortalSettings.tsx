@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Bell, Lock, User, Shield, ChevronRight, Palette, Loader2, Save, X } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 export default function PortalSettings() {
   const [user, setUser] = useState<any>(null);
@@ -27,18 +28,12 @@ export default function PortalSettings() {
 
   const fetchUser = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/api/v1/users/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const data = await apiFetch<any>("/users/me");
+      setUser(data);
+      setAppearance({
+        theme: data.theme || localStorage.getItem('theme') || 'Light',
+        fontSize: data.fontSize || localStorage.getItem('font-size') || 'Medium',
       });
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data);
-        setAppearance({
-          theme: data.theme || localStorage.getItem('theme') || 'Light',
-          fontSize: data.fontSize || localStorage.getItem('font-size') || 'Medium',
-        });
-      }
     } catch (err) {
       console.error("Failed to fetch user profile", err);
     } finally {
@@ -49,24 +44,16 @@ export default function PortalSettings() {
   const handleUpdate = async (field: string, value: string) => {
     setIsUpdating(true);
     try {
-      const token = localStorage.getItem('token');
       const payload = { [field]: value };
-      const response = await fetch('http://localhost:8000/api/v1/users/me', {
+      const updatedUser = await apiFetch<any>("/users/me", {
         method: 'PUT',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify(payload)
       });
-
-      if (response.ok) {
-        const updatedUser = await response.json();
-        setUser(updatedUser);
-        if (field === 'email') localStorage.setItem('user_email', value);
-        toast.success(`${field.replace('_', ' ')} updated successfully`);
-        setEditMode(null);
-      } else {
+      setUser(updatedUser);
+      if (field === 'email') localStorage.setItem('user_email', value);
+      toast.success(`${field.replace('_', ' ')} updated successfully`);
+      setEditMode(null);
+    } catch (err: any) {
         const err = await response.json();
         toast.error(err.detail || "Update failed");
       }
@@ -89,27 +76,17 @@ export default function PortalSettings() {
 
     setIsUpdating(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/api/v1/users/me', {
+      await apiFetch("/users/me", {
         method: 'PUT',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           password: passwordData.new,
           current_password: passwordData.current
         })
       });
-
-      if (response.ok) {
-        toast.success("Password updated successfully");
-        setPasswordData({ current: "", new: "" });
-      } else {
-        const err = await response.json();
-        toast.error(err.detail || "Update failed");
-      }
-    } catch (err) {
+      toast.success("Password updated successfully");
+      setPasswordData({ current: "", new: "" });
+    } catch (err: any) {
+      toast.error(err.message || "Update failed");
       toast.error("Network error");
     } finally {
       setIsUpdating(false);
@@ -134,23 +111,12 @@ export default function PortalSettings() {
     window.dispatchEvent(new Event('appearance-change'));
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/api/v1/users/me', {
+      const updatedUser = await apiFetch<any>("/users/me", {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify(type === 'theme' ? { theme: value } : { font_size: value })
       });
-
-      if (response.ok) {
-        const updatedUser = await response.json();
-        setUser(updatedUser);
-        toast.success(`${type} preference saved`);
-      } else {
-        toast.error("Preference saved locally only");
-      }
+      setUser(updatedUser);
+      toast.success(`${type} preference saved`);
     } catch (err) {
       toast.error("Preference saved locally only");
     }

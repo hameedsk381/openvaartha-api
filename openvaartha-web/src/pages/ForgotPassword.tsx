@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Mail, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -12,15 +13,10 @@ export default function ForgotPassword() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/users/forgot-password", {
+      await apiFetch("/users/forgot-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Request failed");
-      }
       setSent(true);
     } catch (e: any) {
       toast.error(e.message);

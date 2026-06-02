@@ -86,14 +86,14 @@ async def build_rss(
 
     articles = await db["articles"].find(query).sort("published_at", -1).limit(max_items).to_list(length=None)
 
-    channel_title = "OpenVaartha"
-    channel_desc = "OpenVaartha — News Without Noise"
+    channel_title = settings.APP_NAME
+    channel_desc = f"{settings.APP_NAME} — News Without Noise"
     channel_link = base
 
     if category_id:
         cat = await db["categories"].find_one({"_id": category_id})
         if cat:
-            channel_title = f"OpenVaartha — {cat['name']}"
+            channel_title = f"{settings.APP_NAME} — {cat['name']}"
             channel_desc = f"{channel_desc} — {cat['name']}"
 
     rss = Element("rss")

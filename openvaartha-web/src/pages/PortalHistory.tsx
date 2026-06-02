@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getArticleImage, handleImageFallback } from "@/lib/utils";
 import { Clock, CalendarDays, ArrowUpRight, History, Loader2 } from "lucide-react";
+import { apiFetch } from "@/lib/api";
 
 type HistoryArticle = {
   id: string;
@@ -13,19 +14,8 @@ type HistoryArticle = {
   publishedAt?: string;
 };
 
-const API_BASE = "http://localhost:8000/api/v1";
-
 const fetchReadingHistory = async (): Promise<HistoryArticle[]> => {
-  const token = localStorage.getItem("token");
-  const response = await fetch(`${API_BASE}/users/me/history`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to load reading history");
-  }
-
-  return response.json();
+  return apiFetch<HistoryArticle[]>("/users/me/history");
 };
 
 const groupLabel = (publishedAt?: string) => {

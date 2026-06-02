@@ -81,8 +81,8 @@ Generate a complete news article with this exact JSON structure:
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
                 response_mime_type="application/json",
-                temperature=0.7,
-                max_output_tokens=4096,
+                temperature=settings.AI_TEMPERATURE,
+                max_output_tokens=settings.AI_MAX_OUTPUT_TOKENS,
             ),
         )
 
@@ -104,7 +104,7 @@ Generate a complete news article with this exact JSON structure:
             "summary": data["summary"],
             "body": data["body"],
             "tldr": data["tldr"],
-            "points": data["points"][:8],
+            "points": data["points"][:settings.AI_MAX_POINTS],
             "category_id": data.get("category_id", ""),
         }
 

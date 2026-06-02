@@ -4,6 +4,7 @@ import { Newspaper, Bookmark, Clock, Zap, ArrowUpRight, ChevronRight, TrendingUp
 import { getArticleImage, handleImageFallback } from "@/lib/utils";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { useTrendingArticles, useArticles } from "@/lib/api-hooks";
+import { apiFetch } from "@/lib/api";
 
 export default function PortalDashboard() {
   const { saved } = useReadingList();
@@ -16,14 +17,8 @@ export default function PortalDashboard() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:8000/api/v1/users/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data);
-        }
+        const data = await apiFetch<any>("/users/me");
+        setUser(data);
       } catch (err) {
         console.error("Failed to fetch user profile", err);
       } finally {

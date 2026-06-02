@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { Lock, Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -26,15 +27,10 @@ export default function ResetPassword() {
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/users/reset-password", {
+      await apiFetch("/users/reset-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, new_password: password }),
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Reset failed");
-      }
       setDone(true);
       setTimeout(() => navigate("/login"), 3000);
     } catch (e: any) {

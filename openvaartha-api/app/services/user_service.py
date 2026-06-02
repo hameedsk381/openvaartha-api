@@ -92,7 +92,7 @@ async def create_password_reset_token(db: AsyncIOMotorDatabase, email: str) -> O
         "token": token,
         "user_id": user["_id"],
         "email": email,
-        "expires_at": datetime.now(timezone.utc) + timedelta(hours=1),
+        "expires_at": datetime.now(timezone.utc) + timedelta(hours=settings.RESET_TOKEN_EXPIRE_HOURS),
         "used": False,
         "created_at": datetime.now(timezone.utc),
     })
