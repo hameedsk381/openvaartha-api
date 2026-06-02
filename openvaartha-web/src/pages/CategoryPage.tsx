@@ -29,7 +29,7 @@ const CategoryPage = () => {
   }, [categoryId, categories]);
 
   const list = useMemo(() => {
-    const base = allArticles.filter((a) => a.category === currentCategory);
+    const base = allArticles.filter((a) => a.category?.toLowerCase() === currentCategory.toLowerCase());
     if (filter === 'Popular') return [...base].sort((a, b) => Number(!!b.isTrending) - Number(!!a.isTrending));
     if (filter === 'Trending') return base.filter((a) => a.isTrending);
     return [...base].sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt));
@@ -68,17 +68,17 @@ const CategoryPage = () => {
                   to={`/article/${featured.slug}`}
                   className="lg:col-span-8 lg:border-r lg:border-border block group press"
                 >
-                  {featured.thumbnailUrl && (
-                    <div className="relative aspect-[16/10] sm:aspect-[16/9] overflow-hidden bg-[hsl(var(--surface-2))]">
+                  <div className="relative aspect-[16/10] sm:aspect-[16/9] overflow-hidden bg-[hsl(var(--surface-2))] bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900">
+                    {featured.thumbnailUrl && (
                       <img
                         src={featured.thumbnailUrl}
                         alt={featured.title}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                         onError={handleImageFallback}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-                    </div>
-                  )}
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                  </div>
                   <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 lg:p-10 text-white">
                     <div className="flex items-center gap-3 mb-3">
                       <span className="overline text-secondary">Featured</span>

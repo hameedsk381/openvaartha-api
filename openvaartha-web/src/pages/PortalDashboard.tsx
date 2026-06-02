@@ -85,16 +85,16 @@ export default function PortalDashboard() {
             <TrendingUp className="h-3.5 w-3.5 text-primary" />
             <span className="overline text-primary">Trending Now</span>
           </div>
-          <Link to={`/article/${featured.slug}`} className="block rounded-xl overflow-hidden border border-border hover:border-primary/40 transition-colors press group">
-            {featured.thumbnailUrl && (
-              <div className="relative aspect-[16/7] overflow-hidden">
+          <Link to={`/article/${featured.slug}`} className="block rounded-xl overflow-hidden border border-border hover:border-primary/40 transition-colors press group relative">
+            <div className="relative aspect-[16/7] overflow-hidden bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900">
+              {featured.thumbnailUrl && (
                 <img src={featured.thumbnailUrl} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" onError={handleImageFallback} />
-              </div>
-            )}
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
                 <span className="tag bg-primary text-white mb-2">{featured.category}</span>
                 <p className="text-white text-sm font-bold leading-snug">{featured.title}</p>
+              </div>
             </div>
           </Link>
         </div>

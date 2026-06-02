@@ -38,8 +38,8 @@ const SearchPage = () => {
 
   const results = useMemo(() => {
     const source = query.trim() ? searchResults : allArticles;
-    if (selectedCategory === 'All') return source;
-    return source.filter((a) => a.category === selectedCategory);
+    if (selectedCategory.toLowerCase() === 'all') return source;
+    return source.filter((a) => a.category?.toLowerCase() === selectedCategory.toLowerCase());
   }, [query, selectedCategory, searchResults, allArticles]);
 
   const isEmpty = !query && selectedCategory === 'All';

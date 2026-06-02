@@ -63,8 +63,15 @@ export default function Index() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const filtered = selectedCat === 'All' ? articlesData : articlesData.filter(a => a.category === selectedCat);
-  const isFiltered = selectedCat !== 'All';
+  const selectedCategoryObj = categories.find(
+    c => c.name.toLowerCase() === selectedCat.toLowerCase()
+  );
+  const displayCategoryName = selectedCategoryObj ? selectedCategoryObj.name : selectedCat;
+
+  const filtered = selectedCat.toLowerCase() === 'all'
+    ? articlesData
+    : articlesData.filter(a => a.category?.toLowerCase() === selectedCat.toLowerCase());
+  const isFiltered = selectedCat.toLowerCase() !== 'all';
 
   const hero = filtered[0];
   const topRail = filtered.slice(1, 4);
@@ -88,7 +95,7 @@ export default function Index() {
                 key={cat}
                 onClick={() => setCategory(cat)}
                 className={`shrink-0 h-9 px-4 rounded-full text-sm font-medium transition-colors press whitespace-nowrap
-                  ${selectedCat === cat
+                  ${selectedCat.toLowerCase() === cat.toLowerCase()
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-secondary/50 text-[hsl(var(--secondary-foreground))] hover:bg-secondary'}`}
               >
@@ -124,7 +131,7 @@ export default function Index() {
             <div className="px-4 sm:px-6 lg:px-10 py-6 border-b border-border">
               <span className="overline text-primary">Section</span>
               <h1 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight mt-1">
-                {selectedCat}
+                {displayCategoryName}
               </h1>
               <p className="text-sm text-muted-foreground mt-2">
                 {filtered.length} article{filtered.length !== 1 ? 's' : ''} in this section
@@ -140,8 +147,8 @@ export default function Index() {
                     to={`/article/${hero.slug}`}
                     className="block group press relative"
                   >
-                    {hero.thumbnailUrl && (
-                      <div className="relative overflow-hidden aspect-[16/10] sm:aspect-[16/9] lg:aspect-[16/10] bg-[hsl(var(--surface-2))]">
+                    <div className="relative overflow-hidden aspect-[16/10] sm:aspect-[16/9] lg:aspect-[16/10] bg-[hsl(var(--surface-2))] bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900 border-b border-border">
+                      {hero.thumbnailUrl && (
                         <img
                           src={hero.thumbnailUrl}
                           alt={hero.title}
@@ -149,9 +156,9 @@ export default function Index() {
                           loading="eager"
                           onError={handleImageFallback}
                         />
-                      </div>
-                    )}
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                    </div>
 
                       <button
                         onClick={(e) => { e.preventDefault(); toggleSave(hero as any); }}
@@ -307,9 +314,9 @@ export default function Index() {
             <div className="lg:col-span-8 lg:border-r lg:border-border">
               <div className="px-4 sm:px-6 lg:px-10 py-5 border-b border-border flex items-baseline justify-between">
                 <div>
-                  <span className="overline text-primary">{isFiltered ? selectedCat : 'Latest'}</span>
+                  <span className="overline text-primary">{isFiltered ? displayCategoryName : 'Latest'}</span>
                   <h3 className="font-serif text-xl sm:text-2xl font-bold tracking-tight mt-0.5">
-                    {isFiltered ? `${selectedCat} stories` : 'The latest'}
+                    {isFiltered ? `${displayCategoryName} stories` : 'The latest'}
                   </h3>
                 </div>
                 <span className="text-xs text-muted-foreground font-medium">{feed.length} stories</span>
