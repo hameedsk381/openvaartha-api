@@ -192,10 +192,9 @@ export default function Index() {
                             <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                           </span>
                         </div>
-                      </div>
-                    </div>
-                  </Link>
-                </div>
+                  </div>
+                </Link>
+              </div>
 
                 <aside className="lg:col-span-4 flex flex-col">
                   <div className="px-4 sm:px-6 lg:px-6 py-4 lg:py-5 border-b border-border flex items-baseline justify-between">
