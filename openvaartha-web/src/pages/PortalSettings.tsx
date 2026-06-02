@@ -54,11 +54,7 @@ export default function PortalSettings() {
       toast.success(`${field.replace('_', ' ')} updated successfully`);
       setEditMode(null);
     } catch (err: any) {
-        const err = await response.json();
-        toast.error(err.detail || "Update failed");
-      }
-    } catch (err) {
-      toast.error("Network error. Please try again.");
+      toast.error(err.message || "Update failed");
     } finally {
       setIsUpdating(false);
     }
