@@ -95,7 +95,6 @@ export default function PortalDashboard() {
               <div className="absolute bottom-4 left-4 right-4">
                 <span className="tag bg-primary text-white mb-2">{featured.category}</span>
                 <p className="text-white text-sm font-bold leading-snug">{featured.title}</p>
-              </div>
             </div>
           </Link>
         </div>
