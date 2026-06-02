@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { Clock, Flame, ArrowUpRight, Bookmark, BookmarkCheck } from 'lucide-react';
-import { getArticleImage, handleImageFallback } from '../lib/utils';
+import { handleImageFallback } from '../lib/utils';
 import { useReadingList } from '@/hooks/use-reading-list';
 import { useArticles, useCategories } from '@/lib/api-hooks';
 
@@ -68,38 +68,40 @@ const CategoryPage = () => {
                   to={`/article/${featured.slug}`}
                   className="lg:col-span-8 lg:border-r lg:border-border block group press"
                 >
-                  <div className="relative aspect-[16/10] sm:aspect-[16/9] overflow-hidden bg-[hsl(var(--surface-2))]">
-                    <img
-                      src={getArticleImage(featured.thumbnailUrl)}
-                      alt={featured.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                      onError={handleImageFallback}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 lg:p-10 text-white">
-                      <div className="flex items-center gap-3 mb-3">
-                        <span className="overline text-secondary">Featured</span>
-                        <span className="h-1 w-1 rounded-full bg-white/40" />
-                        <span className="text-[11px] font-medium tracking-wide">{relativeTime(featured.publishedAt)}</span>
-                        {featured.isTrending && (
-                          <>
-                            <span className="h-1 w-1 rounded-full bg-white/40" />
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary">
-                              <Flame className="h-3 w-3 fill-current" /> Trending
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold leading-[1.05] tracking-tight max-w-3xl">
-                        {featured.title}
-                      </h2>
-                      <p className="text-white/80 text-sm sm:text-base mt-3 line-clamp-2 max-w-2xl leading-relaxed">
-                        {featured.summary}
-                      </p>
-                      <span className="inline-flex items-center gap-1.5 mt-5 text-xs font-semibold uppercase tracking-[0.18em] group-hover:text-secondary transition-colors">
-                        Read article <ArrowUpRight className="h-3.5 w-3.5" />
-                      </span>
+                  {featured.thumbnailUrl && (
+                    <div className="relative aspect-[16/10] sm:aspect-[16/9] overflow-hidden bg-[hsl(var(--surface-2))]">
+                      <img
+                        src={featured.thumbnailUrl}
+                        alt={featured.title}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                        onError={handleImageFallback}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
                     </div>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 lg:p-10 text-white">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="overline text-secondary">Featured</span>
+                      <span className="h-1 w-1 rounded-full bg-white/40" />
+                      <span className="text-[11px] font-medium tracking-wide">{relativeTime(featured.publishedAt)}</span>
+                      {featured.isTrending && (
+                        <>
+                          <span className="h-1 w-1 rounded-full bg-white/40" />
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary">
+                            <Flame className="h-3 w-3 fill-current" /> Trending
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold leading-[1.05] tracking-tight max-w-3xl">
+                      {featured.title}
+                    </h2>
+                    <p className="text-white/80 text-sm sm:text-base mt-3 line-clamp-2 max-w-2xl leading-relaxed">
+                      {featured.summary}
+                    </p>
+                    <span className="inline-flex items-center gap-1.5 mt-5 text-xs font-semibold uppercase tracking-[0.18em] group-hover:text-secondary transition-colors">
+                      Read article <ArrowUpRight className="h-3.5 w-3.5" />
+                    </span>
                   </div>
                 </Link>
 
@@ -124,15 +126,17 @@ const CategoryPage = () => {
                           <Clock className="h-3 w-3" /> {art.readTime}
                         </span>
                       </div>
-                      <div className="w-24 h-20 sm:w-28 sm:h-24 shrink-0 overflow-hidden rounded-md bg-[hsl(var(--surface-2))]">
-                        <img
-                          src={getArticleImage(art.thumbnailUrl)}
-                          alt=""
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          onError={handleImageFallback}
-                          loading="lazy"
-                        />
-                      </div>
+                      {art.thumbnailUrl && (
+                        <div className="w-24 h-20 sm:w-28 sm:h-24 shrink-0 overflow-hidden rounded-md bg-[hsl(var(--surface-2))]">
+                          <img
+                            src={art.thumbnailUrl}
+                            alt=""
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            onError={handleImageFallback}
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
                     </Link>
                   ))}
                 </aside>
@@ -172,15 +176,17 @@ const CategoryPage = () => {
                 {rest.map(art => (
                   <article key={art.id} className="group">
                     <Link to={`/article/${art.slug}`} className="block press">
-                      <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
-                        <img
-                          src={getArticleImage(art.thumbnailUrl)}
-                          alt=""
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                          onError={handleImageFallback}
-                          loading="lazy"
-                        />
-                      </div>
+                      {art.thumbnailUrl && (
+                        <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
+                          <img
+                            src={art.thumbnailUrl}
+                            alt=""
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                            onError={handleImageFallback}
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 mb-2">
                         <span className="overline text-primary">{art.category}</span>
                         <span className="h-1 w-1 rounded-full bg-border" />

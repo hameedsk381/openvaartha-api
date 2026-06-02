@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import BreakingTicker from '../components/BreakingTicker';
 import FeedSkeleton from '../components/FeedSkeleton';
-import { getArticleImage, handleImageFallback } from '@/lib/utils';
+import { handleImageFallback } from '@/lib/utils';
 import { Clock, Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame } from 'lucide-react';
 import { useReadingList } from '@/hooks/use-reading-list';
 import { useArticles, useTrendingArticles, useCategories } from '@/lib/api-hooks';
@@ -140,14 +140,17 @@ export default function Index() {
                     to={`/article/${hero.slug}`}
                     className="block group press relative"
                   >
-                    <div className="relative overflow-hidden aspect-[16/10] sm:aspect-[16/9] lg:aspect-[16/10] bg-[hsl(var(--surface-2))]">
-                      <img
-                        src={getArticleImage(hero.thumbnailUrl)}
-                        alt={hero.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                        loading="eager"
-                        onError={handleImageFallback}
-                      />
+                    {hero.thumbnailUrl && (
+                      <div className="relative overflow-hidden aspect-[16/10] sm:aspect-[16/9] lg:aspect-[16/10] bg-[hsl(var(--surface-2))]">
+                        <img
+                          src={hero.thumbnailUrl}
+                          alt={hero.title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                          loading="eager"
+                          onError={handleImageFallback}
+                        />
+                      </div>
+                    )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
                       <button
@@ -224,15 +227,17 @@ export default function Index() {
                           <Clock className="h-3 w-3" /> {art.readTime}
                         </span>
                       </div>
-                      <div className="w-24 h-20 sm:w-28 sm:h-24 shrink-0 overflow-hidden rounded-md bg-[hsl(var(--surface-2))]">
-                        <img
-                          src={getArticleImage(art.thumbnailUrl)}
-                          alt=""
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          loading="lazy"
-                          onError={handleImageFallback}
-                        />
-                      </div>
+                      {art.thumbnailUrl && (
+                        <div className="w-24 h-20 sm:w-28 sm:h-24 shrink-0 overflow-hidden rounded-md bg-[hsl(var(--surface-2))]">
+                          <img
+                            src={art.thumbnailUrl}
+                            alt=""
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            loading="lazy"
+                            onError={handleImageFallback}
+                          />
+                        </div>
+                      )}
                     </Link>
                   ))}
                 </aside>
@@ -264,15 +269,17 @@ export default function Index() {
                     to={`/article/${art.slug}`}
                     className="group press block"
                   >
-                    <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
-                      <img
-                        src={getArticleImage(art.thumbnailUrl)}
-                        alt=""
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                        loading="lazy"
-                        onError={handleImageFallback}
-                      />
-                    </div>
+                    {art.thumbnailUrl && (
+                      <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
+                        <img
+                          src={art.thumbnailUrl}
+                          alt=""
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                          loading="lazy"
+                          onError={handleImageFallback}
+                        />
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 mb-2">
                       <span className="overline text-primary">{art.category}</span>
                       <span className="h-1 w-1 rounded-full bg-border" />
@@ -352,15 +359,17 @@ export default function Index() {
 
                     <div className="flex flex-col items-end gap-2 shrink-0">
                       <Link to={`/article/${art.slug}`} className="press block">
-                        <div className="w-24 h-20 sm:w-32 sm:h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
-                          <img
-                            src={getArticleImage(art.thumbnailUrl)}
-                            alt=""
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            loading="lazy"
-                            onError={handleImageFallback}
-                          />
-                        </div>
+                        {art.thumbnailUrl && (
+                          <div className="w-24 h-20 sm:w-32 sm:h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
+                            <img
+                              src={art.thumbnailUrl}
+                              alt=""
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              loading="lazy"
+                              onError={handleImageFallback}
+                            />
+                          </div>
+                        )}
                       </Link>
                       <button
                         onClick={() => toggleSave(art as any)}

@@ -1,6 +1,6 @@
 import { useReadingList } from "@/hooks/use-reading-list";
 import { Link } from "react-router-dom";
-import { getArticleImage, handleImageFallback } from "@/lib/utils";
+import { handleImageFallback } from "@/lib/utils";
 import { Clock, Trash2, ArrowUpRight, BookmarkX } from "lucide-react";
 
 export default function PortalSaved() {
@@ -30,14 +30,16 @@ export default function PortalSaved() {
           {saved.map((article) => (
             <div key={article.id} className="flex items-start gap-3 p-3 hover:bg-[hsl(var(--surface))] transition-colors group/row">
               <Link to={`/article/${article.slug}`} className="shrink-0 press">
-                <div className="h-14 w-20 rounded-lg overflow-hidden bg-secondary/30">
-                  <img
-                    src={getArticleImage(article.thumbnail)}
-                    alt=""
-                    className="w-full h-full object-cover transition-transform group-hover/row:scale-[1.03]"
-                    onError={handleImageFallback}
-                  />
-                </div>
+                {article.thumbnail && (
+                  <div className="h-14 w-20 rounded-lg overflow-hidden bg-secondary/30">
+                    <img
+                      src={article.thumbnail}
+                      alt=""
+                      className="w-full h-full object-cover transition-transform group-hover/row:scale-[1.03]"
+                      onError={handleImageFallback}
+                    />
+                  </div>
+                )}
               </Link>
 
               <Link to={`/article/${article.slug}`} className="flex-1 min-w-0 press">

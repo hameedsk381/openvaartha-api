@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Newspaper, Bookmark, Clock, Zap, ArrowUpRight, ChevronRight, TrendingUp, Loader2 } from "lucide-react";
-import { getArticleImage, handleImageFallback } from "@/lib/utils";
+import { handleImageFallback } from "@/lib/utils";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { useTrendingArticles, useArticles } from "@/lib/api-hooks";
 import { apiFetch } from "@/lib/api";
@@ -86,8 +86,11 @@ export default function PortalDashboard() {
             <span className="overline text-primary">Trending Now</span>
           </div>
           <Link to={`/article/${featured.slug}`} className="block rounded-xl overflow-hidden border border-border hover:border-primary/40 transition-colors press group">
-            <div className="relative aspect-[16/7] overflow-hidden">
-              <img src={getArticleImage(featured.thumbnailUrl)} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" onError={handleImageFallback} />
+            {featured.thumbnailUrl && (
+              <div className="relative aspect-[16/7] overflow-hidden">
+                <img src={featured.thumbnailUrl} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" onError={handleImageFallback} />
+              </div>
+            )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
                 <span className="tag bg-primary text-white mb-2">{featured.category}</span>
@@ -107,10 +110,12 @@ export default function PortalDashboard() {
         </div>
         <div className="border border-border rounded-xl overflow-hidden divide-y divide-border">
           {recent.map(art => (
-            <Link key={art.id} to={`/article/${art.slug}`} className="flex items-center gap-3 p-3 hover:bg-[hsl(var(--surface))] transition-colors press">
-              <div className="h-12 w-16 rounded-lg overflow-hidden bg-secondary/30 shrink-0">
-                <img src={getArticleImage(art.thumbnailUrl)} alt="" className="w-full h-full object-cover" onError={handleImageFallback} />
-              </div>
+            <Link key={art.id} to={`/article/${art.slug}`} className="flex items-center gap-3 p-3 hover:bg-[hsl(var(--surface))] transition-colors press group/row">
+              {art.thumbnailUrl && (
+                <div className="h-12 w-14 rounded-lg overflow-hidden bg-secondary/30 shrink-0">
+                  <img src={art.thumbnailUrl} alt="" className="w-full h-full object-cover" onError={handleImageFallback} />
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <span className="tag mb-1.5">{art.category}</span>
                 <p className="text-xs font-semibold text-foreground leading-snug line-clamp-2">{art.title}</p>

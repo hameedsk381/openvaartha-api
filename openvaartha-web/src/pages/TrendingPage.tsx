@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import Navbar from '../components/Navbar';
 import { Flame, Clock, ArrowUpRight, BarChart3, Bookmark, BookmarkCheck } from 'lucide-react';
-import { cn, getArticleImage, handleImageFallback } from '@/lib/utils';
+import { cn, handleImageFallback } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useReadingList } from '@/hooks/use-reading-list';
 import { useTrendingArticles, useEditorPicks } from '@/lib/api-hooks';
@@ -48,14 +48,16 @@ const TrendingPage = () => {
                   className="group press block border-b border-border"
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-2">
-                    <div className="aspect-[4/3] sm:aspect-auto overflow-hidden bg-[hsl(var(--surface-2))]">
-                      <img
-                        src={getArticleImage(lead.thumbnailUrl)}
-                        alt=""
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                        onError={handleImageFallback}
-                      />
-                    </div>
+                    {lead.thumbnailUrl && (
+                      <div className="aspect-[4/3] sm:aspect-auto overflow-hidden bg-[hsl(var(--surface-2))]">
+                        <img
+                          src={lead.thumbnailUrl}
+                          alt=""
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                          onError={handleImageFallback}
+                        />
+                      </div>
+                    )}
                     <div className="p-6 sm:p-8 lg:p-10 flex flex-col justify-center relative">
                       <span className="absolute top-4 right-4 sm:top-6 sm:right-6 font-serif text-7xl sm:text-8xl font-bold text-primary/15 leading-none">
                         01
@@ -118,15 +120,17 @@ const TrendingPage = () => {
                     </Link>
                     <div className="flex flex-col items-end gap-2 shrink-0">
                       <Link to={`/article/${art.slug}`} className="press block">
-                        <div className="w-24 h-20 sm:w-28 sm:h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
-                          <img
-                            src={getArticleImage(art.thumbnailUrl)}
-                            alt=""
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            onError={handleImageFallback}
-                            loading="lazy"
-                          />
-                        </div>
+                        {art.thumbnailUrl && (
+                          <div className="w-24 h-20 sm:w-28 sm:h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
+                            <img
+                              src={art.thumbnailUrl}
+                              alt=""
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              onError={handleImageFallback}
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
                       </Link>
                       <button
                         onClick={() => toggleSave(art as any)}

@@ -1,7 +1,7 @@
 import Navbar from '../components/Navbar';
 import { ArrowUpRight, Compass, Clock, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getArticleImage, handleImageFallback } from '../lib/utils';
+import { handleImageFallback } from '../lib/utils';
 import { useExplainers } from '@/lib/api-hooks';
 
 const relativeTime = (iso: string) => {
@@ -43,14 +43,16 @@ const ExplainersPage = () => {
                 className="group press block"
               >
                 <div className="grid grid-cols-1 lg:grid-cols-12">
-                  <div className="lg:col-span-7 aspect-[16/10] sm:aspect-[16/9] lg:aspect-auto overflow-hidden bg-[hsl(var(--surface-2))]">
-                    <img
-                      src={getArticleImage(lead.thumbnailUrl)}
-                      alt={lead.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                      onError={handleImageFallback}
-                    />
-                  </div>
+                  {lead.thumbnailUrl && (
+                    <div className="lg:col-span-7 aspect-[16/10] sm:aspect-[16/9] lg:aspect-auto overflow-hidden bg-[hsl(var(--surface-2))]">
+                      <img
+                        src={lead.thumbnailUrl}
+                        alt={lead.title}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                        onError={handleImageFallback}
+                      />
+                    </div>
+                  )}
                   <div className="lg:col-span-5 lg:border-l lg:border-border p-6 sm:p-10 lg:p-12 flex flex-col justify-center">
                     <div className="flex items-center gap-2 mb-4">
                       <span className="overline text-primary">The deep dive</span>
@@ -142,15 +144,17 @@ const ExplainersPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
               {more.map((art) => (
                 <Link key={art.id} to={`/article/${art.slug}`} className="group press block">
-                  <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
-                    <img
-                      src={getArticleImage(art.thumbnailUrl)}
-                      alt={art.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                      onError={handleImageFallback}
-                      loading="lazy"
-                    />
-                  </div>
+                  {art.thumbnailUrl && (
+                    <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
+                      <img
+                        src={art.thumbnailUrl}
+                        alt={art.title}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                        onError={handleImageFallback}
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 mb-2">
                     <span className="overline text-primary">{art.category}</span>
                     <span className="h-1 w-1 rounded-full bg-border" />

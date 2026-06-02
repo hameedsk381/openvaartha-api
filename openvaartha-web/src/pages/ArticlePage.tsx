@@ -318,21 +318,23 @@ const ArticlePage = () => {
           </div>
         </header>
 
-        <figure className="border-b border-border bg-[hsl(var(--surface-2))]">
-          <div className="max-w-6xl mx-auto">
-            <img
-              src={getArticleImage(article.thumbnailUrl)}
-              alt={`${article.title} — ${article.category}`}
-              className="w-full aspect-[16/9] sm:aspect-[21/9] object-cover"
-              onError={handleImageFallback}
-              loading="eager"
-              fetchPriority="high"
-            />
-            <figcaption className="px-4 sm:px-6 lg:px-10 py-3 text-[11px] font-serif italic text-muted-foreground border-t border-border bg-background">
-              {article.title} · {article.category}
-            </figcaption>
-          </div>
-        </figure>
+        {article.thumbnailUrl && (
+          <figure className="border-b border-border bg-[hsl(var(--surface-2))]">
+            <div className="max-w-6xl mx-auto">
+              <img
+                src={article.thumbnailUrl}
+                alt={`${article.title} — ${article.category}`}
+                className="w-full aspect-[16/9] sm:aspect-[21/9] object-cover"
+                onError={handleImageFallback}
+                loading="eager"
+                fetchPriority="high"
+              />
+              <figcaption className="px-4 sm:px-6 lg:px-10 py-3 text-[11px] font-serif italic text-muted-foreground border-t border-border bg-background">
+                {article.title} · {article.category}
+              </figcaption>
+            </div>
+          </figure>
+        )}
 
         <div className="max-w-screen-2xl mx-auto grid grid-cols-1 lg:grid-cols-12 px-4 sm:px-6 lg:px-10 py-10 sm:py-16 gap-x-12">
           <aside className="hidden lg:block lg:col-span-3" aria-label="Article tools">

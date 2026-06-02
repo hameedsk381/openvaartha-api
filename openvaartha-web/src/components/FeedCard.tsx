@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { cn, getArticleImage, handleImageFallback } from "@/lib/utils";
+import { cn, handleImageFallback } from "@/lib/utils";
 import type { Article } from "@/lib/types";
 import { ChevronRight, ArrowUpRight } from "lucide-react";
 
@@ -37,7 +37,7 @@ const FeedCard = ({ article, index = 0, variant = "grid" }: FeedCardProps) => {
         )}
 
         {/* Thumbnail Section */}
-        {variant !== "minimal" && (
+        {variant !== "minimal" && article.thumbnail && (
           <div className={cn(
             "relative overflow-hidden flex-shrink-0",
             variant === "hero" ? "w-full aspect-[16/9] sm:aspect-[21/9]" :
@@ -45,7 +45,7 @@ const FeedCard = ({ article, index = 0, variant = "grid" }: FeedCardProps) => {
                 "w-full aspect-square"
           )} >
             <img
-              src={getArticleImage(article.thumbnail)}
+              src={article.thumbnail}
               alt=""
               className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
               loading="lazy"

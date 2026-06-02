@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import { Bell, ArrowUpRight, Radio, RefreshCw } from 'lucide-react';
-import { cn, getArticleImage, handleImageFallback } from '@/lib/utils';
+import { cn, handleImageFallback } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useArticles } from '@/lib/api-hooks';
 
@@ -87,15 +87,17 @@ const LiveUpdatesPage = () => {
                           {a.title}
                         </h4>
                       </div>
-                      <div className="w-20 h-16 shrink-0 overflow-hidden rounded-md bg-[hsl(var(--surface-2))]">
-                        <img
-                          src={getArticleImage(a.thumbnailUrl)}
-                          alt=""
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          onError={handleImageFallback}
-                          loading="lazy"
-                        />
-                      </div>
+                      {a.thumbnailUrl && (
+                        <div className="w-20 h-16 shrink-0 overflow-hidden rounded-md bg-[hsl(var(--surface-2))]">
+                          <img
+                            src={a.thumbnailUrl}
+                            alt=""
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            onError={handleImageFallback}
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
                     </Link>
                   ))}
                 </div>

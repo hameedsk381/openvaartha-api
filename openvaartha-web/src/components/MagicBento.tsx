@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Zap, Shield, TrendingUp, Globe, Briefcase, ArrowUpRight } from 'lucide-react';
 import './MagicBento.css';
-import { cn, getArticleImage, handleImageFallback } from "@/lib/utils";
+import { cn, handleImageFallback } from "@/lib/utils";
 import type { Article } from "@/lib/types";
 
 export interface BentoCardProps {
@@ -48,10 +48,10 @@ const ParticleCard: React.FC<BentoCardProps> = ({
       style={{ '--card-color': color } as React.CSSProperties}
     >
       {/* Background Image if exists */}
-      {hasFeatureImage && (
+      {hasFeatureImage && article.thumbnail && (
         <div className="absolute inset-0 z-0">
           <img
-            src={getArticleImage(article.thumbnail)}
+            src={article.thumbnail}
             alt=""
             className="w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-all duration-700 group-hover:scale-105"
             onError={handleImageFallback}

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { Search, X, Hash, Clock, ArrowUpRight } from 'lucide-react';
-import { getArticleImage, handleImageFallback } from '@/lib/utils';
+import { handleImageFallback } from '@/lib/utils';
 import { useSearch, useCategories, useArticles } from '@/lib/api-hooks';
 
 const relativeTime = (iso: string) => {
@@ -187,15 +187,17 @@ const SearchPage = () => {
                         </div>
                       </Link>
                       <Link to={`/article/${art.slug}`} className="press hidden sm:block shrink-0">
-                        <div className="w-32 h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
-                          <img
-                            src={getArticleImage(art.thumbnailUrl)}
-                            alt=""
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            onError={handleImageFallback}
-                            loading="lazy"
-                          />
-                        </div>
+                        {art.thumbnailUrl && (
+                          <div className="w-32 h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
+                            <img
+                              src={art.thumbnailUrl}
+                              alt=""
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              onError={handleImageFallback}
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
                       </Link>
                     </li>
                   ))}

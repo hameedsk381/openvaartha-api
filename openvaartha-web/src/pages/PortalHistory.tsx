@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getArticleImage, handleImageFallback } from "@/lib/utils";
+import { handleImageFallback } from "@/lib/utils";
 import { Clock, CalendarDays, ArrowUpRight, History, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
@@ -86,14 +86,16 @@ export default function PortalHistory() {
                     to={`/article/${article.slug}`}
                     className="flex items-center gap-3 p-3 hover:bg-[hsl(var(--surface))] transition-colors press group/row"
                   >
-                    <div className="h-12 w-16 rounded-lg overflow-hidden bg-secondary/30 shrink-0">
-                      <img
-                        src={getArticleImage(article.thumbnailUrl)}
-                        alt=""
-                        className="w-full h-full object-cover transition-transform group-hover/row:scale-[1.03]"
-                        onError={handleImageFallback}
-                      />
-                    </div>
+                    {article.thumbnailUrl && (
+                      <div className="h-12 w-16 rounded-lg overflow-hidden bg-secondary/30 shrink-0">
+                        <img
+                          src={article.thumbnailUrl}
+                          alt=""
+                          className="w-full h-full object-cover transition-transform group-hover/row:scale-[1.03]"
+                          onError={handleImageFallback}
+                        />
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       {article.category ? <span className="tag mb-1.5">{article.category}</span> : null}
                       <p className="text-xs font-bold text-foreground group-hover/row:text-primary transition-colors leading-snug line-clamp-2">{article.title}</p>

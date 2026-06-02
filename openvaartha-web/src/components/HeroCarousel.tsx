@@ -5,7 +5,7 @@ import type { Article } from '@/lib/types';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ArrowUpRight, Clock, Sparkles } from 'lucide-react';
 import { Button } from './ui/button';
-import { getArticleImage, handleImageFallback } from '../lib/utils';
+import { handleImageFallback } from '../lib/utils';
 
 interface HeroCarouselProps {
   articles: Article[];
@@ -21,14 +21,17 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
           {articles.map((article, index) => (
             <div key={article.id} className="relative min-h-[380px] flex-[0_0_100%] min-w-0 sm:min-h-0 sm:aspect-[21/10] lg:aspect-[21/8.5]">
               {/* Background with subtle zoom on hover */}
-              <div className="absolute inset-0 overflow-hidden">
-                <img
-                  src={getArticleImage(article.thumbnail)}
-                  alt=""
-                  className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                  loading={index === 0 ? "eager" : "lazy"}
-                  onError={handleImageFallback}
-                />
+              {article.thumbnail && (
+                <div className="absolute inset-0 overflow-hidden">
+                  <img
+                    src={article.thumbnail}
+                    alt=""
+                    className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                    loading={index === 0 ? "eager" : "lazy"}
+                    onError={handleImageFallback}
+                  />
+                </div>
+              )}
                 <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
               </div>
