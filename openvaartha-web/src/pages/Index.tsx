@@ -70,12 +70,12 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border">
+      <div className="sticky top-0 z-50 bg-background border-b border-border">
         <Navbar isInsideStack />
         <BreakingTicker />
       </div>
 
-      <main className="pb-safe pt-36 md:pt-28">
+      <main className="pb-safe pt-0">
         <div className="max-w-screen-2xl mx-auto">
 
           {isFiltered && (
