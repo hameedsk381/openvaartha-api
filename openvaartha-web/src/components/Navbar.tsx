@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Search, Sun, Moon, Bookmark, User, Home, X, ChevronRight, LogOut, Radio } from "lucide-react";
 import { useReadingList } from "@/hooks/use-reading-list";
@@ -33,8 +33,16 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
     (localStorage.getItem("ui-lang") as LangCode | null) ?? "en"
   );
   const { saved }                 = useReadingList();
-  const navigate                  = useNavigate();
-  const location                  = useLocation();
+  const [searchParams] = useSearchParams();
+  const selectedCat = searchParams.get('category') || 'All';
+
+  const setCategory = (cat: string) => {
+    if (cat.toLowerCase() === 'all') {
+      navigate('/');
+    } else {
+      navigate(`/?category=${cat}`);
+    }
+  };
 
   const { data: searchResults = [] } = useSearch(query, 0, 7);
   const { data: categories = [] } = useCategories();
@@ -80,24 +88,31 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
   return (
     <>
       <header className={cn(
-        "h-14 flex items-center justify-between px-4 sm:px-6",
+        "bg-background w-full",
         isInsideStack ? "" : "border-b border-border"
       )}>
-        <Link to="/" className="press">
-          <img src="/logo.jpg" alt="Open Vaartha" className="h-9 w-9 rounded-lg object-cover" />
-        </Link>
+        <div className="h-14 flex items-center justify-between px-4 sm:px-6 max-w-screen-2xl mx-auto">
+          <Link to="/" className="press shrink-0">
+            <img src="/logo.jpg" alt="Open Vaartha" className="h-9 w-9 rounded-lg object-cover" />
+          </Link>
 
-        <nav className="hidden md:flex items-center gap-1">
-          {categoryNames.slice(0, 5).map(cat => (
-            <button
-              key={cat}
-              onClick={() => navigate(`/?category=${cat}`)}
-              className="h-11 px-3 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors press"
-            >
-              {cat}
-            </button>
-          ))}
-        </nav>
+          {/* Desktop category pills in the center */}
+          <nav className="hidden md:flex items-center gap-2 mx-4 overflow-x-auto no-scrollbar max-w-2xl">
+            {(["All", ...categoryNames] as string[]).map(cat => (
+              <button
+                key={cat}
+                onClick={() => setCategory(cat)}
+                className={cn(
+                  "shrink-0 h-9 px-4 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors press whitespace-nowrap",
+                  selectedCat.toLowerCase() === cat.toLowerCase()
+                    ? "bg-primary text-primary-foreground font-bold"
+                    : "bg-secondary/50 text-[hsl(var(--secondary-foreground))] hover:bg-secondary"
+                )}
+              >
+                {cat}
+              </button>
+            ))}
+          </nav>
 
         <div className="flex items-center gap-0.5">
           <div className="hidden sm:flex items-center border border-border rounded-lg overflow-hidden mr-1">
@@ -173,6 +188,24 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
               Sign in
             </Link>
           )}
+        </div>
+        </div>
+        {/* Mobile scrollable category pills row */}
+        <div className="md:hidden border-t border-border/50 py-2 px-4 flex gap-2 overflow-x-auto no-scrollbar bg-background">
+          {(["All", ...categoryNames] as string[]).map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategory(cat)}
+              className={cn(
+                "shrink-0 h-8 px-4.5 rounded-full text-xs font-bold transition-colors press whitespace-nowrap",
+                selectedCat.toLowerCase() === cat.toLowerCase()
+                  ? "bg-primary text-primary-foreground font-bold"
+                  : "bg-secondary/50 text-[hsl(var(--secondary-foreground))] hover:bg-secondary"
+              )}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
       </header>
 

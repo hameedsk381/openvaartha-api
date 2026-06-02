@@ -28,7 +28,6 @@ export default function Index() {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedCat = searchParams.get('category') || 'All';
   const { toggleSave, isSaved } = useReadingList();
-  const [collapsed, setCollapsed] = useState(false);
   const [switching, setSwitching] = useState(false);
   const switchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -41,16 +40,7 @@ export default function Index() {
     [categories],
   );
 
-  useEffect(() => {
-    let lastY = 0;
-    const onScroll = () => {
-      const y = window.scrollY;
-      setCollapsed(y > 80 && y > lastY);
-      lastY = y;
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  // Unused scroll effect removed since navbar contains unified tabs
 
   const setCategory = (cat: string) => {
     if (cat === selectedCat) return;
@@ -84,47 +74,16 @@ export default function Index() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border">
         <Navbar isInsideStack />
-
-        <div
-          className="overflow-hidden transition-[max-height,opacity] duration-300"
-          style={{ maxHeight: collapsed ? 0 : 120, opacity: collapsed ? 0 : 1 }}
-        >
-          <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 py-2.5 max-w-screen-2xl mx-auto">
-            {(['All', ...CATEGORY_NAMES] as string[]).map(cat => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                className={`shrink-0 h-9 px-4 rounded-full text-sm font-medium transition-colors press whitespace-nowrap
-                  ${selectedCat.toLowerCase() === cat.toLowerCase()
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-secondary/50 text-[hsl(var(--secondary-foreground))] hover:bg-secondary'}`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          <BreakingTicker />
-        </div>
+        <BreakingTicker />
       </div>
 
-      <main
-        className="pb-safe"
-        style={{ paddingTop: collapsed ? '56px' : '130px', transition: 'padding-top 300ms' }}
-      >
+      <main className="pb-safe pt-36 md:pt-28">
         <div className="max-w-screen-2xl mx-auto">
-          <div className="px-4 sm:px-6 lg:px-10 py-3 sm:py-4 border-b border-border flex items-center justify-between">
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="hidden sm:inline-flex h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-              <span className="font-serif italic text-xs sm:text-sm text-muted-foreground truncate">
-                {dateline}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 sm:gap-5 text-[10px] sm:text-xs uppercase tracking-[0.18em] text-muted-foreground/80 font-semibold">
-              <span className="hidden sm:inline">South India Edition</span>
-              <span className="hidden sm:inline-block h-3 w-px bg-border" />
-              <span className="text-primary">Vol. 02 · No. 47</span>
-            </div>
+          <div className="px-4 sm:px-6 lg:px-10 py-3 border-b border-border text-xs text-muted-foreground font-serif italic flex items-center gap-2.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+            <span>{dateline}</span>
+            <span className="text-border font-sans not-italic">|</span>
+            <span className="font-sans not-italic uppercase tracking-wider text-[10px] text-primary font-bold">Vol. 02 · No. 47</span>
           </div>
 
           {isFiltered && (
