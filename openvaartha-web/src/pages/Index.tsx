@@ -11,8 +11,7 @@ import type { Article } from '@/lib/types';
 
 type CategoryName = string;
 
-const formatDateline = (d = new Date()) =>
-  d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
 
 const relativeTime = (iso: string) => {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -68,7 +67,6 @@ export default function Index() {
   const editor = filtered.slice(4, 7);
   const feed = filtered.slice(7);
   const trending = useMemo(() => trendingData.slice(0, 5), [trendingData]);
-  const dateline = useMemo(() => formatDateline(), []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -79,12 +77,6 @@ export default function Index() {
 
       <main className="pb-safe pt-36 md:pt-28">
         <div className="max-w-screen-2xl mx-auto">
-          <div className="px-4 sm:px-6 lg:px-10 py-3 border-b border-border text-xs text-muted-foreground font-serif italic flex items-center gap-2.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-            <span>{dateline}</span>
-            <span className="text-border font-sans not-italic">|</span>
-            <span className="font-sans not-italic uppercase tracking-wider text-[10px] text-primary font-bold">Vol. 02 · No. 47</span>
-          </div>
 
           {isFiltered && (
             <div className="px-4 sm:px-6 lg:px-10 py-6 border-b border-border">
