@@ -8,6 +8,7 @@ import {
   Clock, Sparkles, User, ExternalLink, History, Type, Flame,
 } from "lucide-react";
 import { cn, getArticleImage, handleImageFallback } from "@/lib/utils";
+import { categoryColors } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
 import CommentSection from "@/components/CommentSection";
 import { useReadingList } from "@/hooks/use-reading-list";
@@ -237,7 +238,12 @@ const ArticlePage = () => {
       </nav>
 
       <article>
-        <header className="border-y border-border bg-[hsl(var(--surface))] mt-4">
+        <header className="border-y border-border bg-[hsl(var(--surface))] mt-4 relative">
+          <div
+            aria-hidden="true"
+            className="absolute top-0 left-0 right-0 h-1"
+            style={{ backgroundColor: categoryColors[article.category] || 'hsl(var(--primary))' }}
+          />
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-16">
             <div className="flex items-center gap-3 mb-5">
               <Link
@@ -518,7 +524,25 @@ const ArticlePage = () => {
         </div>
       </article>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Floating share bar — mobile only */}
+      {article && (
+        <div className="fixed bottom-0 inset-x-0 z-50 border-t border-border bg-background/95 backdrop-blur-md lg:hidden flex items-center justify-between px-5 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <h3 className="text-xs font-semibold truncate">{article.title}</h3>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleShare}
+              className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 hover:opacity-90 transition-opacity press"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              Share
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 lg:pb-12">
         <CommentSection articleId={article?.id ?? ""} currentUserId={currentUserId} />
       </div>
     </div>

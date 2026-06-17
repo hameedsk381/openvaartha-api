@@ -2,8 +2,10 @@ import { useState, useRef, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import BreakingTicker from '../components/BreakingTicker';
+import HeroCarousel from '../components/HeroCarousel';
 import FeedSkeleton from '../components/FeedSkeleton';
 import { handleImageFallback } from '@/lib/utils';
+import { categoryColors } from '@/lib/types';
 import { Clock, Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useReadingList } from '@/hooks/use-reading-list';
@@ -95,6 +97,9 @@ export default function Index() {
           )}
 
           {hero && (
+            <>
+              <HeroCarousel articles={filtered.slice(0, 5)} />
+
             <section className="border-b border-border">
               <div className="grid grid-cols-1 lg:grid-cols-12">
                 <div className="lg:col-span-8 lg:border-r lg:border-border">

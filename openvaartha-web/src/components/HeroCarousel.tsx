@@ -3,7 +3,7 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import type { Article } from '@/lib/types';
 import { Link } from 'react-router-dom';
-import { ChevronRight, ArrowUpRight, Clock, Sparkles } from 'lucide-react';
+import { ChevronRight, ArrowUpRight, Clock, Sparkles, Flame } from 'lucide-react';
 import { Button } from './ui/button';
 import { handleImageFallback } from '../lib/utils';
 
@@ -14,69 +14,73 @@ interface HeroCarouselProps {
 const HeroCarousel = ({ articles }: HeroCarouselProps) => {
   const [emblaRef] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 5000 })]);
 
+  if (articles.length === 0) return null;
+
   return (
-    <section className="relative mb-10 w-full overflow-hidden rounded-[1.75rem] border border-black/5 bg-background shadow-glass-lg dark:border-white/5 sm:mb-12 sm:rounded-[2.5rem] group">
+    <section className="relative w-full overflow-hidden border-b border-border">
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex">
           {articles.map((article, index) => (
-            <div key={article.id} className="relative min-h-[380px] flex-[0_0_100%] min-w-0 sm:min-h-0 sm:aspect-[21/10] lg:aspect-[21/8.5]">
-              {/* Background with subtle zoom on hover */}
-              {article.thumbnail && (
-                <div className="absolute inset-0 overflow-hidden">
+            <Link
+              key={article.id}
+              to={`/article/${article.slug}`}
+              className="relative min-h-[360px] flex-[0_0_100%] min-w-0 sm:min-h-0 sm:aspect-[21/9] group"
+            >
+              {article.thumbnailUrl && (
+                <div className="absolute inset-0 overflow-hidden bg-[hsl(var(--surface-2))]">
                   <img
-                    src={article.thumbnail}
+                    src={article.thumbnailUrl}
                     alt=""
-                    className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                    className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]"
                     loading={index === 0 ? "eager" : "lazy"}
                     onError={handleImageFallback}
                   />
                 </div>
               )}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
-              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
-              {/* Content Overlay */}
-              <div className="absolute inset-0 flex flex-col justify-end p-6 pb-10 sm:p-10 sm:pb-14 lg:p-14 lg:pb-20">
-                <div className="max-w-[95%] space-y-4 animate-in slide-in-from-bottom-8 duration-700 sm:max-w-2xl sm:space-y-4 lg:max-w-4xl lg:space-y-5">
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                    <span className="rounded-full bg-white px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-black shadow-lg sm:px-4 sm:text-[10px]">
+              <div className="absolute inset-0 flex flex-col justify-end p-6 pb-8 sm:p-10 sm:pb-12 lg:p-14 lg:pb-16">
+                <div className="max-w-3xl space-y-3 sm:space-y-4">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                    <span className="rounded-full bg-secondary px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-secondary-foreground shadow-sm">
                       {article.category}
                     </span>
-                    <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.3em] text-white/50 sm:text-[10px]">
-                      <Clock className="h-3 w-3 opacity-60" /> {article.readTime}
-                    </div>
-                    {article.trending && (
-                      <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-primary sm:text-[10px]">
-                        <Sparkles className="h-3 w-3 fill-current" /> Trending
+                    <span className="flex items-center gap-1.5 text-[10px] font-medium text-white/60">
+                      <Clock className="h-3 w-3" /> {article.readTime}
+                    </span>
+                    {article.isTrending && (
+                      <span className="flex items-center gap-1 text-[10px] font-semibold text-secondary">
+                        <Flame className="h-3 w-3 fill-current" /> Trending
                       </span>
                     )}
                   </div>
 
-                  <h2 className="max-w-4xl text-balance text-[1.85rem] font-black leading-[1.05] tracking-tighter text-white sm:text-4xl md:text-5xl lg:text-6xl">
+                  <h2 className="text-balance text-[1.75rem] font-bold leading-[1.05] tracking-tight text-white sm:text-4xl lg:text-5xl line-clamp-2">
                     {article.title}
                   </h2>
-                  <p className="max-w-2xl line-clamp-2 text-sm font-bold leading-relaxed text-white/40 sm:text-lg tracking-tight">
+                  <p className="max-w-2xl line-clamp-2 text-sm leading-relaxed text-white/70">
                     {article.summary}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-4 pt-3 sm:pt-4">
-                    <Link to={`/article/${article.slug}`}>
-                      <Button className="h-11 rounded-xl bg-white px-6 text-sm font-semibold text-black shadow-lg transition-all hover:bg-white/90 active:scale-95">
-                        Read article
-                      </Button>
-                    </Link>
-                    <Link to="/" className="flex items-center gap-2 text-sm font-medium text-white/50 transition-all hover:text-white group/link">
-                      View feed <ChevronRight className="h-4 w-4 transition-transform group-hover/link:translate-x-1" />
-                    </Link>
+                  <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-secondary group-hover:text-white transition-colors">
+                    Read article <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
 
+      <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-6 flex gap-1.5 z-10">
+        {articles.slice(0, 5).map((_, i) => (
+          <button
+            key={i}
+            className="h-1.5 w-6 rounded-full bg-white/30 hover:bg-white/60 transition-colors"
+            aria-label={`Go to slide ${i + 1}`}
+          />
+        ))}
+      </div>
     </section>
   );
 };
