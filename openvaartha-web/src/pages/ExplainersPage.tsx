@@ -32,7 +32,7 @@ const ExplainersPage = () => {
               Explainers
             </h1>
             <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-4 max-w-2xl leading-relaxed">
-              The "why" behind the headline. Long-form context on the policies, people and shifts shaping South India.
+              The "why" behind the headline. Long-form context on the policies, people and shifts shaping Andhra Pradesh & Telangana.
             </p>
           </header>
 

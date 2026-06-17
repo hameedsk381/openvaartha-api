@@ -381,7 +381,7 @@ export default function Index() {
                   <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent_60%)]" />
                   <span className="relative overline !text-secondary">The Briefing</span>
                   <h4 className="relative font-serif text-xl font-bold mt-2 leading-snug">
-                    South India, in your inbox by sunrise.
+                    Andhra Pradesh & Telangana, in your inbox by sunrise.
                   </h4>
                   <p className="relative text-sm text-white/80 mt-2 leading-relaxed">
                     A free morning digest of the stories that matter — curated, never automated.

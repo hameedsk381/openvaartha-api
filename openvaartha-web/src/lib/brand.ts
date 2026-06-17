@@ -2,8 +2,8 @@ export const BRAND = {
   name: "Open Vaartha",
   shortName: "Open Vaartha",
   monogram: "OV",
-  tagline: "Independent journalism from South India. Five languages. One signal, no noise.",
-  description: "Immersive, high-speed regional dispatches from South India. Open Vaartha brings you authoritative briefings on Politics, Tech, Cinema, and Business.",
+  tagline: "Independent journalism for Andhra Pradesh & Telangana. Two states, one signal, no noise.",
+  description: "Immersive, high-speed regional dispatches from Andhra Pradesh & Telangana. Open Vaartha brings you authoritative briefings on Politics, Tech, Cinema, and Business.",
   url: "https://openvaartha.com",
   twitterHandle: "@openvaartha",
   instagramHandle: "@openvaartha",
@@ -18,7 +18,7 @@ export const BRAND = {
   editorialPromise: "The Open Vaartha editorial promise",
 } as const;
 
-export const SITE_TITLE = `${BRAND.name} — South India's Authoritative News Platform`;
+export const SITE_TITLE = `${BRAND.name} — Andhra Pradesh & Telangana's Authoritative News Platform`;
 export const SITE_DESCRIPTION = BRAND.description;
 
 export function pageTitle(title: string): string {

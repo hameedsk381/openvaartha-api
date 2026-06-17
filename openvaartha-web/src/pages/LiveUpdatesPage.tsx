@@ -47,7 +47,7 @@ const LiveUpdatesPage = () => {
               Live updates
             </h1>
             <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-4 max-w-2xl leading-relaxed">
-              Real-time dispatches from our regional desks across South India — verified, timestamped, no rumours.
+              Real-time dispatches from our regional desks across Andhra Pradesh & Telangana — verified, timestamped, no rumours.
             </p>
 
             <div className="flex flex-wrap items-center gap-3 mt-6">

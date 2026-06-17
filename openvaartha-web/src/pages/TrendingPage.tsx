@@ -36,7 +36,7 @@ const TrendingPage = () => {
               Trending now
             </h1>
             <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-4 max-w-2xl leading-relaxed">
-              The stories South India is reading, ranked by attention — refreshed every fifteen minutes.
+              The stories Andhra Pradesh & Telangana are reading, ranked by attention — refreshed every fifteen minutes.
             </p>
           </header>
 
