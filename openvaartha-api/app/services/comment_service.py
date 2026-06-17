@@ -1,7 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Optional
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.sanitize import sanitize_text
 
@@ -92,7 +92,7 @@ async def create_comment(
         "is_edited": False,
         "is_flagged": False,
         "is_active": True,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc),
         "updated_at": None,
     }
     await db["comments"].insert_one(doc)
@@ -113,7 +113,7 @@ async def update_comment(
 
     await db["comments"].update_one(
         {"_id": comment_id},
-        {"$set": {"body": sanitize_text(body), "is_edited": True, "updated_at": datetime.utcnow()}},
+        {"$set": {"body": sanitize_text(body), "is_edited": True, "updated_at": datetime.now(timezone.utc)}},
     )
     return await db["comments"].find_one({"_id": comment_id})
 
@@ -132,7 +132,7 @@ async def delete_comment(
 
     await db["comments"].update_one(
         {"_id": comment_id},
-        {"$set": {"is_active": False, "updated_at": datetime.utcnow()}},
+        {"$set": {"is_active": False, "updated_at": datetime.now(timezone.utc)}},
     )
     return True
 

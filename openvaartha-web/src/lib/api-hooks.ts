@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Article, Category, CategoryName, Comment } from "./types";
-import { articles as mockArticles } from "@/data/mockArticles";
+import type { Article, Category, Comment } from "./types";
 import { apiFetch } from "./api";
 
 export function useArticles(params?: {
@@ -15,7 +14,6 @@ export function useArticles(params?: {
   return useQuery<Article[]>({
     queryKey: ["articles", params],
     queryFn: () => apiFetch<Article[]>(`/articles/?${query}`),
-    placeholderData: mockArticles as unknown as Article[],
   });
 }
 
@@ -31,7 +29,6 @@ export function useTrendingArticles(limit = 10) {
   return useQuery<Article[]>({
     queryKey: ["articles", "trending", limit],
     queryFn: () => apiFetch<Article[]>(`/articles/trending?limit=${limit}`),
-    placeholderData: mockArticles.filter((a) => a.trending) as unknown as Article[],
   });
 }
 
@@ -39,7 +36,6 @@ export function useBreakingArticles(limit = 5) {
   return useQuery<Article[]>({
     queryKey: ["articles", "breaking", limit],
     queryFn: () => apiFetch<Article[]>(`/articles/breaking?limit=${limit}`),
-    placeholderData: mockArticles.filter((a) => a.isBreaking) as unknown as Article[],
   });
 }
 
@@ -47,7 +43,6 @@ export function useEditorPicks(limit = 10) {
   return useQuery<Article[]>({
     queryKey: ["articles", "editor-picks", limit],
     queryFn: () => apiFetch<Article[]>(`/articles/editor-picks?limit=${limit}`),
-    placeholderData: mockArticles as unknown as Article[],
   });
 }
 
@@ -108,6 +103,20 @@ export function useCommentCount(articleId: string) {
     queryFn: () => apiFetch<{ count: number }>(`/comments/count?article_id=${articleId}`),
     enabled: !!articleId,
     placeholderData: { count: 0 },
+  });
+}
+
+export function useNewsletterSubscribe() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (email: string) =>
+      apiFetch<{ message: string; email: string }>("/newsletter/subscribe", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["newsletter"] });
+    },
   });
 }
 

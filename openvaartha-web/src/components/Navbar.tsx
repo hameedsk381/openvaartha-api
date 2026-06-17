@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation, useSearchParams } from "react-router-do
 import { cn } from "@/lib/utils";
 import { Search, Sun, Moon, Bookmark, User, Home, X, ChevronRight, LogOut, Radio } from "lucide-react";
 import { useReadingList } from "@/hooks/use-reading-list";
-import { useSearch, useCategories } from "@/lib/api-hooks";
+import { useSearch, useCategories, useBreakingArticles } from "@/lib/api-hooks";
 
 interface NavbarProps { isInsideStack?: boolean; }
 
@@ -46,8 +46,9 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
 
   const { data: searchResults = [] } = useSearch(query, 0, 7);
   const { data: categories = [] } = useCategories();
+  const { data: breakingArticles = [] } = useBreakingArticles(5);
 
-  const hasBreaking = searchResults.length > 0;
+  const hasBreaking = breakingArticles.length > 0;
 
   const switchLang = (code: LangCode) => {
     setLang(code);

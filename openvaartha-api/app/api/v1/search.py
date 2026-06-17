@@ -17,7 +17,7 @@ async def search_articles(
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
     """Search articles by title, summary, or content with optional category filter."""
-    articles = await article_service.search_articles(db, query=q, skip=skip, limit=limit)
+    articles = await article_service.search_articles(db, query=q, skip=skip, limit=limit, category=category)
     return articles
 
 

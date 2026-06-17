@@ -1,8 +1,8 @@
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 from app.services import article_service, auth_service
-from app.schemas.article import ArticleCreate, ArticleContent
+from app.schemas.article import ArticleCreate, ArticleContentCreate
 from app.schemas.user import UserCreate
 from app.core.security import verify_password
 
@@ -42,9 +42,9 @@ class TestArticleService:
             "language": "en",
             "is_trending": True,
             "is_breaking": False,
-            "published_at": datetime.utcnow(),
+            "published_at": datetime.now(timezone.utc),
             "author": "Test",
-            "created_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc)
         })
         
         articles = await article_service.get_trending_articles(db, limit=10)
@@ -67,9 +67,9 @@ class TestArticleService:
             "language": "en",
             "is_trending": False,
             "is_breaking": True,
-            "published_at": datetime.utcnow(),
+            "published_at": datetime.now(timezone.utc),
             "author": "Test",
-            "created_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc)
         })
         
         articles = await article_service.get_breaking_articles(db, limit=5)
@@ -101,9 +101,9 @@ class TestArticleService:
             language="en",
             is_trending=False,
             is_breaking=False,
-            published_at=datetime.utcnow(),
+            published_at=datetime.now(timezone.utc),
             author="Test Author",
-            content=ArticleContent(
+            content=ArticleContentCreate(
                 tldr="TLDR",
                 points=["Point 1"],
                 body="Full body"

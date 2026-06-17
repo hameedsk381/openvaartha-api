@@ -147,9 +147,12 @@ async def add_to_reading_list(
     current_user: UserModel = Depends(get_current_user),
 ):
     """Add article to reading list."""
-    success = await user_service.add_to_reading_list(db, current_user.id, article_id)
-    if not success:
+    result = await user_service.add_to_reading_list(db, current_user.id, article_id)
+    if not result["success"]:
         raise HTTPException(status_code=404, detail="Article not found")
+
+    if result["status"] == "already_exists":
+        raise HTTPException(status_code=400, detail="Article already in reading list")
 
     return {"message": "Article added to reading list"}
 

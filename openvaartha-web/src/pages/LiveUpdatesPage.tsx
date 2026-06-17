@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
-import { Bell, ArrowUpRight, Radio, RefreshCw } from 'lucide-react';
+import { Bell, ArrowUpRight, Radio, RefreshCw, Loader2 } from 'lucide-react';
 import { cn, handleImageFallback } from '@/lib/utils';
 import { Link } from 'react-router-dom';
-import { useArticles } from '@/lib/api-hooks';
+import { useArticles, useLiveUpdates } from '@/lib/api-hooks';
+
+type LiveUpdate = {
+  id: string;
+  time: string;
+  text: string;
+  type: string;
+  title: string;
+  slug: string;
+};
 
 const LiveUpdatesPage = () => {
   const [now, setNow] = useState(new Date());
   const { data: articles = [] } = useArticles({ limit: 3 });
+  const { data: liveUpdates = [], isLoading } = useLiveUpdates(100);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 30_000);
@@ -61,9 +71,48 @@ const LiveUpdatesPage = () => {
                 </div>
               </div>
 
-              <p className="font-serif italic text-muted-foreground text-center py-16">
-                Live updates from our regional desks. Check back soon.
-              </p>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                </div>
+              ) : liveUpdates.length === 0 ? (
+                <p className="font-serif italic text-muted-foreground text-center py-16">
+                  Live updates from our regional desks. Check back soon.
+                </p>
+              ) : (
+                <div className="relative">
+                  <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
+                  <div className="space-y-0">
+                    {liveUpdates.map((update: LiveUpdate) => (
+                      <div key={update.id} className="relative pl-12 pb-6 last:pb-0">
+                        <div className="absolute left-2.5 top-1.5 h-3 w-3 rounded-full bg-primary ring-4 ring-background" />
+                        <div className="text-xs text-muted-foreground font-medium mb-1">
+                          {new Date(update.time).toLocaleTimeString('en-IN', {
+                            hour: '2-digit', minute: '2-digit',
+                          })}
+                        </div>
+                        {update.slug ? (
+                          <Link
+                            to={`/article/${update.slug}`}
+                            className="group block press"
+                          >
+                            <h4 className="font-serif text-sm font-bold leading-snug tracking-tight group-hover:text-primary transition-colors">
+                              {update.title}
+                            </h4>
+                            <p className="font-serif text-sm text-muted-foreground mt-1 leading-relaxed">
+                              {update.text}
+                            </p>
+                          </Link>
+                        ) : (
+                          <p className="font-serif text-sm text-foreground leading-relaxed">
+                            {update.text}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </section>
 
             <aside className="lg:col-span-4">

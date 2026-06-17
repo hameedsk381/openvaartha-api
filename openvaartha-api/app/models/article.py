@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, model_validator
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from uuid import uuid4
 
@@ -51,7 +51,7 @@ class Article(BaseModel):
     published_at: datetime
     last_updated: Optional[datetime] = None
     author: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = None
     content: Optional[ArticleContent] = None
     sources: Optional[List[ArticleSource]] = None

@@ -26,27 +26,26 @@ async def get_reading_list(db: AsyncIOMotorDatabase, user_id: str) -> List[dict]
     articles.sort(key=lambda article: order.get(article["_id"], len(order)))
     return [await article_service._populate_article_extras(db, article) for article in articles]
 
-async def add_to_reading_list(db: AsyncIOMotorDatabase, user_id: str, article_id: str) -> bool:
-    """Add an article to the user's reading list."""
-    # Check if article exists
+async def add_to_reading_list(db: AsyncIOMotorDatabase, user_id: str, article_id: str) -> dict:
+    """Add an article to the user's reading list.
+    Returns {"success": True, "status": "added|already_exists"} or {"success": False, "status": "not_found"}."""
     article = await db["articles"].find_one({"_id": article_id})
     if not article:
-        return False
-        
-    # Check if already in reading list
+        return {"success": False, "status": "not_found"}
+
     existing = await db["reading_lists"].find_one({
         "user_id": user_id,
         "article_id": article_id
     })
     if existing:
-        return True # Consider it a success if already there
-        
+        return {"success": True, "status": "already_exists"}
+
     await db["reading_lists"].insert_one({
         "user_id": user_id,
         "article_id": article_id,
-        "saved_at": datetime.utcnow()
+        "saved_at": datetime.now(timezone.utc)
     })
-    return True
+    return {"success": True, "status": "added"}
 
 async def remove_from_reading_list(db: AsyncIOMotorDatabase, user_id: str, article_id: str) -> bool:
     """Remove an article from the user's reading list."""
@@ -75,7 +74,7 @@ async def add_to_reading_history(db: AsyncIOMotorDatabase, user_id: str, article
 
     await db["reading_history"].update_one(
         {"user_id": user_id, "article_id": article_id},
-        {"$set": {"read_at": datetime.utcnow()}},
+        {"$set": {"read_at": datetime.now(timezone.utc)}},
         upsert=True
     )
     return True

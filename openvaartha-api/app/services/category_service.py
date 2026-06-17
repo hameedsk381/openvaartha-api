@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import uuid4
 
@@ -53,7 +53,7 @@ async def create_category(db: AsyncIOMotorDatabase, category_data: CategoryCreat
         "name": category_data.name.strip(),
         "color_code": category_data.color_code,
         "emoji": category_data.emoji,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc),
     }
     try:
         await db["categories"].insert_one(category_doc)
@@ -83,7 +83,7 @@ async def update_category(
                 detail="Category with this name already exists",
             )
 
-    update_dict["updated_at"] = datetime.utcnow()
+    update_dict["updated_at"] = datetime.now(timezone.utc)
     try:
         result = await db["categories"].update_one({"_id": category_id}, {"$set": update_dict})
     except DuplicateKeyError:

@@ -10,8 +10,11 @@ from app.models.user import User as UserModel
 from app.schemas.article import Article as ArticleSchema
 from app.schemas.user import User as UserSchema
 from app.schemas.comment import Comment as CommentSchema
+from app.schemas.source import SourceCreate, SourceUpdate, Source as SourceSchema
 from app.services import article_service, user_service
 from app.services.ai_service import generate_article
+from app.services.source_service import create_source, update_source, delete_source, get_source, list_sources
+from app.services.rss_service import process_source
 
 router = APIRouter(dependencies=[Depends(get_current_active_admin)])
 
@@ -56,13 +59,17 @@ async def dashboard_stats(
     }
 
 
-@router.get("/users", response_model=List[UserSchema])
+@router.get("/users")
 async def list_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
+    include_total: bool = Query(False, description="Return {items, total} instead of plain array"),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """List all users (admin only)."""
+    total = 0
+    if include_total:
+        total = await db["users"].count_documents({})
     cursor = db["users"].find().sort("created_at", -1).skip(skip).limit(limit)
     docs = await cursor.to_list(length=limit)
     result = []
@@ -70,6 +77,8 @@ async def list_users(
         if "_id" in d and "id" not in d:
             d["id"] = str(d["_id"])
         result.append(UserSchema(**d))
+    if include_total:
+        return {"items": result, "total": total}
     return result
 
 
@@ -111,19 +120,25 @@ async def delete_user(
     return {"message": "User deleted"}
 
 
-@router.get("/comments", response_model=List[CommentSchema])
+@router.get("/comments")
 async def list_all_comments(
     article_id: Optional[str] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
+    include_total: bool = Query(False, description="Return {items, total} instead of plain array"),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """List all comments across articles (admin only)."""
     query = {}
     if article_id:
         query["article_id"] = article_id
+    total = 0
+    if include_total:
+        total = await db["comments"].count_documents(query)
     cursor = db["comments"].find(query).sort("created_at", -1).skip(skip).limit(limit)
     docs = await cursor.to_list(length=limit)
+    if include_total:
+        return {"items": docs, "total": total}
     return docs
 
 
@@ -131,20 +146,28 @@ async def list_all_comments(
 async def list_subscribers(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
+    include_total: bool = Query(False, description="Return {items, total} instead of plain array"),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """List newsletter subscribers (admin only)."""
-    cursor = db["newsletter_subscribers"].find({"is_active": True}).sort("subscribed_at", -1).skip(skip).limit(limit)
+    query = {"is_active": True}
+    total = 0
+    if include_total:
+        total = await db["newsletter_subscribers"].count_documents(query)
+    cursor = db["newsletter_subscribers"].find(query).sort("subscribed_at", -1).skip(skip).limit(limit)
     docs = await cursor.to_list(length=limit)
-    return [
+    items = [
         {
-            "id": d.get("_id", d.get("id")),
+            "id": str(d.get("_id", d.get("id", ""))),
             "email": d["email"],
             "subscribedAt": d.get("subscribed_at"),
             "isActive": d.get("is_active", True),
         }
         for d in docs
     ]
+    if include_total:
+        return {"items": items, "total": total}
+    return items
 
 class GenerateArticleRequest(BaseModel):
     topic: str
@@ -172,3 +195,83 @@ async def ai_generate_article(body: GenerateArticleRequest):
             detail="AI generation failed. Check the GEMINI_API_KEY environment variable.",
         )
     return result
+
+
+# ── RSS Sources ──────────────────────────────────────────────────────────────
+
+
+@router.get("/sources", response_model=List[SourceSchema])
+async def list_admin_sources(
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """List all RSS sources (admin only)."""
+    return await list_sources(db)
+
+
+@router.post("/sources", response_model=SourceSchema, status_code=201)
+async def create_admin_source(
+    body: SourceCreate,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Create a new RSS source (admin only)."""
+    return await create_source(db, body)
+
+
+@router.get("/sources/{source_id}", response_model=SourceSchema)
+async def get_admin_source(
+    source_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Get a single RSS source (admin only)."""
+    source = await get_source(db, source_id)
+    if not source:
+        raise HTTPException(status_code=404, detail="Source not found")
+    return source
+
+
+@router.put("/sources/{source_id}", response_model=SourceSchema)
+async def update_admin_source(
+    source_id: str,
+    body: SourceUpdate,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Update an RSS source (admin only)."""
+    source = await update_source(db, source_id, body)
+    if not source:
+        raise HTTPException(status_code=404, detail="Source not found")
+    return source
+
+
+@router.delete("/sources/{source_id}")
+async def delete_admin_source(
+    source_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Delete an RSS source (admin only)."""
+    deleted = await delete_source(db, source_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Source not found")
+    return {"message": "Source deleted"}
+
+
+class ProcessResult(BaseModel):
+    processed: int
+
+
+@router.post("/sources/process", response_model=ProcessResult)
+async def process_all_sources(
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Manually trigger RSS feed fetching + article generation for all active sources."""
+    import logging
+
+    logger = logging.getLogger(__name__)
+    sources = await list_sources(db, active_only=True)
+    total = 0
+    for source in sources:
+        try:
+            n = await process_source(db, source)
+            total += n
+        except Exception as e:
+            logger.error("Failed to process source %s: %s", source.get("name"), e)
+    return {"processed": total}

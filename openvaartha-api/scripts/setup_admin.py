@@ -1,7 +1,7 @@
 import sys
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pymongo import MongoClient
 
 # Add the project root to sys.path so we can import app
@@ -53,7 +53,7 @@ def setup_admin():
             "is_active": True,
             "is_admin": True,
             "role": "admin",
-            "created_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc)
         }
         users_collection.insert_one(new_admin)
         print(f"Created new admin user: {admin_email}")

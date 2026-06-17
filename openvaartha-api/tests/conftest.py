@@ -1,19 +1,10 @@
 import pytest
-import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
 from httpx import AsyncClient, ASGITransport
 from app.main import app
 from app.config import Settings
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create an instance of the default event loop for the test session."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest.fixture(scope="session")
@@ -26,7 +17,7 @@ def test_settings():
     )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 async def mongo_client(test_settings):
     """Create MongoDB client for testing."""
     client = AsyncIOMotorClient(test_settings.MONGODB_URL)
@@ -39,7 +30,6 @@ async def db(mongo_client, test_settings):
     """Create test database and clean up after each test."""
     db = mongo_client[test_settings.DATABASE_NAME]
     
-    # Clean collections before each test
     collections = [
         "users", "articles", "categories", "newsletter_subscribers",
         "reading_lists", "reading_history", "sources", "article_content", "article_sources"
@@ -49,7 +39,6 @@ async def db(mongo_client, test_settings):
     
     yield db
     
-    # Clean collections after each test
     for collection in collections:
         await db[collection].delete_many({})
 
@@ -70,9 +59,16 @@ def reset_rate_limiter():
 
 @pytest.fixture(scope="function")
 async def client(db):
-    """Create test client."""
+    """Create test client with overridden DB dependency."""
+    from app.database import get_db
+
+    async def _get_db_override():
+        yield db
+
+    app.dependency_overrides[get_db] = _get_db_override
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as async_client:
         yield async_client
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
@@ -89,7 +85,7 @@ async def test_user(db):
         "hashed_password": get_password_hash("testpassword123"),
         "is_active": True,
         "is_admin": False,
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc)
     }
     
     await db["users"].insert_one(user_data)
@@ -110,7 +106,7 @@ async def test_admin(db):
         "hashed_password": get_password_hash("adminpassword123"),
         "is_active": True,
         "is_admin": True,
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc)
     }
     
     await db["users"].insert_one(admin_data)
@@ -127,7 +123,7 @@ async def test_category(db):
         "name": "Technology",
         "color_code": "#3B82F6",
         "emoji": "💻",
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc)
     }
     
     await db["categories"].insert_one(category_data)
@@ -151,10 +147,10 @@ async def test_article(db, test_category):
         "is_breaking": False,
         "thumbnail_url": "https://example.com/image.jpg",
         "instagram_url": None,
-        "published_at": datetime.utcnow(),
+        "published_at": datetime.now(timezone.utc),
         "last_updated": None,
         "author": "Test Author",
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc)
     }
     
     await db["articles"].insert_one(article_data)

@@ -16,7 +16,7 @@ class TestUserProfile:
         assert response.status_code == 200
         data = response.json()
         assert data["email"] == "test@example.com"
-        assert data["full_name"] == "Test User"
+        assert data["fullName"] == "Test User"
         assert "id" in data
     
     @pytest.mark.asyncio
@@ -29,7 +29,7 @@ class TestUserProfile:
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["full_name"] == "Updated Name"
+        assert data["fullName"] == "Updated Name"
     
     @pytest.mark.asyncio
     async def test_update_user_email_duplicate(self, client: AsyncClient, auth_headers, test_user, db):
@@ -74,7 +74,7 @@ class TestReadingList:
     async def test_add_to_reading_list(self, client: AsyncClient, auth_headers, test_article):
         """Test adding article to reading list."""
         response = await client.post(
-            f"/api/v1/users/me/reading-list?article_id={test_article['id']}",
+            f"/api/v1/users/me/reading-list/{test_article['id']}",
             headers=auth_headers
         )
         assert response.status_code == 200
@@ -85,13 +85,13 @@ class TestReadingList:
         """Test adding duplicate article to reading list."""
         # Add first time
         await client.post(
-            f"/api/v1/users/me/reading-list?article_id={test_article['id']}",
+            f"/api/v1/users/me/reading-list/{test_article['id']}",
             headers=auth_headers
         )
         
         # Add second time
         response = await client.post(
-            f"/api/v1/users/me/reading-list?article_id={test_article['id']}",
+            f"/api/v1/users/me/reading-list/{test_article['id']}",
             headers=auth_headers
         )
         assert response.status_code == 400
@@ -101,7 +101,7 @@ class TestReadingList:
     async def test_add_nonexistent_article_to_reading_list(self, client: AsyncClient, auth_headers):
         """Test adding non-existent article to reading list."""
         response = await client.post(
-            f"/api/v1/users/me/reading-list?article_id={str(uuid4())}",
+            f"/api/v1/users/me/reading-list/{str(uuid4())}",
             headers=auth_headers
         )
         assert response.status_code == 404
@@ -111,7 +111,7 @@ class TestReadingList:
         """Test removing article from reading list."""
         # Add article
         await client.post(
-            f"/api/v1/users/me/reading-list?article_id={test_article['id']}",
+            f"/api/v1/users/me/reading-list/{test_article['id']}",
             headers=auth_headers
         )
         
@@ -137,7 +137,7 @@ class TestReadingList:
         """Test getting reading list with articles."""
         # Add article
         await client.post(
-            f"/api/v1/users/me/reading-list?article_id={test_article['id']}",
+            f"/api/v1/users/me/reading-list/{test_article['id']}",
             headers=auth_headers
         )
         

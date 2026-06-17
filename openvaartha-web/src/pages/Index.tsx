@@ -1,15 +1,15 @@
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import BreakingTicker from '../components/BreakingTicker';
 import FeedSkeleton from '../components/FeedSkeleton';
 import { handleImageFallback } from '@/lib/utils';
-import { Clock, Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame } from 'lucide-react';
+import { Clock, Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useReadingList } from '@/hooks/use-reading-list';
-import { useArticles, useTrendingArticles, useCategories } from '@/lib/api-hooks';
+import { useArticles, useTrendingArticles, useCategories, useNewsletterSubscribe } from '@/lib/api-hooks';
 import type { Article } from '@/lib/types';
 
-type CategoryName = string;
 
 
 
@@ -28,7 +28,11 @@ export default function Index() {
   const selectedCat = searchParams.get('category') || 'All';
   const { toggleSave, isSaved } = useReadingList();
   const [switching, setSwitching] = useState(false);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [showNewsletter, setShowNewsletter] = useState(false);
   const switchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const subscribeMutation = useNewsletterSubscribe();
 
   const { data: categories = [] } = useCategories();
   const { data: articlesData = [] } = useArticles({ limit: 50 });
@@ -381,9 +385,47 @@ export default function Index() {
                   <p className="relative text-sm text-white/80 mt-2 leading-relaxed">
                     A free morning digest of the stories that matter — curated, never automated.
                   </p>
-                  <button className="relative mt-4 h-11 px-5 rounded-md bg-white text-primary text-sm font-bold inline-flex items-center gap-2 hover:bg-secondary transition-colors press">
-                    Subscribe free <ArrowUpRight className="h-4 w-4" />
-                  </button>
+                  {showNewsletter ? (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (newsletterEmail.trim()) {
+                          subscribeMutation.mutate(newsletterEmail.trim(), {
+                            onSuccess: () => {
+                              toast.success("Subscribed! Check your inbox.");
+                              setShowNewsletter(false);
+                              setNewsletterEmail('');
+                            },
+                            onError: (err) => toast.error(err.message),
+                          });
+                        }
+                      }}
+                      className="relative mt-4 flex gap-2"
+                    >
+                      <input
+                        type="email"
+                        value={newsletterEmail}
+                        onChange={(e) => setNewsletterEmail(e.target.value)}
+                        placeholder="your@email.com"
+                        required
+                        className="flex-1 h-11 px-4 rounded-md bg-white/20 text-white placeholder:text-white/60 text-sm border border-white/30 focus:outline-none focus:border-white"
+                      />
+                      <button
+                        type="submit"
+                        disabled={subscribeMutation.isPending}
+                        className="h-11 px-4 rounded-md bg-white text-primary text-sm font-bold inline-flex items-center gap-2 hover:bg-secondary transition-colors press disabled:opacity-50"
+                      >
+                        {subscribeMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending</> : 'Subscribe'}
+                      </button>
+                    </form>
+                  ) : (
+                    <button
+                      onClick={() => setShowNewsletter(true)}
+                      className="relative mt-4 h-11 px-5 rounded-md bg-white text-primary text-sm font-bold inline-flex items-center gap-2 hover:bg-secondary transition-colors press"
+                    >
+                      Subscribe free <ArrowUpRight className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </aside>

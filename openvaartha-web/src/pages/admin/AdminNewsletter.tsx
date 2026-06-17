@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Mail, Download } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Loader2, Mail } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+
+const PAGE_SIZE = 50;
 
 type Subscriber = {
   id: string;
@@ -13,10 +16,22 @@ type Subscriber = {
 };
 
 export default function AdminNewsletter() {
-  const { data: subscribers = [], isLoading } = useQuery({
-    queryKey: ["admin", "newsletter"],
-    queryFn: () => apiFetch<Subscriber[]>("/admin/newsletter/subscribers"),
+  const [page, setPage] = useState(0);
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin", "newsletter", { page }],
+    queryFn: () => {
+      const params = new URLSearchParams({
+        skip: String(page * PAGE_SIZE),
+        limit: String(PAGE_SIZE),
+        include_total: "true",
+      });
+      return apiFetch<{ items: Subscriber[]; total: number }>(`/admin/newsletter/subscribers?${params.toString()}`);
+    },
   });
+
+  const subscribers = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const exportCSV = () => {
     const csv = "Email,Subscribed At\n" + subscribers
@@ -36,7 +51,7 @@ export default function AdminNewsletter() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black tracking-tight">Newsletter</h1>
-          <p className="text-sm text-muted-foreground mt-1">{subscribers.length} active subscribers</p>
+          <p className="text-sm text-muted-foreground mt-1">{total} active subscribers</p>
         </div>
         <Button type="button" variant="outline" onClick={exportCSV} disabled={subscribers.length === 0}>
           <Download className="h-4 w-4" />
@@ -48,7 +63,7 @@ export default function AdminNewsletter() {
         <div className="h-48 flex items-center justify-center">
           <Loader2 className="h-7 w-7 text-primary animate-spin" />
         </div>
-      ) : subscribers.length === 0 ? (
+      ) : subscribers.length === 0 && page === 0 ? (
         <div className="border border-dashed border-border rounded-xl flex flex-col items-center justify-center py-16 text-center space-y-3">
           <Mail className="h-8 w-8 text-primary/40" />
           <p className="text-sm font-semibold text-foreground">No subscribers yet</p>
@@ -77,6 +92,31 @@ export default function AdminNewsletter() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>{total} subscribers total</span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+              <ChevronLeft className="h-4 w-4" /> Previous
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <Button
+                key={i}
+                variant={i === page ? "default" : "outline"}
+                size="sm"
+                className="w-8"
+                onClick={() => setPage(i)}
+              >
+                {i + 1}
+              </Button>
+            ))}
+            <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
+              Next <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       )}

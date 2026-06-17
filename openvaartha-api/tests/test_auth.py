@@ -19,7 +19,7 @@ class TestAuthRegistration:
         assert response.status_code == 200
         data = response.json()
         assert data["email"] == "newuser@example.com"
-        assert data["full_name"] == "New User"
+        assert data["fullName"] == "New User"
         assert "id" in data
         assert "password" not in data
         assert "hashed_password" not in data
@@ -153,7 +153,7 @@ class TestAuthTokens:
     async def test_access_protected_route_without_auth(self, client: AsyncClient):
         """Test accessing protected route without authentication."""
         response = await client.post(
-            "/api/v1/articles",
+            "/api/v1/articles/",
             json={
                 "title": "Test Article",
                 "summary": "Test summary",

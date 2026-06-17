@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AlertCircle, Loader2, MessageSquare, RotateCcw, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, Loader2, MessageSquare, RotateCcw, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/ConfirmDialog";
+
+const PAGE_SIZE = 50;
 
 type Comment = {
   id: string;
@@ -25,14 +27,25 @@ type Comment = {
 
 export default function AdminComments() {
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(0);
   const [showInactive, setShowInactive] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Comment | null>(null);
 
-  const { data: comments = [], isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["admin", "comments", { showInactive }],
-    queryFn: () => apiFetch<Comment[]>("/admin/comments?limit=200"),
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["admin", "comments", { page, showInactive }],
+    queryFn: () => {
+      const params = new URLSearchParams({
+        skip: String(page * PAGE_SIZE),
+        limit: String(PAGE_SIZE),
+        include_total: "true",
+      });
+      return apiFetch<{ items: Comment[]; total: number }>(`/admin/comments?${params.toString()}`);
+    },
   });
 
+  const comments = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
   const displayed = showInactive ? comments : comments.filter((c) => {
     const active = c.isActive ?? c.is_active ?? true;
     return active;
@@ -124,6 +137,31 @@ export default function AdminComments() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>{total} comments total</span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+              <ChevronLeft className="h-4 w-4" /> Previous
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <Button
+                key={i}
+                variant={i === page ? "default" : "outline"}
+                size="sm"
+                className="w-8"
+                onClick={() => setPage(i)}
+              >
+                {i + 1}
+              </Button>
+            ))}
+            <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
+              Next <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
 

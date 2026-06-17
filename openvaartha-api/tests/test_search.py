@@ -1,7 +1,7 @@
 import pytest
 from httpx import AsyncClient
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class TestSearch:
@@ -51,9 +51,9 @@ class TestSearch:
                 "language": "en",
                 "is_trending": False,
                 "is_breaking": False,
-                "published_at": datetime.utcnow(),
+                "published_at": datetime.now(timezone.utc),
                 "author": "Test Author",
-                "created_at": datetime.utcnow()
+                "created_at": datetime.now(timezone.utc)
             })
         
         response = await client.get("/api/v1/search/?q=Search&skip=0&limit=5")

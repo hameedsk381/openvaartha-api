@@ -4,7 +4,7 @@ import type { Comment } from "@/lib/types";
 import { MessageCircle, Heart, Trash2, Reply, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useQueryClient } from "@tanstack/react-query";
+import ConfirmDialog from "./ConfirmDialog";
 
 const timeAgo = (dateStr: string): string => {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -15,24 +15,87 @@ const timeAgo = (dateStr: string): string => {
   return `${Math.floor(hrs / 24)}d ago`;
 };
 
+function ReplyForm({
+  articleId,
+  parentId,
+  onCancel,
+}: {
+  articleId: string;
+  parentId: string;
+  onCancel: () => void;
+}) {
+  const [body, setBody] = useState("");
+  const createComment = useCreateComment();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!body.trim()) return;
+    createComment.mutate(
+      { articleId, body: body.trim(), parentId },
+      {
+        onSuccess: () => {
+          setBody("");
+          onCancel();
+          toast.success("Reply posted");
+        },
+        onError: (err) => toast.error(err.message),
+      }
+    );
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-3 p-3 rounded-lg bg-[hsl(var(--surface))] border border-border">
+      <textarea
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+        placeholder="Write a reply…"
+        required
+        rows={2}
+        className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground resize-none outline-none"
+      />
+      <div className="flex justify-end gap-2 mt-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="h-8 px-3 rounded-md text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors press"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={createComment.isPending || !body.trim()}
+          className="h-8 px-3 rounded-md bg-primary text-white text-xs font-semibold inline-flex items-center gap-2 disabled:opacity-50 press"
+        >
+          {createComment.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+          Reply
+        </button>
+      </div>
+    </form>
+  );
+}
+
 function CommentCard({
   comment,
   articleId,
   currentUserId,
+  replies,
   isReply = false,
 }: {
   comment: Comment;
   articleId: string;
   currentUserId?: string;
+  replies?: Comment[];
   isReply?: boolean;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [showReplies, setShowReplies] = useState(true);
+  const [showReplyForm, setShowReplyForm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(false);
   const toggleLike = useToggleCommentLike();
   const deleteComment = useDeleteComment();
-  const queryClient = useQueryClient();
 
   const isOwner = currentUserId === comment.userId;
   const isLiked = currentUserId ? comment.likes.includes(currentUserId) : false;
+  const hasReplies = replies && replies.length > 0;
 
   const handleLike = () => {
     if (!currentUserId) {
@@ -43,8 +106,16 @@ function CommentCard({
   };
 
   const handleDelete = () => {
-    if (!confirm("Delete this comment?")) return;
-    deleteComment.mutate({ commentId: comment.id, articleId });
+    deleteComment.mutate(
+      { commentId: comment.id, articleId },
+      {
+        onSuccess: () => {
+          toast.success("Comment deleted");
+          setDeleteTarget(false);
+        },
+        onError: (err) => toast.error(err.message),
+      }
+    );
   };
 
   return (
@@ -75,9 +146,18 @@ function CommentCard({
               <Heart className={cn("h-3.5 w-3.5", isLiked && "fill-current")} />
               {comment.likes.length > 0 && comment.likes.length}
             </button>
+            {currentUserId && !isReply && (
+              <button
+                onClick={() => setShowReplyForm(!showReplyForm)}
+                className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-primary transition-colors press"
+              >
+                <Reply className="h-3.5 w-3.5" />
+                Reply
+              </button>
+            )}
             {isOwner && (
               <button
-                onClick={handleDelete}
+                onClick={() => setDeleteTarget(true)}
                 disabled={deleteComment.isPending}
                 className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors press"
               >
@@ -85,9 +165,49 @@ function CommentCard({
                 Delete
               </button>
             )}
+            {hasReplies && (
+              <button
+                onClick={() => setShowReplies(!showReplies)}
+                className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-primary transition-colors press"
+              >
+                {showReplies ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                {comment.replyCount} {comment.replyCount === 1 ? "reply" : "replies"}
+              </button>
+            )}
           </div>
+
+          {showReplyForm && (
+            <ReplyForm
+              articleId={articleId}
+              parentId={comment.id}
+              onCancel={() => setShowReplyForm(false)}
+            />
+          )}
         </div>
       </div>
+
+      {hasReplies && showReplies && (
+        <div className="ml-10 pl-4 border-l-2 border-border mt-3 space-y-3">
+          {replies.map((reply) => (
+            <CommentCard
+              key={reply.id}
+              comment={reply}
+              articleId={articleId}
+              currentUserId={currentUserId}
+              isReply
+            />
+          ))}
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(false); }}
+        title="Delete comment"
+        description="Are you sure you want to delete this comment? This cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }
@@ -101,15 +221,12 @@ export default function CommentSection({
 }) {
   const [body, setBody] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
 
   const { data: comments = [], isLoading } = useComments(articleId);
   const { data: countData } = useCommentCount(articleId);
   const createComment = useCreateComment();
-  const deleteComment = useDeleteComment();
-  const queryClient = useQueryClient();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!body.trim()) return;
     createComment.mutate(
@@ -123,6 +240,14 @@ export default function CommentSection({
       }
     );
   };
+
+  const topLevel = comments.filter((c) => !c.parentId);
+  const repliesByParent = comments.reduce<Record<string, Comment[]>>((acc, c) => {
+    if (c.parentId) {
+      (acc[c.parentId] ??= []).push(c);
+    }
+    return acc;
+  }, {});
 
   return (
     <section className="mt-14 pt-10 border-t border-border">
@@ -184,12 +309,13 @@ export default function CommentSection({
         </div>
       ) : (
         <div>
-          {comments.map((comment) => (
+          {topLevel.map((comment) => (
             <CommentCard
               key={comment.id}
               comment={comment}
               articleId={articleId}
               currentUserId={currentUserId}
+              replies={repliesByParent[comment.id]}
             />
           ))}
         </div>

@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
     CACHE_TTL_SECONDS: int = 300
+    CELERY_BROKER_URL: str = "redis://localhost:6379/1"
+    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
 
     # JWT
     JWT_SECRET_KEY: str = "your-jwt-secret-key-change-in-production"
@@ -40,6 +42,7 @@ class Settings(BaseSettings):
     AI_TEMPERATURE: float = 0.7
     AI_MAX_OUTPUT_TOKENS: int = 4096
     AI_MAX_POINTS: int = 8
+    AI_TIMEOUT: int = 60  # seconds for Gemini API call
 
     # Gemini
     GEMINI_API_KEY: str = ""

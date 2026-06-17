@@ -1,7 +1,8 @@
+import re
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Optional, Any
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 from fastapi import HTTPException, status
 from pymongo.errors import OperationFailure
@@ -301,9 +302,9 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
         "thumbnail_url": article_data.thumbnail_url,
         "instagram_url": article_data.instagram_url,
         "published_at": article_data.published_at,
-        "last_updated": article_data.last_updated or datetime.utcnow(),
+        "last_updated": article_data.last_updated or datetime.now(timezone.utc),
         "author": sanitize_text(article_data.author),
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc),
     }
 
     await db["articles"].insert_one(article_doc)
@@ -346,8 +347,8 @@ async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data
             update_dict[field] = sanitize_text(update_dict[field])
 
     if update_dict:
-        update_dict["last_updated"] = datetime.utcnow()
-        update_dict["updated_at"] = datetime.utcnow()
+        update_dict["last_updated"] = datetime.now(timezone.utc)
+        update_dict["updated_at"] = datetime.now(timezone.utc)
         await db["articles"].update_one({"_id": article_id}, {"$set": update_dict})
 
     if content_data:
@@ -384,12 +385,19 @@ async def delete_article(db: AsyncIOMotorDatabase, article_id: str):
     return False
 
 
-async def search_articles(db: AsyncIOMotorDatabase, query: str, skip: int = 0, limit: int = 20):
-    """Search published articles by title and summary."""
+async def search_articles(db: AsyncIOMotorDatabase, query: str, skip: int = 0, limit: int = 20, category: Optional[str] = None):
+    """Search published articles by title and summary with optional category filter."""
     await ensure_article_indexes(db)
+
+    text_filter = {"$text": {"$search": query}}
+    if category:
+        category_doc = await db["categories"].find_one({"name": {"$regex": f"^{re.escape(category)}$", "$options": "i"}})
+        if category_doc:
+            text_filter["category_id"] = category_doc["_id"]
+
     try:
         cursor = db["articles"].find(
-            _public_query({"$text": {"$search": query}}),
+            _public_query(text_filter),
             {"score": {"$meta": "textScore"}},
         ).sort([("score", {"$meta": "textScore"}), ("published_at", -1)]).skip(skip).limit(limit)
         articles = await cursor.to_list(length=limit)

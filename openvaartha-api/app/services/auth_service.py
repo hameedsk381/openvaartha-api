@@ -1,5 +1,5 @@
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from uuid import uuid4
 
 from app.config import settings
@@ -54,7 +54,7 @@ async def create_user(db: AsyncIOMotorDatabase, user_data: UserCreate):
         "is_active": True,
         "is_admin": False,
         "role": safe_role,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc),
     }
 
     await db["users"].insert_one(user_doc)

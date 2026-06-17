@@ -31,6 +31,7 @@ import AdminCategories from "./pages/admin/AdminCategories.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import AdminComments from "./pages/admin/AdminComments.tsx";
 import AdminNewsletter from "./pages/admin/AdminNewsletter.tsx";
+import AdminSources from "./pages/admin/AdminSources.tsx";
 import InstallPWA from "./components/InstallPWA.tsx";
 import { toast } from "sonner";
 
@@ -127,6 +128,7 @@ const App = () => {
             <Route path="/admin/users" element={<AdminRoute roles={["admin"]}><AdminLayout><AdminUsers /></AdminLayout></AdminRoute>} />
             <Route path="/admin/comments" element={<AdminRoute roles={["admin", "moderator"]}><AdminLayout><AdminComments /></AdminLayout></AdminRoute>} />
             <Route path="/admin/newsletter" element={<AdminRoute roles={["admin"]}><AdminLayout><AdminNewsletter /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/sources" element={<AdminRoute roles={["admin"]}><AdminLayout><AdminSources /></AdminLayout></AdminRoute>} />
 
             <Route path="*" element={<NotFound />} />
 

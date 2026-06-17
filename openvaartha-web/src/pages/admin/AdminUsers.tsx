@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Check, ChevronDown, Loader2, RotateCcw, Shield, ShieldOff, Trash2, X } from "lucide-react";
+import { AlertCircle, Check, ChevronLeft, ChevronRight, Loader2, RotateCcw, Shield, ShieldOff, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/ConfirmDialog";
+
+const PAGE_SIZE = 50;
 
 type AdminUser = {
   id: string;
@@ -23,11 +25,23 @@ type AdminUser = {
 
 export default function AdminUsers() {
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
-  const { data: users = [], isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["admin", "users"],
-    queryFn: () => apiFetch<AdminUser[]>("/admin/users"),
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["admin", "users", { page }],
+    queryFn: () => {
+      const params = new URLSearchParams({
+        skip: String(page * PAGE_SIZE),
+        limit: String(PAGE_SIZE),
+        include_total: "true",
+      });
+      return apiFetch<{ items: AdminUser[]; total: number }>(`/admin/users?${params.toString()}`);
+    },
   });
+
+  const users = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const deleteMutation = useMutation({
     mutationFn: (userId: string) => apiFetch(`/admin/users/${userId}`, { method: "DELETE" }),
@@ -165,6 +179,31 @@ export default function AdminUsers() {
           </div>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>{total} users total</span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+              <ChevronLeft className="h-4 w-4" /> Previous
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <Button
+                key={i}
+                variant={i === page ? "default" : "outline"}
+                size="sm"
+                className="w-8"
+                onClick={() => setPage(i)}
+              >
+                {i + 1}
+              </Button>
+            ))}
+            <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
+              Next <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog
         open={!!deleteTarget}

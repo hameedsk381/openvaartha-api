@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field, model_validator
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 
@@ -13,7 +13,7 @@ class User(BaseModel):
     is_active: bool = True
     is_admin: bool = False
     role: str = "user"  # user, editor, admin
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = None
     theme: Optional[str] = None
     font_size: Optional[str] = None

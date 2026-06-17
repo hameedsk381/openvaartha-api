@@ -6,6 +6,7 @@ from google import genai
 from google.genai import types
 
 from app.config import settings
+from app.core.sanitize import sanitize_html, sanitize_text
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +85,7 @@ Generate a complete news article with this exact JSON structure:
                 temperature=settings.AI_TEMPERATURE,
                 max_output_tokens=settings.AI_MAX_OUTPUT_TOKENS,
             ),
+            timeout=settings.AI_TIMEOUT,
         )
 
         content = response.text
@@ -100,12 +102,12 @@ Generate a complete news article with this exact JSON structure:
             data["points"] = [p.strip().strip("-* ") for p in data["points"].split("\n") if p.strip()]
 
         return {
-            "title": data["title"],
-            "summary": data["summary"],
-            "body": data["body"],
-            "tldr": data["tldr"],
-            "points": data["points"][:settings.AI_MAX_POINTS],
-            "category_id": data.get("category_id", ""),
+            "title": sanitize_text(data["title"]),
+            "summary": sanitize_text(data["summary"]),
+            "body": sanitize_html(data["body"]),
+            "tldr": sanitize_text(data["tldr"]),
+            "points": [sanitize_text(p) for p in data["points"][:settings.AI_MAX_POINTS]],
+            "category_id": sanitize_text(data.get("category_id", "")),
         }
 
     except Exception as e:

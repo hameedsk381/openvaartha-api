@@ -1,7 +1,7 @@
 import pytest
 from httpx import AsyncClient
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class TestArticleListing:
@@ -43,9 +43,9 @@ class TestArticleListing:
                 "language": "en",
                 "is_trending": False,
                 "is_breaking": False,
-                "published_at": datetime.utcnow(),
+                "published_at": datetime.now(timezone.utc),
                 "author": "Test Author",
-                "created_at": datetime.utcnow()
+                "created_at": datetime.now(timezone.utc)
             })
         
         response = await client.get("/api/v1/articles/?skip=0&limit=10")
@@ -64,7 +64,7 @@ class TestArticleListing:
             "name": "Sports",
             "color_code": "#FF0000",
             "emoji": "⚽",
-            "created_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc)
         })
         
         # Create article in other category
@@ -80,16 +80,16 @@ class TestArticleListing:
             "language": "en",
             "is_trending": False,
             "is_breaking": False,
-            "published_at": datetime.utcnow(),
+            "published_at": datetime.now(timezone.utc),
             "author": "Test Author",
-            "created_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc)
         })
         
         response = await client.get(f"/api/v1/articles/?category_id={test_category['id']}")
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 1
-        assert data[0]["category_id"] == test_category["id"]
+        assert data[0]["categoryId"] == test_category["id"]
 
 
 class TestTrendingArticles:
@@ -111,9 +111,9 @@ class TestTrendingArticles:
             "language": "en",
             "is_trending": True,
             "is_breaking": False,
-            "published_at": datetime.utcnow(),
+            "published_at": datetime.now(timezone.utc),
             "author": "Test Author",
-            "created_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc)
         })
         
         response = await client.get("/api/v1/articles/trending")
@@ -142,9 +142,9 @@ class TestBreakingArticles:
             "language": "en",
             "is_trending": False,
             "is_breaking": True,
-            "published_at": datetime.utcnow(),
+            "published_at": datetime.now(timezone.utc),
             "author": "Test Author",
-            "created_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc)
         })
         
         response = await client.get("/api/v1/articles/breaking")
@@ -185,7 +185,7 @@ class TestArticleCRUD:
                 "language": "en",
                 "is_trending": False,
                 "is_breaking": False,
-                "published_at": datetime.utcnow().isoformat(),
+                "published_at": datetime.now(timezone.utc).isoformat(),
                 "author": "Test Author",
                 "content": {
                     "tldr": "TLDR content",
@@ -211,7 +211,7 @@ class TestArticleCRUD:
                 "category_id": str(uuid4()),
                 "read_time": "5 min",
                 "language": "en",
-                "published_at": datetime.utcnow().isoformat(),
+                "published_at": datetime.now(timezone.utc).isoformat(),
                 "author": "Test Author",
                 "content": {
                     "tldr": "TLDR",

@@ -1,7 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import Optional
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 from app.schemas.newsletter import NewsletterSubscribe
 
 async def subscribe(db: AsyncIOMotorDatabase, email: str) -> dict:
@@ -14,7 +14,7 @@ async def subscribe(db: AsyncIOMotorDatabase, email: str) -> dict:
         else:
             await db["newsletter_subscribers"].update_one(
                 {"email": email},
-                {"$set": {"is_active": True, "updated_at": datetime.utcnow()}}
+                {"$set": {"is_active": True, "updated_at": datetime.now(timezone.utc)}}
             )
             return {"success": True, "detail": "Successfully re-subscribed", "re_subscribed": True}
     
@@ -24,7 +24,7 @@ async def subscribe(db: AsyncIOMotorDatabase, email: str) -> dict:
         "id": subscriber_id,
         "email": email,
         "is_active": True,
-        "subscribed_at": datetime.utcnow()
+        "subscribed_at": datetime.now(timezone.utc)
     }
     await db["newsletter_subscribers"].insert_one(new_subscriber)
     return {"success": True, "detail": "Successfully subscribed", "re_subscribed": False}
@@ -37,6 +37,6 @@ async def unsubscribe(db: AsyncIOMotorDatabase, email: str) -> bool:
     
     await db["newsletter_subscribers"].update_one(
         {"email": email},
-        {"$set": {"is_active": False, "updated_at": datetime.utcnow()}}
+        {"$set": {"is_active": False, "updated_at": datetime.now(timezone.utc)}}
     )
     return True

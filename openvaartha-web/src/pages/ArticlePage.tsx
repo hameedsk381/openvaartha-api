@@ -8,6 +8,7 @@ import {
   Clock, Sparkles, User, ExternalLink, History, Type, Flame,
 } from "lucide-react";
 import { cn, getArticleImage, handleImageFallback } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 import CommentSection from "@/components/CommentSection";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { toast } from "sonner";
@@ -152,6 +153,13 @@ const ArticlePage = () => {
   };
 
   const { data: article, isLoading } = useArticle(slug || "");
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (!localStorage.getItem("token")) return;
+    apiFetch<{ id: string }>("/users/me")
+      .then((u) => setCurrentUserId(u.id))
+      .catch(() => {});
+  }, []);
   useSEOMeta(article);
 
   useEffect(() => {
@@ -511,7 +519,7 @@ const ArticlePage = () => {
       </article>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <CommentSection articleId={article?.id ?? ""} />
+        <CommentSection articleId={article?.id ?? ""} currentUserId={currentUserId} />
       </div>
     </div>
   );

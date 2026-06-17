@@ -63,12 +63,14 @@ class TestNewsletter:
     
     @pytest.mark.asyncio
     async def test_unsubscribe_nonexistent(self, client: AsyncClient):
-        """Test unsubscription for non-existent email."""
+        """Test unsubscription for non-existent email.
+        Always returns 200 to prevent email enumeration."""
         response = await client.post(
             "/api/v1/newsletter/unsubscribe",
             json={"email": "nonexistent@example.com"}
         )
-        assert response.status_code == 404
+        assert response.status_code == 200
+        assert "unsubscribed" in response.json()["message"].lower()
     
     @pytest.mark.asyncio
     async def test_resubscribe_after_unsubscribe(self, client: AsyncClient):

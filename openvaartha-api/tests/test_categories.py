@@ -135,7 +135,7 @@ class TestCategories:
     @pytest.mark.asyncio
     async def test_update_category_collides(self, client: AsyncClient, admin_headers, db, test_category):
         from uuid import uuid4
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         other_id = str(uuid4())
         await db["categories"].insert_one({
@@ -143,7 +143,7 @@ class TestCategories:
             "name": "Other",
             "color_code": "#fff",
             "emoji": "🟪",
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
         })
         response = await client.put(
             f"/api/v1/categories/{other_id}",
@@ -155,7 +155,7 @@ class TestCategories:
     @pytest.mark.asyncio
     async def test_delete_category_admin(self, client: AsyncClient, admin_headers, db):
         from uuid import uuid4
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         cat_id = str(uuid4())
         await db["categories"].insert_one({
@@ -163,7 +163,7 @@ class TestCategories:
             "name": "Disposable",
             "color_code": "#fff",
             "emoji": "🗑",
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
         })
         response = await client.delete(
             f"/api/v1/categories/{cat_id}",
@@ -198,7 +198,7 @@ class TestCategories:
         self, client: AsyncClient, admin_headers
     ):
         from uuid import uuid4
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         response = await client.post(
             "/api/v1/articles/",
@@ -208,7 +208,7 @@ class TestCategories:
                 "category_id": str(uuid4()),
                 "read_time": "1 min",
                 "language": "en",
-                "published_at": datetime.utcnow().isoformat(),
+                "published_at": datetime.now(timezone.utc).isoformat(),
                 "author": "Tester",
                 "content": {"tldr": "x", "points": ["p"], "body": "b"},
             },

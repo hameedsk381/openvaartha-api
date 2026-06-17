@@ -54,8 +54,10 @@ export default function AIGenerateDialog({ onApply }: Props) {
   const [tone, setTone] = useState("neutral");
 
   const mutation = useMutation({
-    mutationFn: () =>
-      apiFetch<AIResult>("/admin/ai/generate-article", {
+    mutationFn: () => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 60000);
+      return apiFetch<AIResult>("/admin/ai/generate-article", {
         method: "POST",
         body: JSON.stringify({
           topic,
@@ -63,7 +65,9 @@ export default function AIGenerateDialog({ onApply }: Props) {
           style,
           tone,
         }),
-      }),
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timer));
+    },
     onSuccess: (data) => {
       onApply(data);
       setOpen(false);
