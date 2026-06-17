@@ -4,6 +4,7 @@ import { InstagramEmbed } from 'react-social-media-embed';
 import { useState, useEffect } from 'react';
 import { getArticleImage, handleImageFallback } from '../lib/utils';
 import { useArticles } from '@/lib/api-hooks';
+import { BRAND } from '@/lib/brand';
 
 const InstagramFeed = () => {
     const [stats, setStats] = useState({
@@ -39,7 +40,7 @@ const InstagramFeed = () => {
             }
 
             try {
-                const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://www.instagram.com/openvaartha/')}`);
+                const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(BRAND.instagramUrl)}`);
                 const data = await response.json();
                 
                 if (data.contents) {
@@ -84,7 +85,7 @@ const InstagramFeed = () => {
                             Live Social Desk
                         </div>
                         <h2 className="text-3xl font-black leading-[1.02] tracking-tighter text-foreground sm:text-4xl">
-                            Connecting through <br /><span className="text-[#E1306C]">@openvaartha</span>
+                            Connecting through <br /><span className="text-[#E1306C]">{BRAND.instagramHandle}</span>
                         </h2>
                         <p className="max-w-md text-sm font-bold leading-relaxed text-muted-foreground lg:max-w-xs">
                             Get behind-the-scenes reporting, quick infographics, and real-time community updates directly on our Instagram feed.
@@ -111,11 +112,11 @@ const InstagramFeed = () => {
                     </div>
 
                     <div className="max-w-full overflow-hidden rounded-2xl border border-black/5 glass shadow-glass-sm dark:border-white/5 sm:max-w-[328px]">
-                        <InstagramEmbed url="https://www.instagram.com/openvaartha/" width="100%" />
+                        <InstagramEmbed url={BRAND.instagramUrl} width="100%" />
                     </div>
 
                     <a 
-                        href="https://www.instagram.com/openvaartha/" 
+                        href={BRAND.instagramUrl} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="inline-block w-full sm:w-auto"
@@ -132,7 +133,7 @@ const InstagramFeed = () => {
                         {posts.map((post) => (
                             <a 
                                 key={post.id}
-                                href="https://www.instagram.com/openvaartha/"
+                                href={BRAND.instagramUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="group relative aspect-square overflow-hidden rounded-xl border-transparent glass transition-all duration-500 hover:border-[#E1306C]/30 sm:rounded-2xl"

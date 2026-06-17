@@ -5,6 +5,8 @@ import BreakingTicker from '../components/BreakingTicker';
 import HeroCarousel from '../components/HeroCarousel';
 import FeedSkeleton from '../components/FeedSkeleton';
 import Footer from '@/components/Footer';
+import InstagramFeed from '@/components/InstagramFeed';
+import FacebookFeed from '@/components/FacebookFeed';
 import { handleImageFallback } from '@/lib/utils';
 import { categoryColors } from '@/lib/types';
 import { Clock, Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame, Loader2 } from 'lucide-react';
@@ -431,6 +433,9 @@ export default function Index() {
               </div>
             </aside>
           </section>
+
+          <InstagramFeed />
+          <FacebookFeed />
 
           <Footer />
         </div>

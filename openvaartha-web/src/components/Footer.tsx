@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useCategories } from "@/lib/api-hooks";
 import { BRAND } from "@/lib/brand";
+import { Instagram, Facebook } from "lucide-react";
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -24,6 +25,26 @@ const Footer = () => {
                 <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-xs">
                   {BRAND.tagline}
                 </p>
+                <div className="flex items-center gap-3 mt-4">
+                  <a
+                    href={BRAND.instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors press"
+                    aria-label="Instagram"
+                  >
+                    <Instagram className="h-4 w-4" />
+                  </a>
+                  <a
+                    href={BRAND.facebookUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors press"
+                    aria-label="Facebook"
+                  >
+                    <Facebook className="h-4 w-4" />
+                  </a>
+                </div>
               </div>
             </div>
           </div>
