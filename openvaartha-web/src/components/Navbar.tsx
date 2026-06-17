@@ -93,8 +93,11 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
         isInsideStack ? "" : "border-b border-border"
       )}>
         <div className="h-14 flex items-center justify-between px-4 sm:px-6 max-w-screen-2xl mx-auto">
-          <Link to="/" className="press shrink-0">
+          <Link to="/" className="press shrink-0 flex items-center gap-2.5">
             <img src="/logo.jpg" alt="Open Vaartha" className="h-9 w-9 rounded-lg object-cover" />
+            <span className="hidden sm:inline font-serif text-base font-bold tracking-tight">
+              Open<span className="text-primary">vaartha</span>
+            </span>
           </Link>
 
           {/* Desktop category pills in the center */}

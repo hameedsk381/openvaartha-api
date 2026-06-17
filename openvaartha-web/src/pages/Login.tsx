@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { toast } from 'sonner';
 import { Mail, Lock, User as UserIcon, Loader2, Eye, EyeOff, ArrowLeft, Quote } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { BRAND } from '@/lib/brand';
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -120,7 +121,7 @@ export default function Login() {
           </p>
           <div className="mt-8 flex items-center gap-3">
             <div className="h-px w-10 bg-secondary" />
-            <span className="font-serif italic text-sm text-white/70">The Open Vaartha editorial promise</span>
+            <span className="font-serif italic text-sm text-white/70">The {BRAND.name} editorial promise</span>
           </div>
         </div>
 

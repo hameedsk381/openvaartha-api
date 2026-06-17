@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { ARTICLE_STATUSES, type Article, type ArticleStatus, type Category } from "./types";
 import { cn } from "@/lib/utils";
+import { BRAND } from "@/lib/brand";
 import MDXBodyEditor from "@/components/MDXBodyEditor";
 import AIGenerateDialog from "@/components/AIGenerateDialog";
 import { Input } from "@/components/ui/input";
@@ -50,7 +51,7 @@ const emptyForm: FormState = {
   categoryId: "",
   readTime: "3 min",
   language: "en",
-  author: "Open Vaartha Desk",
+  author: `${BRAND.name} Desk`,
   thumbnailUrl: "",
   instagramUrl: "",
   publishedAt: new Date().toISOString().slice(0, 16),

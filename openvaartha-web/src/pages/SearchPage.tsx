@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { Search, X, Hash, Clock, ArrowUpRight } from 'lucide-react';
 import { handleImageFallback } from '@/lib/utils';
+import { BRAND } from '@/lib/brand';
 import { useSearch, useCategories, useArticles } from '@/lib/api-hooks';
 
 const relativeTime = (iso: string) => {
@@ -61,7 +62,7 @@ const SearchPage = () => {
               The archive
             </h1>
             <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-              Every story Open Vaartha has filed — searchable by headline, body, or section.
+              Every story {BRAND.name} has filed — searchable by headline, body, or section.
             </p>
 
             <div className="relative mt-7 max-w-3xl">

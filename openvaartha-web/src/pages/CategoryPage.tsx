@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { Clock, Flame, ArrowUpRight, Bookmark, BookmarkCheck } from 'lucide-react';
 import { handleImageFallback } from '../lib/utils';
+import { BRAND } from '@/lib/brand';
 import { useReadingList } from '@/hooks/use-reading-list';
 import { useArticles, useCategories } from '@/lib/api-hooks';
 
@@ -48,7 +49,7 @@ const CategoryPage = () => {
           <header className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14 border-b border-border bg-[hsl(var(--surface))]">
             <div className="flex items-center gap-2 mb-3">
               <Link to="/" className="overline text-muted-foreground hover:text-primary transition-colors">
-                Open Vaartha
+                {BRAND.name}
               </Link>
               <span className="text-muted-foreground/50">/</span>
               <span className="overline text-primary">Section</span>

@@ -9,13 +9,12 @@ import {
 } from "lucide-react";
 import { cn, getArticleImage, handleImageFallback } from "@/lib/utils";
 import { categoryColors } from "@/lib/types";
+import { BRAND, pageTitle, SITE_TITLE } from "@/lib/brand";
 import { apiFetch } from "@/lib/api";
 import CommentSection from "@/components/CommentSection";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { toast } from "sonner";
 import InstagramEmbed from "@/components/InstagramEmbed";
-
-const SITE_NAME = "Open Vaartha";
 
 const timeAgo = (dateStr: string): string => {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -37,7 +36,7 @@ function useSEOMeta(article: Article | undefined) {
     const desc = article.summary || article.content?.tldr || "";
     const published = new Date(article.publishedAt).toISOString();
 
-    document.title = `${article.title} — ${SITE_NAME}`;
+    document.title = pageTitle(article.title);
 
     const setMeta = (name: string, content: string, prop = false) => {
       const attr = prop ? "property" : "name";
@@ -56,7 +55,7 @@ function useSEOMeta(article: Article | undefined) {
     setMeta("og:url", url, true);
     setMeta("og:image", image, true);
     setMeta("og:image:alt", article.title, true);
-    setMeta("og:site_name", SITE_NAME, true);
+    setMeta("og:site_name", BRAND.name, true);
     setMeta("og:type", "article", true);
     setMeta("article:published_time", published, true);
     setMeta("article:section", article.category, true);
@@ -90,7 +89,7 @@ function useSEOMeta(article: Article | undefined) {
       },
       publisher: {
         "@type": "Organization",
-        name: SITE_NAME,
+        name: BRAND.name,
         logo: {
           "@type": "ImageObject",
           url: `${window.location.origin}/icon.svg`,
@@ -133,7 +132,7 @@ function useSEOMeta(article: Article | undefined) {
     breadcrumbScript.textContent = JSON.stringify(breadcrumbLd);
 
     return () => {
-      document.title = `${SITE_NAME} — South India's Authoritative News Platform`;
+      document.title = SITE_TITLE;
     };
   }, [article]);
 }

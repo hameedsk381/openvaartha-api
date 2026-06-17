@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Download, X } from "lucide-react";
+import { BRAND } from "@/lib/brand";
 
 export default function InstallPWA() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -31,7 +32,7 @@ export default function InstallPWA() {
         <Download className="h-5 w-5 text-white" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold">Install Open Vaartha</p>
+        <p className="text-sm font-bold">Install {BRAND.name}</p>
         <p className="text-xs text-muted-foreground">Get the app for a faster experience</p>
       </div>
       <button

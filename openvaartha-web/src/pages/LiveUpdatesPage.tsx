@@ -4,6 +4,7 @@ import { Bell, ArrowUpRight, Radio, RefreshCw, Loader2 } from 'lucide-react';
 import { cn, handleImageFallback } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useArticles, useLiveUpdates } from '@/lib/api-hooks';
+import { BRAND } from '@/lib/brand';
 
 type LiveUpdate = {
   id: string;
@@ -156,7 +157,7 @@ const LiveUpdatesPage = () => {
                     <Radio className="h-3 w-3" /> Editorial standards
                   </p>
                   <p className="font-serif text-sm text-muted-foreground leading-relaxed">
-                    Every dispatch on this page is filed by a verified Open Vaartha reporter and timestamped at source.
+                    Every dispatch on this page is filed by a verified {BRAND.name} reporter and timestamped at source.
                   </p>
                   <Link
                     to="/"
