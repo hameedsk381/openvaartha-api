@@ -207,6 +207,7 @@ export default function Index() {
                 </aside>
               </div>
             </section>
+            </>
           )}
 
           {editor.length > 0 && !switching && (
