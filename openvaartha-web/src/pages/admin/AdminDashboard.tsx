@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { FileText, Users, MessageSquare, Mail, TrendingUp, Zap, Plus, FolderTree, Loader2, ArrowUpRight } from "lucide-react";
+import { FileText, Users, MessageSquare, Mail, TrendingUp, Zap, Plus, FolderTree, Loader2, ArrowUpRight, AlertCircle, RotateCcw } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ type DashboardStats = {
 };
 
 export default function AdminDashboard() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin", "dashboard"],
     queryFn: () => apiFetch<DashboardStats>("/admin/stats/dashboard"),
   });
@@ -31,6 +31,19 @@ export default function AdminDashboard() {
     return (
       <div className="h-96 flex items-center justify-center">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="h-96 flex flex-col items-center justify-center gap-3">
+        <AlertCircle className="h-8 w-8 text-destructive" />
+        <p className="text-sm font-semibold text-destructive">Failed to load dashboard</p>
+        <p className="text-xs text-muted-foreground max-w-md text-center">{(error as Error)?.message}</p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RotateCcw className="h-3.5 w-3.5" /> Retry
+        </Button>
       </div>
     );
   }

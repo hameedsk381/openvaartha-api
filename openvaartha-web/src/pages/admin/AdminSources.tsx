@@ -236,6 +236,11 @@ export default function AdminSources() {
           <span>Active</span>
           <span className="text-right">Actions</span>
         </div>
+        {isLoading ? (
+          <div className="h-32 flex items-center justify-center">
+            <Loader2 className="h-6 w-6 text-primary animate-spin" />
+          </div>
+        ) : (
         <div className="divide-y divide-border">
           {sources.map((source) => {
             const isEditing = editingId === source.id;
@@ -337,6 +342,7 @@ export default function AdminSources() {
             <div className="p-8 text-sm text-muted-foreground text-center">No RSS sources configured.</div>
           )}
         </div>
+        )}
       </div>
 
       <ConfirmDialog

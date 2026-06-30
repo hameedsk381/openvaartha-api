@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Download, Loader2, Mail } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Loader2, Mail, AlertCircle, RotateCcw } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
@@ -17,7 +17,7 @@ type Subscriber = {
 
 export default function AdminNewsletter() {
   const [page, setPage] = useState(0);
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin", "newsletter", { page }],
     queryFn: () => {
       const params = new URLSearchParams({
@@ -62,6 +62,15 @@ export default function AdminNewsletter() {
       {isLoading ? (
         <div className="h-48 flex items-center justify-center">
           <Loader2 className="h-7 w-7 text-primary animate-spin" />
+        </div>
+      ) : isError ? (
+        <div className="h-48 flex flex-col items-center justify-center gap-3">
+          <AlertCircle className="h-8 w-8 text-destructive" />
+          <p className="text-sm font-semibold text-destructive">Failed to load subscribers</p>
+          <p className="text-xs text-muted-foreground max-w-md text-center">{(error as Error)?.message}</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RotateCcw className="h-3.5 w-3.5" /> Retry
+          </Button>
         </div>
       ) : subscribers.length === 0 && page === 0 ? (
         <div className="border border-dashed border-border rounded-xl flex flex-col items-center justify-center py-16 text-center space-y-3">

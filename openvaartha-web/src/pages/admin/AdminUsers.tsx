@@ -52,31 +52,31 @@ export default function AdminUsers() {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const toggleAdmin = (user: AdminUser) => {
-    const isAdmin = user.isAdmin ?? user.is_admin ?? false;
-    apiFetch(`/admin/users/${user.id}`, {
-      method: "PUT",
-      body: JSON.stringify({ is_admin: !isAdmin }),
-    })
-      .then(() => {
-        queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-        toast.success(isAdmin ? "Admin rights removed" : "User promoted to admin");
-      })
-      .catch((e) => toast.error(e.message));
-  };
+  const adminMutation = useMutation({
+    mutationFn: ({ userId, isAdmin }: { userId: string; isAdmin: boolean }) =>
+      apiFetch(`/admin/users/${userId}`, {
+        method: "PUT",
+        body: JSON.stringify({ is_admin: isAdmin }),
+      }),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      toast.success(variables.isAdmin ? "User promoted to admin" : "Admin rights removed");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
 
-  const toggleActive = (user: AdminUser) => {
-    const isActive = user.isActive ?? user.is_active ?? true;
-    apiFetch(`/admin/users/${user.id}`, {
-      method: "PUT",
-      body: JSON.stringify({ is_active: !isActive }),
-    })
-      .then(() => {
-        queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-        toast.success(isActive ? "User deactivated" : "User activated");
-      })
-      .catch((e) => toast.error(e.message));
-  };
+  const activeMutation = useMutation({
+    mutationFn: ({ userId, isActive }: { userId: string; isActive: boolean }) =>
+      apiFetch(`/admin/users/${userId}`, {
+        method: "PUT",
+        body: JSON.stringify({ is_active: isActive }),
+      }),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      toast.success(variables.isActive ? "User activated" : "User deactivated");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -144,20 +144,22 @@ export default function AdminUsers() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => toggleAdmin(user)}
+                      onClick={() => adminMutation.mutate({ userId: user.id, isAdmin: !isAdmin })}
+                      disabled={adminMutation.isPending}
                       title={isAdmin ? "Remove admin" : "Make admin"}
                     >
-                      {isAdmin ? <X className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
+                      {adminMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : isAdmin ? <X className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
                       <span className="hidden sm:inline">{isAdmin ? "Demote" : "Promote"}</span>
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => toggleActive(user)}
+                      onClick={() => activeMutation.mutate({ userId: user.id, isActive: !isActive })}
+                      disabled={activeMutation.isPending}
                       title={isActive ? "Deactivate" : "Activate"}
                     >
-                      {isActive ? "Disable" : "Enable"}
+                      {activeMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : isActive ? "Disable" : "Enable"}
                     </Button>
                     <Button
                       type="button"

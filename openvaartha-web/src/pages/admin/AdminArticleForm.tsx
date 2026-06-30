@@ -1,7 +1,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ExternalLink, Loader2, Plus, Save, Trash2, X } from "lucide-react";
+import { Link, useNavigate, useParams, useBlocker } from "react-router-dom";
+import { ArrowLeft, ExternalLink, Loader2, Plus, Save, Trash2, X, AlertCircle, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { ARTICLE_STATUSES, type Article, type ArticleStatus, type Category } from "./types";
@@ -77,6 +77,26 @@ export default function AdminArticleForm() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(emptyForm);
+  const dirty = useRef(false);
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      dirty.current && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (dirty.current) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
+
+  const markDirty = () => { dirty.current = true; };
+
+  const resetDirty = () => { dirty.current = false; };
 
   const categoriesQuery = useQuery({
     queryKey: ["admin", "categories"],
@@ -106,6 +126,7 @@ export default function AdminArticleForm() {
     queryKey: ["admin", "article", articleId],
     queryFn: () => apiFetch<Article>(`/articles/${articleId}`),
     enabled: isEditing,
+    retry: 1,
   });
 
   useEffect(() => {
@@ -133,6 +154,7 @@ export default function AdminArticleForm() {
       timeline: article.content?.timeline?.filter((t): t is TimelineEntry => !!t) || [],
       explainer: article.content?.explainer?.filter((e): e is ExplainerEntry => !!e) || [],
     });
+    resetDirty();
   }, [articleQuery.data]);
 
   useEffect(() => {
@@ -180,6 +202,7 @@ export default function AdminArticleForm() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "articles"] });
+      resetDirty();
       toast.success(isEditing ? "Article updated" : "Article created");
       navigate("/admin/articles");
     },
@@ -187,6 +210,7 @@ export default function AdminArticleForm() {
   });
 
   const update = (field: keyof FormState, value: string | boolean) => {
+    markDirty();
     setForm((current) => {
       const next = { ...current, [field]: value };
       if (field === "title" && !current.slug && !articleId) {
@@ -197,14 +221,17 @@ export default function AdminArticleForm() {
   };
 
   const addTimelineEntry = () => {
+    markDirty();
     setForm((current) => ({ ...current, timeline: [...current.timeline, { date: "", event: "" }] }));
   };
 
   const removeTimelineEntry = (index: number) => {
+    markDirty();
     setForm((current) => ({ ...current, timeline: current.timeline.filter((_, i) => i !== index) }));
   };
 
   const updateTimelineEntry = (index: number, field: keyof TimelineEntry, value: string) => {
+    markDirty();
     setForm((current) => {
       const timeline = [...current.timeline];
       timeline[index] = { ...timeline[index], [field]: value };
@@ -213,14 +240,17 @@ export default function AdminArticleForm() {
   };
 
   const addExplainerEntry = () => {
+    markDirty();
     setForm((current) => ({ ...current, explainer: [...current.explainer, { question: "", answer: "" }] }));
   };
 
   const removeExplainerEntry = (index: number) => {
+    markDirty();
     setForm((current) => ({ ...current, explainer: current.explainer.filter((_, i) => i !== index) }));
   };
 
   const updateExplainerEntry = (index: number, field: keyof ExplainerEntry, value: string) => {
+    markDirty();
     setForm((current) => {
       const explainer = [...current.explainer];
       explainer[index] = { ...explainer[index], [field]: value };
@@ -261,7 +291,34 @@ export default function AdminArticleForm() {
     );
   }
 
+  if (articleQuery.isError) {
+    return (
+      <div className="h-80 flex flex-col items-center justify-center gap-3">
+        <AlertCircle className="h-8 w-8 text-destructive" />
+        <p className="text-sm font-semibold text-destructive">Failed to load article</p>
+        <p className="text-xs text-muted-foreground max-w-md text-center">{(articleQuery.error as Error)?.message}</p>
+        <Button variant="outline" size="sm" onClick={() => articleQuery.refetch()}>
+          <RotateCcw className="h-3.5 w-3.5" /> Retry
+        </Button>
+      </div>
+    );
+  }
+
   return (
+    <>
+      {blocker.state === "blocked" && (
+        <div className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-background border border-border rounded-xl p-6 max-w-sm w-full shadow-xl space-y-4">
+            <p className="text-sm font-semibold">Unsaved changes</p>
+            <p className="text-sm text-muted-foreground">You have unsaved changes. Are you sure you want to leave?</p>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => blocker.reset?.()}>Stay</Button>
+              <Button size="sm" onClick={() => blocker.proceed?.()}>Discard</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
     <form onSubmit={onSubmit} className="max-w-6xl space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -289,6 +346,17 @@ export default function AdminArticleForm() {
             Save
             <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-white/20 px-1.5 text-[10px] font-mono opacity-60">⌘S</kbd>
           </Button>
+          {isEditing ? (
+            <Button variant="outline" size="sm" asChild>
+              <a href={`/${articleQuery.data?.slug || ""}`} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4" /> Preview
+              </a>
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => toast.info("Save the article first to preview")}>
+              <ExternalLink className="h-4 w-4" /> Preview
+            </Button>
+          )}
         </div>
       </div>
 
@@ -548,6 +616,7 @@ export default function AdminArticleForm() {
         </aside>
       </div>
     </form>
+    </>
   );
 }
 

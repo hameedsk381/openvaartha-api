@@ -136,6 +136,11 @@ export default function AdminCategories() {
           <span>Color</span>
           <span className="text-right">Actions</span>
         </div>
+        {isLoading ? (
+          <div className="h-32 flex items-center justify-center">
+            <Loader2 className="h-6 w-6 text-primary animate-spin" />
+          </div>
+        ) : (
         <div className="divide-y divide-border">
           {categories.map((category) => {
             const isEditing = editingId === category.id;
@@ -204,6 +209,7 @@ export default function AdminCategories() {
             <div className="p-8 text-sm text-muted-foreground text-center">No categories found.</div>
           )}
         </div>
+        )}
       </div>
 
       <ConfirmDialog

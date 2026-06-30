@@ -47,7 +47,11 @@ export default function AdminRoute({ children, roles }: AdminRouteProps) {
   if (roles && roles.length > 0) {
     const maxAllowed = Math.max(...roles.map((r) => ROLE_HIERARCHY[r] ?? 0));
     if (userLevel < maxAllowed) {
-      return <Navigate to="/admin" replace />;
+      const fallback: Record<string, string> = {
+        editor: "/admin/articles",
+        moderator: "/admin/comments",
+      };
+      return <Navigate to={fallback[effectiveRole] ?? "/"} replace />;
     }
   }
 
