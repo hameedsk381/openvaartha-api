@@ -163,6 +163,13 @@ export default function AdminArticleForm() {
     }
   }, [categoriesQuery.data, form.categoryId]);
 
+  const safeDate = (d: string) => {
+    if (!d) return new Date().toISOString();
+    const parsed = new Date(d);
+    if (Number.isNaN(parsed.getTime())) return new Date().toISOString();
+    return parsed.toISOString();
+  };
+
   const payload = useMemo(() => ({
     title: form.title,
     slug: form.slug || undefined,
@@ -174,7 +181,7 @@ export default function AdminArticleForm() {
     author: form.author,
     thumbnail_url: form.thumbnailUrl || null,
     instagram_url: form.instagramUrl || null,
-    published_at: new Date(form.publishedAt).toISOString(),
+    published_at: safeDate(form.publishedAt),
     is_trending: form.isTrending,
     is_breaking: form.isBreaking,
     is_editor_pick: form.isEditorPick,
