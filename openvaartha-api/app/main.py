@@ -16,6 +16,7 @@ from app.core.security_headers import SecurityHeadersMiddleware
 from app.database import db
 from app.services.article_service import ensure_article_indexes
 from app.services.category_service import ensure_category_indexes
+from app.services.feed_service import _slugify
 from app.services.meta_service import (
     build_article_head,
     build_category_head,
@@ -158,7 +159,15 @@ if os.path.isdir(_dist):
                 else:
                     status = 404
             elif category_match:
-                category = await db["categories"].find_one({"_id": category_match.group(1)})
+                # The category route (both the sitemap and CategoryPage.tsx) keys
+                # off a slugified category *name*, not the category's _id — match
+                # the same way rather than querying by _id (which never matches).
+                slug = category_match.group(1)
+                category = None
+                async for cat in db["categories"].find({}):
+                    if _slugify(cat.get("name", "")) == slug:
+                        category = cat
+                        break
                 if category:
                     head = build_category_head(category, full_path)
                 else:
