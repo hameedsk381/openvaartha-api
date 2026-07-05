@@ -58,7 +58,7 @@ const CategoryPage = () => {
               {currentCategory}
             </h1>
             <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-4 max-w-2xl leading-relaxed">
-              Independent reporting on {currentCategory.toLowerCase()} across Andhra Pradesh & Telangana — verified by regional desks.
+              Independent reporting on {currentCategory.toLowerCase()} — verified, unfiltered, no gatekeepers.
             </p>
           </header>
 

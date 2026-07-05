@@ -37,14 +37,8 @@ type DraftSource = {
 };
 
 const emptyDraft: DraftSource = { name: "", feed_url: "", category_id: "", language: "en" };
-const LANGUAGES = [
-  { value: "en", label: "English" },
-  { value: "te", label: "Telugu" },
-  { value: "ta", label: "Tamil" },
-  { value: "kn", label: "Kannada" },
-  { value: "ml", label: "Malayalam" },
-  { value: "hi", label: "Hindi" },
-];
+// English-only portal — sources are not tagged by language beyond this.
+const LANGUAGES = [{ value: "en", label: "English" }];
 
 export default function AdminSources() {
   const queryClient = useQueryClient();

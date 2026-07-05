@@ -119,7 +119,7 @@ export default function Login() {
         <div className="relative">
           <Quote className="h-10 w-10 text-secondary mb-6" />
           <p className="font-serif text-3xl xl:text-4xl font-bold leading-[1.15] tracking-tight max-w-xl">
-            "The best journalism doesn't shout. It clarifies — patiently, accurately, in the voice of the region it covers."
+            "We're not here to gatekeep the news. We're here to open it up — reported by the generation living through it."
           </p>
           <div className="mt-8 flex items-center gap-3">
             <div className="h-px w-10 bg-secondary" />
@@ -129,12 +129,12 @@ export default function Login() {
 
         <div className="relative grid grid-cols-3 gap-6 pt-8 border-t border-white/15">
           <div>
-            <div className="font-serif text-3xl font-bold">5</div>
-            <div className="text-[11px] uppercase tracking-wider text-white/60 font-semibold mt-1">Languages</div>
+            <div className="font-serif text-3xl font-bold">Gen Z</div>
+            <div className="text-[11px] uppercase tracking-wider text-white/60 font-semibold mt-1">Led</div>
           </div>
           <div>
-            <div className="font-serif text-3xl font-bold">120+</div>
-            <div className="text-[11px] uppercase tracking-wider text-white/60 font-semibold mt-1">Reporters</div>
+            <div className="font-serif text-3xl font-bold">Open</div>
+            <div className="text-[11px] uppercase tracking-wider text-white/60 font-semibold mt-1">Source</div>
           </div>
           <div>
             <div className="font-serif text-3xl font-bold">0</div>
@@ -166,7 +166,7 @@ export default function Login() {
             </h1>
             <p className="font-serif italic text-sm text-muted-foreground mt-3">
               {mode === 'login'
-                ? 'Pick up where you left off — your saved stories, settings and language preferences are waiting.'
+                ? 'Pick up where you left off — your saved stories and settings are waiting.'
                 : 'Free, forever. Save stories, follow sections, get the morning briefing.'}
             </p>
           </div>

@@ -111,7 +111,7 @@ export default function AIGenerateDialog({ onApply }: Props) {
               <Input
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                placeholder="e.g. Andhra Pradesh Budget 2026 highlights"
+                placeholder="e.g. AI regulation debate heats up in Congress"
                 disabled={mutation.isPending}
               />
             </div>

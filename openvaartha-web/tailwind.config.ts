@@ -138,9 +138,9 @@ export default {
       // TYPOGRAPHY
       // ─────────────────────────────────────────────────────
       fontFamily: {
-        sans:    ["Inter", "Noto Sans Telugu", "system-ui", "-apple-system", "sans-serif"],
-        serif:   ["Source Serif 4", "Noto Serif Telugu", "Georgia", "serif"],
-        display: ["Bricolage Grotesque", "Noto Sans Telugu", "Inter", "system-ui", "sans-serif"],
+        sans:    ["Inter", "system-ui", "-apple-system", "sans-serif"],
+        serif:   ["Source Serif 4", "Georgia", "serif"],
+        display: ["Bricolage Grotesque", "Inter", "system-ui", "sans-serif"],
         mono:    ["JetBrains Mono", "Fira Code", "monospace"],
       },
       fontSize: {

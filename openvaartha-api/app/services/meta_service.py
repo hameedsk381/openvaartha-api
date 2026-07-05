@@ -8,12 +8,12 @@ from app.config import settings
 
 # Mirrors BRAND in openvaartha-web/src/lib/brand.ts — keep in sync.
 SITE_NAME = "Open Vaartha"
-SITE_TITLE = "Open Vaartha — Andhra Pradesh & Telangana's Authoritative News Platform"
+SITE_TITLE = "Open Vaartha — An Open News Platform, Built by Gen Z"
 # Kept under 160 chars, keywords first — long descriptions get truncated in
 # search snippets and social previews.
 SITE_DESCRIPTION = (
-    "Andhra Pradesh & Telangana news: politics, tech, cinema, and business. "
-    "Fast, independent dispatches from Open Vaartha."
+    "Open Vaartha is an independent, youth-led news initiative — open "
+    "journalism built by Gen Z, for a freer internet."
 )
 TWITTER_HANDLE = "@openvaartha"
 DEFAULT_IMAGE = "/logo.jpg"
@@ -88,17 +88,17 @@ def build_head(
 _STATIC_ROUTE_META: Dict[str, Dict[str, Optional[str]]] = {
     "trending": {
         "title": f"Trending News — {SITE_NAME}",
-        "description": "The most-read stories right now across Andhra Pradesh & Telangana — politics, tech, cinema, and business.",
+        "description": "The most-read stories right now — politics, tech, culture, and business, ranked by attention.",
         "robots": None,
     },
     "explainers": {
         "title": f"Explainers — {SITE_NAME}",
-        "description": "In-depth explainers that break down the issues shaping Andhra Pradesh & Telangana.",
+        "description": "In-depth explainers that break down the ideas and shifts shaping the internet you live in.",
         "robots": None,
     },
     "live": {
         "title": f"Live Updates — {SITE_NAME}",
-        "description": "Live, rolling coverage of developing stories across Andhra Pradesh & Telangana.",
+        "description": "Live, rolling coverage of developing stories — verified, timestamped, no rumours.",
         "robots": None,
     },
     "search": {
@@ -182,7 +182,7 @@ def build_category_head(category: Dict[str, Any], canonical_path: str) -> str:
     canonical = f"{_base_url()}/{canonical_path.strip('/')}"
     return build_head(
         title=f"{display} News — {SITE_NAME}",
-        description=f"Latest {display} news and updates from Andhra Pradesh & Telangana. {SITE_DESCRIPTION}",
+        description=f"Latest {display} news and updates from {SITE_NAME}. {SITE_DESCRIPTION}",
         canonical=canonical,
     )
 

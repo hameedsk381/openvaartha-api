@@ -47,7 +47,7 @@ const LiveUpdatesPage = () => {
               Live updates
             </h1>
             <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-4 max-w-2xl leading-relaxed">
-              Real-time dispatches from our regional desks across Andhra Pradesh & Telangana — verified, timestamped, no rumours.
+              Real-time dispatches from our desk — verified, timestamped, no rumours.
             </p>
 
             <div className="flex flex-wrap items-center gap-3 mt-6">
@@ -78,7 +78,7 @@ const LiveUpdatesPage = () => {
                 </div>
               ) : liveUpdates.length === 0 ? (
                 <p className="font-serif italic text-muted-foreground text-center py-16">
-                  Live updates from our regional desks. Check back soon.
+                  Live updates from our desk. Check back soon.
                 </p>
               ) : (
                 <div className="relative">

@@ -5,7 +5,6 @@ import BreakingTicker from '../components/BreakingTicker';
 import HeroCarousel from '../components/HeroCarousel';
 import FeedSkeleton from '../components/FeedSkeleton';
 import Footer from '@/components/Footer';
-import InstagramFeed from '@/components/InstagramFeed';
 import FacebookFeed from '@/components/FacebookFeed';
 import { handleImageFallback } from '@/lib/utils';
 import { categoryColors } from '@/lib/types';
@@ -383,7 +382,7 @@ export default function Index() {
                   <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent_60%)]" />
                   <span className="relative chip">The Briefing</span>
                   <h4 className="relative font-display text-2xl font-bold mt-3 leading-tight">
-                    Andhra Pradesh & Telangana, in your inbox by sunrise.
+                    The stories that matter, in your inbox by sunrise.
                   </h4>
                   <p className="relative text-sm text-white/80 mt-2 leading-relaxed">
                     A free morning digest of the stories that matter — curated, never automated.
@@ -434,7 +433,6 @@ export default function Index() {
             </aside>
           </section>
 
-          <InstagramFeed />
           <FacebookFeed />
 
           <Footer />

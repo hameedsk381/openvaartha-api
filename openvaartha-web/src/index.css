@@ -73,16 +73,14 @@
 
     /* ── Typography Tokens ───────────────────────────────
        Sans: Inter — clean, warm, excellent screen readability.
-             Noto Sans for Telugu, Tamil, Kannada, Malayalam, Hindi.
-       Serif: Source Serif 4 — variable optical size, friendly on
-             screens. Noto Serif for Indian language article bodies.
+       Serif: Source Serif 4 — variable optical size, friendly on screens.
+       English-only portal — no non-Latin language families.
        ──────────────────────────────────────────────────── */
-    --font-sans:  "Inter", "Noto Sans Telugu", system-ui, -apple-system, sans-serif;
-    --font-serif: "Source Serif 4", "Noto Serif Telugu", Georgia, serif;
+    --font-sans:  "Inter", system-ui, -apple-system, sans-serif;
+    --font-serif: "Source Serif 4", Georgia, serif;
     /* Display — feed headlines, section headers, wordmark. Sans = feed mode,
-       serif = read mode (article body only). Telugu headlines fall back to
-       Noto Sans Telugu 900. */
-    --font-display: "Bricolage Grotesque", "Noto Sans Telugu", "Inter", system-ui, sans-serif;
+       serif = read mode (article body only). */
+    --font-display: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
 
     /* Sticker shadow — hard offset, no blur. THE redesign signature. */
     --sticker-shadow: 4px 4px 0 hsl(var(--primary));

@@ -50,7 +50,7 @@ async def llms_txt(db: AsyncIOMotorDatabase = Depends(get_db)):
 
 > {SITE_DESCRIPTION}
 
-{SITE_NAME} is an independent, open-source regional news platform covering Andhra Pradesh & Telangana, built by FOSS Andhra Foundation.
+{SITE_NAME} is an independent, youth-led news initiative operated by Gen Z — an open news platform built for the liberation of digital spaces, run by FOSS Andhra Foundation.
 
 ## Content categories
 
@@ -86,7 +86,7 @@ async def agents_json():
         # page yet (see openvaartha-web/src/components/Footer.tsx) — omitting
         # rather than publishing an address/URL that doesn't resolve.
         "type": "NewsMediaOrganization",
-        "language": ["te", "en"],
+        "language": ["en"],
         "capabilities": {
             "news_articles": True,
             "structured_data": ["NewsArticle", "BreadcrumbList", "Organization", "WebSite"],

@@ -17,21 +17,10 @@ const initDark = (): boolean => {
   return false;
 };
 
-const LANGS = [
-  { code: "en", label: "EN" },
-  { code: "te", label: "తె" },
-  { code: "ta", label: "த" },
-  { code: "kn", label: "ಕ" },
-] as const;
-type LangCode = typeof LANGS[number]["code"];
-
 const Navbar = ({ isInsideStack }: NavbarProps) => {
   const [isDark, setIsDark]       = useState(initDark);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery]         = useState("");
-  const [lang, setLang]           = useState<LangCode>(() =>
-    (localStorage.getItem("ui-lang") as LangCode | null) ?? "en"
-  );
   const { saved }                 = useReadingList();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -50,11 +39,6 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
   const { data: breakingArticles = [] } = useBreakingArticles(5);
 
   const hasBreaking = breakingArticles.length > 0;
-
-  const switchLang = (code: LangCode) => {
-    setLang(code);
-    localStorage.setItem("ui-lang", code);
-  };
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
@@ -120,22 +104,6 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
           </nav>
 
         <div className="flex items-center gap-0.5">
-          <div className="hidden sm:flex items-center border border-border rounded-lg overflow-hidden mr-1">
-            {LANGS.map(({ code, label }) => (
-              <button
-                key={code}
-                onClick={() => switchLang(code)}
-                className={cn(
-                  "h-9 px-2.5 text-xs font-medium transition-colors",
-                  lang === code ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted"
-                )}
-                aria-label={`Switch to ${label}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
           <button
             onClick={() => setSearchOpen(true)}
             className="h-11 w-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors press"

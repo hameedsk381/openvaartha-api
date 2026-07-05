@@ -25,10 +25,10 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["icon.svg", "robots.txt", "logo.jpg"],
       manifest: {
-        name: "Open Vaartha — Andhra Pradesh & Telangana's Authoritative News Platform",
+        name: "Open Vaartha — An Open News Platform, Built by Gen Z",
         short_name: "Open Vaartha",
         description:
-          "Immersive, high-speed regional dispatches from Andhra Pradesh & Telangana. Politics, Tech, Cinema, and Business.",
+          "Open Vaartha is an independent, youth-led news initiative — open journalism built by Gen Z, for a freer internet.",
         theme_color: "#550000",
         background_color: "#f8f5f0",
         display: "standalone",
