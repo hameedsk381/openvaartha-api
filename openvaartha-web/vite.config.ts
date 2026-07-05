@@ -9,6 +9,12 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    // Dev-only convenience: proxy API/feed calls to production so local UI
+    // work has real content to render against. Never affects `vite build`.
+    proxy: {
+      "/api": { target: "https://openvaartha.com", changeOrigin: true, secure: true },
+      "/sitemap.xml": { target: "https://openvaartha.com", changeOrigin: true, secure: true },
+    },
     hmr: {
       overlay: false,
     },

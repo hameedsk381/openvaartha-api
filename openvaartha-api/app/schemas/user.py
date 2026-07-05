@@ -36,6 +36,8 @@ class User(UserBase):
     is_active: bool
     is_admin: bool
     role: str
+    avatar_url: Optional[str] = None
+    auth_provider: str = "local"
     created_at: datetime
     updated_at: Optional[datetime] = None
     theme: Optional[str] = None
@@ -50,6 +52,14 @@ class User(UserBase):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+class GoogleLoginRequest(BaseModel):
+    id_token: str
+
+    class Config:
+        alias_generator = to_camel
+        populate_by_name = True
 
 
 class Token(BaseModel):

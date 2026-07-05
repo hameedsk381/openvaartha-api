@@ -2,6 +2,9 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from datetime import timedelta, datetime, timezone
 from uuid import uuid4
 
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token as google_id_token
+
 from app.config import settings
 from app.core.security import (
     create_access_token,
@@ -11,6 +14,10 @@ from app.core.security import (
 )
 from app.models.user import User
 from app.schemas.user import UserCreate
+
+# Reused across requests — internally caches Google's signing-key fetches
+# rather than hitting Google's discovery endpoint on every sign-in.
+_google_auth_request = google_requests.Request()
 
 
 # Roles a self-service registration is allowed to set on its own account.
@@ -72,6 +79,66 @@ async def authenticate_user(db: AsyncIOMotorDatabase, email: str, password: str)
         return False
 
     return user
+
+
+async def authenticate_google(db: AsyncIOMotorDatabase, google_credential: str) -> User:
+    """Verify a Google Identity Services ID token and return the matching
+    (or newly created) local user.
+
+    Raises ``ValueError`` on any invalid/expired/wrong-audience token — the
+    same exception type ``google.oauth2.id_token.verify_oauth2_token`` itself
+    raises, so callers can catch just ``ValueError``.
+    """
+    if not settings.GOOGLE_CLIENT_ID:
+        raise ValueError("Google sign-in is not configured")
+
+    claims = google_id_token.verify_oauth2_token(
+        google_credential, _google_auth_request, settings.GOOGLE_CLIENT_ID
+    )
+
+    if not claims.get("email_verified", False):
+        raise ValueError("Google account email is not verified")
+
+    email = claims["email"]
+    google_sub = claims["sub"]
+    full_name = claims.get("name") or email.split("@")[0]
+    avatar_url = claims.get("picture")
+
+    user_doc = await db["users"].find_one({"google_sub": google_sub})
+    if user_doc:
+        return User(**user_doc)
+
+    # No account linked to this Google subject yet — check for a pre-existing
+    # local account with the same (verified) email and link it, rather than
+    # creating a duplicate account under the same address.
+    user_doc = await db["users"].find_one({"email": email})
+    if user_doc:
+        await db["users"].update_one(
+            {"_id": user_doc["_id"]},
+            {"$set": {"google_sub": google_sub, "updated_at": datetime.now(timezone.utc)}},
+        )
+        user_doc["google_sub"] = google_sub
+        return User(**user_doc)
+
+    # Brand new account. Mirrors create_user()'s rule: sign-in can never grant
+    # anything above the default "user" role — admin/editor is always a
+    # separate, out-of-band elevation.
+    user_id = str(uuid4())
+    new_doc = {
+        "_id": user_id,
+        "email": email,
+        "full_name": full_name,
+        "hashed_password": None,
+        "avatar_url": avatar_url,
+        "is_active": True,
+        "is_admin": False,
+        "role": "user",
+        "auth_provider": "google",
+        "google_sub": google_sub,
+        "created_at": datetime.now(timezone.utc),
+    }
+    await db["users"].insert_one(new_doc)
+    return User(**new_doc)
 
 
 def create_tokens(user: User):

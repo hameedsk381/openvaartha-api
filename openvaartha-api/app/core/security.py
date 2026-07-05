@@ -6,8 +6,15 @@ import bcrypt as _bcrypt
 from app.config import settings
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash."""
+def verify_password(plain_password: str, hashed_password: Optional[str]) -> bool:
+    """Verify a password against its hash.
+
+    ``hashed_password`` is None for OAuth-only accounts (e.g. Google sign-in)
+    that never set a local password — those must never authenticate via the
+    password grant, so this returns False rather than raising.
+    """
+    if not hashed_password:
+        return False
     return _bcrypt.checkpw(
         plain_password.encode(), hashed_password.encode()
     )

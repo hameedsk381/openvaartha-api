@@ -6,12 +6,12 @@ from app.config import settings
 
 _CSP = (
     "default-src 'self';"
-    "script-src 'self' 'unsafe-inline';"
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;"
+    "script-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/client;"
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style;"
     "font-src 'self' https://fonts.gstatic.com data:;"
     "img-src 'self' data: blob: https:;"
-    "connect-src 'self';"
-    "frame-src 'none';"
+    "connect-src 'self' https://accounts.google.com;"
+    "frame-src https://accounts.google.com;"
     "base-uri 'self';"
     "form-action 'self';"
     "object-src 'none'"

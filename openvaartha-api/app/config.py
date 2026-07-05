@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash"
 
+    # Google Sign-In (verifies the ID token's audience — no client secret
+    # needed since the frontend uses Google Identity Services' implicit flow)
+    GOOGLE_CLIENT_ID: str = ""
+
     # News APIs
     NEWS_API_KEY: str = ""
     MEDIASTACK_API_KEY: str = ""

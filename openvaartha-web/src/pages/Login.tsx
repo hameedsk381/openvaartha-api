@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Mail, Lock, User as UserIcon, Loader2, Eye, EyeOff, ArrowLeft, Quote } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { BRAND } from '@/lib/brand';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -57,6 +58,7 @@ export default function Login() {
       }
       const result = await res.json();
       localStorage.setItem('token', result.access_token);
+      localStorage.setItem('refresh_token', result.refresh_token);
       localStorage.setItem('user_email', data.email);
       toast.success('Welcome back.');
       navigate(from, { replace: true });
@@ -167,6 +169,23 @@ export default function Login() {
                 ? 'Pick up where you left off — your saved stories, settings and language preferences are waiting.'
                 : 'Free, forever. Save stories, follow sections, get the morning briefing.'}
             </p>
+          </div>
+
+          {/* Google sign-in — same flow for both new and returning readers */}
+          <div className="mb-6">
+            <GoogleSignInButton
+              onSuccess={() => {
+                toast.success('Welcome to Open Vaartha.');
+                navigate(from, { replace: true });
+              }}
+              onError={(message) => toast.error(message)}
+            />
+          </div>
+
+          <div className="relative mb-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="overline text-muted-foreground">or use email</span>
+            <div className="h-px flex-1 bg-border" />
           </div>
 
           {/* Tabs */}

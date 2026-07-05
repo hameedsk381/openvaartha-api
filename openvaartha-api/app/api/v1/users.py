@@ -12,6 +12,7 @@ from app.database import get_db
 from app.models.user import User as UserModel
 from app.schemas.article import Article as ArticleSchema
 from app.schemas.user import (
+    GoogleLoginRequest,
     RefreshTokenRequest,
     Token,
     User as UserSchema,
@@ -53,6 +54,36 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return auth_service.create_tokens(user)
+
+
+@router.post("/google", response_model=Token)
+@limiter.limit(LOGIN_LIMIT)
+async def google_login(
+    request: Request,
+    body: GoogleLoginRequest,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Sign in (or auto-register) using a Google Identity Services ID token.
+
+    The frontend never sees a client secret — Google Identity Services signs
+    the credential client-side, and this endpoint only verifies that
+    signature and its audience against GOOGLE_CLIENT_ID.
+    """
+    try:
+        user = await auth_service.authenticate_google(db, body.id_token)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Google credential",
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="This account has been disabled",
         )
 
     return auth_service.create_tokens(user)
