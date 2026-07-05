@@ -3,7 +3,9 @@ export const BRAND = {
   shortName: "Open Vaartha",
   monogram: "OV",
   tagline: "Independent journalism for Andhra Pradesh & Telangana. Two states, one signal, no noise.",
-  description: "Immersive, high-speed regional dispatches from Andhra Pradesh & Telangana. Open Vaartha brings you authoritative briefings on Politics, Tech, Cinema, and Business.",
+  // Kept under 160 chars, keywords first — long descriptions get truncated in
+  // search snippets and social previews.
+  description: "Andhra Pradesh & Telangana news: politics, tech, cinema, and business. Fast, independent dispatches from Open Vaartha.",
   url: "https://openvaartha.com",
   twitterHandle: "@openvaartha",
   instagramHandle: "@openvaartha",

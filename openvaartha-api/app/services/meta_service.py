@@ -9,9 +9,11 @@ from app.config import settings
 # Mirrors BRAND in openvaartha-web/src/lib/brand.ts — keep in sync.
 SITE_NAME = "Open Vaartha"
 SITE_TITLE = "Open Vaartha — Andhra Pradesh & Telangana's Authoritative News Platform"
+# Kept under 160 chars, keywords first — long descriptions get truncated in
+# search snippets and social previews.
 SITE_DESCRIPTION = (
-    "Immersive, high-speed regional dispatches from Andhra Pradesh & Telangana. "
-    "Open Vaartha brings you authoritative briefings on Politics, Tech, Cinema, and Business."
+    "Andhra Pradesh & Telangana news: politics, tech, cinema, and business. "
+    "Fast, independent dispatches from Open Vaartha."
 )
 TWITTER_HANDLE = "@openvaartha"
 DEFAULT_IMAGE = "/logo.jpg"

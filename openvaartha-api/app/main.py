@@ -99,8 +99,9 @@ if os.path.isdir(_dist):
     app.mount("/assets", StaticFiles(directory=os.path.join(_dist, "assets")), name="assets")
 
     # PWA files — serve before catch-all so they aren't swallowed by index.html.
-    # robots.txt is intentionally absent: it is served dynamically by feeds.router
-    # so it can advertise the sitemap URL derived from SITE_URL.
+    # robots.txt, llms.txt, and /.well-known/agents.json are intentionally absent
+    # here: they're served dynamically by feeds.router (registered above, before
+    # this catch-all) so they can derive URLs from SITE_URL.
     _pwa_files = [
         "sw.js", "manifest.webmanifest", "registerSW.js", "offline.html",
         "icon.svg", "logo.jpg", "pwa-192x192.png", "pwa-512x512.png",
