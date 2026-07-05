@@ -118,3 +118,17 @@ class TestGoogleSignIn:
             data={"username": "googleuser@example.com", "password": "anything-at-all"},
         )
         assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_auth_config_endpoint(self, client: AsyncClient, monkeypatch):
+        # 1. When Client ID is configured
+        monkeypatch.setattr(settings, "GOOGLE_CLIENT_ID", "test-client-id")
+        response = await client.get("/api/v1/users/auth-config")
+        assert response.status_code == 200
+        assert response.json() == {"google_client_id": "test-client-id"}
+
+        # 2. When Client ID is empty/not configured
+        monkeypatch.setattr(settings, "GOOGLE_CLIENT_ID", "")
+        response = await client.get("/api/v1/users/auth-config")
+        assert response.status_code == 200
+        assert response.json() == {"google_client_id": None}

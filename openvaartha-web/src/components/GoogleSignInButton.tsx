@@ -52,14 +52,34 @@ interface GoogleSignInButtonProps {
  */
 export default function GoogleSignInButton({ onSuccess, onError }: GoogleSignInButtonProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [available, setAvailable] = useState(true);
+  const [clientId, setClientId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
-    if (!clientId) {
-      setAvailable(false);
-      return;
-    }
+    let cancelled = false;
+    apiFetch<{ google_client_id: string | null }>("/users/auth-config")
+      .then((config) => {
+        if (cancelled) return;
+        if (config?.google_client_id) {
+          setClientId(config.google_client_id);
+        } else {
+          setClientId(null);
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setClientId(null);
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (loading || !clientId) return;
 
     let cancelled = false;
 
@@ -99,14 +119,16 @@ export default function GoogleSignInButton({ onSuccess, onError }: GoogleSignInB
           shape: "rectangular",
         });
       })
-      .catch(() => setAvailable(false));
+      .catch(() => {
+        // Fail silently
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [onSuccess, onError]);
+  }, [loading, clientId, onSuccess, onError]);
 
-  if (!available) return null;
+  if (loading || !clientId) return null;
 
   return <div ref={containerRef} className="flex justify-center [&>div]:!w-full" />;
 }

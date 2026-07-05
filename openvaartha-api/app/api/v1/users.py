@@ -24,6 +24,13 @@ from app.services import auth_service, user_service
 router = APIRouter()
 
 
+@router.get("/auth-config")
+async def get_auth_config():
+    """Get public authentication configuration like Google Client ID."""
+    from app.config import settings
+    return {"google_client_id": settings.GOOGLE_CLIENT_ID or None}
+
+
 @router.post("/register", response_model=UserSchema)
 @limiter.limit(REGISTER_LIMIT)
 async def register_user(
