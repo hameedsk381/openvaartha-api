@@ -34,6 +34,7 @@ import AdminNewsletter from "./pages/admin/AdminNewsletter.tsx";
 import AdminSources from "./pages/admin/AdminSources.tsx";
 import InstallPWA from "./components/InstallPWA.tsx";
 import { toast } from "sonner";
+import ErrorBoundary from "./components/ErrorBoundary.tsx";
 
 
 const queryClient = new QueryClient();
@@ -99,6 +100,7 @@ const App = () => {
       <div className="relative min-h-screen overflow-x-hidden bg-background selection:bg-primary/10">
         <BrowserRouter>
           <ProtectedRoute>
+            <ErrorBoundary>
             <Routes>
               <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
@@ -133,6 +135,7 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
 
             </Routes>
+            </ErrorBoundary>
           </ProtectedRoute>
         </BrowserRouter>
         <InstallPWA />

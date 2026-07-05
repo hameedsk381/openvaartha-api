@@ -14,7 +14,7 @@ interface HeroCarouselProps {
 const HeroCarousel = ({ articles }: HeroCarouselProps) => {
   const [emblaRef] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 5000 })]);
 
-  if (articles.length === 0) return null;
+  if (!articles || articles.length === 0) return null;
 
   return (
     <section className="relative w-full overflow-hidden border-b border-border">
@@ -22,11 +22,11 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
         <div className="flex">
           {articles.map((article, index) => (
             <Link
-              key={article.id}
-              to={`/article/${article.slug}`}
+              key={article?.id ?? index}
+              to={`/article/${article?.slug ?? "#"}`}
               className="relative min-h-[360px] flex-[0_0_100%] min-w-0 sm:min-h-0 sm:aspect-[21/9] group"
             >
-              {article.thumbnailUrl && (
+              {article?.thumbnailUrl && (
                 <div className="absolute inset-0 overflow-hidden bg-[hsl(var(--surface-2))]">
                   <img
                     src={article.thumbnailUrl}
@@ -43,12 +43,12 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
                 <div className="max-w-3xl space-y-3 sm:space-y-4">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
                     <span className="rounded-full bg-secondary px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-secondary-foreground shadow-sm">
-                      {article.category}
+                      {article?.category}
                     </span>
                     <span className="flex items-center gap-1.5 text-[10px] font-medium text-white/60">
-                      <Clock className="h-3 w-3" /> {article.readTime}
+                      <Clock className="h-3 w-3" /> {article?.readTime}
                     </span>
-                    {article.isTrending && (
+                    {article?.isTrending && (
                       <span className="flex items-center gap-1 text-[10px] font-semibold text-secondary">
                         <Flame className="h-3 w-3 fill-current" /> Trending
                       </span>
@@ -56,10 +56,10 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
                   </div>
 
                   <h2 className="text-balance text-[1.75rem] font-bold leading-[1.05] tracking-tight text-white sm:text-4xl lg:text-5xl line-clamp-2">
-                    {article.title}
+                    {article?.title}
                   </h2>
                   <p className="max-w-2xl line-clamp-2 text-sm leading-relaxed text-white/70">
-                    {article.summary}
+                    {article?.summary}
                   </p>
 
                   <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-secondary group-hover:text-white transition-colors">
