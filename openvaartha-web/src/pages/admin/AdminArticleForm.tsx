@@ -1,6 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useParams, useBlocker } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ExternalLink, Loader2, Plus, Save, Trash2, X, AlertCircle, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
@@ -79,19 +79,15 @@ export default function AdminArticleForm() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const dirty = useRef(false);
 
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      dirty.current && currentLocation.pathname !== nextLocation.pathname
-  );
-
+  // Guard against losing unsaved changes (tab close / browser back)
   useEffect(() => {
-    const handler = (e: BeforeUnloadEvent) => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (dirty.current) {
         e.preventDefault();
       }
     };
-    window.addEventListener("beforeunload", handler);
-    return () => window.removeEventListener("beforeunload", handler);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
   const markDirty = () => { dirty.current = true; };
@@ -313,19 +309,6 @@ export default function AdminArticleForm() {
 
   return (
     <>
-      {blocker.state === "blocked" && (
-        <div className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-background border border-border rounded-xl p-6 max-w-sm w-full shadow-xl space-y-4">
-            <p className="text-sm font-semibold">Unsaved changes</p>
-            <p className="text-sm text-muted-foreground">You have unsaved changes. Are you sure you want to leave?</p>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" size="sm" onClick={() => blocker.reset?.()}>Stay</Button>
-              <Button size="sm" onClick={() => blocker.proceed?.()}>Discard</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
     <form onSubmit={onSubmit} className="max-w-6xl space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
