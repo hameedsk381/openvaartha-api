@@ -1,9 +1,7 @@
 import json
 import logging
 from typing import Optional
-
-from google import genai
-from google.genai import types
+import httpx
 
 from app.config import settings
 from app.core.sanitize import sanitize_html, sanitize_text
@@ -68,25 +66,36 @@ Tone: {tone_guide}{source_block}
 Generate a complete news article with this exact JSON structure:
 {{"title": "", "summary": "", "body": "", "tldr": "", "points": [], "category_id": ""}}"""
 
-    if not settings.GEMINI_API_KEY:
+    if not settings.GROQ_API_KEY:
         return None
 
     try:
-        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        headers = {
+            "Authorization": f"Bearer {settings.GROQ_API_KEY}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": settings.GROQ_MODEL,
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": settings.AI_TEMPERATURE,
+            "max_tokens": settings.AI_MAX_OUTPUT_TOKENS,
+        }
 
-        response = await client.aio.models.generate_content(
-            model=settings.GEMINI_MODEL,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
-                response_mime_type="application/json",
-                temperature=settings.AI_TEMPERATURE,
-                max_output_tokens=settings.AI_MAX_OUTPUT_TOKENS,
-            ),
-            timeout=settings.AI_TIMEOUT,
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=settings.AI_TIMEOUT,
+            )
+            response.raise_for_status()
+            res_data = response.json()
 
-        content = response.text
+        content = res_data["choices"][0]["message"]["content"]
         if not content:
             return None
 
@@ -109,5 +118,5 @@ Generate a complete news article with this exact JSON structure:
         }
 
     except Exception as e:
-        logger.error(f"Gemini AI generation failed: {e}", exc_info=True)
+        logger.error(f"Groq AI generation failed: {e}", exc_info=True)
         return None

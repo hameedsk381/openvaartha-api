@@ -77,8 +77,8 @@ app.include_router(feeds.router)
 def health_check():
     return {
         "status": "healthy",
-        "ai_available": bool(settings.GEMINI_API_KEY),
-        "ai_model": settings.GEMINI_MODEL,
+        "ai_available": bool(settings.GROQ_API_KEY),
+        "ai_model": settings.GROQ_MODEL,
     }
 
 
@@ -87,10 +87,10 @@ async def startup_checks():
     await ensure_article_indexes(db)
     await ensure_category_indexes(db)
     await ensure_admin_user(db)
-    if not settings.GEMINI_API_KEY:
-        print("WARNING: GEMINI_API_KEY is not set. AI article generation will be unavailable.")
+    if not settings.GROQ_API_KEY:
+        print("WARNING: GROQ_API_KEY is not set. AI article generation will be unavailable.")
     else:
-        print(f"INFO: Gemini AI enabled (model: {settings.GEMINI_MODEL})")
+        print(f"INFO: Groq AI enabled (model: {settings.GROQ_MODEL})")
 
 
 # Serve React SPA — mount after API routes so /api/* is never shadowed

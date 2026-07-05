@@ -187,12 +187,12 @@ class GenerateArticleResponse(BaseModel):
 
 @router.post("/ai/generate-article", response_model=GenerateArticleResponse)
 async def ai_generate_article(body: GenerateArticleRequest):
-    """Generate a complete article draft from a topic prompt using OpenAI."""
+    """Generate a complete article draft from a topic prompt using Groq."""
     result = await generate_article(topic=body.topic, source_content=body.source_content, style=body.style, tone=body.tone)
     if not result:
         raise HTTPException(
             status_code=503,
-            detail="AI generation failed. Check the GEMINI_API_KEY environment variable.",
+            detail="AI generation failed. Check the GROQ_API_KEY environment variable.",
         )
     return result
 

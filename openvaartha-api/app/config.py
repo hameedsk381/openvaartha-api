@@ -42,11 +42,11 @@ class Settings(BaseSettings):
     AI_TEMPERATURE: float = 0.7
     AI_MAX_OUTPUT_TOKENS: int = 4096
     AI_MAX_POINTS: int = 8
-    AI_TIMEOUT: int = 60  # seconds for Gemini API call
+    AI_TIMEOUT: int = 60  # seconds for AI API call
 
-    # Gemini
-    GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    # Groq
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
 
     # Google Sign-In (verifies the ID token's audience — no client secret
     # needed since the frontend uses Google Identity Services' implicit flow)
