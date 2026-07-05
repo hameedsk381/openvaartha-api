@@ -48,10 +48,10 @@ const ParticleCard: React.FC<BentoCardProps> = ({
       style={{ '--card-color': color } as React.CSSProperties}
     >
       {/* Background Image if exists */}
-      {hasFeatureImage && article.thumbnail && (
+      {hasFeatureImage && article.thumbnailUrl && (
         <div className="absolute inset-0 z-0">
           <img
-            src={article.thumbnail}
+            src={article.thumbnailUrl}
             alt=""
             className="w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-all duration-700 group-hover:scale-105"
             onError={handleImageFallback}

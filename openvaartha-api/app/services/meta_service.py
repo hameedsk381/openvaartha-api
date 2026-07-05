@@ -79,9 +79,110 @@ def build_head(
     return "\n  ".join(lines)
 
 
+# Distinct title/description for known static SPA routes so they don't all share
+# the homepage title (duplicate-title/meta hurts indexing and snippet CTR).
+# Keys are normalized paths (no leading/trailing slash). ``robots`` is the value
+# of a <meta name="robots"> tag; None means index/follow (the default).
+_STATIC_ROUTE_META: Dict[str, Dict[str, Optional[str]]] = {
+    "trending": {
+        "title": f"Trending News — {SITE_NAME}",
+        "description": "The most-read stories right now across Andhra Pradesh & Telangana — politics, tech, cinema, and business.",
+        "robots": None,
+    },
+    "explainers": {
+        "title": f"Explainers — {SITE_NAME}",
+        "description": "In-depth explainers that break down the issues shaping Andhra Pradesh & Telangana.",
+        "robots": None,
+    },
+    "live": {
+        "title": f"Live Updates — {SITE_NAME}",
+        "description": "Live, rolling coverage of developing stories across Andhra Pradesh & Telangana.",
+        "robots": None,
+    },
+    "search": {
+        "title": f"Search — {SITE_NAME}",
+        "description": SITE_DESCRIPTION,
+        "robots": "noindex, follow",
+    },
+    # Auth and private routes: already Disallow'd in robots.txt; mark noindex too.
+    "login": {"title": f"Sign in — {SITE_NAME}", "description": SITE_DESCRIPTION, "robots": "noindex, nofollow"},
+    "register": {"title": f"Create account — {SITE_NAME}", "description": SITE_DESCRIPTION, "robots": "noindex, nofollow"},
+    "forgot-password": {"title": f"Reset password — {SITE_NAME}", "description": SITE_DESCRIPTION, "robots": "noindex, nofollow"},
+    "reset-password": {"title": f"Reset password — {SITE_NAME}", "description": SITE_DESCRIPTION, "robots": "noindex, nofollow"},
+}
+
+
+def _homepage_json_ld() -> str:
+    base = _base_url()
+    return "\n  ".join([
+        _json_ld_script({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": SITE_NAME,
+            "url": base,
+            "logo": _abs_url(PUBLISHER_LOGO),
+        }),
+        _json_ld_script({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": SITE_NAME,
+            "url": base,
+            "potentialAction": {
+                "@type": "SearchAction",
+                "target": f"{base}/search?q={{search_term_string}}",
+                "query-input": "required name=search_term_string",
+            },
+        }),
+    ])
+
+
 def build_default_head(path: str = "") -> str:
-    canonical = f"{_base_url()}/{path.strip('/')}".rstrip("/")
-    return build_head(title=SITE_TITLE, description=SITE_DESCRIPTION, canonical=canonical)
+    normalized = path.strip("/")
+    canonical = f"{_base_url()}/{normalized}".rstrip("/")
+
+    # Private route trees (portal/*, admin/*) should never be indexed.
+    first_segment = normalized.split("/", 1)[0]
+    if first_segment in ("portal", "admin"):
+        return build_head(
+            title=f"{SITE_NAME}",
+            description=SITE_DESCRIPTION,
+            canonical=canonical,
+            extra='<meta name="robots" content="noindex, nofollow">',
+        )
+
+    if normalized == "":
+        return build_head(
+            title=SITE_TITLE,
+            description=SITE_DESCRIPTION,
+            canonical=canonical,
+            extra=_homepage_json_ld(),
+        )
+
+    meta = _STATIC_ROUTE_META.get(normalized)
+    if meta is None:
+        return build_head(title=SITE_TITLE, description=SITE_DESCRIPTION, canonical=canonical)
+
+    extra = ""
+    if meta.get("robots"):
+        extra = f'<meta name="robots" content="{html.escape(meta["robots"], quote=True)}">'
+    return build_head(
+        title=meta["title"],
+        description=meta["description"],
+        canonical=canonical,
+        extra=extra,
+    )
+
+
+def build_category_head(category: Dict[str, Any], canonical_path: str) -> str:
+    """Per-category title/description so category pages don't share the homepage meta."""
+    name = category.get("name", "").strip()
+    display = name[:1].upper() + name[1:] if name else "News"
+    canonical = f"{_base_url()}/{canonical_path.strip('/')}"
+    return build_head(
+        title=f"{display} News — {SITE_NAME}",
+        description=f"Latest {display} news and updates from Andhra Pradesh & Telangana. {SITE_DESCRIPTION}",
+        canonical=canonical,
+    )
 
 
 def build_article_head(article: Dict[str, Any], category_name: str = "") -> str:

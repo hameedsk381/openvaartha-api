@@ -33,6 +33,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
     (localStorage.getItem("ui-lang") as LangCode | null) ?? "en"
   );
   const { saved }                 = useReadingList();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedCat = searchParams.get('category') || 'All';
 

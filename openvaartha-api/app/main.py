@@ -4,6 +4,7 @@ import re
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -15,7 +16,12 @@ from app.core.security_headers import SecurityHeadersMiddleware
 from app.database import db
 from app.services.article_service import ensure_article_indexes
 from app.services.category_service import ensure_category_indexes
-from app.services.meta_service import build_article_head, build_default_head, inject_head
+from app.services.meta_service import (
+    build_article_head,
+    build_category_head,
+    build_default_head,
+    inject_head,
+)
 from app.services.seed_service import ensure_admin_user
 
 # Block known-unsafe production configs at import time.
@@ -25,6 +31,10 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description="OpenVaartha News Aggregation API",
+    # Don't expose the full API surface (routes, schemas) publicly in production.
+    docs_url=None if settings.is_production else "/docs",
+    redoc_url=None if settings.is_production else "/redoc",
+    openapi_url=None if settings.is_production else "/openapi.json",
 )
 
 # Wire the SlowAPI limiter so per-route @limiter.limit decorators take effect.
@@ -44,6 +54,10 @@ app.add_middleware(
 
 # Security headers — CSP, X-Frame-Options, HSTS, etc.
 app.add_middleware(SecurityHeadersMiddleware)
+
+# Compress large text responses (JS/CSS bundles, HTML, JSON). Serves the SPA's
+# ~1.8MB JS bundle gzipped to mobile clients, which is the primary access pattern.
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 # Include routers
 app.include_router(articles.router, prefix="/api/v1/articles", tags=["Articles"])
@@ -102,21 +116,37 @@ if os.path.isdir(_dist):
 
     _index_path = os.path.join(_dist, "index.html")
     _article_path_re = re.compile(r"^article/([^/]+)/?$")
+    _category_path_re = re.compile(r"^category/([^/]+)/?$")
+
+    # Client routes that legitimately exist (see openvaartha-web/src/App.tsx).
+    # Anything else is a real 404 so crawlers stop wasting budget on typo'd URLs.
+    _known_exact = {
+        "", "login", "register", "forgot-password", "reset-password",
+        "search", "trending", "explainers", "live",
+    }
+    _known_prefixes = ("portal", "admin")
 
     @app.get("/{full_path:path}", include_in_schema=False)
     async def serve_spa(full_path: str):
         # Inject route-specific meta (title/canonical/OG/JSON-LD) into the marked
         # <!--app-head--> block so no-JS crawlers (WhatsApp, Facebook, Twitter,
-        # Googlebot first pass) see real article metadata instead of SPA defaults.
+        # Googlebot first pass) see real metadata instead of SPA defaults. The SPA
+        # shell is always returned as the body; only the HTTP status and injected
+        # <head> vary. Unknown paths return 404 so they aren't treated as soft-404s.
         with open(_index_path, encoding="utf-8") as f:
             index_html = f.read()
 
+        path = full_path.strip("/")
         head = None
-        match = _article_path_re.match(full_path)
-        if match:
-            try:
+        status = 200
+
+        article_match = _article_path_re.match(full_path)
+        category_match = _category_path_re.match(full_path)
+
+        try:
+            if article_match:
                 article = await db["articles"].find_one(
-                    {"slug": match.group(1), "status": "published"}
+                    {"slug": article_match.group(1), "status": "published"}
                 )
                 if article:
                     category = await db["categories"].find_one(
@@ -125,12 +155,22 @@ if os.path.isdir(_dist):
                     head = build_article_head(
                         article, category_name=(category or {}).get("name", "")
                     )
-            except Exception:
-                head = None  # never let meta enrichment take the page down
+                else:
+                    status = 404
+            elif category_match:
+                category = await db["categories"].find_one({"_id": category_match.group(1)})
+                if category:
+                    head = build_category_head(category, full_path)
+                else:
+                    status = 404
+            elif path not in _known_exact and path.split("/", 1)[0] not in _known_prefixes:
+                status = 404
+        except Exception:
+            head = None  # never let meta enrichment take the page down
 
         if head is None:
             head = build_default_head(full_path)
-        return HTMLResponse(inject_head(index_html, head))
+        return HTMLResponse(inject_head(index_html, head), status_code=status)
 
 
 if __name__ == "__main__":

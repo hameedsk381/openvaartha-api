@@ -38,6 +38,14 @@ function useSEOMeta(article: Article | undefined) {
 
     document.title = pageTitle(article.title);
 
+    // The shell's <html lang> defaults to "en", but article content is often
+    // Telugu — detect Telugu script directly rather than trusting the (often
+    // stale) Article.language field, so screen readers and Google both get
+    // the right pronunciation/language signal for this specific page.
+    const isTelugu = /[ఀ-౿]/.test(article.title + article.content?.body);
+    const previousLang = document.documentElement.lang;
+    document.documentElement.lang = isTelugu ? "te" : "en";
+
     const setMeta = (name: string, content: string, prop = false) => {
       const attr = prop ? "property" : "name";
       let el = document.querySelector(`meta[${attr}="${name}"]`) as HTMLMetaElement | null;
@@ -133,6 +141,7 @@ function useSEOMeta(article: Article | undefined) {
 
     return () => {
       document.title = SITE_TITLE;
+      document.documentElement.lang = previousLang || "en";
     };
   }, [article]);
 }

@@ -271,22 +271,20 @@ export default function Index() {
 
           <section className="grid grid-cols-1 lg:grid-cols-12">
             <div className="lg:col-span-8 lg:border-r lg:border-border">
-              <div className="px-4 sm:px-6 lg:px-10 py-5 border-b border-border flex items-baseline justify-between">
-                <div>
-                  <span className="overline text-primary">{isFiltered ? displayCategoryName : 'Latest'}</span>
-                  <h3 className="font-serif text-xl sm:text-2xl font-bold tracking-tight mt-0.5">
-                    {isFiltered ? `${displayCategoryName} stories` : 'The latest'}
-                  </h3>
+              {(switching || feed.length > 0) && (
+                <div className="px-4 sm:px-6 lg:px-10 py-5 border-b border-border flex items-baseline justify-between">
+                  <div>
+                    <span className="overline text-primary">{isFiltered ? displayCategoryName : 'Latest'}</span>
+                    <h3 className="font-serif text-xl sm:text-2xl font-bold tracking-tight mt-0.5">
+                      {isFiltered ? `${displayCategoryName} stories` : 'The latest'}
+                    </h3>
+                  </div>
+                  <span className="text-xs text-muted-foreground font-medium">{feed.length} stories</span>
                 </div>
-                <span className="text-xs text-muted-foreground font-medium">{feed.length} stories</span>
-              </div>
+              )}
 
               {switching ? (
                 <div className="px-4 sm:px-6 lg:px-10 py-6"><FeedSkeleton /></div>
-              ) : feed.length === 0 ? (
-                <div className="px-4 sm:px-6 lg:px-10 py-16 text-center">
-                  <p className="font-serif italic text-muted-foreground">No more stories in this section.</p>
-                </div>
               ) : (
                 feed.map((art) => (
                   <article

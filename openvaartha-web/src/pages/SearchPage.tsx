@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { Search, X, Hash, Clock, ArrowUpRight } from 'lucide-react';
 import { handleImageFallback } from '@/lib/utils';
@@ -30,7 +30,10 @@ const Highlight = ({ text, q }: { text: string; q: string }) => {
 };
 
 const SearchPage = () => {
-  const [query, setQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  // Supports deep links (e.g. Google's sitelinks search box via the
+  // WebSite/SearchAction schema on the homepage: /search?q=...).
+  const [query, setQuery] = useState(() => searchParams.get('q') || '');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   const { data: categories = [] } = useCategories();

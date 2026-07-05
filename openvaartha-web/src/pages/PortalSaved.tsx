@@ -30,10 +30,10 @@ export default function PortalSaved() {
           {saved.map((article) => (
             <div key={article.id} className="flex items-start gap-3 p-3 hover:bg-[hsl(var(--surface))] transition-colors group/row">
               <Link to={`/article/${article.slug}`} className="shrink-0 press">
-                {article.thumbnail && (
+                {article.thumbnailUrl && (
                   <div className="h-14 w-20 rounded-lg overflow-hidden bg-secondary/30">
                     <img
-                      src={article.thumbnail}
+                      src={article.thumbnailUrl}
                       alt=""
                       className="w-full h-full object-cover transition-transform group-hover/row:scale-[1.03]"
                       onError={handleImageFallback}

@@ -37,7 +37,7 @@ const FeedCard = ({ article, index = 0, variant = "grid" }: FeedCardProps) => {
         )}
 
         {/* Thumbnail Section */}
-        {variant !== "minimal" && article.thumbnail && (
+        {variant !== "minimal" && article.thumbnailUrl && (
           <div className={cn(
             "relative overflow-hidden flex-shrink-0",
             variant === "hero" ? "w-full aspect-[16/9] sm:aspect-[21/9]" :
@@ -45,7 +45,7 @@ const FeedCard = ({ article, index = 0, variant = "grid" }: FeedCardProps) => {
                 "w-full aspect-square"
           )} >
             <img
-              src={article.thumbnail}
+              src={article.thumbnailUrl}
               alt=""
               className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
               loading="lazy"
@@ -54,7 +54,7 @@ const FeedCard = ({ article, index = 0, variant = "grid" }: FeedCardProps) => {
             {/* Glossy Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-            {article.trending && (
+            {article.isTrending && (
               <div className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full glass bg-white/20 text-white backdrop-blur-md">
                 <ArrowUpRight className="h-4 w-4" />
               </div>
