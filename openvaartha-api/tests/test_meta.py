@@ -71,9 +71,15 @@ class TestArticleHead:
         head = build_article_head(
             _article(title='<script>alert("x")</script>', summary='a "quoted" & <b>bold</b> claim')
         )
-        assert "<script>alert" not in head
+        # Meta/title attributes must be entity-escaped
         assert "&lt;script&gt;" in head
         assert "&quot;quoted&quot;" in head
+        # JSON-LD may carry the raw string, but a literal </script> from content
+        # must never survive (it would terminate the script block early). The
+        # only </script> occurrences allowed are the two legitimate closing tags
+        # of the NewsArticle and BreadcrumbList blocks.
+        assert head.count("</script>") == 2
+        assert "<\\/script>" in head  # escaped form of the content's closing tag
 
     def test_falls_back_to_tldr_when_no_summary(self):
         head = build_article_head(_article(summary=""))

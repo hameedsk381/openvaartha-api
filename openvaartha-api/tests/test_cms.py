@@ -27,6 +27,41 @@ def _article_payload(category_id: str, **overrides):
     return body
 
 
+class TestTeluguContent:
+    @pytest.mark.asyncio
+    async def test_create_article_with_telugu_language(self, client: AsyncClient, admin_headers, test_category, db):
+        """Regression: the articles text index used Mongo's default language
+        override, so any document with language="te" failed to insert
+        (WriteError 17262: 'language override unsupported: te'). On a Telugu
+        news platform, Telugu articles must be creatable and searchable."""
+        # In production the startup hook runs ensure_article_indexes; the ASGI
+        # test transport doesn't fire startup, so run it explicitly — this also
+        # exercises the old-index drop/rebuild migration path.
+        from app.services.article_service import ensure_article_indexes
+
+        await ensure_article_indexes(db)
+
+        payload = _article_payload(
+            test_category["id"],
+            title="అమరావతి మెట్రో పనులకు ఆమోదం",
+            summary="తెలుగు సారాంశం",
+            language="te",
+        )
+        response = await client.post("/api/v1/articles/", json=payload, headers=admin_headers)
+        assert response.status_code == 200, response.text
+        assert response.json()["language"] == "te"
+
+        # And it must be findable via text search once published
+        article = response.json()
+        publish = await client.put(
+            f"/api/v1/articles/{article['id']}", json={"status": "published"}, headers=admin_headers
+        )
+        assert publish.status_code == 200
+        search = await client.get("/api/v1/search/", params={"q": "మెట్రో"})
+        assert search.status_code == 200
+        assert any(a["id"] == article["id"] for a in search.json())
+
+
 class TestDraftPublishWorkflow:
     @pytest.mark.asyncio
     async def test_articles_default_to_draft(self, client: AsyncClient, admin_headers, test_category):

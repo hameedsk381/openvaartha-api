@@ -92,7 +92,27 @@ async def generate_unique_slug(db: AsyncIOMotorDatabase, title: str) -> str:
 
 async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
     """Create article indexes used by search and integrity-sensitive lookups."""
-    await db["articles"].create_index([("title", "text"), ("summary", "text")], name="articles_text_search")
+    # Text search: by default Mongo treats each document's `language` field as
+    # its per-document text-index language, and Telugu ("te") is not a supported
+    # value — which made every Telugu article insert fail with WriteError 17262.
+    # Point the override at a field articles never set, and disable stemming
+    # ("none") since Telugu has no Mongo stemmer anyway.
+    _text_index_opts = {
+        "name": "articles_text_search",
+        "default_language": "none",
+        "language_override": "text_search_lang",
+    }
+    try:
+        await db["articles"].create_index(
+            [("title", "text"), ("summary", "text")], **_text_index_opts
+        )
+    except OperationFailure:
+        # An older index with the same name but default language options exists
+        # (pre-fix deployments) — rebuild it with the corrected options.
+        await db["articles"].drop_index("articles_text_search")
+        await db["articles"].create_index(
+            [("title", "text"), ("summary", "text")], **_text_index_opts
+        )
     await db["articles"].create_index("slug", unique=True)
     await db["articles"].create_index("status")
     await db["article_content"].create_index("article_id")
