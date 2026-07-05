@@ -19,6 +19,7 @@ x-app-environment: &app-environment
   MEDIASTACK_API_KEY: ${MEDIASTACK_API_KEY:-}
   INSTAGRAM_ACCESS_TOKEN: ${INSTAGRAM_ACCESS_TOKEN:-}
   INSTAGRAM_USER_ID: ${INSTAGRAM_USER_ID:-}
+  SITE_URL: ${SITE_URL:-http://localhost:8000}
 
 services:
   api:

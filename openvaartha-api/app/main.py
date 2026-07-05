@@ -1,8 +1,9 @@
 import os
+import re
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -14,6 +15,7 @@ from app.core.security_headers import SecurityHeadersMiddleware
 from app.database import db
 from app.services.article_service import ensure_article_indexes
 from app.services.category_service import ensure_category_indexes
+from app.services.meta_service import build_article_head, build_default_head, inject_head
 from app.services.seed_service import ensure_admin_user
 
 # Block known-unsafe production configs at import time.
@@ -81,11 +83,13 @@ _dist = os.path.join(os.path.dirname(__file__), "..", "static")
 if os.path.isdir(_dist):
     app.mount("/assets", StaticFiles(directory=os.path.join(_dist, "assets")), name="assets")
 
-    # PWA files — serve before catch-all so they aren't swallowed by index.html
+    # PWA files — serve before catch-all so they aren't swallowed by index.html.
+    # robots.txt is intentionally absent: it is served dynamically by feeds.router
+    # so it can advertise the sitemap URL derived from SITE_URL.
     _pwa_files = [
         "sw.js", "manifest.webmanifest", "registerSW.js", "offline.html",
         "icon.svg", "logo.jpg", "pwa-192x192.png", "pwa-512x512.png",
-        "robots.txt", "news-fallback.svg", "placeholder.svg",
+        "news-fallback.svg", "placeholder.svg",
     ]
     for _name in _pwa_files:
         _path = os.path.join(_dist, _name)
@@ -96,9 +100,37 @@ if os.path.isdir(_dist):
 
             app.get(f"/{_name}", include_in_schema=False)(_serve_static)
 
+    _index_path = os.path.join(_dist, "index.html")
+    _article_path_re = re.compile(r"^article/([^/]+)/?$")
+
     @app.get("/{full_path:path}", include_in_schema=False)
-    def serve_spa(full_path: str):
-        return FileResponse(os.path.join(_dist, "index.html"))
+    async def serve_spa(full_path: str):
+        # Inject route-specific meta (title/canonical/OG/JSON-LD) into the marked
+        # <!--app-head--> block so no-JS crawlers (WhatsApp, Facebook, Twitter,
+        # Googlebot first pass) see real article metadata instead of SPA defaults.
+        with open(_index_path, encoding="utf-8") as f:
+            index_html = f.read()
+
+        head = None
+        match = _article_path_re.match(full_path)
+        if match:
+            try:
+                article = await db["articles"].find_one(
+                    {"slug": match.group(1), "status": "published"}
+                )
+                if article:
+                    category = await db["categories"].find_one(
+                        {"_id": article.get("category_id")}
+                    )
+                    head = build_article_head(
+                        article, category_name=(category or {}).get("name", "")
+                    )
+            except Exception:
+                head = None  # never let meta enrichment take the page down
+
+        if head is None:
+            head = build_default_head(full_path)
+        return HTMLResponse(inject_head(index_html, head))
 
 
 if __name__ == "__main__":
