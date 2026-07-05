@@ -43,7 +43,7 @@ const LiveUpdatesPage = () => {
               </span>
               <span className="overline text-red-600">Live · {today}</span>
             </div>
-            <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.02]">
+            <h1 className="poster text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.02]">
               Live updates
             </h1>
             <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-4 max-w-2xl leading-relaxed">

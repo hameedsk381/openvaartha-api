@@ -19,7 +19,7 @@ const Footer = () => {
                 <span className="text-xs font-black text-white">{BRAND.monogram}</span>
               </div>
               <div>
-                <div className="font-serif text-2xl font-bold tracking-tight">
+                <div className="font-display text-2xl font-extrabold tracking-tight">
                   Open<span className="text-primary">vaartha</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-xs">

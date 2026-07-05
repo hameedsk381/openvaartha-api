@@ -85,7 +85,7 @@ export default function Index() {
           {isFiltered && (
             <div className="px-4 sm:px-6 lg:px-10 py-6 border-b border-border">
               <span className="overline text-primary">Section</span>
-              <h1 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight mt-1">
+              <h1 className="font-display text-3xl sm:text-5xl font-bold tracking-tight mt-1">
                 {displayCategoryName}
               </h1>
               <p className="text-sm text-muted-foreground mt-2">
@@ -96,7 +96,9 @@ export default function Index() {
 
           {hero && (
             <>
-              <HeroCarousel articles={filtered.slice(0, 5)} />
+              {/* Carousel only earns its place with multiple stories — with one,
+                  it just duplicates the hero block below it. */}
+              {filtered.length > 1 && <HeroCarousel articles={filtered.slice(0, 5)} />}
 
             <section className="border-b border-border">
               <div className="grid grid-cols-1 lg:grid-cols-12">
@@ -129,20 +131,19 @@ export default function Index() {
                       </button>
 
                       <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 lg:p-10">
-                        <div className="flex items-center gap-3 mb-3 text-white/90">
-                          <span className="overline text-secondary !text-[10px]">{hero.category}</span>
-                          <span className="h-1 w-1 rounded-full bg-white/40" />
-                          <span className="text-[11px] font-medium tracking-wide">{relativeTime(hero.publishedAt)}</span>
+                        <div className="flex flex-wrap items-center gap-2 mb-4">
+                          <span className="chip">{hero.category}</span>
+                          <span className="chip-primary">
+                            <Zap className="h-3 w-3 fill-current" /> {hero.readTime}
+                          </span>
+                          <span className="font-display text-[11px] font-bold uppercase tracking-wide text-white/80">{relativeTime(hero.publishedAt)}</span>
                           {hero.isTrending && (
-                            <>
-                              <span className="h-1 w-1 rounded-full bg-white/40" />
-                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary">
-                                <Flame className="h-3 w-3 fill-current" /> Trending
-                              </span>
-                            </>
+                            <span className="chip-primary">
+                              <Flame className="h-3 w-3 fill-current" /> Trending
+                            </span>
                           )}
                         </div>
-                        <h2 className="font-serif text-white font-bold text-2xl sm:text-4xl lg:text-5xl leading-[1.05] tracking-tight max-w-3xl">
+                        <h2 className="poster text-white text-3xl sm:text-5xl lg:text-6xl max-w-3xl">
                           {hero.title}
                         </h2>
                         <p className="text-white/80 text-sm sm:text-base mt-3 line-clamp-2 max-w-2xl leading-relaxed">
@@ -163,7 +164,7 @@ export default function Index() {
 
                 <aside className="lg:col-span-4 flex flex-col">
                   <div className="px-4 sm:px-6 lg:px-6 py-4 lg:py-5 border-b border-border flex items-baseline justify-between">
-                    <h3 className="font-serif italic text-sm tracking-tight text-foreground">
+                    <h3 className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
                       Top stories
                     </h3>
                     <span className="overline">Now</span>
@@ -184,7 +185,7 @@ export default function Index() {
                             {relativeTime(art.publishedAt)}
                           </span>
                         </div>
-                        <h4 className="font-serif text-[15px] sm:text-base font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-3">
+                        <h4 className="font-display text-[15px] sm:text-base font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-3">
                           {art.title}
                         </h4>
                         <span className="flex items-center gap-1 mt-2 text-[11px] text-muted-foreground font-medium">
@@ -215,7 +216,7 @@ export default function Index() {
               <div className="flex items-baseline justify-between mb-6 sm:mb-8">
                 <div>
                   <span className="overline text-primary">Editor's picks</span>
-                  <h3 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight mt-1">
+                  <h3 className="font-display text-2xl sm:text-3xl font-bold tracking-tight mt-1">
                     Worth your time
                   </h3>
                 </div>
@@ -252,7 +253,7 @@ export default function Index() {
                         {relativeTime(art.publishedAt)}
                       </span>
                     </div>
-                    <h4 className="font-serif text-lg sm:text-xl font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-3">
+                    <h4 className="font-display text-lg sm:text-xl font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-3">
                       {art.title}
                     </h4>
                     <p className="text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
@@ -275,7 +276,7 @@ export default function Index() {
                 <div className="px-4 sm:px-6 lg:px-10 py-5 border-b border-border flex items-baseline justify-between">
                   <div>
                     <span className="overline text-primary">{isFiltered ? displayCategoryName : 'Latest'}</span>
-                    <h3 className="font-serif text-xl sm:text-2xl font-bold tracking-tight mt-0.5">
+                    <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight mt-0.5">
                       {isFiltered ? `${displayCategoryName} stories` : 'The latest'}
                     </h3>
                   </div>
@@ -307,7 +308,7 @@ export default function Index() {
                           </>
                         )}
                       </div>
-                      <h3 className="font-serif text-base sm:text-lg font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                      <h3 className="font-display text-base sm:text-lg font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-2">
                         {art.title}
                       </h3>
                       <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
@@ -353,7 +354,7 @@ export default function Index() {
                 <div className="px-4 sm:px-6 lg:px-6 py-5 border-b border-border flex items-baseline justify-between">
                   <div>
                     <span className="overline text-primary">Most read</span>
-                    <h3 className="font-serif text-xl font-bold tracking-tight mt-0.5">Trending now</h3>
+                    <h3 className="font-display text-xl font-bold tracking-tight mt-0.5">Trending now</h3>
                   </div>
                   <Zap className="h-4 w-4 text-primary fill-current" />
                 </div>
@@ -361,12 +362,12 @@ export default function Index() {
                   {trending.map((art, i) => (
                     <li key={art.id} className="border-b border-border last:border-0 py-4">
                       <Link to={`/article/${art.slug}`} className="group flex gap-4 press">
-                        <span className="font-serif text-3xl font-bold text-primary/30 group-hover:text-primary transition-colors leading-none w-8 shrink-0">
+                        <span className="font-display text-3xl font-bold text-primary/30 group-hover:text-primary transition-colors leading-none w-8 shrink-0">
                           {String(i + 1).padStart(2, '0')}
                         </span>
                         <div className="flex-1 min-w-0">
                           <span className="overline text-primary">{art.category}</span>
-                          <h4 className="font-serif text-sm font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-3 mt-1">
+                          <h4 className="font-display text-sm font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-3 mt-1">
                             {art.title}
                           </h4>
                           <span className="flex items-center gap-1 mt-1.5 text-[10px] text-muted-foreground font-medium">
@@ -378,10 +379,10 @@ export default function Index() {
                   ))}
                 </ol>
 
-                <div className="mx-4 sm:mx-6 lg:mx-6 my-6 p-6 rounded-xl gradient-maroon text-white relative overflow-hidden">
+                <div className="mx-4 sm:mx-6 lg:mx-6 my-6 p-6 rounded-2xl gradient-maroon text-white relative overflow-hidden border-2 border-foreground shadow-sticker">
                   <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent_60%)]" />
-                  <span className="relative overline !text-secondary">The Briefing</span>
-                  <h4 className="relative font-serif text-xl font-bold mt-2 leading-snug">
+                  <span className="relative chip">The Briefing</span>
+                  <h4 className="relative font-display text-2xl font-bold mt-3 leading-tight">
                     Andhra Pradesh & Telangana, in your inbox by sunrise.
                   </h4>
                   <p className="relative text-sm text-white/80 mt-2 leading-relaxed">

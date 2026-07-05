@@ -28,7 +28,7 @@ const ExplainersPage = () => {
               <Compass className="h-4 w-4 text-primary" />
               <span className="overline text-primary">Deep dives · Context</span>
             </div>
-            <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.02]">
+            <h1 className="poster text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.02]">
               Explainers
             </h1>
             <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-4 max-w-2xl leading-relaxed">

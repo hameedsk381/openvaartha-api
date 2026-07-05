@@ -138,9 +138,10 @@ export default {
       // TYPOGRAPHY
       // ─────────────────────────────────────────────────────
       fontFamily: {
-        sans:  ["Inter", "system-ui", "-apple-system", "sans-serif"],
-        serif: ["Source Serif 4", "Georgia", "Libre Baskerville", "serif"],
-        mono:  ["JetBrains Mono", "Fira Code", "monospace"],
+        sans:    ["Inter", "Noto Sans Telugu", "system-ui", "-apple-system", "sans-serif"],
+        serif:   ["Source Serif 4", "Noto Serif Telugu", "Georgia", "serif"],
+        display: ["Bricolage Grotesque", "Noto Sans Telugu", "Inter", "system-ui", "sans-serif"],
+        mono:    ["JetBrains Mono", "Fira Code", "monospace"],
       },
       fontSize: {
         "2xs": ["0.625rem",  { lineHeight: "0.875rem"  }],  // 10px
@@ -170,6 +171,10 @@ export default {
         "maroon": "0 4px 14px 0 rgba(85,0,0,0.20)",
         "maroon-lg": "0 10px 30px 0 rgba(85,0,0,0.25)",
         "inner-sm": "inset 0 1px 2px 0 rgba(0,0,0,0.06)",
+        /* Hard offset "sticker" shadows — redesign signature */
+        "sticker":    "4px 4px 0 hsl(var(--primary))",
+        "sticker-sm": "3px 3px 0 hsl(var(--primary))",
+        "sticker-lg": "6px 6px 0 hsl(var(--primary))",
       },
 
       // ─────────────────────────────────────────────────────

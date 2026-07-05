@@ -20,8 +20,8 @@ const FeedCard = ({ article, index = 0, variant = "grid" }: FeedCardProps) => {
     >
       <article
         className={cn(
-          "relative overflow-hidden transition-all duration-700 h-full flex flex-col group",
-          "rounded-2xl sm:rounded-3xl border border-black/5 dark:border-white/5 bg-card shadow-glass-sm hover-lift",
+          "relative overflow-hidden h-full flex flex-col group",
+          "sticker sticker-hover",
           variant === "list" ? "sm:flex-row" : "",
         )}
       >
@@ -74,7 +74,7 @@ const FeedCard = ({ article, index = 0, variant = "grid" }: FeedCardProps) => {
           <div className="space-y-3.5 sm:space-y-4">
             <h2
               className={cn(
-                "font-black text-balance leading-[1.12] tracking-tight transition-transform duration-500 group-hover:translate-x-1",
+                "font-display font-extrabold text-balance leading-[1.05] tracking-tight",
                 variant === "hero" ? "text-2xl sm:text-4xl lg:text-5xl" : "text-lg sm:text-2xl"
               )}
             >

@@ -54,7 +54,7 @@ const CategoryPage = () => {
               <span className="text-muted-foreground/50">/</span>
               <span className="overline text-primary">Section</span>
             </div>
-            <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.02]">
+            <h1 className="poster text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.02]">
               {currentCategory}
             </h1>
             <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-4 max-w-2xl leading-relaxed">

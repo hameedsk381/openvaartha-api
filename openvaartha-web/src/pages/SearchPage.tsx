@@ -61,7 +61,7 @@ const SearchPage = () => {
         <div className="max-w-screen-2xl mx-auto">
           <header className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14 border-b border-border bg-[hsl(var(--surface))]">
             <span className="overline text-primary">Archive · Search</span>
-            <h1 className="font-serif text-4xl sm:text-6xl font-bold tracking-tight leading-[1.02] mt-3">
+            <h1 className="poster text-4xl sm:text-6xl font-bold tracking-tight leading-[1.02] mt-3">
               The archive
             </h1>
             <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-3 max-w-2xl leading-relaxed">

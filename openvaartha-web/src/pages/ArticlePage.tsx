@@ -463,24 +463,27 @@ const ArticlePage = () => {
             </div>
 
             {article.content?.tldr && (
-              <section id="takeaway" className="border-l-4 border-primary pl-5 sm:pl-6 mb-10">
-                <h2 className="overline text-primary flex items-center gap-1.5 mb-3">
-                  <Sparkles className="h-3 w-3" /> The takeaway
+              <section id="takeaway" className="tldr-block mb-10">
+                <h2 className="chip-primary mb-4">
+                  <Sparkles className="h-3 w-3 fill-current" /> TL;DR
                 </h2>
-                <p className="font-serif text-xl sm:text-2xl font-medium text-foreground leading-snug">
+                <p className="font-display text-xl sm:text-2xl font-bold text-foreground leading-snug text-balance">
                   {article.content.tldr}
+                </p>
+                <p className="mt-3 font-display text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                  Read in 20 seconds — or get the full story below
                 </p>
               </section>
             )}
 
             {article.content?.points && article.content.points.length > 0 && (
-              <section id="key-points" className="mb-12 p-6 sm:p-8 rounded-lg bg-[hsl(var(--surface))] border border-border">
-                <h2 className="overline text-primary mb-5">Key points</h2>
+              <section id="key-points" className="mb-12 p-6 sm:p-8 rounded-2xl bg-[hsl(var(--surface))] border-2 border-border">
+                <h2 className="chip mb-5">Key points</h2>
                 <ol className="space-y-4">
                   {article.content.points.map((point, i) => (
                     <li key={i} className="flex gap-4">
-                      <span className="font-serif text-xl font-bold text-primary tabular-nums leading-none w-7 shrink-0 pt-0.5">
-                        {String(i + 1).padStart(2, "0")}
+                      <span className="font-display text-2xl font-bold text-primary tabular-nums leading-none w-8 shrink-0">
+                        {i + 1}
                       </span>
                       <p className="text-base text-foreground leading-relaxed">{point}</p>
                     </li>

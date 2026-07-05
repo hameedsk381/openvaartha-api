@@ -77,8 +77,17 @@
        Serif: Source Serif 4 — variable optical size, friendly on
              screens. Noto Serif for Indian language article bodies.
        ──────────────────────────────────────────────────── */
-    --font-sans:  "Inter", "Noto Sans Telugu", "Noto Sans Tamil", "Noto Sans Kannada", "Noto Sans Malayalam", "Noto Sans Devanagari", system-ui, -apple-system, sans-serif;
-    --font-serif: "Source Serif 4", "Noto Serif Telugu", "Noto Serif Tamil", "Noto Serif Kannada", "Noto Serif Malayalam", Georgia, "Libre Baskerville", serif;
+    --font-sans:  "Inter", "Noto Sans Telugu", system-ui, -apple-system, sans-serif;
+    --font-serif: "Source Serif 4", "Noto Serif Telugu", Georgia, serif;
+    /* Display — feed headlines, section headers, wordmark. Sans = feed mode,
+       serif = read mode (article body only). Telugu headlines fall back to
+       Noto Sans Telugu 900. */
+    --font-display: "Bricolage Grotesque", "Noto Sans Telugu", "Inter", system-ui, sans-serif;
+
+    /* Sticker shadow — hard offset, no blur. THE redesign signature. */
+    --sticker-shadow: 4px 4px 0 hsl(var(--primary));
+    --sticker-shadow-sm: 3px 3px 0 hsl(var(--primary));
+    --sticker-shadow-hover: 6px 6px 0 hsl(var(--primary));
 
     /* ── Spacing Scale (8px base) ──────────────────────── */
     --sp-1: 0.25rem;   /* 4px  */
@@ -198,14 +207,15 @@
     line-height: 1.6;
   }
 
-  /* Typographic hierarchy — serif for headings, warm editorial feel */
+  /* Typographic hierarchy — display grotesk for headings (feed mode).
+     Article body stays serif via .article-body (read mode). */
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-serif);
+    font-family: var(--font-display);
     @apply font-bold tracking-tight;
   }
-  h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.08; letter-spacing: -0.025em; }
-  h2 { font-size: clamp(1.5rem, 3.5vw, 2.25rem); line-height: 1.15; letter-spacing: -0.02em; }
-  h3 { font-size: clamp(1.125rem, 2vw, 1.5rem); line-height: 1.3; letter-spacing: -0.015em; }
+  h1 { font-size: clamp(2.25rem, 6vw, 4.25rem); line-height: 0.98; letter-spacing: -0.03em; font-weight: 800; }
+  h2 { font-size: clamp(1.5rem, 3.5vw, 2.5rem); line-height: 1.05; letter-spacing: -0.025em; font-weight: 800; }
+  h3 { font-size: clamp(1.125rem, 2vw, 1.5rem); line-height: 1.2; letter-spacing: -0.015em; font-weight: 700; }
 
   a { @apply text-inherit; }
 
@@ -354,6 +364,93 @@
   }
   .gradient-warm {
     background: linear-gradient(160deg, hsl(var(--background)) 0%, hsl(var(--surface)) 60%, hsl(var(--surface-2)) 100%);
+  }
+
+  /* ── GEN Z FEED SYSTEM ─────────────────────────────────────
+     Sticker cards, chunky chips, poster type. Colors are 100%
+     brand tokens — identity shift is type + shape + motion only. */
+
+  /* Display face for headlines/wordmark outside h1-h6 */
+  .font-display { font-family: var(--font-display); }
+
+  /* Sticker card — 2px ink border + hard maroon offset shadow.
+     Lifts toward the cursor on hover; sits flat when pressed. */
+  .sticker {
+    @apply border-2 border-foreground rounded-2xl bg-card;
+    box-shadow: var(--sticker-shadow);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+  }
+  .sticker-hover:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--sticker-shadow-hover);
+  }
+  .sticker-hover:active {
+    transform: translate(2px, 2px);
+    box-shadow: 0 0 0 hsl(var(--primary));
+  }
+  .sticker-sm {
+    @apply border-2 border-foreground rounded-xl bg-card;
+    box-shadow: var(--sticker-shadow-sm);
+  }
+
+  /* Chunky chip — full-radius pill, display face, loud */
+  .chip {
+    font-family: var(--font-display);
+    @apply inline-flex items-center gap-1 h-7 px-3 rounded-full
+           border-2 border-foreground bg-secondary
+           text-xs font-bold uppercase tracking-wide
+           text-[hsl(var(--secondary-foreground))];
+  }
+  .chip-primary {
+    font-family: var(--font-display);
+    @apply inline-flex items-center gap-1 h-7 px-3 rounded-full
+           border-2 border-foreground bg-primary text-primary-foreground
+           text-xs font-bold uppercase tracking-wide;
+  }
+  .chip-ghost {
+    font-family: var(--font-display);
+    @apply inline-flex items-center gap-1 h-7 px-3 rounded-full
+           border-2 border-border bg-transparent
+           text-xs font-bold uppercase tracking-wide text-muted-foreground;
+  }
+
+  /* TL;DR sticker block — the signature reading element */
+  .tldr-block {
+    @apply border-2 border-foreground rounded-2xl p-5 sm:p-6 bg-secondary/40;
+    box-shadow: var(--sticker-shadow);
+  }
+
+  /* Horizontal snap rail — thumb-first story browsing */
+  .story-rail {
+    @apply flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory
+           px-4 sm:px-6 lg:px-10 py-2;
+    scroll-padding-inline: 1rem;
+  }
+  .story-rail > * { @apply snap-start shrink-0; }
+
+  /* Poster headline — oversized display type for heroes */
+  .poster {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 0.98;
+    text-wrap: balance;
+  }
+
+  /* Marquee strip (breaking ticker) — chunky, bordered */
+  .marquee-strip {
+    @apply bg-primary text-primary-foreground border-y-2 border-foreground overflow-hidden;
+  }
+
+  /* ── Reduced motion — kill transforms & marquee for users who ask */
+  @media (prefers-reduced-motion: reduce) {
+    .sticker, .sticker-hover, .press,
+    .ticker-track, .animate-fade-in, .animate-fade-up {
+      animation: none !important;
+      transition: none !important;
+    }
+    .sticker-hover:hover, .sticker-hover:active { transform: none; }
+    html { scroll-behavior: auto; }
   }
 
   /* ── Custom Scrollbar for Portal */

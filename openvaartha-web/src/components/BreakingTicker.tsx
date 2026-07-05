@@ -7,23 +7,23 @@ const BreakingTicker = () => {
   const dur = `${Math.max(25, breaking.length * 9)}s`;
 
   return (
-    <div className="flex items-center bg-primary text-primary-foreground h-7 overflow-hidden">
-      <div className="flex items-center gap-1.5 px-3 h-full bg-[hsl(var(--primary-hover,0_100%_13%))] shrink-0 border-r border-white/10 z-10">
-        <Zap className="h-2.5 w-2.5 fill-current text-secondary" />
-        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-secondary relative pl-4">
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-secondary animate-pulse" />
+    <div className="marquee-strip flex items-center h-9">
+      <div className="flex items-center gap-1.5 px-4 h-full bg-[hsl(var(--primary-hover,0_100%_13%))] shrink-0 border-r-2 border-foreground z-10">
+        <Zap className="h-3 w-3 fill-current text-secondary" />
+        <span className="font-display text-[11px] font-bold uppercase tracking-[0.18em] text-secondary relative pl-4">
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-secondary animate-pulse" />
           Live
         </span>
       </div>
       <div className="flex-1 overflow-hidden">
         <div
-          className="ticker-track flex items-center gap-8 whitespace-nowrap"
+          className="ticker-track flex items-center gap-10 whitespace-nowrap"
           style={{ '--ticker-duration': dur } as React.CSSProperties}
         >
           {[...breaking, ...breaking].map((item, i) => (
-            <span key={`${item.id}-${i}`} className="text-[10px] font-semibold tracking-tight flex items-center gap-4 text-primary-foreground/90">
+            <span key={`${item.id}-${i}`} className="font-display text-xs font-bold tracking-tight flex items-center gap-5 text-primary-foreground">
               {item.title}
-              <span className="text-secondary/40">·</span>
+              <span className="text-secondary">⚡</span>
             </span>
           ))}
         </div>

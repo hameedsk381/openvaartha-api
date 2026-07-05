@@ -95,8 +95,8 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
       )}>
         <div className="h-14 flex items-center justify-between px-4 sm:px-6 max-w-screen-2xl mx-auto">
           <Link to="/" className="press shrink-0 flex items-center gap-2.5">
-            <img src="/logo.jpg" alt="Open Vaartha" className="h-9 w-9 rounded-lg object-cover" />
-            <span className="hidden sm:inline font-serif text-base font-bold tracking-tight">
+            <img src="/logo.jpg" alt="Open Vaartha" className="h-9 w-9 rounded-lg object-cover border-2 border-foreground" />
+            <span className="hidden sm:inline font-display text-lg font-extrabold tracking-tight">
               Open<span className="text-primary">vaartha</span>
             </span>
           </Link>
@@ -108,10 +108,10 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
                 key={cat}
                 onClick={() => setCategory(cat)}
                 className={cn(
-                  "shrink-0 h-9 px-4 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors press whitespace-nowrap",
+                  "shrink-0 h-9 px-4 rounded-full font-display text-xs font-bold uppercase tracking-wide transition-colors press whitespace-nowrap border-2",
                   selectedCat.toLowerCase() === cat.toLowerCase()
-                    ? "bg-primary text-primary-foreground font-bold"
-                    : "bg-secondary/50 text-[hsl(var(--secondary-foreground))] hover:bg-secondary"
+                    ? "bg-primary text-primary-foreground border-foreground"
+                    : "bg-secondary/50 text-[hsl(var(--secondary-foreground))] border-transparent hover:border-foreground hover:bg-secondary"
                 )}
               >
                 {cat}
