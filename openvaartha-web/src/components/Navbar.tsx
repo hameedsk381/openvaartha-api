@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Search, Sun, Moon, Bookmark, User, Home, X, ChevronRight, LogOut, Radio } from "lucide-react";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { useSearch, useCategories, useBreakingArticles } from "@/lib/api-hooks";
+import { useLogout } from "@/hooks/use-logout";
 
 interface NavbarProps { isInsideStack?: boolean; }
 
@@ -25,6 +26,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedCat = searchParams.get('category') || 'All';
+  const searchOverlayRef = useRef<HTMLDivElement | null>(null);
 
   const setCategory = (cat: string) => {
     if (cat.toLowerCase() === 'all') {
@@ -39,6 +41,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
   const { data: breakingArticles = [] } = useBreakingArticles(5);
 
   const hasBreaking = breakingArticles.length > 0;
+  const isMac = typeof navigator !== "undefined" && /mac/i.test(navigator.userAgent);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
@@ -48,10 +51,32 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setSearchOpen(o => !o); }
       if (e.key === "Escape") { setSearchOpen(false); setQuery(""); }
+      if (e.key === "Tab" && searchOpen) {
+        if (!searchOverlayRef.current) return;
+        const focusable = searchOverlayRef.current.querySelectorAll<HTMLElement>(
+          'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex="0"], [contenteditable]'
+        );
+        if (focusable.length === 0) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            last.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === last) {
+            first.focus();
+            e.preventDefault();
+          }
+        }
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []);
+  }, [searchOpen]);
 
   const toggleDark = () => {
     const next = !isDark;
@@ -62,12 +87,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
 
   const filtered = query.trim().length > 1 ? searchResults : [];
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user_email');
-    navigate('/');
-    window.location.reload();
-  };
+  const logout = useLogout();
 
   const categoryNames = useMemo(() => categories.map((c) => c.name), [categories]);
 
@@ -113,7 +133,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
           </button>
 
           {!isTouchDevice() && (
-            <span className="hidden sm:inline text-xs text-muted-foreground/50 select-none">⌘K</span>
+            <span className="hidden sm:inline text-xs text-muted-foreground/50 select-none">{isMac ? "⌘K" : "Ctrl+K"}</span>
           )}
 
           <button
@@ -145,7 +165,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
                 <User className="h-5 w-5 text-white" />
               </Link>
               <button
-                onClick={handleLogout}
+                onClick={logout}
                 className="h-11 w-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors press"
                 aria-label="Log out"
                 title="Log out"
@@ -164,21 +184,25 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
         </div>
         </div>
         {/* Mobile scrollable category pills row */}
-        <div className="md:hidden border-t border-border/50 py-2 px-4 flex gap-2 overflow-x-auto no-scrollbar bg-background">
-          {(["All", ...categoryNames] as string[]).map(cat => (
-            <button
-              key={cat}
-              onClick={() => setCategory(cat)}
-              className={cn(
-                "shrink-0 h-8 px-4.5 rounded-full text-xs font-bold transition-colors press whitespace-nowrap",
-                selectedCat.toLowerCase() === cat.toLowerCase()
-                  ? "bg-primary text-primary-foreground font-bold"
-                  : "bg-secondary/50 text-[hsl(var(--secondary-foreground))] hover:bg-secondary"
-              )}
-            >
-              {cat}
-            </button>
-          ))}
+        <div className="md:hidden relative border-t border-border/50 bg-background">
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
+          <div className="py-2 px-6 flex gap-2 overflow-x-auto no-scrollbar relative z-0">
+            {(["All", ...categoryNames] as string[]).map(cat => (
+              <button
+                key={cat}
+                onClick={() => setCategory(cat)}
+                className={cn(
+                  "shrink-0 h-8 px-4.5 rounded-full text-xs font-bold transition-colors press whitespace-nowrap",
+                  selectedCat.toLowerCase() === cat.toLowerCase()
+                    ? "bg-primary text-primary-foreground font-bold"
+                    : "bg-secondary/50 text-[hsl(var(--secondary-foreground))] hover:bg-secondary"
+                )}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
         </div>
       </header>
 
@@ -207,7 +231,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
       </nav>
 
       {searchOpen && (
-        <div className="fixed inset-0 z-[100] bg-background flex flex-col">
+        <div ref={searchOverlayRef} className="fixed inset-0 z-[100] bg-background flex flex-col">
           <div className="flex items-center gap-3 h-14 px-4 border-b border-border bg-background">
             <Search className="h-5 w-5 text-muted-foreground shrink-0" />
             <input
@@ -245,7 +269,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
                 </div>
                 {!isTouchDevice() && (
                   <div className="p-4 rounded-xl bg-[hsl(var(--surface))] border border-border">
-                    <p className="text-xs text-muted-foreground">Tip: Press <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs font-mono">⌘K</kbd> to open search from anywhere</p>
+                    <p className="text-xs text-muted-foreground">Tip: Press <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs font-mono">{isMac ? "⌘K" : "Ctrl+K"}</kbd> to open search from anywhere</p>
                   </div>
                 )}
               </div>

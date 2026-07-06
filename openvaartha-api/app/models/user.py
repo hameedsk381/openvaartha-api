@@ -15,7 +15,8 @@ class User(BaseModel):
     avatar_url: Optional[str] = None
     is_active: bool = True
     is_admin: bool = False
-    role: str = "user"  # user, editor, admin
+    role: str = "user"  # user, editor, admin, contributor
+    contributor_status: Optional[str] = None  # None, requested, approved, rejected
     auth_provider: str = "local"  # local, google
     google_sub: Optional[str] = None  # Google's stable per-account subject id
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

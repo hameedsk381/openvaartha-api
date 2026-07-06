@@ -169,6 +169,24 @@ async def update_user_profile(
     return UserModel(**updated_user_doc)
 
 
+@router.post("/me/contributor-request", response_model=UserSchema)
+async def request_contributor_access(
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """Request contributor access."""
+    if current_user.role in ("admin", "editor", "contributor"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"User already has {current_user.role} permissions",
+        )
+    
+    updated_user_doc = await user_service.update_user(
+        db, current_user.id, {"contributor_status": "requested"}
+    )
+    return UserModel(**updated_user_doc)
+
+
 @router.get("/me/reading-list", response_model=List[ArticleSchema])
 async def get_reading_list(
     db: AsyncIOMotorDatabase = Depends(get_db),

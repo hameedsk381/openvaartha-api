@@ -28,3 +28,4 @@ class Source(BaseModel):
     active: bool = True
     last_fetched_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    article_count: int = 0

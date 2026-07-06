@@ -8,6 +8,7 @@ class UserBase(BaseModel):
     email: EmailStr
     full_name: str
     role: Optional[str] = "user"
+    contributor_status: Optional[str] = None
 
     class Config:
         alias_generator = to_camel
@@ -36,6 +37,7 @@ class User(UserBase):
     is_active: bool
     is_admin: bool
     role: str
+    contributor_status: Optional[str] = None
     avatar_url: Optional[str] = None
     auth_provider: str = "local"
     created_at: datetime

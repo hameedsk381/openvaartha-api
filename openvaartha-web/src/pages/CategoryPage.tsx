@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { Clock, Flame, ArrowUpRight, Bookmark, BookmarkCheck } from 'lucide-react';
+import { Clock, Flame, ArrowUpRight, Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
 import { handleImageFallback } from '../lib/utils';
 import { BRAND } from '@/lib/brand';
 import { useReadingList } from '@/hooks/use-reading-list';
@@ -20,21 +20,32 @@ const CategoryPage = () => {
   const { toggleSave, isSaved } = useReadingList();
 
   const { data: categories = [] } = useCategories();
-  const { data: allArticles = [] } = useArticles({ limit: 50 });
 
-  const currentCategory = useMemo(() => {
-    const cat = categories.find(
+  const categoryObj = useMemo(() => {
+    return categories.find(
       (c) => c.name.toLowerCase().replace(/\s+/g, '-') === categoryId,
     );
-    return cat?.name || categoryId?.replace(/-/g, ' ') || 'Politics';
   }, [categoryId, categories]);
 
+  const currentCategory = categoryObj?.name || categoryId?.replace(/-/g, ' ') || 'Politics';
+
+  const [limit, setLimit] = useState(12);
+
+  useEffect(() => {
+    setLimit(12);
+  }, [categoryId]);
+
+  const { data: categoryArticles = [], isFetching } = useArticles({
+    category: categoryObj?.id,
+    limit,
+  });
+
   const list = useMemo(() => {
-    const base = allArticles.filter((a) => a.category?.toLowerCase() === currentCategory.toLowerCase());
+    const base = categoryArticles;
     if (filter === 'Popular') return [...base].sort((a, b) => Number(!!b.isTrending) - Number(!!a.isTrending));
     if (filter === 'Trending') return base.filter((a) => a.isTrending);
     return [...base].sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt));
-  }, [currentCategory, filter, allArticles]);
+  }, [filter, categoryArticles]);
 
   const featured = list[0];
   const secondary = list.slice(1, 3);
@@ -173,55 +184,74 @@ const CategoryPage = () => {
                 <p className="font-serif italic text-muted-foreground">No more stories to show.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
-                {rest.map(art => (
-                  <article key={art.id} className="group">
-                    <Link to={`/article/${art.slug}`} className="block press">
-                      {art.thumbnailUrl && (
-                        <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
-                          <img
-                            src={art.thumbnailUrl}
-                            alt=""
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                            onError={handleImageFallback}
-                            loading="lazy"
-                          />
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
+                  {rest.map(art => (
+                    <article key={art.id} className="group">
+                      <Link to={`/article/${art.slug}`} className="block press">
+                        {art.thumbnailUrl && (
+                          <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
+                            <img
+                              src={art.thumbnailUrl}
+                              alt=""
+                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                              onError={handleImageFallback}
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="overline text-primary">{art.category}</span>
+                          <span className="h-1 w-1 rounded-full bg-border" />
+                          <span className="text-[10px] text-muted-foreground font-medium">
+                            {relativeTime(art.publishedAt)}
+                          </span>
                         </div>
+                        <h3 className="font-serif text-lg sm:text-xl font-bold leading-snug tracking-tight group-hover:text-primary transition-colors line-clamp-3">
+                          {art.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                          {art.summary}
+                        </p>
+                      </Link>
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-medium">
+                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {art.readTime}</span>
+                          <span>·</span>
+                          <span className="truncate">{art.author}</span>
+                        </div>
+                        <button
+                          onClick={() => toggleSave(art as any)}
+                          className={`h-9 w-9 rounded-md flex items-center justify-center transition-colors press
+                            ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
+                          aria-label="Save"
+                        >
+                          {isSaved(art.id)
+                            ? <BookmarkCheck className="h-4 w-4 fill-current" />
+                            : <Bookmark className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+
+                {/* Load More Button */}
+                {categoryArticles.length >= limit && (
+                  <div className="flex justify-center mt-12 p-6 border-t border-border">
+                    <button
+                      onClick={() => setLimit(prev => prev + 12)}
+                      disabled={isFetching}
+                      className="w-full max-w-xs h-11 rounded-md border border-border bg-background text-foreground text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface))] transition-colors press disabled:opacity-50"
+                    >
+                      {isFetching ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      ) : (
+                        "Load more stories"
                       )}
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="overline text-primary">{art.category}</span>
-                        <span className="h-1 w-1 rounded-full bg-border" />
-                        <span className="text-[10px] text-muted-foreground font-medium">
-                          {relativeTime(art.publishedAt)}
-                        </span>
-                      </div>
-                      <h3 className="font-serif text-lg sm:text-xl font-bold leading-snug tracking-tight group-hover:text-primary transition-colors line-clamp-3">
-                        {art.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
-                        {art.summary}
-                      </p>
-                    </Link>
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-medium">
-                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {art.readTime}</span>
-                        <span>·</span>
-                        <span className="truncate">{art.author}</span>
-                      </div>
-                      <button
-                        onClick={() => toggleSave(art as any)}
-                        className={`h-9 w-9 rounded-md flex items-center justify-center transition-colors press
-                          ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
-                        aria-label="Save"
-                      >
-                        {isSaved(art.id)
-                          ? <BookmarkCheck className="h-4 w-4 fill-current" />
-                          : <Bookmark className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </section>
         </div>

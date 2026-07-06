@@ -55,11 +55,13 @@ class ArticleBase(BaseModel):
     is_trending: bool = False
     is_breaking: bool = False
     is_editor_pick: bool = False
+    is_opinion: bool = False
     thumbnail_url: Optional[str] = None
     instagram_url: Optional[str] = None
     published_at: datetime
     last_updated: Optional[datetime] = None
     author: str
+    author_id: Optional[str] = None
 
     class Config:
         alias_generator = to_camel
@@ -69,6 +71,19 @@ class ArticleBase(BaseModel):
 class ArticleCreate(ArticleBase):
     content: ArticleContentCreate
     source_ids: Optional[List[str]] = []
+
+
+class ContributionCreate(BaseModel):
+    title: str
+    summary: str
+    category_id: str
+    read_time: str = "5 min read"
+    language: str = "en"
+    content: ArticleContentCreate
+
+    class Config:
+        alias_generator = to_camel
+        populate_by_name = True
 
 
 class ArticleUpdate(BaseModel):
@@ -82,11 +97,13 @@ class ArticleUpdate(BaseModel):
     is_trending: Optional[bool] = None
     is_breaking: Optional[bool] = None
     is_editor_pick: Optional[bool] = None
+    is_opinion: Optional[bool] = None
     thumbnail_url: Optional[str] = None
     instagram_url: Optional[str] = None
     published_at: Optional[datetime] = None
     last_updated: Optional[datetime] = None
     author: Optional[str] = None
+    author_id: Optional[str] = None
     content: Optional[ArticleContentUpdate] = None
 
     class Config:

@@ -5,14 +5,27 @@ import type { Article } from '@/lib/types';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ArrowUpRight, Clock, Sparkles, Flame } from 'lucide-react';
 import { Button } from './ui/button';
-import { handleImageFallback } from '../lib/utils';
+import { cn, handleImageFallback } from '../lib/utils';
 
 interface HeroCarouselProps {
   articles: Article[];
 }
 
 const HeroCarousel = ({ articles }: HeroCarouselProps) => {
-  const [emblaRef] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 5000 })]);
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 5000 })]);
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!emblaApi) return;
+    const onSelect = () => {
+      setSelectedIndex(emblaApi.selectedScrollSnap());
+    };
+    emblaApi.on('select', onSelect);
+    onSelect();
+    return () => {
+      emblaApi.off('select', onSelect);
+    };
+  }, [emblaApi]);
 
   if (!articles || articles.length === 0) return null;
 
@@ -30,7 +43,7 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
                 <div className="absolute inset-0 overflow-hidden bg-[hsl(var(--surface-2))]">
                   <img
                     src={article.thumbnailUrl}
-                    alt=""
+                    alt={article?.title || ""}
                     className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]"
                     loading={index === 0 ? "eager" : "lazy"}
                     onError={handleImageFallback}
@@ -76,8 +89,16 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
         {articles.slice(0, 5).map((_, i) => (
           <button
             key={i}
-            className="h-1.5 w-6 rounded-full bg-white/30 hover:bg-white/60 transition-colors"
+            className={cn(
+              "h-1.5 w-6 rounded-full transition-all press",
+              selectedIndex === i ? "bg-white" : "bg-white/30 hover:bg-white/60"
+            )}
+            onClick={(e) => {
+              e.preventDefault();
+              emblaApi?.scrollTo(i);
+            }}
             aria-label={`Go to slide ${i + 1}`}
+            aria-current={selectedIndex === i ? "true" : "false"}
           />
         ))}
       </div>

@@ -127,7 +127,7 @@ const MagicBento: React.FC<MagicBentoProps> = ({ articles }) => {
             article={articles[0]}
             label="Featured"
             color="hsl(355, 100%, 20%)"
-            className="min-h-[200px] md:min-h-0 md:col-span-2 md:row-span-3"
+            className="min-h-[160px] md:min-h-0 md:col-span-2 md:row-span-3"
             icon={<Zap size={24} />}
           />
         )}
@@ -163,7 +163,7 @@ const MagicBento: React.FC<MagicBentoProps> = ({ articles }) => {
             article={articles[4]}
             label="Markets"
             color="hsl(140, 100%, 25%)"
-            className="min-h-[140px] md:min-h-0 md:col-span-2 md:row-span-1"
+            className="hidden md:block md:col-span-2 md:row-span-1"
             icon={<Briefcase size={20} />}
           />
         )}

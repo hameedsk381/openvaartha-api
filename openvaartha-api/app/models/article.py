@@ -7,6 +7,7 @@ from uuid import uuid4
 
 class ArticleStatus(str, Enum):
     DRAFT = "draft"
+    PENDING = "pending"
     PUBLISHED = "published"
     ARCHIVED = "archived"
 
@@ -46,11 +47,13 @@ class Article(BaseModel):
     is_trending: bool = False
     is_breaking: bool = False
     is_editor_pick: bool = False
+    is_opinion: bool = False
     thumbnail_url: Optional[str] = None
     instagram_url: Optional[str] = None
     published_at: datetime
     last_updated: Optional[datetime] = None
     author: str
+    author_id: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = None
     content: Optional[ArticleContent] = None

@@ -22,10 +22,12 @@ function setTokens(access: string, refresh: string): void {
   localStorage.setItem("refresh_token", refresh);
 }
 
-function clearTokens(): void {
+export function clearTokens(): void {
   localStorage.removeItem("token");
   localStorage.removeItem("refresh_token");
   localStorage.removeItem("user_email");
+  localStorage.removeItem("user_role");
+  localStorage.removeItem("user_contributor_status");
 }
 
 let isRefreshing = false;

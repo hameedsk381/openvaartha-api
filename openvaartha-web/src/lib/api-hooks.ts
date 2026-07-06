@@ -68,6 +68,7 @@ export function useLiveUpdates(limit = 20) {
     queryKey: ["articles", "live-updates", limit],
     queryFn: () => apiFetch(`/articles/live-updates?limit=${limit}`),
     placeholderData: [],
+    refetchInterval: 10000, // Poll every 10 seconds
   });
 }
 

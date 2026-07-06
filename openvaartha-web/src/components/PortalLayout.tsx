@@ -1,7 +1,8 @@
 import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Bookmark, History, Settings, ArrowLeft, LogOut, Lock, ArrowUpRight } from "lucide-react";
+import { LayoutDashboard, Bookmark, History, Settings, ArrowLeft, LogOut, Lock, ArrowUpRight, PenSquare } from "lucide-react";
+import { useLogout } from "@/hooks/use-logout";
 import Navbar from "./Navbar";
 
 interface NavItem {
@@ -60,8 +61,17 @@ function SignInRequired({ label }: { label: string }) {
 export function PortalLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const logout = useLogout();
   const isAuthed = !!localStorage.getItem('token');
-  const current  = NAV_ITEMS.find(n => location.pathname === n.path);
+  const userRole = localStorage.getItem('user_role');
+  const isContributor = userRole === "contributor" || userRole === "editor" || userRole === "admin";
+
+  const items = [...NAV_ITEMS];
+  if (isContributor) {
+    items.splice(3, 0, { label: "Write", icon: PenSquare, path: "/portal/write", requiresAuth: true });
+  }
+
+  const current  = items.find(n => location.pathname === n.path);
   const gated    = !!current?.requiresAuth && !isAuthed;
 
   return (
@@ -80,7 +90,7 @@ export function PortalLayout({ children }: { children: ReactNode }) {
           </div>
 
           <nav className="py-3 flex-1">
-            {NAV_ITEMS.map(({ label, icon: Icon, path, requiresAuth }) => {
+            {items.map(({ label, icon: Icon, path, requiresAuth }) => {
               const active = location.pathname === path;
               const locked = requiresAuth && !isAuthed;
               return (
@@ -105,12 +115,7 @@ export function PortalLayout({ children }: { children: ReactNode }) {
           <div className="p-3 border-t border-border space-y-2">
             {isAuthed ? (
               <button
-                onClick={() => {
-                  localStorage.removeItem('token');
-                  localStorage.removeItem('user_email');
-                  navigate('/');
-                  window.location.reload();
-                }}
+                onClick={logout}
                 className="flex items-center gap-3 w-full px-3 h-11 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-all press"
               >
                 <LogOut className="h-4 w-4 shrink-0" />
@@ -141,7 +146,7 @@ export function PortalLayout({ children }: { children: ReactNode }) {
 
           {/* Mobile pill nav */}
           <div className="sm:hidden flex overflow-x-auto no-scrollbar gap-1.5 px-4 py-2 border-b border-border">
-            {NAV_ITEMS.map(({ label, icon: Icon, path, requiresAuth }) => {
+            {items.map(({ label, icon: Icon, path, requiresAuth }) => {
               const active = location.pathname === path;
               const locked = requiresAuth && !isAuthed;
               return (

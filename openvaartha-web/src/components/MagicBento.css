@@ -25,11 +25,13 @@
   box-shadow: 0 8px 40px hsl(0 0% 0% / 0.4);
 }
 
-.bento-card:hover {
-  transform: translateY(-4px) scale(1.005);
-  border-color: hsl(var(--foreground) / 0.2);
-  box-shadow: 0 20px 40px hsl(0 0% 0% / 0.15);
-  background: var(--card-color);
+@media (hover: hover) {
+  .bento-card:hover {
+    transform: translateY(-4px) scale(1.005);
+    border-color: hsl(var(--foreground) / 0.2);
+    box-shadow: 0 20px 40px hsl(0 0% 0% / 0.15);
+    background: var(--card-color);
+  }
 }
 
 .bento-title {
@@ -52,18 +54,20 @@
   line-height: 1.5;
 }
 
-.bento-card:hover .bento-description,
-.bento-card:hover .bento-title,
-.bento-card:hover .text-\[9px\],
-.bento-card:hover .text-\[10px\],
-.bento-card:hover .text-muted-foreground {
-  color: white;
-}
+@media (hover: hover) {
+  .bento-card:hover .bento-description,
+  .bento-card:hover .bento-title,
+  .bento-card:hover .text-\[9px\],
+  .bento-card:hover .text-\[10px\],
+  .bento-card:hover .text-muted-foreground {
+    color: white;
+  }
 
-.bento-card:hover .bento-icon {
-  background-color: hsl(0 0% 100% / 0.2);
-  border-color: hsl(0 0% 100% / 0.3);
-  color: white;
+  .bento-card:hover .bento-icon {
+    background-color: hsl(0 0% 100% / 0.2);
+    border-color: hsl(0 0% 100% / 0.3);
+    color: white;
+  }
 }
 
 .bento-glow {

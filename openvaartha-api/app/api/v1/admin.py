@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from pydantic import BaseModel
 
@@ -34,6 +34,18 @@ async def dashboard_stats(
     breaking = await db["articles"].count_documents({"is_breaking": True, "status": "published"})
     trending = await db["articles"].count_documents({"is_trending": True, "status": "published"})
 
+    # Sparkline: last 7 days published counts
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    sparkline_data = []
+    for i in range(6, -1, -1):
+        day_start = today - timedelta(days=i)
+        day_end = day_start + timedelta(days=1)
+        count = await db["articles"].count_documents({
+            "status": "published",
+            "published_at": {"$gte": day_start, "$lt": day_end}
+        })
+        sparkline_data.append(count)
+
     cursor = db["articles"].find().sort("published_at", -1).limit(5)
     recent_docs = await cursor.to_list(length=5)
     recent_articles = []
@@ -56,6 +68,7 @@ async def dashboard_stats(
         "comments": {"total": total_comments},
         "subscribers": {"total": total_subscribers},
         "recent_articles": recent_articles,
+        "sparkline": sparkline_data,
     }
 
 
@@ -63,14 +76,30 @@ async def dashboard_stats(
 async def list_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
+    search: Optional[str] = Query(None),
+    role: Optional[str] = Query(None),
     include_total: bool = Query(False, description="Return {items, total} instead of plain array"),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """List all users (admin only)."""
+    query: dict = {}
+    if search:
+        query["$or"] = [
+            {"email": {"$regex": search, "$options": "i"}},
+            {"full_name": {"$regex": search, "$options": "i"}},
+        ]
+    if role:
+        if role == "admin":
+            query["is_admin"] = True
+        elif role == "user":
+            query["is_admin"] = {"$ne": True}
+        else:
+            query["role"] = role
+
     total = 0
     if include_total:
-        total = await db["users"].count_documents({})
-    cursor = db["users"].find().sort("created_at", -1).skip(skip).limit(limit)
+        total = await db["users"].count_documents(query)
+    cursor = db["users"].find(query).sort("created_at", -1).skip(skip).limit(limit)
     docs = await cursor.to_list(length=limit)
     result = []
     for d in docs:
@@ -137,9 +166,63 @@ async def list_all_comments(
         total = await db["comments"].count_documents(query)
     cursor = db["comments"].find(query).sort("created_at", -1).skip(skip).limit(limit)
     docs = await cursor.to_list(length=limit)
+    result = []
+    for d in docs:
+        if "_id" in d and "id" not in d:
+            d["id"] = str(d["_id"])
+        # Fetch article info
+        article = await db["articles"].find_one({"id": d.get("article_id", "")})
+        if article:
+            d["article_title"] = article.get("title", "Unknown Article")
+            d["article_slug"] = article.get("slug", "")
+        else:
+            d["article_title"] = "Unknown Article"
+            d["article_slug"] = ""
+        result.append(d)
     if include_total:
-        return {"items": docs, "total": total}
-    return docs
+        return {"items": result, "total": total}
+    return result
+
+
+class BulkModerateComments(BaseModel):
+    comment_ids: List[str]
+    action: str  # "approve" | "delete"
+
+
+@router.post("/comments/bulk-moderate")
+async def bulk_moderate_comments(
+    body: BulkModerateComments,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Approve or delete multiple comments in bulk (admin only)."""
+    if body.action == "approve":
+        await db["comments"].update_many(
+            {"_id": {"$in": body.comment_ids}},
+            {"$set": {"is_active": True, "updated_at": datetime.now(timezone.utc)}}
+        )
+    elif body.action == "delete":
+        await db["comments"].update_many(
+            {"_id": {"$in": body.comment_ids}},
+            {"$set": {"is_active": False, "updated_at": datetime.now(timezone.utc)}}
+        )
+    else:
+        raise HTTPException(status_code=400, detail="Invalid action")
+    return {"message": f"Successfully performed {body.action} on {len(body.comment_ids)} comments"}
+
+
+@router.put("/comments/{comment_id}/approve")
+async def approve_comment(
+    comment_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Approve/re-activate a comment (admin only)."""
+    res = await db["comments"].update_one(
+        {"_id": comment_id},
+        {"$set": {"is_active": True, "updated_at": datetime.now(timezone.utc)}}
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return {"message": "Comment approved"}
 
 
 @router.get("/newsletter/subscribers")
@@ -275,3 +358,61 @@ async def process_all_sources(
         except Exception as e:
             logger.error("Failed to process source %s: %s", source.get("name"), e)
     return {"processed": total}
+
+
+@router.post("/sources/{source_id}/process", response_model=ProcessResult)
+async def process_single_source(
+    source_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Manually trigger RSS feed fetching + article generation for a single source (admin only)."""
+    source = await get_source(db, source_id)
+    if not source:
+        raise HTTPException(status_code=404, detail="Source not found")
+    try:
+        n = await process_source(db, source)
+        return {"processed": n}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to process source: {str(e)}")
+
+
+@router.get("/contributor-requests", response_model=List[UserSchema])
+async def list_contributor_requests(
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """List all contributor requests (admin only)."""
+    cursor = db["users"].find({"contributor_status": "requested"})
+    users = await cursor.to_list(length=100)
+    return [UserModel(**u) for u in users]
+
+
+class ContributorReviewRequest(BaseModel):
+    action: str  # approve, reject
+
+
+@router.post("/contributor-requests/{user_id}/review", response_model=UserSchema)
+async def review_contributor_request(
+    user_id: str,
+    review: ContributorReviewRequest,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Approve or reject a contributor request (admin only)."""
+    user_doc = await db["users"].find_one({"_id": user_id})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    user = UserModel(**user_doc)
+    if user.contributor_status != "requested":
+        raise HTTPException(status_code=400, detail="User has no pending request")
+        
+    update_data = {}
+    if review.action == "approve":
+        update_data["role"] = "contributor"
+        update_data["contributor_status"] = "approved"
+    elif review.action == "reject":
+        update_data["contributor_status"] = "rejected"
+    else:
+        raise HTTPException(status_code=400, detail="Invalid action: choose 'approve' or 'reject'")
+        
+    updated_user_doc = await user_service.update_user(db, user_id, update_data)
+    return UserModel(**updated_user_doc)

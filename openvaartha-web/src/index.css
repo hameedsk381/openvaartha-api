@@ -315,6 +315,9 @@
   .ticker-track {
     animation: ticker var(--ticker-duration, 30s) linear infinite;
   }
+  .ticker-track:hover {
+    animation-play-state: paused;
+  }
 
   @keyframes ticker {
     0%   { transform: translateX(0); }
@@ -447,7 +450,7 @@
       animation: none !important;
       transition: none !important;
     }
-    .sticker-hover:hover, .sticker-hover:active { transform: none; }
+    .sticker-hover:hover, .sticker-hover:active, .press:active { transform: none !important; }
     html { scroll-behavior: auto; }
   }
 

@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { Search, X, Hash, Clock, ArrowUpRight } from 'lucide-react';
+import { Search, X, Hash, Clock, ArrowUpRight, Loader2 } from 'lucide-react';
 import { handleImageFallback } from '@/lib/utils';
 import { BRAND } from '@/lib/brand';
 import { useSearch, useCategories, useArticles } from '@/lib/api-hooks';
@@ -37,13 +37,33 @@ const SearchPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   const { data: categories = [] } = useCategories();
-  const { data: allArticles = [] } = useArticles({ limit: 200 });
-  const { data: searchResults = [] } = useSearch(query, 0, 50);
+
+  const selectedCategoryObj = useMemo(() => {
+    return categories.find(c => c.name.toLowerCase() === selectedCategory.toLowerCase());
+  }, [categories, selectedCategory]);
+
+  const [limit, setLimit] = useState(15);
+
+  useEffect(() => {
+    setLimit(15);
+  }, [query, selectedCategory]);
+
+  const { data: allArticles = [], isFetching: allFetching } = useArticles({
+    category: selectedCategoryObj?.id,
+    limit
+  });
+
+  const { data: searchResults = [], isFetching: searchFetching } = useSearch(query, 0, limit);
+
+  const isFetching = allFetching || searchFetching;
 
   const results = useMemo(() => {
     const source = query.trim() ? searchResults : allArticles;
     if (selectedCategory.toLowerCase() === 'all') return source;
-    return source.filter((a) => a.category?.toLowerCase() === selectedCategory.toLowerCase());
+    if (query.trim()) {
+      return source.filter((a) => a.category?.toLowerCase() === selectedCategory.toLowerCase());
+    }
+    return source;
   }, [query, selectedCategory, searchResults, allArticles]);
 
   const isEmpty = !query && selectedCategory === 'All';
@@ -206,6 +226,23 @@ const SearchPage = () => {
                     </li>
                   ))}
                 </ol>
+
+                {/* Load More Button */}
+                {results.length >= limit && (
+                  <div className="flex justify-center mt-12 p-6 border-t border-border">
+                    <button
+                      onClick={() => setLimit(prev => prev + 15)}
+                      disabled={isFetching}
+                      className="w-full max-w-xs h-11 rounded-md border border-border bg-background text-foreground text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface))] transition-colors press disabled:opacity-50"
+                    >
+                      {isFetching ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      ) : (
+                        "Load more stories"
+                      )}
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </section>

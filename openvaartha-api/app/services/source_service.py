@@ -50,6 +50,7 @@ async def get_source(db: AsyncIOMotorDatabase, source_id: str) -> Optional[dict]
     doc = await db["sources"].find_one({"_id": source_id})
     if doc:
         doc["id"] = doc["_id"]
+        doc["article_count"] = await db["article_sources"].count_documents({"source_id": source_id})
     return doc
 
 
@@ -61,6 +62,7 @@ async def list_sources(db: AsyncIOMotorDatabase, active_only: bool = False) -> l
     docs = await cursor.to_list(length=1000)
     for d in docs:
         d["id"] = d["_id"]
+        d["article_count"] = await db["article_sources"].count_documents({"source_id": d["id"]})
     return docs
 
 

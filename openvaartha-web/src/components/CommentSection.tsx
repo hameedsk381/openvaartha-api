@@ -274,26 +274,40 @@ export default function CommentSection({
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-8 p-4 rounded-lg bg-[hsl(var(--surface))] border border-border">
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder="Share your thoughts…"
-            required
-            rows={3}
-            className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground resize-none outline-none"
-          />
-          <div className="flex justify-end mt-3">
+        currentUserId ? (
+          <form onSubmit={handleSubmit} className="mb-8 p-4 rounded-lg bg-[hsl(var(--surface))] border border-border">
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Share your thoughts…"
+              required
+              rows={3}
+              className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground resize-none outline-none"
+            />
+            <div className="flex justify-end mt-3">
+              <button
+                type="submit"
+                disabled={createComment.isPending || !body.trim()}
+                className="h-9 px-4 rounded-md bg-primary text-white text-xs font-semibold inline-flex items-center gap-2 disabled:opacity-50 press"
+              >
+                {createComment.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                Post comment
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="mb-8 p-6 text-center border border-dashed border-border rounded-xl bg-muted/10 space-y-3">
+            <p className="text-sm font-semibold text-muted-foreground">You must be signed in to join the discussion.</p>
             <button
-              type="submit"
-              disabled={createComment.isPending || !body.trim()}
-              className="h-9 px-4 rounded-md bg-primary text-white text-xs font-semibold inline-flex items-center gap-2 disabled:opacity-50 press"
+              onClick={() => {
+                window.location.href = `/login?from=${encodeURIComponent(window.location.pathname)}`;
+              }}
+              className="h-9 px-4 rounded-md bg-primary text-white text-xs font-bold uppercase tracking-wider hover:bg-primary/90 transition-all press"
             >
-              {createComment.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-              Post comment
+              Sign in to comment
             </button>
           </div>
-        </form>
+        )
       )}
 
       {isLoading ? (

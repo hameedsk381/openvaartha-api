@@ -1,8 +1,9 @@
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, FileText, FolderTree, Users, MessageSquare, Mail, Rss, ArrowLeft, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, FolderTree, Users, MessageSquare, Mail, Rss, ArrowLeft, LogOut, Inbox } from "lucide-react";
 import { apiFetch } from "@/lib/api";
+import { useLogout } from "@/hooks/use-logout";
 
 interface NavItem {
   label: string;
@@ -14,6 +15,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/admin", roles: ["admin"] },
   { label: "Articles", icon: FileText, path: "/admin/articles", roles: ["admin", "editor"] },
+  { label: "Review Queue", icon: Inbox, path: "/admin/contributions", roles: ["admin", "editor"] },
   { label: "Categories", icon: FolderTree, path: "/admin/categories", roles: ["admin", "editor"] },
   { label: "Users", icon: Users, path: "/admin/users", roles: ["admin"] },
   { label: "Comments", icon: MessageSquare, path: "/admin/comments", roles: ["admin", "moderator"] },
@@ -24,13 +26,29 @@ const NAV_ITEMS: NavItem[] = [
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const logout = useLogout();
   const [user, setUser] = useState<{ fullName?: string; email?: string; role?: string; isAdmin?: boolean } | null>(null);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     apiFetch<{ fullName?: string; email?: string; role?: string; isAdmin?: boolean }>("/users/me")
       .then(setUser)
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (user?.role === "admin" || user?.role === "editor" || user?.isAdmin) {
+      apiFetch<any>("/articles/?status=pending&include_unpublished=true&include_total=true")
+        .then((res) => {
+          if (res && typeof res === "object" && typeof res.total === "number") {
+            setPendingCount(res.total);
+          } else if (Array.isArray(res)) {
+            setPendingCount(res.length);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user]);
 
   const effectiveRole = user?.isAdmin ? "admin" : (user?.role || "user");
   const visibleNavItems = useMemo(
@@ -66,6 +84,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 >
                   <Icon className={cn("h-4 w-4 shrink-0", active ? "text-secondary" : "")} />
                   <span className="flex-1">{label}</span>
+                  {label === "Review Queue" && pendingCount > 0 && (
+                    <span className="h-5 min-w-5 px-1.5 flex items-center justify-center rounded-full bg-destructive text-[10px] font-black text-white animate-pulse">
+                      {pendingCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -80,12 +103,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               Back to site
             </Link>
             <button
-              onClick={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user_email");
-                navigate("/");
-                window.location.reload();
-              }}
+              onClick={logout}
               className="flex items-center gap-3 w-full px-3 h-10 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-all press"
             >
               <LogOut className="h-4 w-4 shrink-0" />

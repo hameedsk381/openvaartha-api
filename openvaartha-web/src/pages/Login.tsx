@@ -60,6 +60,13 @@ export default function Login() {
       localStorage.setItem('token', result.access_token);
       localStorage.setItem('refresh_token', result.refresh_token);
       localStorage.setItem('user_email', data.email);
+      try {
+        const me = await apiFetch<any>("/users/me");
+        localStorage.setItem("user_role", me.role);
+        if (me.contributorStatus) localStorage.setItem("user_contributor_status", me.contributorStatus);
+      } catch {
+        // Non-fatal
+      }
       toast.success('Welcome back.');
       navigate(from, { replace: true });
     } catch (e: any) {

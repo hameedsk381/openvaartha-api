@@ -12,9 +12,8 @@ export default function PortalSettings() {
   const [passwordData, setPasswordData] = useState({ current: "", new: "" });
 
   const [notifications, setNotifications] = useState({
-    breaking: true,
-    morning: true,
-    newsletter: false,
+    breaking: localStorage.getItem("notify_breaking") !== "false",
+    morning: localStorage.getItem("notify_morning") !== "false",
   });
 
   const [appearance, setAppearance] = useState({
@@ -151,7 +150,41 @@ export default function PortalSettings() {
           label="Account Type" 
           value={user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User"} 
         />
-        <SettingsRow label="Avatar" value="Change photo" chevron />
+        <div className="flex items-center justify-between p-4 border-b border-border hover:bg-secondary/10 transition-colors cursor-pointer"
+          onClick={() => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = "image/*";
+            input.onchange = ev => {
+              const file = (ev.target as HTMLInputElement).files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                  if (e.target?.result) {
+                    handleUpdate("avatar_url", e.target.result as string);
+                  }
+                };
+                reader.readAsDataURL(file);
+              }
+            };
+            input.click();
+          }}
+        >
+          <div className="flex items-center gap-3">
+            {user?.avatarUrl || user?.avatar_url ? (
+              <img src={user.avatarUrl || user.avatar_url} alt="Avatar" className="h-10 w-10 rounded-full object-cover border border-border" />
+            ) : (
+              <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                {user?.fullName ? user.fullName.charAt(0).toUpperCase() : "?"}
+              </div>
+            )}
+            <div>
+              <p className="text-sm font-semibold">Avatar</p>
+              <p className="text-xs text-muted-foreground">Click to upload a custom profile picture</p>
+            </div>
+          </div>
+          <span className="text-xs text-primary font-semibold">Change</span>
+        </div>
       </SettingsSection>
 
       {/* ── Security ────────────────────────────────── */}
@@ -204,16 +237,78 @@ export default function PortalSettings() {
       <SettingsSection label="Notifications" icon={Bell}>
         <ToggleRow
           label="Breaking News"
-          description="Instant high-priority alerts"
+          description="Instant high-priority alerts (this device only)"
           checked={notifications.breaking}
-          onChange={v => setNotifications(p => ({ ...p, breaking: v }))}
+          onChange={v => {
+            setNotifications(p => ({ ...p, breaking: v }));
+            localStorage.setItem("notify_breaking", String(v));
+            toast.success("Notification preferences saved");
+          }}
         />
         <ToggleRow
           label="Morning Briefing"
-          description="Daily 8 AM summary"
+          description="Daily 8 AM summary (this device only)"
           checked={notifications.morning}
-          onChange={v => setNotifications(p => ({ ...p, morning: v }))}
+          onChange={v => {
+            setNotifications(p => ({ ...p, morning: v }));
+            localStorage.setItem("notify_morning", String(v));
+            toast.success("Notification preferences saved");
+          }}
         />
+      </SettingsSection>
+
+      {/* ── Contributor ─────────────────────────────── */}
+      <SettingsSection label="Contributor" icon={Shield}>
+        <div className="p-4 space-y-3">
+          <p className="text-sm font-semibold">Columnist Program</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Submit opinion articles to OpenVaartha. Share your expertise, local stories, or deep-dive analysis directly with our readers.
+          </p>
+          {user?.role === "contributor" ? (
+            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-xs font-semibold text-green-600 dark:text-green-400">
+              ✓ Approved Contributor
+            </div>
+          ) : user?.contributorStatus === "requested" ? (
+            <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-xs font-semibold text-yellow-600 dark:text-yellow-400">
+              Pending editor review
+            </div>
+          ) : user?.contributorStatus === "rejected" ? (
+            <div className="space-y-2">
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs font-semibold text-red-600 dark:text-red-400">
+                Application status: rejected
+              </div>
+              <button
+                onClick={async () => {
+                  try {
+                    const data = await apiFetch<any>("/users/me/contributor-request", { method: "POST" });
+                    setUser(data);
+                    toast.success("Contributor request submitted again");
+                  } catch (err: any) {
+                    toast.error(err.message || "Failed to submit request");
+                  }
+                }}
+                className="w-full h-10 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors press"
+              >
+                Re-apply for Contributor Access
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={async () => {
+                try {
+                  const data = await apiFetch<any>("/users/me/contributor-request", { method: "POST" });
+                  setUser(data);
+                  toast.success("Contributor request submitted");
+                } catch (err: any) {
+                  toast.error(err.message || "Failed to submit request");
+                }
+              }}
+              className="w-full h-10 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors press"
+            >
+              Request Contributor Access
+            </button>
+          )}
+        </div>
       </SettingsSection>
     </div>
   );

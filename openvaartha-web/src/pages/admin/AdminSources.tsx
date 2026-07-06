@@ -22,6 +22,8 @@ type RssSource = {
   last_fetched_at?: string;
   createdAt?: string;
   created_at?: string;
+  articleCount?: number;
+  article_count?: number;
 };
 
 type Category = {
@@ -34,9 +36,10 @@ type DraftSource = {
   feed_url: string;
   category_id: string;
   language: string;
+  active: boolean;
 };
 
-const emptyDraft: DraftSource = { name: "", feed_url: "", category_id: "", language: "en" };
+const emptyDraft: DraftSource = { name: "", feed_url: "", category_id: "", language: "en", active: true };
 // English-only portal — sources are not tagged by language beyond this.
 const LANGUAGES = [{ value: "en", label: "English" }];
 
@@ -105,6 +108,16 @@ export default function AdminSources() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const processSingleMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiFetch<{ processed: number }>(`/admin/sources/${id}/process`, { method: "POST" }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "sources"] });
+      toast.success(`Source processed: ${data.processed} new articles`);
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (!draft.name.trim() || !draft.feed_url.trim() || !draft.category_id) return;
@@ -118,6 +131,7 @@ export default function AdminSources() {
       feed_url: source.feedUrl || source.feed_url || "",
       category_id: source.categoryId || source.category_id || "",
       language: source.language,
+      active: source.active ?? true,
     });
   };
 
@@ -223,10 +237,11 @@ export default function AdminSources() {
       </form>
 
       <div className="border border-border rounded-xl overflow-hidden">
-        <div className="hidden md:grid grid-cols-[1fr_200px_140px_100px_140px] gap-4 h-11 px-5 items-center border-b border-border bg-muted/50 text-xs font-semibold text-muted-foreground">
+        <div className="hidden md:grid grid-cols-[1fr_200px_120px_80px_80px_160px] gap-4 h-11 px-5 items-center border-b border-border bg-muted/50 text-xs font-semibold text-muted-foreground">
           <span>Name</span>
           <span>Feed URL</span>
           <span>Category</span>
+          <span>Articles</span>
           <span>Active</span>
           <span className="text-right">Actions</span>
         </div>
@@ -240,12 +255,14 @@ export default function AdminSources() {
             const isEditing = editingId === source.id;
             const isMutating =
               (updateMutation.isPending && updateMutation.variables === source.id) ||
-              (deleteMutation.isPending && deleteMutation.variables === source.id);
+              (deleteMutation.isPending && deleteMutation.variables === source.id) ||
+              (processSingleMutation.isPending && processSingleMutation.variables === source.id);
             const catName = categories.find((c) => c.id === (source.categoryId || source.category_id))?.name || "—";
             const lastFetched = source.lastFetchedAt || source.last_fetched_at;
             const feedUrl = source.feedUrl || source.feed_url || "";
+            const articleCount = source.articleCount ?? source.article_count ?? 0;
             return (
-              <div key={source.id} className="block md:grid md:grid-cols-[1fr_200px_140px_100px_140px] md:gap-4 md:items-center p-4 md:px-5">
+              <div key={source.id} className="block md:grid md:grid-cols-[1fr_200px_120px_80px_80px_160px] md:gap-4 md:items-center p-4 md:px-5">
                 <div className="mb-1 md:mb-0 flex md:block items-center gap-2">
                   <span className="text-xs text-muted-foreground md:hidden">Name: </span>
                   {isEditing ? (
@@ -284,17 +301,20 @@ export default function AdminSources() {
                     <span className="text-sm text-muted-foreground">{catName}</span>
                   )}
                 </div>
+                <div className="mb-1 md:mb-0 flex md:block items-center gap-2">
+                  <span className="text-xs text-muted-foreground md:hidden">Articles: </span>
+                  <span className="text-sm font-medium text-muted-foreground">{articleCount}</span>
+                </div>
                 <div className="mb-2 md:mb-0 flex md:block items-center gap-2">
                   <span className="text-xs text-muted-foreground md:hidden">Active: </span>
                   {isEditing ? (
-                    <Select value={edit.language} onValueChange={(v) => setEdit({ ...edit, language: v })}>
+                    <Select value={edit.active ? "true" : "false"} onValueChange={(v) => setEdit({ ...edit, active: v === "true" })}>
                       <SelectTrigger className="h-9">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {LANGUAGES.map((l) => (
-                          <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
-                        ))}
+                        <SelectItem value="true">Active</SelectItem>
+                        <SelectItem value="false">Inactive</SelectItem>
                       </SelectContent>
                     </Select>
                   ) : (
@@ -315,17 +335,28 @@ export default function AdminSources() {
                     </>
                   ) : (
                     <>
-                      <Button type="button" variant="outline" size="icon" onClick={() => startEdit(source)}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs font-semibold px-2 py-0 shrink-0"
+                        onClick={() => processSingleMutation.mutate(source.id)}
+                        disabled={isMutating}
+                      >
+                        {isMutating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Activity className="h-3 w-3 mr-1 text-orange-500" />}
+                        Process
+                      </Button>
+                      <Button type="button" variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => startEdit(source)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button type="button" variant="outline" size="icon" onClick={() => confirmDelete(source)} disabled={isMutating} className="text-destructive hover:text-destructive">
-                        {isMutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      <Button type="button" variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive shrink-0" onClick={() => confirmDelete(source)} disabled={isMutating}>
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </>
                   )}
                 </div>
                 {!isEditing && lastFetched && (
-                  <div className="md:col-span-5 text-[10px] text-muted-foreground mt-1">
+                  <div className="md:col-span-6 text-[10px] text-muted-foreground mt-1">
                     Last fetched: {new Date(lastFetched).toLocaleString()}
                   </div>
                 )}

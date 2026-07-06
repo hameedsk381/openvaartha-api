@@ -176,8 +176,11 @@ async def get_articles(
     skip: int = 0,
     limit: int = 20,
     category_id: Optional[str] = None,
+    status: Optional[str] = None,
     search: Optional[str] = None,
     include_unpublished: bool = False,
+    is_opinion: Optional[bool] = None,
+    author_id: Optional[str] = None,
 ):
     """Get articles. Public callers see only published items;
     callers in admin contexts may opt in to all statuses."""
@@ -186,7 +189,10 @@ async def get_articles(
         skip=skip,
         limit=limit,
         category_id=category_id or "",
+        status=status or "",
         search=search or "",
+        is_opinion=str(is_opinion) if is_opinion is not None else "",
+        author_id=author_id or "",
         scope="all" if include_unpublished else "public",
     )
     if not include_unpublished:
@@ -197,8 +203,14 @@ async def get_articles(
     query: dict = {} if include_unpublished else _public_query()
     if category_id:
         query["category_id"] = category_id
+    if status:
+        query["status"] = status
     if search:
         query["$text"] = {"$search": search}
+    if is_opinion is not None:
+        query["is_opinion"] = is_opinion
+    if author_id is not None:
+        query["author_id"] = author_id
 
     cursor = db["articles"].find(query).sort("published_at", -1).skip(skip).limit(limit)
     articles = await cursor.to_list(length=limit)
@@ -319,6 +331,7 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
         "is_trending": article_data.is_trending,
         "is_breaking": article_data.is_breaking,
         "is_editor_pick": article_data.is_editor_pick,
+        "is_opinion": getattr(article_data, "is_opinion", False),
         "thumbnail_url": article_data.thumbnail_url,
         "instagram_url": article_data.instagram_url,
         "published_at": article_data.published_at,

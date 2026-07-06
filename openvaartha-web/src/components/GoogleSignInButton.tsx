@@ -98,8 +98,10 @@ export default function GoogleSignInButton({ onSuccess, onError }: GoogleSignInB
               localStorage.setItem("token", tokens.access_token);
               localStorage.setItem("refresh_token", tokens.refresh_token);
               try {
-                const me = await apiFetch<{ email: string }>("/users/me");
+                const me = await apiFetch<{ email: string; role: string; contributorStatus?: string }>("/users/me");
                 localStorage.setItem("user_email", me.email);
+                localStorage.setItem("user_role", me.role);
+                if (me.contributorStatus) localStorage.setItem("user_contributor_status", me.contributorStatus);
               } catch {
                 // Non-fatal — the tokens are already stored and valid.
               }

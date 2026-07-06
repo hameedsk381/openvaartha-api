@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import Navbar from '../components/Navbar';
-import { ArrowUpRight, Compass, Clock, Target } from 'lucide-react';
+import { ArrowUpRight, Compass, Clock, Target, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { handleImageFallback } from '../lib/utils';
 import { useExplainers } from '@/lib/api-hooks';
@@ -11,7 +12,8 @@ const relativeTime = (iso: string) => {
 };
 
 const ExplainersPage = () => {
-  const { data: explainers = [] } = useExplainers(0, 20);
+  const [limit, setLimit] = useState(12);
+  const { data: explainers = [], isFetching } = useExplainers(0, limit);
 
   const lead = explainers[0];
   const featured = explainers.slice(1, 3);
@@ -172,6 +174,23 @@ const ExplainersPage = () => {
                 </Link>
               ))}
             </div>
+
+            {/* Load More Button */}
+            {explainers.length >= limit && (
+              <div className="flex justify-center mt-12 p-6 border-t border-border">
+                <button
+                  onClick={() => setLimit(prev => prev + 12)}
+                  disabled={isFetching}
+                  className="w-full max-w-xs h-11 rounded-md border border-border bg-background text-foreground text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface))] transition-colors press disabled:opacity-50"
+                >
+                  {isFetching ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  ) : (
+                    "Load more stories"
+                  )}
+                </button>
+              </div>
+            )}
           </section>
         </div>
       </main>

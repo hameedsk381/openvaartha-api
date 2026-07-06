@@ -3,10 +3,10 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Optional, Union
 
 from app.database import get_db
-from app.schemas.article import Article, ArticleCreate, ArticleUpdate
+from app.schemas.article import Article, ArticleCreate, ArticleUpdate, ContributionCreate
 from app.services import article_service
 from app.services.article_service import _public_query
-from app.core.dependencies import get_current_active_admin, get_current_editor, get_current_user_optional
+from app.core.dependencies import get_current_active_admin, get_current_editor, get_current_user, get_current_user_optional
 from app.core.rate_limit import limiter, MUTATION_LIMIT
 from app.models.user import User as UserModel
 
@@ -22,6 +22,7 @@ async def list_articles(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     category_id: Optional[str] = None,
+    status: Optional[str] = None,
     search: Optional[str] = Query(None, description="Full-text search across title and summary"),
     include_unpublished: bool = Query(False, description="Admin-only: include drafts/archived."),
     include_total: bool = Query(False, description="Return {items, total} instead of plain array"),
@@ -37,6 +38,7 @@ async def list_articles(
         skip=skip,
         limit=limit,
         category_id=category_id,
+        status=status,
         search=search,
         include_unpublished=include_unpublished,
     )
@@ -47,6 +49,8 @@ async def list_articles(
     query: dict = {} if include_unpublished else _public_query()
     if category_id:
         query["category_id"] = category_id
+    if status:
+        query["status"] = status
     if search:
         query["$text"] = {"$search": search}
     total = await db["articles"].count_documents(query)
@@ -139,6 +143,120 @@ async def get_editor_picks(
 ):
     """Get editor's choice articles (published only)."""
     return await article_service.get_editor_pick_articles(db, limit=limit)
+
+
+@router.get("/mine", response_model=List[Article])
+async def list_my_contributions(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """List current user's contributions (requires login)."""
+    return await article_service.get_articles(
+        db,
+        skip=skip,
+        limit=limit,
+        include_unpublished=True,
+        author_id=current_user.id,
+    )
+
+
+@router.post("/contributions", response_model=Article)
+@limiter.limit(MUTATION_LIMIT)
+async def create_contributor_post(
+    request: Request,
+    contribution: ContributionCreate,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """Submit a contributed opinion post."""
+    if current_user.role not in ("contributor", "editor", "admin"):
+        raise HTTPException(status_code=403, detail="Contributor permissions required")
+        
+    from app.schemas.article import ArticleCreate
+    from app.models.article import ArticleStatus
+    from datetime import datetime, timezone
+    
+    article_data = ArticleCreate(
+        title=contribution.title,
+        summary=contribution.summary,
+        category_id=contribution.category_id,
+        read_time=contribution.read_time,
+        language=contribution.language,
+        status=ArticleStatus.PENDING,
+        is_trending=False,
+        is_breaking=False,
+        is_editor_pick=False,
+        is_opinion=True,
+        published_at=datetime.now(timezone.utc),
+        author=current_user.full_name,
+        content=contribution.content,
+    )
+    
+    return await article_service.create_article(db, article_data, author_id=current_user.id)
+
+
+@router.put("/contributions/{article_id}", response_model=Article)
+@limiter.limit(MUTATION_LIMIT)
+async def update_contributor_post(
+    request: Request,
+    article_id: str,
+    contribution: ContributionCreate,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """Update a contributed post before it gets published."""
+    existing = await article_service.get_article_by_id(db, article_id, include_unpublished=True)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Article not found")
+        
+    if existing.get("author_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="You do not own this contribution")
+        
+    if existing.get("status") not in ("pending", "draft"):
+        raise HTTPException(status_code=400, detail="Cannot edit an article that is already published or archived")
+        
+    from app.schemas.article import ArticleUpdate, ArticleContentUpdate
+    article_update = ArticleUpdate(
+        title=contribution.title,
+        summary=contribution.summary,
+        category_id=contribution.category_id,
+        read_time=contribution.read_time,
+        language=contribution.language,
+        content=ArticleContentUpdate(
+            tldr=contribution.content.tldr,
+            points=contribution.content.points,
+            body=contribution.content.body,
+            timeline=contribution.content.timeline,
+            explainer=contribution.content.explainer,
+        )
+    )
+    
+    return await article_service.update_article(db, article_id, article_update)
+
+
+@router.delete("/contributions/{article_id}")
+@limiter.limit(MUTATION_LIMIT)
+async def delete_contributor_post(
+    request: Request,
+    article_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """Withdraw a contributed post."""
+    existing = await article_service.get_article_by_id(db, article_id, include_unpublished=True)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Article not found")
+        
+    if existing.get("author_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="You do not own this contribution")
+        
+    if existing.get("status") not in ("pending", "draft"):
+        raise HTTPException(status_code=400, detail="Cannot delete an article that is already published or archived")
+        
+    await article_service.delete_article(db, article_id)
+    return {"message": "Contribution withdrawn successfully"}
 
 
 @router.get("/{id_or_slug}", response_model=Article)

@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Check, ChevronLeft, ChevronRight, Loader2, RotateCcw, Shield, ShieldOff, Trash2, X } from "lucide-react";
+import { AlertCircle, Check, ChevronLeft, ChevronRight, Loader2, RotateCcw, Shield, ShieldOff, Trash2, X, Search } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const PAGE_SIZE = 50;
 
@@ -26,15 +28,19 @@ type AdminUser = {
 export default function AdminUsers() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["admin", "users", { page }],
+    queryKey: ["admin", "users", { page, search, roleFilter }],
     queryFn: () => {
       const params = new URLSearchParams({
         skip: String(page * PAGE_SIZE),
         limit: String(PAGE_SIZE),
         include_total: "true",
       });
+      if (search) params.set("search", search);
+      if (roleFilter !== "all") params.set("role", roleFilter);
       return apiFetch<{ items: AdminUser[]; total: number }>(`/admin/users?${params.toString()}`);
     },
   });
@@ -78,11 +84,101 @@ export default function AdminUsers() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const requestsQuery = useQuery({
+    queryKey: ["admin", "contributor-requests"],
+    queryFn: () => apiFetch<AdminUser[]>("/admin/contributor-requests"),
+  });
+
+  const reviewMutation = useMutation({
+    mutationFn: ({ userId, action }: { userId: string; action: "approve" | "reject" }) =>
+      apiFetch(`/admin/contributor-requests/${userId}/review`, {
+        method: "POST",
+        body: JSON.stringify({ action }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "contributor-requests"] });
+      toast.success("Contributor request processed");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
         <h1 className="text-2xl font-black tracking-tight">Users</h1>
         <p className="text-sm text-muted-foreground mt-1">Manage registered users and admin access.</p>
+      </div>
+
+      {requestsQuery.data && requestsQuery.data.length > 0 && (
+        <div className="border border-yellow-500/20 bg-yellow-500/5 rounded-xl p-5 space-y-4">
+          <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+            <Shield className="h-4 w-4" />
+            <h2 className="text-sm font-semibold uppercase tracking-wider">Pending Contributor Requests</h2>
+          </div>
+          <div className="divide-y divide-border/40">
+            {requestsQuery.data.map((req) => (
+              <div key={req.id} className="py-3 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{req.fullName ?? req.full_name ?? "—"}</p>
+                  <p className="text-xs text-muted-foreground">{req.email}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700 text-white font-semibold h-8"
+                    onClick={() => reviewMutation.mutate({ userId: req.id, action: "approve" })}
+                    disabled={reviewMutation.isPending}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 hover:bg-red-50 border-red-200 h-8"
+                    onClick={() => reviewMutation.mutate({ userId: req.id, action: "reject" })}
+                    disabled={reviewMutation.isPending}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Search and Filter row */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        {/* Search */}
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search users by name/email..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            className="pl-9 h-9"
+          />
+        </div>
+
+        {/* Role select dropdown */}
+        <div className="w-full sm:max-w-[180px]">
+          <Select value={roleFilter} onValueChange={(value) => { setRoleFilter(value); setPage(0); }}>
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder="Filter by Role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="editor">Editor</SelectItem>
+              <SelectItem value="moderator">Moderator</SelectItem>
+              <SelectItem value="contributor">Contributor</SelectItem>
+              <SelectItem value="user">User</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="border border-border rounded-lg overflow-hidden">
@@ -126,7 +222,7 @@ export default function AdminUsers() {
                     )}>
                       <span className="inline-flex items-center gap-1">
                         {isAdmin ? <Shield className="h-3 w-3" /> : <ShieldOff className="h-3 w-3" />}
-                        {isAdmin ? "Admin" : "User"}
+                        {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : (isAdmin ? "Admin" : "User")}
                       </span>
                     </span>
                   </div>

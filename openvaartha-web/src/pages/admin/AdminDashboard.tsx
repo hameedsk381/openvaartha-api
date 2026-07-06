@@ -19,6 +19,7 @@ type DashboardStats = {
     published_at: string;
     thumbnail_url?: string;
   }>;
+  sparkline?: number[];
 };
 
 export default function AdminDashboard() {
@@ -60,11 +61,18 @@ export default function AdminDashboard() {
     { label: "Archived", value: s?.archived ?? 0, icon: FileText, color: "text-gray-600", bg: "bg-gray-50 dark:bg-gray-800/20" },
   ];
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
   return (
     <div className="space-y-6 max-w-6xl">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-black tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl font-black tracking-tight">{getGreeting()}, Admin</h1>
           <p className="text-sm text-muted-foreground mt-1">Overview of your content and audience.</p>
         </div>
         <div className="flex gap-2">
@@ -87,6 +95,87 @@ export default function AdminDashboard() {
             <p className="text-xs font-semibold text-muted-foreground">{card.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* Sparkline Trend Section */}
+      {data?.sparkline && (
+        <div className="border border-border rounded-lg p-5 bg-[hsl(var(--surface))] flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span className="overline text-primary">Activity</span>
+            <h3 className="text-base font-bold tracking-tight mt-0.5">Publishing activity</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Articles published daily over the last 7 days.</p>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="text-right">
+              <span className="text-2xl font-black tracking-tight">{data.sparkline.reduce((a, b) => a + b, 0)}</span>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Total this week</p>
+            </div>
+            {/* Lightweight SVG Sparkline */}
+            <div className="w-32 h-10 flex items-end">
+              <svg className="w-full h-full" viewBox="0 0 120 30">
+                <defs>
+                  <linearGradient id="sparkline-grad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                {/* SVG Area Line */}
+                <path
+                  d={(() => {
+                    const maxVal = Math.max(...data.sparkline, 1);
+                    const points = data.sparkline.map((val, idx) => {
+                      const x = (idx / 6) * 120;
+                      const y = 30 - (val / maxVal) * 23 - 3;
+                      return `${x},${y}`;
+                    });
+                    return `M ${points.join(" L ")}`;
+                  })()}
+                  fill="none"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                {/* SVG Fill area */}
+                <path
+                  d={(() => {
+                    const maxVal = Math.max(...data.sparkline, 1);
+                    const points = data.sparkline.map((val, idx) => {
+                      const x = (idx / 6) * 120;
+                      const y = 30 - (val / maxVal) * 23 - 3;
+                      return `${x},${y}`;
+                    });
+                    return `M 0,30 L ${points.join(" L ")} L 120,30 Z`;
+                  })()}
+                  fill="url(#sparkline-grad)"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Action Shortcuts */}
+      <div className="border border-border rounded-lg p-5">
+        <h3 className="text-xs font-semibold text-muted-foreground mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Link to="/admin/articles/new" className="flex flex-col items-center justify-center p-4 border border-border rounded-lg bg-[hsl(var(--surface))] hover:border-primary/40 hover:bg-background transition-all text-center press group">
+            <Plus className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span className="text-xs font-bold mt-2">Write Article</span>
+          </Link>
+          <Link to="/admin/comments" className="flex flex-col items-center justify-center p-4 border border-border rounded-lg bg-[hsl(var(--surface))] hover:border-primary/40 hover:bg-background transition-all text-center press group">
+            <MessageSquare className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span className="text-xs font-bold mt-2">Moderate Comments</span>
+          </Link>
+          <Link to="/admin/sources" className="flex flex-col items-center justify-center p-4 border border-border rounded-lg bg-[hsl(var(--surface))] hover:border-primary/40 hover:bg-background transition-all text-center press group">
+            <Plus className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span className="text-xs font-bold mt-2">RSS Sources</span>
+          </Link>
+          <Link to="/admin/newsletter" className="flex flex-col items-center justify-center p-4 border border-border rounded-lg bg-[hsl(var(--surface))] hover:border-primary/40 hover:bg-background transition-all text-center press group">
+            <Mail className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span className="text-xs font-bold mt-2">Subscribers</span>
+          </Link>
+        </div>
       </div>
 
       <div className="border border-border rounded-lg overflow-hidden">

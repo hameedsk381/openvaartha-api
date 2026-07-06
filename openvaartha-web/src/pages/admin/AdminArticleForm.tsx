@@ -78,6 +78,45 @@ export default function AdminArticleForm() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(emptyForm);
   const dirty = useRef(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [revisions, setRevisions] = useState<Array<{ date: string; title: string; body: string }>>([]);
+  const isMac = typeof navigator !== "undefined" && /mac/i.test(navigator.userAgent);
+
+  const wordCount = useMemo(() => {
+    const text = form.body.trim();
+    if (!text) return 0;
+    return text.split(/\s+/).length;
+  }, [form.body]);
+
+  const charCount = useMemo(() => form.body.length, [form.body]);
+
+  useEffect(() => {
+    const key = `openvaartha_revs_${articleId || "new"}`;
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      try {
+        setRevisions(JSON.parse(stored));
+      } catch (e) {
+        setRevisions([]);
+      }
+    } else {
+      setRevisions([]);
+    }
+  }, [articleId]);
+
+  const saveRevision = (title: string, body: string) => {
+    if (!body.trim()) return;
+    const key = `openvaartha_revs_${articleId || "new"}`;
+    const newRev = { date: new Date().toLocaleString(), title, body };
+    setRevisions((prev) => {
+      if (prev.length > 0 && prev[0].body === body && prev[0].title === title) {
+        return prev;
+      }
+      const next = [newRev, ...prev].slice(0, 5);
+      localStorage.setItem(key, JSON.stringify(next));
+      return next;
+    });
+  };
 
   // Guard against losing unsaved changes (tab close / browser back)
   useEffect(() => {
@@ -192,6 +231,7 @@ export default function AdminArticleForm() {
 
   const mutation = useMutation({
     mutationFn: () => {
+      saveRevision(form.title, form.body);
       if (isEditing) {
         return apiFetch<Article>(`/articles/${articleId}`, {
           method: "PUT",
@@ -309,7 +349,7 @@ export default function AdminArticleForm() {
 
   return (
     <>
-    <form onSubmit={onSubmit} className="max-w-6xl space-y-8">
+    <form onSubmit={onSubmit} className="max-w-6xl space-y-8 pb-20 lg:pb-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -334,19 +374,11 @@ export default function AdminArticleForm() {
           <Button type="submit" disabled={mutation.isPending} className="gap-2">
             {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-white/20 px-1.5 text-[10px] font-mono opacity-60">⌘S</kbd>
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-white/20 px-1.5 text-[10px] font-mono opacity-60">{isMac ? "⌘S" : "Ctrl+S"}</kbd>
           </Button>
-          {isEditing ? (
-            <Button variant="outline" size="sm" asChild>
-              <a href={`/${articleQuery.data?.slug || ""}`} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4" /> Preview
-              </a>
-            </Button>
-          ) : (
-            <Button variant="outline" size="sm" onClick={() => toast.info("Save the article first to preview")}>
-              <ExternalLink className="h-4 w-4" /> Preview
-            </Button>
-          )}
+          <Button type="button" variant="outline" size="sm" onClick={() => setPreviewOpen(true)} className="gap-1.5">
+            <ExternalLink className="h-4 w-4" /> Preview
+          </Button>
         </div>
       </div>
 
@@ -391,6 +423,9 @@ export default function AdminArticleForm() {
             </Field>
             <Field label="Body">
               <MDXBodyEditor value={form.body} onChange={(value) => update("body", value)} />
+              <div className="text-xs text-muted-foreground text-right mt-1.5 font-semibold">
+                {wordCount} words · {charCount} characters
+              </div>
             </Field>
           </CardSection>
 
@@ -578,24 +613,76 @@ export default function AdminArticleForm() {
           {/* Media */}
           <CardSection title="Media">
             <Field label="Thumbnail URL">
-              <Input value={form.thumbnailUrl} onChange={(e) => update("thumbnailUrl", e.target.value)} placeholder="https://..." />
-              {form.thumbnailUrl && (
-                <div className="mt-2 rounded-md overflow-hidden border border-border bg-muted">
-                  <img
-                    src={form.thumbnailUrl}
-                    alt="Thumbnail preview"
-                    className="w-full h-36 object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                  />
-                </div>
-              )}
+              <div className="flex gap-2">
+                <Input value={form.thumbnailUrl} onChange={(e) => update("thumbnailUrl", e.target.value)} placeholder="https://..." className="flex-1" />
+              </div>
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file && file.type.startsWith("image/")) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      if (event.target?.result) {
+                        update("thumbnailUrl", event.target.result as string);
+                        toast.success("Image uploaded successfully (Base64)");
+                      }
+                    };
+                    reader.readAsDataURL(file);
+                  } else {
+                    toast.error("Only image files are supported");
+                  }
+                }}
+                className="mt-2 border-2 border-dashed border-border rounded-lg p-4 text-center hover:bg-muted/50 hover:border-primary/40 transition-colors cursor-pointer"
+                onClick={() => {
+                  const input = document.createElement("input");
+                  input.type = "file";
+                  input.accept = "image/*";
+                  input.onchange = (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        if (event.target?.result) {
+                          update("thumbnailUrl", event.target.result as string);
+                          toast.success("Image uploaded successfully (Base64)");
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  };
+                  input.click();
+                }}
+              >
+                {form.thumbnailUrl ? (
+                  <div className="relative rounded overflow-hidden">
+                    <img
+                      src={form.thumbnailUrl}
+                      alt="Thumbnail preview"
+                      className="w-full h-32 object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <span className="text-white text-xs font-semibold">Change Image</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1 text-muted-foreground">
+                    <p className="text-xs font-bold text-foreground">Click to upload or drag & drop</p>
+                    <p className="text-[10px]">PNG, JPG, WEBP up to 5MB</p>
+                  </div>
+                )}
+              </div>
             </Field>
             <Field label="Instagram URL">
               <Input value={form.instagramUrl} onChange={(e) => update("instagramUrl", e.target.value)} placeholder="https://instagram.com/p/..." />
             </Field>
           </CardSection>
-
-          {/* Flags */}
           <CardSection title="Flags">
             <div className="space-y-3">
               <FlagRow label="Trending" checked={form.isTrending} onCheckedChange={(checked) => update("isTrending", checked)} />
@@ -603,9 +690,124 @@ export default function AdminArticleForm() {
               <FlagRow label="Editor pick" checked={form.isEditorPick} onCheckedChange={(checked) => update("isEditorPick", checked)} />
             </div>
           </CardSection>
+
+          {/* Local Revisions */}
+          <CardSection title="Local Revisions">
+            {revisions.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">No local revisions saved yet.</p>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto divide-y divide-border">
+                {revisions.map((rev, idx) => (
+                  <div key={idx} className="pt-2 first:pt-0 flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-semibold text-muted-foreground">{rev.date}</p>
+                      <p className="text-xs font-semibold truncate text-foreground">{rev.title || "Untitled"}</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-6 text-[10px] px-1.5 shrink-0"
+                      onClick={() => {
+                        update("title", rev.title);
+                        update("body", rev.body);
+                        toast.success("Revision restored");
+                      }}
+                    >
+                      Restore
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardSection>
         </aside>
       </div>
+
+      {/* Sticky Bottom Action Bar on Mobile */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur border-t border-border p-3 z-50 flex items-center justify-between gap-3 shadow-lg safe-bottom">
+        <div className="flex-1 max-w-[140px]">
+          <Select value={form.status} onValueChange={(value) => update("status", value)}>
+            <SelectTrigger className="h-10">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              {ARTICLE_STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2 flex-1 justify-end">
+          <Button type="button" variant="outline" className="h-10 px-3 shrink-0" onClick={() => setPreviewOpen(true)}>
+            <ExternalLink className="h-4 w-4" />
+          </Button>
+          <Button type="submit" disabled={mutation.isPending} className="h-10 gap-2 flex-1 justify-center">
+            {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Save
+          </Button>
+        </div>
+      </div>
     </form>
+
+    {/* Live Preview Modal */}
+    <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Preview</DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-6 pt-4">
+          <div className="space-y-2 border-b border-border pb-4">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary">
+              {categoriesQuery.data?.find(c => c.id === form.categoryId)?.name || "General"}
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-black leading-tight tracking-tight text-foreground">{form.title || "Untitled Headline"}</h1>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">{form.author}</span>
+              <span>·</span>
+              <span>{form.readTime}</span>
+              <span>·</span>
+              <span>{new Date(form.publishedAt).toLocaleDateString()}</span>
+            </div>
+          </div>
+
+          {form.thumbnailUrl && (
+            <div className="rounded-xl overflow-hidden border border-border bg-muted max-h-80">
+              <img src={form.thumbnailUrl} alt="Thumbnail preview" className="w-full h-full object-cover" />
+            </div>
+          )}
+
+          {form.tldr && (
+            <div className="p-4 rounded-xl border border-primary/20 bg-[hsl(var(--primary-subtle))]">
+              <p className="text-sm font-bold text-foreground leading-relaxed">
+                <span className="text-primary mr-1">TL;DR:</span> {form.tldr}
+              </p>
+            </div>
+          )}
+
+          {form.points && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Key Highlights</h3>
+              <ul className="list-disc pl-5 text-sm text-foreground space-y-1 leading-relaxed">
+                {form.points.split("\n").filter(Boolean).map((pt, i) => (
+                  <li key={i}>{pt}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="space-y-2 border-t border-border pt-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Body</h3>
+            <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed text-foreground whitespace-pre-wrap font-sans">
+              {form.body || "No body content written yet."}
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }

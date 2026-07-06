@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Edit, Plus, Trash2, Search, AlertCircle, RotateCcw } from "lucide-react";
+import { Edit, Plus, Trash2, Search, AlertCircle, RotateCcw, FileText, CheckCircle2, Clock, Archive } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
@@ -12,14 +12,33 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 
 const PAGE_SIZE = 20;
 
+function getPaginationRange(currentPage: number, totalPages: number) {
+  const delta = 1;
+  const range: Array<number | string> = [];
+
+  for (let i = 0; i < totalPages; i++) {
+    if (
+      i === 0 ||
+      i === totalPages - 1 ||
+      (i >= currentPage - delta && i <= currentPage + delta)
+    ) {
+      range.push(i);
+    } else if (range[range.length - 1] !== "...") {
+      range.push("...");
+    }
+  }
+  return range;
+}
+
 export default function AdminArticles() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [deleteTarget, setDeleteTarget] = useState<Article | null>(null);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["admin", "articles", { page, search }],
+    queryKey: ["admin", "articles", { page, search, statusFilter }],
     queryFn: () => {
       const params = new URLSearchParams({
         skip: String(page * PAGE_SIZE),
@@ -28,6 +47,7 @@ export default function AdminArticles() {
         include_total: "true",
       });
       if (search) params.set("search", search);
+      if (statusFilter !== "all") params.set("status", statusFilter);
       return apiFetch<{ items: Article[]; total: number }>(`/articles/?${params.toString()}`);
     },
   });
@@ -47,13 +67,17 @@ export default function AdminArticles() {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const statusBadge = (status: Article["status"]) => {
-    const map: Record<Article["status"], string> = {
-      draft: "bg-muted text-muted-foreground border-border",
-      published: "bg-primary/10 text-primary border-primary/20",
-      archived: "bg-destructive/10 text-destructive border-destructive/30",
+    const map: Record<string, { className: string; icon: any }> = {
+      draft: { className: "bg-muted text-muted-foreground border-border", icon: FileText },
+      pending: { className: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20", icon: Clock },
+      published: { className: "bg-primary/10 text-primary border-primary/20", icon: CheckCircle2 },
+      archived: { className: "bg-destructive/10 text-destructive border-destructive/30", icon: Archive },
     };
+    const current = map[status || "draft"] ?? map.draft;
+    const Icon = current.icon;
     return (
-      <span className={`inline-flex items-center h-5 px-2 rounded-sm text-[10px] font-bold uppercase tracking-wider border ${map[status] ?? map.draft}`}>
+      <span className={`inline-flex items-center gap-1 h-5 px-2 rounded-sm text-[10px] font-bold uppercase tracking-wider border ${current.className}`}>
+        <Icon className="h-3 w-3 shrink-0" />
         {status ?? "draft"}
       </span>
     );
@@ -74,15 +98,35 @@ export default function AdminArticles() {
         </Link>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search articles by title..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-          className="pl-9"
-        />
+      {/* Filters row */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        {/* Status filter tabs */}
+        <div className="flex border border-border rounded-md overflow-hidden w-fit bg-background">
+          {["all", "published", "draft", "archived"].map((st) => (
+            <button
+              key={st}
+              onClick={() => { setStatusFilter(st); setPage(0); }}
+              className={`h-9 px-4 text-xs font-semibold uppercase tracking-wider transition-colors border-r border-border last:border-0 ${
+                statusFilter === st
+                  ? "bg-primary text-white border-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              {st === "all" ? "All Statuses" : st + "s"}
+            </button>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search articles by title..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            className="pl-9 h-9"
+          />
+        </div>
       </div>
 
       {/* Error state */}
@@ -176,17 +220,26 @@ export default function AdminArticles() {
             <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
               Previous
             </Button>
-            {Array.from({ length: totalPages }, (_, i) => (
-              <Button
-                key={i}
-                variant={i === page ? "default" : "outline"}
-                size="sm"
-                className="w-8"
-                onClick={() => setPage(i)}
-              >
-                {i + 1}
-              </Button>
-            ))}
+            {getPaginationRange(page, totalPages).map((p, idx) => {
+              if (p === "...") {
+                return (
+                  <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground select-none">
+                    ...
+                  </span>
+                );
+              }
+              return (
+                <Button
+                  key={`page-${p}`}
+                  variant={p === page ? "default" : "outline"}
+                  size="sm"
+                  className="w-8"
+                  onClick={() => setPage(p as number)}
+                >
+                  {(p as number) + 1}
+                </Button>
+              );
+            })}
             <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
               Next
             </Button>

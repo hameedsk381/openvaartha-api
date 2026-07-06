@@ -22,6 +22,7 @@ import PortalDashboard from "./pages/PortalDashboard.tsx";
 import PortalSaved from "./pages/PortalSaved.tsx";
 import PortalHistory from "./pages/PortalHistory.tsx";
 import PortalSettings from "./pages/PortalSettings.tsx";
+import PortalWrite from "./pages/PortalWrite.tsx";
 import AdminRoute from "./components/AdminRoute.tsx";
 import AdminLayout from "./components/AdminLayout.tsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
@@ -32,6 +33,7 @@ import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import AdminComments from "./pages/admin/AdminComments.tsx";
 import AdminNewsletter from "./pages/admin/AdminNewsletter.tsx";
 import AdminSources from "./pages/admin/AdminSources.tsx";
+import AdminContributions from "./pages/admin/AdminContributions.tsx";
 import InstallPWA from "./components/InstallPWA.tsx";
 import { toast } from "sonner";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
@@ -99,6 +101,7 @@ const App = () => {
       <Sonner />
       <div className="relative min-h-screen overflow-x-hidden bg-background selection:bg-primary/10">
         <BrowserRouter>
+          <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md focus:shadow-md focus:font-semibold focus:outline-none">Skip to Content</a>
           <ProtectedRoute>
             <ErrorBoundary>
             <Routes>
@@ -120,6 +123,7 @@ const App = () => {
             <Route path="/portal/saved" element={<PortalLayout><PortalSaved /></PortalLayout>} />
             <Route path="/portal/history" element={<PortalLayout><PortalHistory /></PortalLayout>} />
             <Route path="/portal/settings" element={<PortalLayout><PortalSettings /></PortalLayout>} />
+            <Route path="/portal/write" element={<PortalLayout><PortalWrite /></PortalLayout>} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminRoute roles={["admin"]}><AdminLayout><AdminDashboard /></AdminLayout></AdminRoute>} />
@@ -131,6 +135,7 @@ const App = () => {
             <Route path="/admin/comments" element={<AdminRoute roles={["admin", "moderator"]}><AdminLayout><AdminComments /></AdminLayout></AdminRoute>} />
             <Route path="/admin/newsletter" element={<AdminRoute roles={["admin"]}><AdminLayout><AdminNewsletter /></AdminLayout></AdminRoute>} />
             <Route path="/admin/sources" element={<AdminRoute roles={["admin"]}><AdminLayout><AdminSources /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/contributions" element={<AdminRoute roles={["admin", "editor"]}><AdminLayout><AdminContributions /></AdminLayout></AdminRoute>} />
 
             <Route path="*" element={<NotFound />} />
 

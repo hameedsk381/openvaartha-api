@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import BreakingTicker from '../components/BreakingTicker';
@@ -41,7 +41,24 @@ export default function Index() {
   const subscribeMutation = useNewsletterSubscribe();
 
   const { data: categories = [] } = useCategories();
-  const { data: articlesData = [] } = useArticles({ limit: 50 });
+
+  const selectedCategoryObj = useMemo(() => {
+    return categories.find(
+      c => c.name.toLowerCase() === selectedCat.toLowerCase()
+    );
+  }, [categories, selectedCat]);
+
+  const [limit, setLimit] = useState(15);
+
+  useEffect(() => {
+    setLimit(15);
+  }, [selectedCat]);
+
+  const { data: articlesData = [], isFetching } = useArticles({
+    category: selectedCategoryObj?.id,
+    limit
+  });
+
   const { data: trendingData = [] } = useTrendingArticles(5);
 
   // Unused scroll effect removed since navbar contains unified tabs
@@ -57,14 +74,9 @@ export default function Index() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const selectedCategoryObj = categories.find(
-    c => c.name.toLowerCase() === selectedCat.toLowerCase()
-  );
   const displayCategoryName = selectedCategoryObj ? selectedCategoryObj.name : selectedCat;
 
-  const filtered = selectedCat.toLowerCase() === 'all'
-    ? articlesData
-    : articlesData.filter(a => a.category?.toLowerCase() === selectedCat.toLowerCase());
+  const filtered = articlesData;
   const isFiltered = selectedCat.toLowerCase() !== 'all';
 
   const hero = filtered[0];
@@ -80,7 +92,7 @@ export default function Index() {
         <BreakingTicker />
       </div>
 
-      <main className="pb-safe pt-0">
+      <main id="main-content" className="pb-safe pt-0">
         <div className="max-w-screen-2xl mx-auto">
 
           {isFiltered && (
@@ -288,65 +300,84 @@ export default function Index() {
               {switching ? (
                 <div className="px-4 sm:px-6 lg:px-10 py-6"><FeedSkeleton /></div>
               ) : (
-                feed.map((art) => (
-                  <article
-                    key={art.id}
-                    className="group flex gap-4 sm:gap-6 px-4 sm:px-6 lg:px-10 py-5 sm:py-6 border-b border-border last:border-0 hover:bg-[hsl(var(--surface))] transition-colors"
-                  >
-                    <Link to={`/article/${art.slug}`} className="flex-1 min-w-0 press">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="overline text-primary">{art.category}</span>
-                        <span className="h-1 w-1 rounded-full bg-border" />
-                        <span className="text-[10px] text-muted-foreground font-medium tracking-wide">
-                          {relativeTime(art.publishedAt)}
-                        </span>
-                        {art.isTrending && (
-                          <>
-                            <span className="h-1 w-1 rounded-full bg-border" />
-                            <span className="inline-flex items-center gap-1 text-[10px] text-primary font-semibold uppercase tracking-wide">
-                              <Flame className="h-3 w-3 fill-current" /> Trending
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      <h3 className="font-display text-base sm:text-lg font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                        {art.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
-                        {art.summary}
-                      </p>
-                      <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground font-medium">
-                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {art.readTime}</span>
-                        <span>·</span>
-                        <span className="truncate">{art.author}</span>
-                      </div>
-                    </Link>
-
-                    <div className="flex flex-col items-end gap-2 shrink-0">
-                      <Link to={`/article/${art.slug}`} className="press block">
-                        {art.thumbnailUrl && (
-                          <div className="w-24 h-20 sm:w-32 sm:h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
-                            <img
-                              src={art.thumbnailUrl}
-                              alt=""
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                              loading="lazy"
-                              onError={handleImageFallback}
-                            />
-                          </div>
-                        )}
+                <>
+                  {feed.map((art) => (
+                    <article
+                      key={art.id}
+                      className="group flex gap-4 sm:gap-6 px-4 sm:px-6 lg:px-10 py-5 sm:py-6 border-b border-border last:border-0 hover:bg-[hsl(var(--surface))] transition-colors"
+                    >
+                      <Link to={`/article/${art.slug}`} className="flex-1 min-w-0 press">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="overline text-primary">{art.category}</span>
+                          <span className="h-1 w-1 rounded-full bg-border" />
+                          <span className="text-[10px] text-muted-foreground font-medium tracking-wide">
+                            {relativeTime(art.publishedAt)}
+                          </span>
+                          {art.isTrending && (
+                            <>
+                              <span className="h-1 w-1 rounded-full bg-border" />
+                              <span className="inline-flex items-center gap-1 text-[10px] text-primary font-semibold uppercase tracking-wide">
+                                <Flame className="h-3 w-3 fill-current" /> Trending
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        <h3 className="font-display text-base sm:text-lg font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                          {art.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
+                          {art.summary}
+                        </p>
+                        <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground font-medium">
+                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {art.readTime}</span>
+                          <span>·</span>
+                          <span className="truncate">{art.author}</span>
+                        </div>
                       </Link>
+
+                      <div className="flex flex-col items-end gap-2 shrink-0">
+                        <Link to={`/article/${art.slug}`} className="press block">
+                          {art.thumbnailUrl && (
+                            <div className="w-24 h-20 sm:w-32 sm:h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
+                              <img
+                                src={art.thumbnailUrl}
+                                alt=""
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                loading="lazy"
+                                onError={handleImageFallback}
+                              />
+                            </div>
+                          )}
+                        </Link>
+                        <button
+                          onClick={() => toggleSave(art as any)}
+                          className={`h-9 w-9 rounded-md flex items-center justify-center transition-colors press
+                            ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
+                          aria-label="Save"
+                        >
+                          {isSaved(art.id) ? <BookmarkCheck className="h-4 w-4 fill-current" /> : <Bookmark className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+
+                  {/* Load More Button */}
+                  {articlesData.length >= limit && (
+                    <div className="flex justify-center p-6 border-b border-border">
                       <button
-                        onClick={() => toggleSave(art as any)}
-                        className={`h-9 w-9 rounded-md flex items-center justify-center transition-colors press
-                          ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
-                        aria-label="Save"
+                        onClick={() => setLimit(prev => prev + 15)}
+                        disabled={isFetching}
+                        className="w-full max-w-xs h-11 rounded-md border border-border bg-background text-foreground text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface))] transition-colors press disabled:opacity-50"
                       >
-                        {isSaved(art.id) ? <BookmarkCheck className="h-4 w-4 fill-current" /> : <Bookmark className="h-4 w-4" />}
+                        {isFetching ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        ) : (
+                          "Load more stories"
+                        )}
                       </button>
                     </div>
-                  </article>
-                ))
+                  )}
+                </>
               )}
             </div>
 
