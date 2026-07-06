@@ -171,6 +171,65 @@ async def _populate_article_extras(db: AsyncIOMotorDatabase, article: dict) -> d
     return article
 
 
+async def _populate_articles_bulk(db: AsyncIOMotorDatabase, articles: list[dict]) -> list[dict]:
+    """Bulk populate category names and contents for a list of article documents to avoid roundtrip latency."""
+    if not articles:
+        return articles
+
+    # 1. Bulk load all categories (small collection, usually < 10 docs)
+    categories = await db["categories"].find().to_list(length=100)
+    cat_map = {}
+    for cat in categories:
+        cid = str(cat.get("_id") or cat.get("id") or "")
+        if cid:
+            cat_map[cid] = cat.get("name", "General")
+
+    # 2. Standardize article ID formats and collect IDs for batch query
+    article_ids = []
+    for a in articles:
+        if a is None:
+            continue
+        if "_id" in a:
+            a["id"] = str(a.pop("_id"))
+        a.setdefault("status", PUBLIC_STATUS)
+        
+        aid = a.get("id")
+        if aid:
+            article_ids.append(aid)
+
+    # 3. Batch query article contents using $in
+    content_map = {}
+    if article_ids:
+        contents = await db["article_content"].find({"article_id": {"$in": article_ids}}).to_list(length=len(article_ids))
+        for c in contents:
+            cid = c.get("article_id")
+            if cid:
+                if "_id" in c:
+                    c["id"] = str(c.pop("_id"))
+                content_map[cid] = c
+
+    # 4. Map the fetched data back to each article in-memory
+    for a in articles:
+        if a is None:
+            continue
+        # Map Category Name
+        cid = a.get("category_id")
+        if cid:
+            if isinstance(cid, ObjectId):
+                cid = str(cid)
+            a["category"] = cat_map.get(cid, "General")
+        else:
+            a["category"] = "General"
+
+        # Map Content
+        aid = a.get("id")
+        if aid:
+            a["content"] = content_map.get(aid)
+
+    return articles
+
+
+
 async def get_articles(
     db: AsyncIOMotorDatabase,
     skip: int = 0,
@@ -215,7 +274,7 @@ async def get_articles(
     cursor = db["articles"].find(query).sort("published_at", -1).skip(skip).limit(limit)
     articles = await cursor.to_list(length=limit)
 
-    populated = [await _populate_article_extras(db, a) for a in articles]
+    populated = await _populate_articles_bulk(db, articles)
     if not include_unpublished:
         await _set_cached_list(key, populated)
     return populated
@@ -231,7 +290,7 @@ async def get_trending_articles(db: AsyncIOMotorDatabase, limit: int = 10):
     cursor = db["articles"].find(_public_query({"is_trending": True})).sort("published_at", -1).limit(limit)
     articles = await cursor.to_list(length=limit)
 
-    populated = [await _populate_article_extras(db, a) for a in articles]
+    populated = await _populate_articles_bulk(db, articles)
     await _set_cached_list(key, populated)
     return populated
 
@@ -246,7 +305,7 @@ async def get_breaking_articles(db: AsyncIOMotorDatabase, limit: int = 5):
     cursor = db["articles"].find(_public_query({"is_breaking": True})).sort("published_at", -1).limit(limit)
     articles = await cursor.to_list(length=limit)
 
-    populated = [await _populate_article_extras(db, a) for a in articles]
+    populated = await _populate_articles_bulk(db, articles)
     await _set_cached_list(key, populated)
     return populated
 
@@ -255,7 +314,7 @@ async def get_editor_pick_articles(db: AsyncIOMotorDatabase, limit: int = 10):
     """Get editor-curated articles (published only)."""
     cursor = db["articles"].find(_public_query({"is_editor_pick": True})).sort("published_at", -1).limit(limit)
     articles = await cursor.to_list(length=limit)
-    return [await _populate_article_extras(db, a) for a in articles]
+    return await _populate_articles_bulk(db, articles)
 
 
 async def get_explainer_articles(db: AsyncIOMotorDatabase, skip: int = 0, limit: int = 20):
@@ -271,7 +330,7 @@ async def get_explainer_articles(db: AsyncIOMotorDatabase, skip: int = 0, limit:
     query = _public_query({"_id": {"$in": article_ids}})
     cursor = db["articles"].find(query).sort("published_at", -1).skip(skip).limit(limit)
     articles = await cursor.to_list(length=limit)
-    return [await _populate_article_extras(db, a) for a in articles]
+    return await _populate_articles_bulk(db, articles)
 
 
 async def get_article_by_slug(
