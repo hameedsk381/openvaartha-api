@@ -189,32 +189,42 @@ export default function PortalSettings() {
 
       {/* ── Security ────────────────────────────────── */}
       <SettingsSection label="Security" icon={Shield}>
-        <div className="p-4 space-y-3">
-          <p className="text-sm font-semibold">Change Password</p>
-          <div className="space-y-2">
-            <input 
-              type="password" 
-              placeholder="Current password"
-              className="w-full h-11 px-3 bg-secondary/30 border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-              value={passwordData.current}
-              onChange={e => setPasswordData(p => ({ ...p, current: e.target.value }))}
-            />
-            <input 
-              type="password" 
-              placeholder="New password"
-              className="w-full h-11 px-3 bg-secondary/30 border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-              value={passwordData.new}
-              onChange={e => setPasswordData(p => ({ ...p, new: e.target.value }))}
-            />
-            <button 
-              onClick={handlePasswordChange}
-              disabled={isUpdating || !passwordData.new || !passwordData.current}
-              className="w-full h-11 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center"
-            >
-              {isUpdating ? <Loader2 className="h-3 w-3 animate-spin mx-auto" /> : "Update Password"}
-            </button>
+        {user?.authProvider === "google" ? (
+          <div className="p-4 space-y-1.5">
+            <p className="text-sm font-semibold">Signed in with Google</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              This account has no separate Open Vaartha password — you sign in through Google,
+              so your password is managed there, not here.
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="p-4 space-y-3">
+            <p className="text-sm font-semibold">Change Password</p>
+            <div className="space-y-2">
+              <input
+                type="password"
+                placeholder="Current password"
+                className="w-full h-11 px-3 bg-secondary/30 border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                value={passwordData.current}
+                onChange={e => setPasswordData(p => ({ ...p, current: e.target.value }))}
+              />
+              <input
+                type="password"
+                placeholder="New password"
+                className="w-full h-11 px-3 bg-secondary/30 border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                value={passwordData.new}
+                onChange={e => setPasswordData(p => ({ ...p, new: e.target.value }))}
+              />
+              <button
+                onClick={handlePasswordChange}
+                disabled={isUpdating || !passwordData.new || !passwordData.current}
+                className="w-full h-11 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center"
+              >
+                {isUpdating ? <Loader2 className="h-3 w-3 animate-spin mx-auto" /> : "Update Password"}
+              </button>
+            </div>
+          </div>
+        )}
       </SettingsSection>
 
       {/* ── Appearance ─────────────────────────────── */}
