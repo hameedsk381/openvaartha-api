@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
+import { migrateGuestReadingList, READING_LIST_KEY } from "@/hooks/use-reading-list";
 
 declare global {
   interface Window {
@@ -54,6 +56,7 @@ export default function GoogleSignInButton({ onSuccess, onError }: GoogleSignInB
   const containerRef = useRef<HTMLDivElement>(null);
   const [clientId, setClientId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     let cancelled = false;
@@ -105,6 +108,8 @@ export default function GoogleSignInButton({ onSuccess, onError }: GoogleSignInB
               } catch {
                 // Non-fatal — the tokens are already stored and valid.
               }
+              await migrateGuestReadingList().catch(() => {});
+              queryClient.invalidateQueries({ queryKey: READING_LIST_KEY });
               onSuccess();
             } catch {
               onError("Couldn't sign in with Google. Please try again.");
@@ -128,7 +133,7 @@ export default function GoogleSignInButton({ onSuccess, onError }: GoogleSignInB
     return () => {
       cancelled = true;
     };
-  }, [loading, clientId, onSuccess, onError]);
+  }, [loading, clientId, onSuccess, onError, queryClient]);
 
   if (loading || !clientId) return null;
 

@@ -4,10 +4,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { Mail, Lock, User as UserIcon, Loader2, Eye, EyeOff, ArrowLeft, Quote } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { BRAND } from '@/lib/brand';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+import { migrateGuestReadingList, READING_LIST_KEY } from '@/hooks/use-reading-list';
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -38,6 +40,7 @@ export default function Login() {
   const [showPwd, setShowPwd] = useState(false);
   const [showCPwd, setShowCPwd] = useState(false);
 
+  const queryClient = useQueryClient();
   const loginForm = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
   const regForm = useForm<RegisterValues>({ resolver: zodResolver(registerSchema) });
 
@@ -67,6 +70,8 @@ export default function Login() {
       } catch {
         // Non-fatal
       }
+      await migrateGuestReadingList().catch(() => {});
+      queryClient.invalidateQueries({ queryKey: READING_LIST_KEY });
       toast.success('Welcome back.');
       navigate(from, { replace: true });
     } catch (e: any) {
