@@ -124,7 +124,7 @@ if os.path.isdir(_dist):
     # Anything else is a real 404 so crawlers stop wasting budget on typo'd URLs.
     _known_exact = {
         "", "login", "register", "forgot-password", "reset-password",
-        "search", "trending", "explainers", "live",
+        "search", "trending", "explainers", "live", "about", "contact",
     }
     _known_prefixes = ("portal", "admin")
 

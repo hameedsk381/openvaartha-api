@@ -30,11 +30,13 @@ async def build_sitemap(db: AsyncIOMotorDatabase) -> str:
     urlset = Element("urlset")
     urlset.set("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9")
 
-    static_pages: list[tuple[str, str, str, str]] = [
+    static_pages: list[tuple[str, str, str]] = [
         ("/", "daily", "1.0"),
         ("/trending", "daily", "0.9"),
         ("/explainers", "weekly", "0.8"),
-        ("/live-updates", "hourly", "0.7"),
+        ("/live", "hourly", "0.7"),
+        ("/about", "monthly", "0.5"),
+        ("/contact", "monthly", "0.5"),
     ]
 
     for path, freq, prio in static_pages:

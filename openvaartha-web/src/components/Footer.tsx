@@ -71,6 +71,7 @@ const Footer = () => {
               <li><Link to="/trending" className="text-muted-foreground hover:text-primary transition-colors">Trending</Link></li>
               <li><Link to="/live" className="text-muted-foreground hover:text-primary transition-colors">Live updates</Link></li>
               <li><Link to="/explainers" className="text-muted-foreground hover:text-primary transition-colors">Explainers</Link></li>
+              <li><Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">About</Link></li>
             </ul>
           </div>
 
@@ -89,10 +90,16 @@ const Footer = () => {
             &copy; {year} {BRAND.name} &mdash; built by {BRAND.copyright}
           </span>
           <div className="flex gap-5">
-            <span className="cursor-pointer hover:text-primary transition-colors font-medium">Privacy</span>
-            <span className="cursor-pointer hover:text-primary transition-colors font-medium">Terms</span>
-            <span className="cursor-pointer hover:text-primary transition-colors font-medium">Ethics</span>
-            <span className="cursor-pointer hover:text-primary transition-colors font-medium">Contact</span>
+            <Link to="/about" className="hover:text-primary transition-colors font-medium">About</Link>
+            <Link to="/contact" className="hover:text-primary transition-colors font-medium">Contact</Link>
+            <a
+              href="https://fossap.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-primary transition-colors font-medium"
+            >
+              FOSS Andhra
+            </a>
           </div>
         </div>
       </div>

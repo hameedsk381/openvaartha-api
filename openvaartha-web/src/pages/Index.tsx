@@ -5,7 +5,6 @@ import BreakingTicker from '../components/BreakingTicker';
 import HeroCarousel from '../components/HeroCarousel';
 import FeedSkeleton from '../components/FeedSkeleton';
 import Footer from '@/components/Footer';
-import FacebookFeed from '@/components/FacebookFeed';
 import { handleImageFallback } from '@/lib/utils';
 import { categoryColors } from '@/lib/types';
 import { Clock, Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame, Loader2 } from 'lucide-react';
@@ -109,11 +108,15 @@ export default function Index() {
 
           {hero && (
             <>
-              {/* Carousel only earns its place with multiple stories — with one,
-                  it just duplicates the hero block below it. */}
-              {filtered.length > 1 && <HeroCarousel articles={filtered.slice(0, 5)} />}
+              {/* One hero per breakpoint: the swipeable carousel is the mobile
+                  hero; the hero block + top-stories rail below is the desktop
+                  hero. Rendering both stacked on a phone duplicated the same
+                  stories and overflowed long titles into each other. */}
+              <div className="lg:hidden">
+                <HeroCarousel articles={filtered.slice(0, 5)} />
+              </div>
 
-            <section className="border-b border-border">
+            <section className="hidden lg:block border-b border-border">
               <div className="grid grid-cols-1 lg:grid-cols-12">
                 <div className="lg:col-span-8 lg:border-r lg:border-border">
                   <Link
@@ -156,7 +159,7 @@ export default function Index() {
                             </span>
                           )}
                         </div>
-                        <h2 className="poster text-white text-3xl sm:text-5xl lg:text-6xl max-w-3xl">
+                        <h2 className="poster text-white text-3xl sm:text-5xl lg:text-6xl max-w-3xl line-clamp-3">
                           {hero.title}
                         </h2>
                         <p className="text-white/80 text-sm sm:text-base mt-3 line-clamp-2 max-w-2xl leading-relaxed">
@@ -465,8 +468,6 @@ export default function Index() {
               </div>
             </aside>
           </section>
-
-          <FacebookFeed />
 
           <Footer />
         </div>

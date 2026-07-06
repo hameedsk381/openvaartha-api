@@ -16,6 +16,8 @@ import SearchPage from "./pages/SearchPage.tsx";
 import TrendingPage from "./pages/TrendingPage.tsx";
 import ExplainersPage from "./pages/ExplainersPage.tsx";
 import LiveUpdatesPage from "./pages/LiveUpdatesPage.tsx";
+import AboutPage from "./pages/AboutPage.tsx";
+import ContactPage from "./pages/ContactPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { PortalLayout } from "./components/PortalLayout.tsx";
 import PortalDashboard from "./pages/PortalDashboard.tsx";
@@ -116,6 +118,8 @@ const App = () => {
             <Route path="/trending" element={<TrendingPage />} />
             <Route path="/explainers" element={<ExplainersPage />} />
             <Route path="/live" element={<LiveUpdatesPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
             
             {/* Portal Routes */}
             <Route path="/portal" element={<PortalLayout><PortalDashboard /></PortalLayout>} />

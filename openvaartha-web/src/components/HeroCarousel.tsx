@@ -37,7 +37,7 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
             <Link
               key={article?.id ?? index}
               to={`/article/${article?.slug ?? "#"}`}
-              className="relative min-h-[360px] flex-[0_0_100%] min-w-0 sm:min-h-0 sm:aspect-[21/9] group"
+              className="relative min-h-[440px] flex-[0_0_100%] min-w-0 sm:min-h-0 sm:aspect-[21/9] group"
             >
               {article?.thumbnailUrl && (
                 <div className="absolute inset-0 overflow-hidden bg-[hsl(var(--surface-2))]">
