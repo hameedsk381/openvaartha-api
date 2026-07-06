@@ -37,7 +37,7 @@ async def generate_article(
     style: str = "standard",
     tone: str = "neutral",
 ) -> Optional[dict]:
-    """Generate a complete article draft from a topic prompt using Gemini."""
+    """Generate a complete article draft from a topic prompt using Groq."""
     theme_guide = {
         "standard": "Balanced news reporting with context and analysis.",
         "investigative": "Detail-oriented with background, data points, and sourcing.",

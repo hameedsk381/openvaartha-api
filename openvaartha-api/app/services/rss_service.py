@@ -147,7 +147,7 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
             "category_id": category_id,
             "read_time": _estimate_read_time(result.get("body", "")),
             "language": language,
-            "status": "draft",
+            "status": "published" if settings.AUTO_PUBLISH_RSS else "draft",
             "is_trending": False,
             "is_breaking": False,
             "is_editor_pick": False,

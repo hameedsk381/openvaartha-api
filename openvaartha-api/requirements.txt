@@ -12,7 +12,7 @@ pydantic[email]==2.5.3
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
-google-auth>=2.48.1,<3.0.0  # keep in range required by google-genai's own google-auth[requests] pin
+google-auth>=2.48.1,<3.0.0  # verifies Google Sign-In ID tokens — see auth_service.authenticate_google
 
 # Validation
 pydantic==2.5.3
@@ -27,8 +27,8 @@ aiohttp==3.9.1
 celery==5.3.6
 redis==5.0.1
 
-# AI/ML
-google-genai==1.14.0
+# AI/ML — Groq is called directly over HTTP (see ai_service.py) using the
+# httpx dependency already pinned above; no separate SDK needed.
 
 # Utilities
 python-dotenv==1.0.0

@@ -44,6 +44,12 @@ class Settings(BaseSettings):
     AI_MAX_POINTS: int = 8
     AI_TIMEOUT: int = 60  # seconds for AI API call
 
+    # RSS auto-ingestion: when True, AI-rewritten articles from RSS sources go
+    # live immediately with no human review. This is a deliberate editorial
+    # choice made with the risk (accuracy, copyright) explicitly flagged —
+    # flip to False to fall back to draft-for-review without a code change.
+    AUTO_PUBLISH_RSS: bool = True
+
     # Groq
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "llama-3.3-70b-versatile"

@@ -44,6 +44,42 @@ services:
     networks:
       - openvaartha
 
+  # Runs the actual RSS-ingestion + AI-rewrite tasks that app/tasks/rss_generator.py
+  # defines. Without this service the beat schedule below never executes anything —
+  # it was previously configured in code but had no worker/beat container to run it.
+  celery-worker:
+    build:
+      context: .
+      dockerfile: openvaartha-api/Dockerfile
+    command: ["celery", "-A", "app.tasks:celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+    environment: *app-environment
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - openvaartha
+
+  # Triggers app.tasks.rss_generator.process_all_sources on the beat_schedule
+  # defined in app/tasks/__init__.py (every 30 minutes) — the worker above does
+  # the actual work, this process only fires the schedule.
+  celery-beat:
+    build:
+      context: .
+      dockerfile: openvaartha-api/Dockerfile
+    command: ["celery", "-A", "app.tasks:celery_app", "beat", "--loglevel=info"]
+    environment: *app-environment
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - openvaartha
+
   mongo:
     image: mongo:7.0
     environment:
