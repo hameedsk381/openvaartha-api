@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Search, Sun, Moon, Bookmark, User, Home, X, ChevronRight, LogOut, Radio } from "lucide-react";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { useSearch, useCategories, useBreakingArticles } from "@/lib/api-hooks";
-import { useLogout } from "@/hooks/use-logout";
+import SignOutButton from "@/components/SignOutButton";
 
 interface NavbarProps { isInsideStack?: boolean; }
 
@@ -87,8 +87,6 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
 
   const filtered = query.trim().length > 1 ? searchResults : [];
 
-  const logout = useLogout();
-
   const categoryNames = useMemo(() => categories.map((c) => c.name), [categories]);
 
   return (
@@ -164,14 +162,18 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
               >
                 <User className="h-5 w-5 text-white" />
               </Link>
-              <button
-                onClick={logout}
-                className="h-11 w-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors press"
-                aria-label="Log out"
-                title="Log out"
-              >
-                <LogOut className="h-5 w-5" />
-              </button>
+              <SignOutButton>
+                {(onClick) => (
+                  <button
+                    onClick={onClick}
+                    className="h-11 w-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors press"
+                    aria-label="Log out"
+                    title="Log out"
+                  >
+                    <LogOut className="h-5 w-5" />
+                  </button>
+                )}
+              </SignOutButton>
             </div>
           ) : (
             <Link

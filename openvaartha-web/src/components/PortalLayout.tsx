@@ -3,9 +3,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, Bookmark, History, Settings, ArrowLeft, LogOut, Lock, ArrowUpRight, PenSquare } from "lucide-react";
-import { useLogout } from "@/hooks/use-logout";
 import { apiFetch } from "@/lib/api";
 import Navbar from "./Navbar";
+import SignOutButton from "./SignOutButton";
 
 interface NavItem {
   label: string;
@@ -63,7 +63,6 @@ function SignInRequired({ label }: { label: string }) {
 export function PortalLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const logout = useLogout();
   const isAuthed = !!localStorage.getItem('token');
 
   // Read the role live rather than trusting localStorage's snapshot from
@@ -128,13 +127,17 @@ export function PortalLayout({ children }: { children: ReactNode }) {
 
           <div className="p-3 border-t border-border space-y-2">
             {isAuthed ? (
-              <button
-                onClick={logout}
-                className="flex items-center gap-3 w-full px-3 h-11 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-all press"
-              >
-                <LogOut className="h-4 w-4 shrink-0" />
-                Sign out
-              </button>
+              <SignOutButton>
+                {(onClick) => (
+                  <button
+                    onClick={onClick}
+                    className="flex items-center gap-3 w-full px-3 h-11 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-all press"
+                  >
+                    <LogOut className="h-4 w-4 shrink-0" />
+                    Sign out
+                  </button>
+                )}
+              </SignOutButton>
             ) : (
               <Link
                 to="/login"

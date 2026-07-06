@@ -36,6 +36,9 @@ export default function PortalDashboard() {
   const recent = history.slice(0, 5);
   const featured = trending[0];
 
+  const hour = new Date().getHours();
+  const greeting = hour < 5 ? "Still up" : hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : hour < 21 ? "Good evening" : "Still up";
+
   // Only real, verifiable numbers here — no invented "streak"/"reading time"
   // fields the backend doesn't track.
   const stats = [
@@ -54,7 +57,7 @@ export default function PortalDashboard() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="rounded-2xl gradient-maroon p-5 sm:p-6 shadow-maroon-lg">
-        <p className="text-xs font-medium text-white/70 mb-1">Good morning</p>
+        <p className="text-xs font-medium text-white/70 mb-1">{greeting}</p>
         <h1 className="text-2xl font-bold text-white tracking-tight">
           {user?.fullName?.split(' ')[0] || user?.fullName || "Reader"}.
         </h1>

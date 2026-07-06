@@ -1,3 +1,5 @@
+import { toast } from "sonner";
+
 export const API_BASE = "/api/v1";
 
 export class ApiError extends Error {
@@ -46,7 +48,10 @@ async function doRefresh(): Promise<string | null> {
 
     if (!res.ok) {
       clearTokens();
-      window.location.href = "/login";
+      toast.error("Your session expired — sign in again.");
+      // Full navigation would tear down the toast before it can paint —
+      // give it a moment to actually show before leaving the page.
+      setTimeout(() => { window.location.href = "/login"; }, 600);
       return null;
     }
 
@@ -55,7 +60,8 @@ async function doRefresh(): Promise<string | null> {
     return data.access_token;
   } catch {
     clearTokens();
-    window.location.href = "/login";
+    toast.error("Your session expired — sign in again.");
+    setTimeout(() => { window.location.href = "/login"; }, 600);
     return null;
   }
 }
