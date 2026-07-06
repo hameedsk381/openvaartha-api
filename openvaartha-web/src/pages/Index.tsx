@@ -542,56 +542,48 @@ export default function Index() {
                 </ol>
 
                 {/* Newsletter CTA */}
-                <div className="mx-4 sm:mx-6 lg:mx-6 my-6 p-6 rounded-2xl gradient-maroon text-white relative overflow-hidden border-2 border-foreground shadow-sticker">
+                <div className="mx-4 sm:mx-6 lg:mx-6 my-6 p-6 rounded-2xl gradient-maroon text-white relative overflow-hidden border-2 border-foreground shadow-sticker min-h-[300px] flex flex-col justify-between">
                   <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent_60%)]" />
-                  <span className="relative chip">The Briefing</span>
-                  <h4 className="relative font-display text-2xl font-bold mt-3 leading-tight">
-                    The stories that matter, in your inbox by sunrise.
-                  </h4>
-                  <p className="relative text-sm text-white/80 mt-2 leading-relaxed">
-                    A free morning digest of the stories that matter — curated, never automated.
-                  </p>
-                  {showNewsletter ? (
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        if (newsletterEmail.trim()) {
-                          subscribeMutation.mutate(newsletterEmail.trim(), {
-                            onSuccess: () => {
-                              toast.success("Subscribed! Check your inbox.");
-                              setShowNewsletter(false);
-                              setNewsletterEmail('');
-                            },
-                            onError: (err) => toast.error(err.message),
-                          });
-                        }
-                      }}
-                      className="relative mt-4 flex gap-2"
-                    >
-                      <input
-                        type="email"
-                        value={newsletterEmail}
-                        onChange={(e) => setNewsletterEmail(e.target.value)}
-                        placeholder="your@email.com"
-                        required
-                        className="flex-1 h-11 px-4 rounded-md bg-white/20 text-white placeholder:text-white/60 text-sm border border-white/30 focus:outline-none focus:border-white"
-                      />
-                      <button
-                        type="submit"
-                        disabled={subscribeMutation.isPending}
-                        className="h-11 px-4 rounded-md bg-white text-primary text-sm font-bold inline-flex items-center gap-2 hover:bg-secondary transition-colors press disabled:opacity-50"
-                      >
-                        {subscribeMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending</> : 'Subscribe'}
-                      </button>
-                    </form>
-                  ) : (
+                  <div>
+                    <span className="relative chip">The Briefing</span>
+                    <h4 className="relative font-display text-2xl font-bold mt-3 leading-tight">
+                      The stories that matter, in your inbox by sunrise.
+                    </h4>
+                    <p className="relative text-sm text-white/80 mt-2 leading-relaxed">
+                      A free morning digest of the stories that matter — curated, never automated.
+                    </p>
+                  </div>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (newsletterEmail.trim()) {
+                        subscribeMutation.mutate(newsletterEmail.trim(), {
+                          onSuccess: () => {
+                            toast.success("Subscribed! Check your inbox.");
+                            setNewsletterEmail('');
+                          },
+                          onError: (err) => toast.error(err.message),
+                        });
+                      }
+                    }}
+                    className="relative mt-4 flex gap-2"
+                  >
+                    <input
+                      type="email"
+                      value={newsletterEmail}
+                      onChange={(e) => setNewsletterEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      required
+                      className="flex-1 h-11 px-4 rounded-md bg-white/20 text-white placeholder:text-white/60 text-sm border border-white/30 focus:outline-none focus:border-white"
+                    />
                     <button
-                      onClick={() => setShowNewsletter(true)}
-                      className="relative mt-4 h-11 px-5 rounded-md bg-white text-primary text-sm font-bold inline-flex items-center gap-2 hover:bg-secondary transition-colors press"
+                      type="submit"
+                      disabled={subscribeMutation.isPending}
+                      className="h-11 px-4 rounded-md bg-white text-primary text-sm font-bold inline-flex items-center gap-2 hover:bg-secondary transition-colors press disabled:opacity-50 shrink-0"
                     >
-                      Subscribe free <ArrowUpRight className="h-4 w-4" />
+                      {subscribeMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending</> : 'Subscribe'}
                     </button>
-                  )}
+                  </form>
                 </div>
 
                 {/* Live Updates Mini */}
