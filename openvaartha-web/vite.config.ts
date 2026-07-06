@@ -19,6 +19,37 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("lucide-react")) {
+              return "vendor-lucide";
+            }
+            if (
+              id.includes("react") ||
+              id.includes("react-dom") ||
+              id.includes("react-router") ||
+              id.includes("scheduler")
+            ) {
+              return "vendor-react";
+            }
+            if (id.includes("@tanstack") || id.includes("query-core")) {
+              return "vendor-query";
+            }
+            if (id.includes("@mdxeditor")) {
+              return "vendor-mdx";
+            }
+            if (id.includes("recharts") || id.includes("d3")) {
+              return "vendor-charts";
+            }
+            return "vendor-lib"; // remaining third party dependencies
+          }
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({
@@ -79,6 +110,7 @@ export default defineConfig(({ mode }) => ({
         screenshots: [],
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 5000000, // Increase cache size limit to 5 MB
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         runtimeCaching: [
           {
