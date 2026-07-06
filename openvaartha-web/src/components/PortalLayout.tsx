@@ -1,8 +1,10 @@
 import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, Bookmark, History, Settings, ArrowLeft, LogOut, Lock, ArrowUpRight, PenSquare } from "lucide-react";
 import { useLogout } from "@/hooks/use-logout";
+import { apiFetch } from "@/lib/api";
 import Navbar from "./Navbar";
 
 interface NavItem {
@@ -63,7 +65,19 @@ export function PortalLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const logout = useLogout();
   const isAuthed = !!localStorage.getItem('token');
-  const userRole = localStorage.getItem('user_role');
+
+  // Read the role live rather than trusting localStorage's snapshot from
+  // login time — otherwise a contributor approval granted mid-session never
+  // shows the Write tab until the reader manually signs out and back in.
+  // localStorage is only the pre-fetch fallback so the tab doesn't flicker in.
+  const { data: me } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: () => apiFetch<{ role: string }>("/users/me"),
+    enabled: isAuthed,
+    staleTime: 60_000,
+    initialData: isAuthed ? { role: localStorage.getItem('user_role') || 'user' } : undefined,
+  });
+  const userRole = me?.role;
   const isContributor = userRole === "contributor" || userRole === "editor" || userRole === "admin";
 
   const items = [...NAV_ITEMS];
