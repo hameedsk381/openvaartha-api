@@ -162,6 +162,14 @@ const ArticlePage = () => {
   }, []);
   useSEOMeta(article);
 
+  // Record this view in the signed-in reader's history. Fire-and-forget:
+  // history is a convenience, not something a failed request should surface
+  // to the reader as an error.
+  useEffect(() => {
+    if (!article || !localStorage.getItem("token")) return;
+    apiFetch(`/users/me/history/${article.id}`, { method: "POST" }).catch(() => {});
+  }, [article?.id]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
     const onScroll = () => {

@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Newspaper, Bookmark, Clock, Zap, ArrowUpRight, ChevronRight, TrendingUp, Loader2 } from "lucide-react";
+import { Newspaper, Bookmark, ArrowUpRight, ChevronRight, TrendingUp, Loader2 } from "lucide-react";
 import { handleImageFallback } from "@/lib/utils";
 import { useReadingList } from "@/hooks/use-reading-list";
-import { useTrendingArticles, useArticles } from "@/lib/api-hooks";
+import { useTrendingArticles } from "@/lib/api-hooks";
 import { apiFetch } from "@/lib/api";
+import type { Article } from "@/lib/types";
 
 export default function PortalDashboard() {
   const { saved } = useReadingList();
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [history, setHistory] = useState<Article[]>([]);
 
-  const { data: allArticles = [] } = useArticles({ limit: 10 });
   const { data: trending = [] } = useTrendingArticles(1);
 
   useEffect(() => {
@@ -26,16 +27,20 @@ export default function PortalDashboard() {
       }
     };
     fetchUser();
+
+    apiFetch<Article[]>("/users/me/history")
+      .then(setHistory)
+      .catch(() => {});
   }, []);
 
-  const recent = allArticles.slice(0, 5);
+  const recent = history.slice(0, 5);
   const featured = trending[0];
 
+  // Only real, verifiable numbers here — no invented "streak"/"reading time"
+  // fields the backend doesn't track.
   const stats = [
-    { label: "Briefs Read",  value: user?.briefsRead || "124", icon: Newspaper,  suffix: "this month" },
-    { label: "Saved",        value: String(saved.length), icon: Bookmark, suffix: "articles" },
-    { label: "Reading Time", value: user?.readingTime || "42h", icon: Clock,       suffix: "this month" },
-    { label: "Day Streak",   value: user?.streak || "12",  icon: Zap,         suffix: "days" },
+    { label: "Read", value: String(history.length), icon: Newspaper, suffix: "articles" },
+    { label: "Saved", value: String(saved.length), icon: Bookmark, suffix: "articles" },
   ];
 
   if (isLoading) {
@@ -102,11 +107,21 @@ export default function PortalDashboard() {
 
       <div>
         <div className="flex items-center justify-between mb-3">
-          <span className="overline">Recent</span>
-          <Link to="/portal/history" className="text-xs text-primary font-semibold flex items-center gap-0.5 hover:underline underline-offset-2 press">
-            View all <ChevronRight className="h-3 w-3" />
-          </Link>
+          <span className="overline">Recently read</span>
+          {history.length > 0 && (
+            <Link to="/portal/history" className="text-xs text-primary font-semibold flex items-center gap-0.5 hover:underline underline-offset-2 press">
+              View all <ChevronRight className="h-3 w-3" />
+            </Link>
+          )}
         </div>
+        {history.length === 0 ? (
+          <div className="border border-dashed border-border rounded-xl p-6 text-center">
+            <p className="text-sm text-muted-foreground">Nothing read yet — open an article and it'll show up here.</p>
+            <Link to="/" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline underline-offset-2">
+              Browse feed <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          </div>
+        ) : (
         <div className="border border-border rounded-xl overflow-hidden divide-y divide-border">
           {recent.map(art => (
             <Link key={art.id} to={`/article/${art.slug}`} className="flex items-center gap-3 p-3 hover:bg-[hsl(var(--surface))] transition-colors press group/row">
@@ -123,12 +138,13 @@ export default function PortalDashboard() {
             </Link>
           ))}
         </div>
+        )}
       </div>
 
       <div className="border border-border rounded-xl overflow-hidden divide-y divide-border">
         {[
           { label: "Saved Articles",  sub: `${saved.length || 0} saved`,   to: "/portal/saved" },
-          { label: "Reading History", sub: "Browse history",               to: "/portal/history" },
+          { label: "Reading History", sub: history.length > 0 ? `${history.length} read` : "Browse history", to: "/portal/history" },
           { label: "Settings",        sub: "Manage preferences",             to: "/portal/settings" },
         ].map(({ label, sub, to }) => (
           <Link key={to} to={to} className="flex items-center justify-between p-4 hover:bg-[hsl(var(--surface))] transition-colors press">
