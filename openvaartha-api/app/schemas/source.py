@@ -9,6 +9,7 @@ class SourceCreate(BaseModel):
     category_id: str
     language: str = "en"
     active: bool = True
+    auto_publish: bool = True
 
 
 class SourceUpdate(BaseModel):
@@ -17,6 +18,7 @@ class SourceUpdate(BaseModel):
     category_id: Optional[str] = None
     language: Optional[str] = None
     active: Optional[bool] = None
+    auto_publish: Optional[bool] = None
 
 
 class Source(BaseModel):
@@ -26,6 +28,7 @@ class Source(BaseModel):
     category_id: str
     language: str = "en"
     active: bool = True
+    auto_publish: bool = True
     last_fetched_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     article_count: int = 0

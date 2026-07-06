@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import re
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import uuid4
@@ -13,6 +14,31 @@ from app.services.ai_service import generate_article
 from app.services.source_service import set_last_fetched
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_thumbnail(entry) -> Optional[str]:
+    """Try to pull an image URL from various RSS/Atom media extensions."""
+    # media:content or media:thumbnail (feedparser normalises these)
+    for attr in ("media_content", "media_thumbnail"):
+        media = getattr(entry, attr, None)
+        if media and isinstance(media, list):
+            url = media[0].get("url", "")
+            if url:
+                return url
+
+    # <enclosure> with image mime type
+    for link in getattr(entry, "links", []):
+        if link.get("type", "").startswith("image/"):
+            return link.get("href", "")
+
+    # Fallback: first <img> tag in content/summary HTML
+    for html_field in ("summary", "description"):
+        html = getattr(entry, html_field, "") or ""
+        match = re.search(r'<img[^>]+src=["\']([^"\'>]+)', html)
+        if match:
+            return match.group(1)
+
+    return None
 
 
 def _parse_date(entry) -> Optional[datetime]:
@@ -77,6 +103,7 @@ async def fetch_and_parse(feed_url: str) -> list[dict]:
             "content": content_html,
             "published": published,
             "author": sanitize_text(getattr(entry, "author", "") or settings.APP_NAME),
+            "thumbnail": _extract_thumbnail(entry),
         })
 
     return entries
@@ -105,6 +132,7 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
     last_fetched = source.get("last_fetched_at")
     category_id = source.get("category_id", "")
     language = source.get("language", "en")
+    auto_publish = source.get("auto_publish", settings.AUTO_PUBLISH_RSS)
     new_count = 0
 
     for entry in entries:
@@ -147,11 +175,11 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
             "category_id": category_id,
             "read_time": _estimate_read_time(result.get("body", "")),
             "language": language,
-            "status": "published" if settings.AUTO_PUBLISH_RSS else "draft",
+            "status": "published" if auto_publish else "draft",
             "is_trending": False,
             "is_breaking": False,
             "is_editor_pick": False,
-            "thumbnail_url": None,
+            "thumbnail_url": entry.get("thumbnail"),
             "instagram_url": None,
             "published_at": published_dt,
             "last_updated": datetime.now(timezone.utc),

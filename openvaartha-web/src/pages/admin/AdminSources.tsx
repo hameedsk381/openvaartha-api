@@ -18,6 +18,8 @@ type RssSource = {
   category_id?: string;
   language: string;
   active: boolean;
+  autoPublish?: boolean;
+  auto_publish?: boolean;
   lastFetchedAt?: string;
   last_fetched_at?: string;
   createdAt?: string;
@@ -37,9 +39,10 @@ type DraftSource = {
   category_id: string;
   language: string;
   active: boolean;
+  auto_publish: boolean;
 };
 
-const emptyDraft: DraftSource = { name: "", feed_url: "", category_id: "", language: "en", active: true };
+const emptyDraft: DraftSource = { name: "", feed_url: "", category_id: "", language: "en", active: true, auto_publish: true };
 // English-only portal — sources are not tagged by language beyond this.
 const LANGUAGES = [{ value: "en", label: "English" }];
 
@@ -132,6 +135,7 @@ export default function AdminSources() {
       category_id: source.categoryId || source.category_id || "",
       language: source.language,
       active: source.active ?? true,
+      auto_publish: source.autoPublish ?? source.auto_publish ?? true,
     });
   };
 
@@ -179,7 +183,7 @@ export default function AdminSources() {
         </div>
       )}
 
-      <form onSubmit={onSubmit} className="border border-border rounded-xl p-5 grid md:grid-cols-[1fr_1fr_160px_120px_auto] gap-4 items-end">
+      <form onSubmit={onSubmit} className="border border-border rounded-xl p-5 grid md:grid-cols-[1fr_1fr_160px_120px_130px_auto] gap-4 items-end">
         <div className="space-y-2">
           <Label>Name</Label>
           <Input
@@ -227,6 +231,21 @@ export default function AdminSources() {
               {LANGUAGES.map((l) => (
                 <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Publish Mode</Label>
+          <Select
+            value={draft.auto_publish ? "true" : "false"}
+            onValueChange={(v) => setDraft({ ...draft, auto_publish: v === "true" })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true">Auto-publish</SelectItem>
+              <SelectItem value="false">Save as Draft</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -320,6 +339,24 @@ export default function AdminSources() {
                   ) : (
                     <span className={`text-xs font-medium ${source.active ? "text-green-600" : "text-muted-foreground"}`}>
                       {source.active ? "Active" : "Inactive"}
+                    </span>
+                  )}
+                </div>
+                <div className="mb-1 md:mb-0 flex md:block items-center gap-2">
+                  <span className="text-xs text-muted-foreground md:hidden">Auto-publish: </span>
+                  {isEditing ? (
+                    <Select value={edit.auto_publish ? "true" : "false"} onValueChange={(v) => setEdit({ ...edit, auto_publish: v === "true" })}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="true">Auto</SelectItem>
+                        <SelectItem value="false">Draft</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className={`text-xs font-medium ${(source.autoPublish ?? source.auto_publish ?? true) ? "text-blue-600" : "text-amber-600"}`}>
+                      {(source.autoPublish ?? source.auto_publish ?? true) ? "Auto-publish" : "Draft only"}
                     </span>
                   )}
                 </div>

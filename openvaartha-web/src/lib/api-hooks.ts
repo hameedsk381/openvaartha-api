@@ -46,6 +46,18 @@ export function useEditorPicks(limit = 10) {
   });
 }
 
+export function useArticlesByCategory(categoryId: string | undefined, limit = 4) {
+  const query = new URLSearchParams({ skip: "0", limit: String(limit) });
+  if (categoryId) query.set("category_id", categoryId);
+
+  return useQuery<Article[]>({
+    queryKey: ["articles", "by-category", categoryId, limit],
+    queryFn: () => apiFetch<Article[]>(`/articles/?${query}`),
+    enabled: !!categoryId,
+    placeholderData: [],
+  });
+}
+
 export function useExplainers(skip = 0, limit = 20) {
   return useQuery<Article[]>({
     queryKey: ["articles", "explainers", skip, limit],

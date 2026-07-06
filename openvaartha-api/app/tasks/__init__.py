@@ -16,7 +16,7 @@ celery_app = Celery(
 celery_app.conf.beat_schedule = {
     "process-rss-sources": {
         "task": "app.tasks.rss_generator.process_all_sources",
-        "schedule": crontab(minute="*/30"),  # every 30 minutes
+        "schedule": crontab(minute="*/15"),  # every 15 minutes
     },
 }
 

@@ -6,15 +6,22 @@ import HeroCarousel from '../components/HeroCarousel';
 import FeedSkeleton from '../components/FeedSkeleton';
 import Footer from '@/components/Footer';
 import { handleImageFallback } from '@/lib/utils';
-import { categoryColors } from '@/lib/types';
-import { Clock, Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame, Loader2 } from 'lucide-react';
+import { categoryEmojis } from '@/lib/types';
+import { Clock, Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame, Loader2, ChevronRight, Radio } from 'lucide-react';
 import { toast } from 'sonner';
 import { useReadingList } from '@/hooks/use-reading-list';
-import { useArticles, useTrendingArticles, useCategories, useNewsletterSubscribe } from '@/lib/api-hooks';
-import type { Article } from '@/lib/types';
+import {
+  useArticles,
+  useTrendingArticles,
+  useEditorPicks,
+  useCategories,
+  useNewsletterSubscribe,
+  useArticlesByCategory,
+  useLiveUpdates,
+} from '@/lib/api-hooks';
+import type { Article, Category } from '@/lib/types';
 
-
-
+/* ─── helpers ────────────────────────────────────────── */
 
 const relativeTime = (iso: string | null | undefined) => {
   if (!iso) return '';
@@ -27,6 +34,103 @@ const relativeTime = (iso: string | null | undefined) => {
   if (d < 7) return `${d}d ago`;
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 };
+
+/* ─── Category Strip Component ───────────────────────── */
+
+function CategoryStrip({ category }: { category: Category }) {
+  const { data: articles = [] } = useArticlesByCategory(category.id, 4);
+
+  if (articles.length === 0) return null;
+
+  return (
+    <div className="py-6 sm:py-8">
+      <div className="flex items-baseline justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-base sm:text-lg">{categoryEmojis[category.name] || '📰'}</span>
+          <h3 className="font-display text-lg sm:text-xl font-bold tracking-tight">{category.name}</h3>
+        </div>
+        <Link
+          to={`/?category=${category.name}`}
+          className="text-[11px] font-bold uppercase tracking-[0.15em] text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+        >
+          View all <ChevronRight className="h-3 w-3" />
+        </Link>
+      </div>
+
+      {/* Mobile: horizontal scroll, Desktop: 4-col grid */}
+      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide no-scrollbar sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible sm:pb-0">
+        {articles.map((art) => (
+          <Link
+            key={art.id}
+            to={`/article/${art.slug}`}
+            className="group flex-shrink-0 w-[260px] sm:w-auto"
+          >
+            {art.thumbnailUrl && (
+              <div className="aspect-[16/10] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-3">
+                <img
+                  src={art.thumbnailUrl}
+                  alt={art.title}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                  onError={handleImageFallback}
+                />
+              </div>
+            )}
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary">{art.category}</span>
+              <span className="h-1 w-1 rounded-full bg-border" />
+              <span className="text-[10px] text-muted-foreground">{relativeTime(art.publishedAt)}</span>
+            </div>
+            <h4 className="font-display text-sm sm:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-3">
+              {art.title}
+            </h4>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Live Updates Mini-Feed ─────────────────────────── */
+
+function LiveMini() {
+  const { data: updates = [] } = useLiveUpdates(5);
+
+  if (updates.length === 0) return null;
+
+  return (
+    <div className="border-t border-border">
+      <div className="px-4 sm:px-6 lg:px-6 py-4 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+          </span>
+          <h3 className="font-display text-sm font-bold uppercase tracking-wide">Live</h3>
+        </div>
+        <Link to="/live" className="text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+          See all <ChevronRight className="h-3 w-3" />
+        </Link>
+      </div>
+      <ul className="divide-y divide-border">
+        {updates.map((u) => (
+          <li key={u.id} className="px-4 sm:px-6 lg:px-6 py-3">
+            <Link to={`/article/${u.slug}`} className="group">
+              <span className="text-[10px] text-muted-foreground font-medium">
+                {new Date(u.time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+              <p className="text-xs font-semibold leading-snug text-foreground group-hover:text-primary transition-colors mt-0.5 line-clamp-2">
+                {u.text || u.title}
+              </p>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/* ─── Main Page ──────────────────────────────────────── */
 
 export default function Index() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -47,10 +151,10 @@ export default function Index() {
     );
   }, [categories, selectedCat]);
 
-  const [limit, setLimit] = useState(15);
+  const [limit, setLimit] = useState(40);
 
   useEffect(() => {
-    setLimit(15);
+    setLimit(40);
   }, [selectedCat]);
 
   const { data: articlesData = [], isFetching } = useArticles({
@@ -58,9 +162,8 @@ export default function Index() {
     limit
   });
 
-  const { data: trendingData = [] } = useTrendingArticles(5);
-
-  // Unused scroll effect removed since navbar contains unified tabs
+  const { data: trendingData = [] } = useTrendingArticles(8);
+  const { data: editorPicks = [] } = useEditorPicks(6);
 
   const setCategory = (cat: string) => {
     if (cat === selectedCat) return;
@@ -79,10 +182,10 @@ export default function Index() {
   const isFiltered = selectedCat.toLowerCase() !== 'all';
 
   const hero = filtered[0];
-  const topRail = filtered.slice(1, 4);
-  const editor = filtered.slice(4, 7);
-  const feed = filtered.slice(7);
-  const trending = useMemo(() => trendingData.slice(0, 5), [trendingData]);
+  const topRail = filtered.slice(1, 5);
+  const feed = filtered.slice(5);
+  const trending = useMemo(() => trendingData.slice(0, 8), [trendingData]);
+  const picks = useMemo(() => editorPicks.slice(0, 6), [editorPicks]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -106,35 +209,37 @@ export default function Index() {
             </div>
           )}
 
+          {/* ═══════════════════════════════════════════════════════════ */}
+          {/* HERO BLOCK                                                 */}
+          {/* ═══════════════════════════════════════════════════════════ */}
+
           {hero && (
             <>
-              {/* One hero per breakpoint: the swipeable carousel is the mobile
-                  hero; the hero block + top-stories rail below is the desktop
-                  hero. Rendering both stacked on a phone duplicated the same
-                  stories and overflowed long titles into each other. */}
+              {/* Mobile: Swipeable carousel */}
               <div className="lg:hidden">
                 <HeroCarousel articles={filtered.slice(0, 5)} />
               </div>
 
-            <section className="hidden lg:block border-b border-border">
-              <div className="grid grid-cols-1 lg:grid-cols-12">
-                <div className="lg:col-span-8 lg:border-r lg:border-border">
-                  <Link
-                    to={`/article/${hero.slug}`}
-                    className="block group press relative"
-                  >
-                    <div className="relative overflow-hidden aspect-[16/10] sm:aspect-[16/9] lg:aspect-[16/10] bg-[hsl(var(--surface-2))] bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900 border-b border-border">
-                      {hero.thumbnailUrl && (
-                        <img
-                          src={hero.thumbnailUrl}
-                          alt={hero.title}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                          loading="eager"
-                          onError={handleImageFallback}
-                        />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
-                    </div>
+              {/* Desktop: Hero + Top Stories sidebar */}
+              <section className="hidden lg:block border-b border-border">
+                <div className="grid grid-cols-1 lg:grid-cols-12">
+                  <div className="lg:col-span-8 lg:border-r lg:border-border">
+                    <Link
+                      to={`/article/${hero.slug}`}
+                      className="block group press relative"
+                    >
+                      <div className="relative overflow-hidden aspect-[16/10] bg-[hsl(var(--surface-2))] bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900 border-b border-border">
+                        {hero.thumbnailUrl && (
+                          <img
+                            src={hero.thumbnailUrl}
+                            alt={hero.title}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                            loading="eager"
+                            onError={handleImageFallback}
+                          />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                      </div>
 
                       <button
                         onClick={(e) => { e.preventDefault(); toggleSave(hero as any); }}
@@ -174,60 +279,76 @@ export default function Index() {
                             <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                           </span>
                         </div>
+                      </div>
+                    </Link>
                   </div>
-                </Link>
-              </div>
 
-                <aside className="lg:col-span-4 flex flex-col">
-                  <div className="px-4 sm:px-6 lg:px-6 py-4 lg:py-5 border-b border-border flex items-baseline justify-between">
-                    <h3 className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
-                      Top stories
-                    </h3>
-                    <span className="overline">Now</span>
-                  </div>
-                  {topRail.map((art, i) => (
-                    <Link
-                      key={art.id}
-                      to={`/article/${art.slug}`}
-                      className={`group press flex gap-4 px-4 sm:px-6 lg:px-6 py-4 hover:bg-[hsl(var(--surface))] transition-colors ${
-                        i !== topRail.length - 1 ? 'border-b border-border' : ''
-                      }`}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className="overline text-primary">{art.category}</span>
-                          <span className="h-1 w-1 rounded-full bg-border" />
-                          <span className="text-[10px] text-muted-foreground font-medium tracking-wide">
-                            {relativeTime(art.publishedAt)}
+                  <aside className="lg:col-span-4 flex flex-col">
+                    <div className="px-6 py-4 lg:py-5 border-b border-border flex items-baseline justify-between">
+                      <h3 className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
+                        Top stories
+                      </h3>
+                      <span className="overline">Now</span>
+                    </div>
+                    {topRail.map((art, i) => (
+                      <Link
+                        key={art.id}
+                        to={`/article/${art.slug}`}
+                        className={`group press flex gap-4 px-6 py-4 hover:bg-[hsl(var(--surface))] transition-colors ${
+                          i !== topRail.length - 1 ? 'border-b border-border' : ''
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="overline text-primary">{art.category}</span>
+                            <span className="h-1 w-1 rounded-full bg-border" />
+                            <span className="text-[10px] text-muted-foreground font-medium tracking-wide">
+                              {relativeTime(art.publishedAt)}
+                            </span>
+                          </div>
+                          <h4 className="font-display text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-3">
+                            {art.title}
+                          </h4>
+                          <span className="flex items-center gap-1 mt-2 text-[11px] text-muted-foreground font-medium">
+                            <Clock className="h-3 w-3" /> {art.readTime}
                           </span>
                         </div>
-                        <h4 className="font-display text-[15px] sm:text-base font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-3">
-                          {art.title}
-                        </h4>
-                        <span className="flex items-center gap-1 mt-2 text-[11px] text-muted-foreground font-medium">
-                          <Clock className="h-3 w-3" /> {art.readTime}
-                        </span>
-                      </div>
-                      {art.thumbnailUrl && (
-                        <div className="w-24 h-20 sm:w-28 sm:h-24 shrink-0 overflow-hidden rounded-md bg-[hsl(var(--surface-2))]">
-                          <img
-                            src={art.thumbnailUrl}
-                            alt=""
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            loading="lazy"
-                            onError={handleImageFallback}
-                          />
-                        </div>
-                      )}
-                    </Link>
-                  ))}
-                </aside>
-              </div>
-            </section>
+                        {art.thumbnailUrl && (
+                          <div className="w-24 h-20 sm:w-28 sm:h-24 shrink-0 overflow-hidden rounded-md bg-[hsl(var(--surface-2))]">
+                            <img
+                              src={art.thumbnailUrl}
+                              alt={art.title}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              loading="lazy"
+                              onError={handleImageFallback}
+                            />
+                          </div>
+                        )}
+                      </Link>
+                    ))}
+                  </aside>
+                </div>
+              </section>
             </>
           )}
 
-          {editor.length > 0 && !switching && (
+          {/* ═══════════════════════════════════════════════════════════ */}
+          {/* CATEGORY QUICK STRIPS (only on "All" view)                */}
+          {/* ═══════════════════════════════════════════════════════════ */}
+
+          {!isFiltered && categories.length > 0 && (
+            <section className="border-b border-border px-4 sm:px-6 lg:px-10 divide-y divide-border">
+              {categories.slice(0, 6).map((cat) => (
+                <CategoryStrip key={cat.id} category={cat} />
+              ))}
+            </section>
+          )}
+
+          {/* ═══════════════════════════════════════════════════════════ */}
+          {/* EDITOR'S PICKS                                            */}
+          {/* ═══════════════════════════════════════════════════════════ */}
+
+          {picks.length > 0 && !switching && !isFiltered && (
             <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-8 sm:py-12">
               <div className="flex items-baseline justify-between mb-6 sm:mb-8">
                 <div>
@@ -245,7 +366,7 @@ export default function Index() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                {editor.map(art => (
+                {picks.map(art => (
                   <Link
                     key={art.id}
                     to={`/article/${art.slug}`}
@@ -255,7 +376,7 @@ export default function Index() {
                       <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
                         <img
                           src={art.thumbnailUrl}
-                          alt=""
+                          alt={art.title}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                           loading="lazy"
                           onError={handleImageFallback}
@@ -285,6 +406,10 @@ export default function Index() {
               </div>
             </section>
           )}
+
+          {/* ═══════════════════════════════════════════════════════════ */}
+          {/* MAIN FEED + TRENDING SIDEBAR                              */}
+          {/* ═══════════════════════════════════════════════════════════ */}
 
           <section className="grid grid-cols-1 lg:grid-cols-12">
             <div className="lg:col-span-8 lg:border-r lg:border-border">
@@ -344,7 +469,7 @@ export default function Index() {
                             <div className="w-24 h-20 sm:w-32 sm:h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
                               <img
                                 src={art.thumbnailUrl}
-                                alt=""
+                                alt={art.title}
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 loading="lazy"
                                 onError={handleImageFallback}
@@ -364,11 +489,11 @@ export default function Index() {
                     </article>
                   ))}
 
-                  {/* Load More Button */}
+                  {/* Load More */}
                   {articlesData.length >= limit && (
                     <div className="flex justify-center p-6 border-b border-border">
                       <button
-                        onClick={() => setLimit(prev => prev + 15)}
+                        onClick={() => setLimit(prev => prev + 20)}
                         disabled={isFetching}
                         className="w-full max-w-xs h-11 rounded-md border border-border bg-background text-foreground text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface))] transition-colors press disabled:opacity-50"
                       >
@@ -384,8 +509,10 @@ export default function Index() {
               )}
             </div>
 
+            {/* ── Sticky Sidebar ──────────────────────────────────── */}
             <aside className="lg:col-span-4">
               <div className="lg:sticky lg:top-[140px]">
+                {/* Trending */}
                 <div className="px-4 sm:px-6 lg:px-6 py-5 border-b border-border flex items-baseline justify-between">
                   <div>
                     <span className="overline text-primary">Most read</span>
@@ -414,6 +541,7 @@ export default function Index() {
                   ))}
                 </ol>
 
+                {/* Newsletter CTA */}
                 <div className="mx-4 sm:mx-6 lg:mx-6 my-6 p-6 rounded-2xl gradient-maroon text-white relative overflow-hidden border-2 border-foreground shadow-sticker">
                   <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent_60%)]" />
                   <span className="relative chip">The Briefing</span>
@@ -465,6 +593,9 @@ export default function Index() {
                     </button>
                   )}
                 </div>
+
+                {/* Live Updates Mini */}
+                <LiveMini />
               </div>
             </aside>
           </section>

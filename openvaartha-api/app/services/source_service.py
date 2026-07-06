@@ -15,6 +15,7 @@ async def create_source(db: AsyncIOMotorDatabase, data: SourceCreate) -> dict:
         "category_id": data.category_id,
         "language": data.language,
         "active": data.active,
+        "auto_publish": data.auto_publish,
         "last_fetched_at": None,
         "created_at": datetime.now(timezone.utc),
     }
