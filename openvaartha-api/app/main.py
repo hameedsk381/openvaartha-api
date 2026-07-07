@@ -72,6 +72,26 @@ def health_check():
     }
 
 
+@app.get("/health/env")
+def env_check():
+    # Helper to check if string contains actual config and not default fallback placeholders
+    return {
+        "MONGODB_URL_set": bool(settings.MONGODB_URL),
+        "REDIS_URL_set": bool(settings.REDIS_URL),
+        "GROQ_API_KEY_set": bool(settings.GROQ_API_KEY),
+        "JWT_SECRET_KEY_configured": bool(settings.JWT_SECRET_KEY and settings.JWT_SECRET_KEY != "your-jwt-secret-key-change-in-production"),
+        "GOOGLE_CLIENT_ID_set": bool(settings.GOOGLE_CLIENT_ID),
+        "GCS_BUCKET_NAME_set": bool(settings.GCS_BUCKET_NAME),
+        "SMTP_HOST_set": bool(settings.SMTP_HOST),
+        "SMTP_USER_set": bool(settings.SMTP_USER),
+        "SMTP_PASSWORD_set": bool(settings.SMTP_PASSWORD),
+        "NEWS_API_KEY_set": bool(settings.NEWS_API_KEY),
+        "MEDIASTACK_API_KEY_set": bool(settings.MEDIASTACK_API_KEY),
+        "INSTAGRAM_ACCESS_TOKEN_set": bool(settings.INSTAGRAM_ACCESS_TOKEN),
+        "INSTAGRAM_USER_ID_set": bool(settings.INSTAGRAM_USER_ID),
+    }
+
+
 @app.on_event("startup")
 async def startup_checks():
     await ensure_article_indexes(db)
