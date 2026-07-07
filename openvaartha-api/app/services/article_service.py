@@ -28,7 +28,7 @@ def _json_default(value):
 
 
 def _save_base64_thumbnail(thumbnail_url: str) -> str:
-    """Save a base64 encoded image to the media directory and return its public URL path."""
+    """Save a base64 encoded image to Google Cloud Storage (GCS) or local media directory."""
     if not thumbnail_url or not thumbnail_url.startswith("data:image/"):
         return thumbnail_url
 
@@ -48,9 +48,25 @@ def _save_base64_thumbnail(thumbnail_url: str) -> str:
             
         file_bytes = base64.b64decode(base64_data)
         filename = f"{uuid.uuid4().hex}.{ext}"
+
+        # 1. Use Google Cloud Storage if configured
+        if settings.GCS_BUCKET_NAME:
+            try:
+                from google.cloud import storage
+                client = storage.Client()
+                bucket = client.bucket(settings.GCS_BUCKET_NAME)
+                blob = bucket.blob(filename)
+                
+                # Upload the image bytes
+                blob.upload_from_string(file_bytes, content_type=f"image/{ext}")
+                
+                # If GCS bucket has public access, return the public GCS URL
+                return f"https://storage.googleapis.com/{settings.GCS_BUCKET_NAME}/{filename}"
+            except Exception as e:
+                # Log error and fall back to local disk saving
+                print(f"GCS upload failed, falling back to local storage: {e}")
         
-        # Save path: we create a local 'media' directory.
-        # Since uvicorn runs in /app, saving to './media' puts it in /app/media/
+        # 2. Fallback to Local Disk Saving
         media_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "media")
         os.makedirs(media_dir, exist_ok=True)
         

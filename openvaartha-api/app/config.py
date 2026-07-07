@@ -54,6 +54,9 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
 
+    # Google Cloud Storage (GCS)
+    GCS_BUCKET_NAME: str = ""
+
     # Google Sign-In (verifies the ID token's audience — no client secret
     # needed since the frontend uses Google Identity Services' implicit flow)
     GOOGLE_CLIENT_ID: str = ""
