@@ -115,6 +115,15 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
         )
     await db["articles"].create_index("slug", unique=True)
     await db["articles"].create_index("status")
+    
+    # Compound indexes for fast, sorted lookups without memory sorts
+    await db["articles"].create_index([("status", 1), ("published_at", -1)])
+    await db["articles"].create_index([("category_id", 1), ("status", 1), ("published_at", -1)])
+    await db["articles"].create_index([("is_breaking", 1), ("status", 1), ("published_at", -1)])
+    await db["articles"].create_index([("is_opinion", 1), ("status", 1), ("published_at", -1)])
+    await db["articles"].create_index([("is_trending", 1), ("status", 1)])
+    await db["articles"].create_index([("is_editor_pick", 1), ("status", 1)])
+
     await db["article_content"].create_index("article_id")
     await db["reading_history"].create_index([("user_id", 1), ("article_id", 1)], unique=True)
     await ensure_comment_indexes(db)

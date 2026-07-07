@@ -59,7 +59,15 @@ const GlobalLoading = () => (
   </div>
 );
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // Keep cached data for 5 minutes before refetching
+      refetchOnWindowFocus: false, // Avoid refetching when user switches tabs
+      refetchOnReconnect: false,   // Avoid refetching on network reconnect
+    },
+  },
+});
 
 const App = () => {
   useEffect(() => {
