@@ -39,8 +39,6 @@ services:
       context: .
       dockerfile: openvaartha-api/Dockerfile
     environment: *app-environment
-    ports:
-      - "${API_PORT:-8000}:8000"
     depends_on:
       mongo:
         condition: service_healthy
