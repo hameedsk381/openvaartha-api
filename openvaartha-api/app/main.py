@@ -146,6 +146,22 @@ async def test_google_endpoint():
 
 @app.on_event("startup")
 async def startup_checks():
+    import os
+    import base64
+    
+    # Easily ingest Google Service Account credentials from a base64 string
+    b64_creds = os.getenv("GOOGLE_CREDENTIALS_B64")
+    if b64_creds:
+        try:
+            creds_json = base64.b64decode(b64_creds).decode("utf-8")
+            creds_path = "/tmp/google-credentials.json"
+            with open(creds_path, "w") as f:
+                f.write(creds_json)
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path
+            print("Successfully decoded and set GOOGLE_APPLICATION_CREDENTIALS from GOOGLE_CREDENTIALS_B64")
+        except Exception as e:
+            print(f"Failed to decode GOOGLE_CREDENTIALS_B64: {e}")
+
     await ensure_article_indexes(db)
     await ensure_category_indexes(db)
     await ensure_admin_user(db)
