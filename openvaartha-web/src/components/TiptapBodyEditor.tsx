@@ -121,10 +121,9 @@ export default function TiptapBodyEditor({ value, onChange }: Props) {
     content: textToHtml(value),
     onUpdate: ({ editor: ed }) => {
       const html = ed.getHTML();
-      const text = htmlToText(html);
-      if (text !== lastEmit.current) {
-        lastEmit.current = text;
-        onChange(text);
+      if (html !== lastEmit.current) {
+        lastEmit.current = html;
+        onChange(html);
       }
     },
     editorProps: {

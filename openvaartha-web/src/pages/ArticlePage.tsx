@@ -26,6 +26,8 @@ const timeAgo = (dateStr: string): string => {
   return `${Math.floor(hrs / 24)}d ago`;
 };
 
+const isHtml = (str: string): boolean => /<[a-z][\s\S]*>/i.test(str);
+
 const TEXT_SIZES = ["text-base", "text-lg", "text-xl"] as const;
 const TEXT_SIZE_LABELS = ["A−", "A", "A+"];
 
@@ -485,20 +487,25 @@ const ArticlePage = () => {
               </section>
             )}
 
-            <div id="article-body" className="article-body">
-              {bodyParas.map((para, i) => (
-                <p
-                  key={i}
-                  className={cn(
-                    textSize,
-                    "transition-[font-size]",
-                    i === 0 &&
-                      "first-letter:font-serif first-letter:text-6xl sm:first-letter:text-7xl first-letter:font-bold first-letter:text-primary first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:leading-[0.85]"
-                  )}
-                >
-                  {para}
-                </p>
-              ))}
+            <div id="article-body" className={cn("article-body", textSize, "transition-[font-size]")}>
+              {isHtml(article.content?.body || "") ? (
+                <div 
+                  className="prose prose-sm sm:prose-base md:prose-lg max-w-none dark:prose-invert font-serif leading-relaxed prose-headings:font-bold prose-a:text-primary prose-a:underline"
+                  dangerouslySetInnerHTML={{ __html: article.content?.body || "" }} 
+                />
+              ) : (
+                bodyParas.map((para, i) => (
+                  <p
+                    key={i}
+                    className={cn(
+                      i === 0 &&
+                        "first-letter:font-serif first-letter:text-6xl sm:first-letter:text-7xl first-letter:font-bold first-letter:text-primary first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:leading-[0.85]"
+                    )}
+                  >
+                    {para}
+                  </p>
+                ))
+              )}
             </div>
 
             {article.content?.timeline && article.content.timeline.length > 0 && (
