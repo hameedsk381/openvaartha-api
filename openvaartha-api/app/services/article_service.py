@@ -209,6 +209,43 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
                 print(f"Migrated base64 thumbnail to file for article {art.get('slug')}")
     except Exception as e:
         print(f"Failed to migrate base64 thumbnails: {e}")
+
+    # Auto-migration for existing non-webp local file thumbnails on disk
+    try:
+        media_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "media")
+        async for art in db["articles"].find({"thumbnail_url": {"$regex": "^/media/.*\\.(png|jpg|jpeg)$"}}):
+            old_url = art.get("thumbnail_url")
+            filename = old_url.split("/media/", 1)[1]
+            old_file_path = os.path.join(media_dir, filename)
+            
+            if os.path.exists(old_file_path):
+                from PIL import Image
+                import io
+                
+                with open(old_file_path, "rb") as f:
+                    file_bytes = f.read()
+                    
+                img = Image.open(io.BytesIO(file_bytes))
+                if img.mode in ("RGBA", "P"):
+                    img = img.convert("RGB")
+                
+                max_width = 800
+                if img.width > max_width:
+                    ratio = max_width / float(img.width)
+                    new_height = int(float(img.height) * float(ratio))
+                    img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
+                
+                new_filename = f"{os.path.splitext(filename)[0]}.webp"
+                new_file_path = os.path.join(media_dir, new_filename)
+                
+                img.save(new_file_path, format="WEBP", quality=75)
+                
+                new_url = f"/media/{new_filename}"
+                await db["articles"].update_one({"_id": art["_id"]}, {"$set": {"thumbnail_url": new_url}})
+                os.remove(old_file_path)
+                print(f"Compressed existing local thumbnail {filename} to WebP format")
+    except Exception as e:
+        print(f"Failed to migrate existing local thumbnails: {e}")
     # Backfill: documents created before the status field defaulted to draft
     # would be invisible to the public list. Treat un-tagged docs as published
     # so existing inventories migrate cleanly.
