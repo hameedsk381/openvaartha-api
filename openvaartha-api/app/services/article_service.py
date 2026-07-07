@@ -199,53 +199,39 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
     await db["reading_history"].create_index([("user_id", 1), ("article_id", 1)], unique=True)
     await ensure_comment_indexes(db)
 
-    # Auto-migration for existing base64 thumbnails in database
+    # Auto-migration for local files and base64 thumbnails (to GCS if configured)
     try:
-        async for art in db["articles"].find({"thumbnail_url": {"$regex": "^data:image/"}}):
+        # Match anything that isn't a normal URL (e.g., data:image/... or /media/...)
+        async for art in db["articles"].find({"thumbnail_url": {"$not": {"$regex": "^https?://"}} }):
             old_url = art.get("thumbnail_url")
-            new_url = _save_base64_thumbnail(old_url)
-            if new_url != old_url:
-                await db["articles"].update_one({"_id": art["_id"]}, {"$set": {"thumbnail_url": new_url}})
-                print(f"Migrated base64 thumbnail to file for article {art.get('slug')}")
-    except Exception as e:
-        print(f"Failed to migrate base64 thumbnails: {e}")
+            if not old_url:
+                continue
 
-    # Auto-migration for existing non-webp local file thumbnails on disk
-    try:
-        media_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "media")
-        async for art in db["articles"].find({"thumbnail_url": {"$regex": "^/media/.*\\.(png|jpg|jpeg)$"}}):
-            old_url = art.get("thumbnail_url")
-            filename = old_url.split("/media/", 1)[1]
-            old_file_path = os.path.join(media_dir, filename)
-            
-            if os.path.exists(old_file_path):
-                from PIL import Image
-                import io
-                
-                with open(old_file_path, "rb") as f:
-                    file_bytes = f.read()
-                    
-                img = Image.open(io.BytesIO(file_bytes))
-                if img.mode in ("RGBA", "P"):
-                    img = img.convert("RGB")
-                
-                max_width = 800
-                if img.width > max_width:
-                    ratio = max_width / float(img.width)
-                    new_height = int(float(img.height) * float(ratio))
-                    img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
-                
-                new_filename = f"{os.path.splitext(filename)[0]}.webp"
-                new_file_path = os.path.join(media_dir, new_filename)
-                
-                img.save(new_file_path, format="WEBP", quality=75)
-                
-                new_url = f"/media/{new_filename}"
-                await db["articles"].update_one({"_id": art["_id"]}, {"$set": {"thumbnail_url": new_url}})
-                os.remove(old_file_path)
-                print(f"Compressed existing local thumbnail {filename} to WebP format")
+            new_url = None
+            if old_url.startswith("data:image/"):
+                new_url = _save_base64_thumbnail(old_url)
+            elif old_url.startswith("/media/"):
+                import os
+                import base64
+                filename = old_url.split("/")[-1]
+                media_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "media")
+                file_path = os.path.join(media_dir, filename)
+                if os.path.exists(file_path):
+                    with open(file_path, "rb") as f:
+                        file_bytes = f.read()
+                    ext = filename.split(".")[-1].lower()
+                    mime_type = f"image/{ext}" if ext != "jpg" else "image/jpeg"
+                    b64_string = f"data:{mime_type};base64,{base64.b64encode(file_bytes).decode('utf-8')}"
+                    new_url = _save_base64_thumbnail(b64_string)
+
+            # If it migrated successfully to a new URL (and didn't just loop)
+            if new_url and new_url != old_url:
+                # To prevent endless loops if GCS is missing and it falls back to /media/
+                if new_url.startswith("http") or (old_url.startswith("data:") and new_url.startswith("/media/")):
+                    await db["articles"].update_one({"_id": art["_id"]}, {"$set": {"thumbnail_url": new_url}})
+                    print(f"Migrated thumbnail to {new_url} for article {art.get('slug')}")
     except Exception as e:
-        print(f"Failed to migrate existing local thumbnails: {e}")
+        print(f"Error during thumbnail migration: {e}")
     # Backfill: documents created before the status field defaulted to draft
     # would be invisible to the public list. Treat un-tagged docs as published
     # so existing inventories migrate cleanly.
