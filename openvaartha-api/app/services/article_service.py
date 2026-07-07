@@ -496,7 +496,7 @@ async def search_articles(db: AsyncIOMotorDatabase, query: str, skip: int = 0, l
     except OperationFailure:
         return []
 
-    return [await _populate_article_extras(db, a) for a in articles]
+    return await _populate_articles_bulk(db, articles)
 
 
 async def get_related_articles(
@@ -516,7 +516,7 @@ async def get_related_articles(
     ).sort("published_at", -1).limit(limit).to_list(length=limit)
 
     if len(same_category) >= limit:
-        return [await _populate_article_extras(db, a) for a in same_category]
+        return await _populate_articles_bulk(db, same_category)
 
     seen = {article_id, *(a["_id"] for a in same_category)}
     remaining = limit - len(same_category)
@@ -525,4 +525,4 @@ async def get_related_articles(
     ).sort("published_at", -1).limit(remaining).to_list(length=remaining)
 
     combined = same_category + recent
-    return [await _populate_article_extras(db, a) for a in combined]
+    return await _populate_articles_bulk(db, combined)

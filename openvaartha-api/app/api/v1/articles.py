@@ -107,6 +107,13 @@ async def get_live_updates(
     }).sort("published_at", -1).limit(limit)
     breaking_articles = await breaking_cursor.to_list(length=None)
 
+    # Batch query article_content timeline data
+    breaking_ids = [a["_id"] for a in breaking_articles]
+    contents = []
+    if breaking_ids:
+        contents = await db["article_content"].find({"article_id": {"$in": breaking_ids}}).to_list(length=len(breaking_ids))
+    content_map = {c["article_id"]: c for c in contents}
+
     updates = []
     for article in breaking_articles:
         updates.append({
@@ -119,7 +126,7 @@ async def get_live_updates(
             "published_at": article.get("published_at"),
         })
 
-        content = await db["article_content"].find_one({"article_id": article["_id"]})
+        content = content_map.get(article["_id"])
         if content and content.get("timeline"):
             for timeline_item in content["timeline"]:
                 updates.append({
