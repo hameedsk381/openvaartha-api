@@ -16,9 +16,9 @@ PUBLIC_STATUS = ArticleStatus.PUBLISHED.value
 
 
 class ArticleContent(BaseModel):
-    tldr: str
-    points: List[str]
-    body: str
+    tldr: Optional[str] = ""
+    points: Optional[List[str]] = Field(default_factory=list)
+    body: Optional[str] = ""
     timeline: Optional[List[Dict[str, Any]]] = None
     explainer: Optional[Dict[str, Any]] = None
 
