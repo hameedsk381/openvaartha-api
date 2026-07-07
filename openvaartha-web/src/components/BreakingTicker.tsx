@@ -1,30 +1,37 @@
-import { useBreakingArticles } from '@/lib/api-hooks';
-import { Zap } from 'lucide-react';
+import { useArticles } from '@/lib/api-hooks';
+import { Clock } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const BreakingTicker = () => {
-  const { data: breaking = [] } = useBreakingArticles(10);
-  if (breaking.length === 0) return null;
-  const dur = `${Math.max(25, breaking.length * 9)}s`;
+  // Fetch latest 10 articles for the "JUST IN" marquee
+  const { data: latest = [] } = useArticles({ limit: 10 });
+  if (latest.length === 0) return null;
+  
+  const dur = `${Math.max(25, latest.length * 9)}s`;
 
   return (
-    <div className="marquee-strip flex items-center h-10">
-      <div className="flex items-center gap-1.5 px-4 h-full bg-[hsl(var(--primary-hover,0_100%_13%))] shrink-0 border-r-2 border-foreground z-20">
-        <Zap className="h-3.5 w-3.5 fill-current text-secondary" />
-        <span className="font-display text-xs font-bold uppercase tracking-[0.18em] text-secondary relative pl-4">
+    <div className="marquee-strip flex items-center h-10 border-b border-border bg-[hsl(var(--surface))]">
+      <div className="flex items-center gap-1.5 px-4 h-full bg-primary shrink-0 border-r border-border z-20">
+        <Clock className="h-3.5 w-3.5 text-primary-foreground" />
+        <span className="font-display text-xs font-bold uppercase tracking-[0.18em] text-primary-foreground relative pl-4">
           <span className="absolute left-0 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-secondary animate-pulse" />
-          Live
+          JUST IN
         </span>
       </div>
-      <div className="flex-1 overflow-hidden relative before:absolute before:left-0 before:top-0 before:bottom-0 before:w-6 before:bg-gradient-to-r before:from-primary before:to-transparent before:pointer-events-none before:z-10 after:absolute after:right-0 after:top-0 after:bottom-0 after:w-6 after:bg-gradient-to-l after:from-primary after:to-transparent after:pointer-events-none after:z-10">
+      <div className="flex-1 overflow-hidden relative before:absolute before:left-0 before:top-0 before:bottom-0 before:w-6 before:bg-gradient-to-r before:from-[hsl(var(--surface))] before:to-transparent before:pointer-events-none before:z-10 after:absolute after:right-0 after:top-0 after:bottom-0 after:w-6 after:bg-gradient-to-l after:from-[hsl(var(--surface))] after:to-transparent after:pointer-events-none after:z-10">
         <div
-          className="ticker-track flex items-center gap-10 whitespace-nowrap h-full cursor-pointer"
+          className="ticker-track flex items-center gap-8 whitespace-nowrap h-full"
           style={{ '--ticker-duration': dur } as React.CSSProperties}
         >
-          {[...breaking, ...breaking].map((item, i) => (
-            <span key={`${item.id}-${i}`} className="font-display text-xs sm:text-sm font-semibold tracking-tight flex items-center gap-5 text-primary-foreground">
+          {[...latest, ...latest].map((item, i) => (
+            <Link 
+              key={`${item.id}-${i}`} 
+              to={`/article/${item.slug}`}
+              className="font-display text-xs sm:text-[13px] font-semibold tracking-tight flex items-center gap-5 text-foreground hover:text-primary transition-colors press"
+            >
               {item.title}
-              <span className="text-secondary">⚡</span>
-            </span>
+              <span className="text-muted-foreground/30 text-xs">|</span>
+            </Link>
           ))}
         </div>
       </div>
