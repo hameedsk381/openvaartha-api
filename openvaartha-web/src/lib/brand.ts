@@ -12,6 +12,8 @@ export const BRAND = {
   instagramUrl: "https://www.instagram.com/OPENVAARTHA/",
   facebookHandle: "openvaartha",
   facebookUrl: "https://www.facebook.com/openvaartha/",
+  youtubeHandle: "@openvaartha",
+  youtubeUrl: "https://youtube.com/@openvaartha",
   copyright: "FOSS Andhra Foundation",
   logoPath: "/logo.jpg",
   iconPath: "/icon.svg",

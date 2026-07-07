@@ -5,6 +5,7 @@ import { cn, handleImageFallback } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useArticles, useLiveUpdates } from '@/lib/api-hooks';
 import { BRAND } from '@/lib/brand';
+import { LiveUpdatesPageSkeleton } from '@/components/PageSkeletons';
 
 type LiveUpdate = {
   id: string;
@@ -28,6 +29,10 @@ const LiveUpdatesPage = () => {
   const lastUpdated = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
   const today = now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
   const related = articles.slice(0, 3);
+
+  if (isLoading && liveUpdates.length === 0) {
+    return <LiveUpdatesPageSkeleton />;
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -72,11 +77,7 @@ const LiveUpdatesPage = () => {
                 </div>
               </div>
 
-              {isLoading ? (
-                <div className="flex items-center justify-center py-16">
-                  <Loader2 className="h-6 w-6 text-primary animate-spin" />
-                </div>
-              ) : liveUpdates.length === 0 ? (
+              {liveUpdates.length === 0 ? (
                 <p className="font-serif italic text-muted-foreground text-center py-16">
                   Live updates from our desk. Check back soon.
                 </p>

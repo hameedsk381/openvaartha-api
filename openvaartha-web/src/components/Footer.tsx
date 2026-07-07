@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useCategories } from "@/lib/api-hooks";
 import { BRAND } from "@/lib/brand";
-import { Instagram, Facebook } from "lucide-react";
+import { Instagram, Facebook, Youtube } from "lucide-react";
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -15,8 +15,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-10">
           <div className="md:col-span-5">
             <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-lg gradient-maroon flex items-center justify-center shrink-0 shadow-sm">
-                <span className="text-xs font-black text-white">{BRAND.monogram}</span>
+              <div className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0 shadow-sm overflow-hidden border border-border bg-white">
+                <img src={BRAND.logoPath} alt="Open Vaartha" className="h-full w-full object-cover" />
               </div>
               <div>
                 <div className="font-display text-2xl font-extrabold tracking-tight">
@@ -43,6 +43,15 @@ const Footer = () => {
                     aria-label="Facebook"
                   >
                     <Facebook className="h-4 w-4" />
+                  </a>
+                  <a
+                    href={BRAND.youtubeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors press"
+                    aria-label="YouTube"
+                  >
+                    <Youtube className="h-4 w-4" />
                   </a>
                 </div>
               </div>

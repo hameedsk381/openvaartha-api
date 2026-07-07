@@ -5,6 +5,7 @@ import { cn, handleImageFallback } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useReadingList } from '@/hooks/use-reading-list';
 import { useTrendingArticles, useEditorPicks } from '@/lib/api-hooks';
+import { TrendingPageSkeleton } from '@/components/PageSkeletons';
 
 const relativeTime = (iso: string) => {
   const h = Math.round((Date.now() - new Date(iso).getTime()) / 3_600_000);
@@ -15,8 +16,12 @@ const relativeTime = (iso: string) => {
 
 const TrendingPage = () => {
   const { toggleSave, isSaved } = useReadingList();
-  const { data: trendingData = [] } = useTrendingArticles(20);
+  const { data: trendingData = [], isLoading } = useTrendingArticles(20);
   const { data: editorPicks = [] } = useEditorPicks(5);
+
+  if (isLoading && trendingData.length === 0) {
+    return <TrendingPageSkeleton />;
+  }
 
   const lead = trendingData[0];
   const ranks = trendingData.slice(1);

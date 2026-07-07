@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useArticle, useRelatedArticles } from "@/lib/api-hooks";
 import type { Article } from "@/lib/types";
 import Navbar from "@/components/Navbar";
+import { ArticleSkeleton } from "@/components/PageSkeletons";
 import {
   Share2, Bookmark, BookmarkCheck, ArrowLeft, ArrowUpRight,
   Clock, Sparkles, User, ExternalLink, History, Type, Flame, Facebook,
@@ -196,14 +197,7 @@ const ArticlePage = () => {
   const encodedTitle = encodeURIComponent(shareTitle);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="mx-auto max-w-2xl px-5 py-24 text-center">
-          <p className="font-serif italic text-muted-foreground mb-6">Loading article...</p>
-        </div>
-      </div>
-    );
+    return <ArticleSkeleton />;
   }
 
   if (!article) {

@@ -4,6 +4,7 @@ import { ArrowUpRight, Compass, Clock, Target, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { handleImageFallback } from '../lib/utils';
 import { useExplainers } from '@/lib/api-hooks';
+import { ExplainersPageSkeleton } from '@/components/PageSkeletons';
 
 const relativeTime = (iso: string) => {
   const h = Math.round((Date.now() - new Date(iso).getTime()) / 3_600_000);
@@ -13,7 +14,11 @@ const relativeTime = (iso: string) => {
 
 const ExplainersPage = () => {
   const [limit, setLimit] = useState(12);
-  const { data: explainers = [], isFetching } = useExplainers(0, limit);
+  const { data: explainers = [], isFetching, isLoading } = useExplainers(0, limit);
+
+  if (isLoading && explainers.length === 0) {
+    return <ExplainersPageSkeleton />;
+  }
 
   const lead = explainers[0];
   const featured = explainers.slice(1, 3);

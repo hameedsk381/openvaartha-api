@@ -6,6 +6,7 @@ import { handleImageFallback } from '../lib/utils';
 import { BRAND } from '@/lib/brand';
 import { useReadingList } from '@/hooks/use-reading-list';
 import { useArticles, useCategories } from '@/lib/api-hooks';
+import { CategoryPageSkeleton } from '@/components/PageSkeletons';
 
 const relativeTime = (iso: string) => {
   const h = Math.round((Date.now() - new Date(iso).getTime()) / 3_600_000);
@@ -35,7 +36,7 @@ const CategoryPage = () => {
     setLimit(12);
   }, [categoryId]);
 
-  const { data: categoryArticles = [], isFetching } = useArticles({
+  const { data: categoryArticles = [], isFetching, isLoading } = useArticles({
     category: categoryObj?.id,
     limit,
   });
@@ -46,6 +47,10 @@ const CategoryPage = () => {
     if (filter === 'Trending') return base.filter((a) => a.isTrending);
     return [...base].sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt));
   }, [filter, categoryArticles]);
+
+  if (isLoading && categoryArticles.length === 0) {
+    return <CategoryPageSkeleton />;
+  }
 
   const featured = list[0];
   const secondary = list.slice(1, 3);

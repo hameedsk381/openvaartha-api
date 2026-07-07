@@ -119,8 +119,8 @@ export default function Login() {
           </Link>
 
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="h-11 w-11 rounded-lg bg-white/10 flex items-center justify-center backdrop-blur-sm">
-              <span className="font-black text-white tracking-tight">OV</span>
+            <div className="h-11 w-11 rounded-lg flex items-center justify-center overflow-hidden border border-white/20 bg-white">
+              <img src={BRAND.logoPath} alt="Open Vaartha" className="h-full w-full object-cover" />
             </div>
             <span className="font-serif text-2xl font-bold tracking-tight">
               Open<span className="text-secondary">vaartha</span>
@@ -162,8 +162,8 @@ export default function Login() {
           {/* Mobile logo */}
           <div className="lg:hidden flex justify-center mb-8">
             <Link to="/" className="flex items-center gap-2.5">
-              <div className="h-10 w-10 rounded-lg gradient-maroon flex items-center justify-center">
-                <span className="text-xs font-black text-white">OV</span>
+              <div className="h-10 w-10 rounded-lg flex items-center justify-center overflow-hidden border border-border bg-white">
+                <img src={BRAND.logoPath} alt="Open Vaartha" className="h-full w-full object-cover" />
               </div>
               <span className="font-serif text-lg font-bold tracking-tight">
                 Open<span className="text-primary">vaartha</span>
