@@ -5,7 +5,7 @@ import BreakingTicker from '../components/BreakingTicker';
 import HeroCarousel from '../components/HeroCarousel';
 import FeedSkeleton from '../components/FeedSkeleton';
 import Footer from '@/components/Footer';
-import { handleImageFallback } from '@/lib/utils';
+import { handleImageFallback, getArticleImage } from '@/lib/utils';
 import { categoryEmojis } from '@/lib/types';
 import { Clock, Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame, Loader2, ChevronRight, Radio } from 'lucide-react';
 import { toast } from 'sonner';
@@ -65,17 +65,15 @@ function CategoryStrip({ category }: { category: Category }) {
             to={`/article/${art.slug}`}
             className="group flex-shrink-0 w-[260px] sm:w-auto"
           >
-            {art.thumbnailUrl && (
-              <div className="aspect-[16/10] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-3">
-                <img
-                  src={art.thumbnailUrl}
-                  alt={art.title}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
-                  onError={handleImageFallback}
-                />
-              </div>
-            )}
+            <div className="aspect-[16/10] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-3">
+              <img
+                src={getArticleImage(art.thumbnailUrl)}
+                alt={art.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+                onError={handleImageFallback}
+              />
+            </div>
             <div className="flex items-center gap-2 mb-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-primary">{art.category}</span>
               <span className="h-1 w-1 rounded-full bg-border" />
@@ -229,15 +227,13 @@ export default function Index() {
                       className="block group press relative"
                     >
                       <div className="relative overflow-hidden aspect-[16/10] bg-[hsl(var(--surface-2))] bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900 border-b border-border">
-                        {hero.thumbnailUrl && (
-                          <img
-                            src={hero.thumbnailUrl}
-                            alt={hero.title}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                            loading="eager"
-                            onError={handleImageFallback}
-                          />
-                        )}
+                        <img
+                          src={getArticleImage(hero.thumbnailUrl)}
+                          alt={hero.title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                          loading="eager"
+                          onError={handleImageFallback}
+                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
                       </div>
 
@@ -313,17 +309,15 @@ export default function Index() {
                             <Clock className="h-3 w-3" /> {art.readTime}
                           </span>
                         </div>
-                        {art.thumbnailUrl && (
-                          <div className="w-24 h-20 sm:w-28 sm:h-24 shrink-0 overflow-hidden rounded-md bg-[hsl(var(--surface-2))]">
-                            <img
-                              src={art.thumbnailUrl}
-                              alt={art.title}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                              loading="lazy"
-                              onError={handleImageFallback}
-                            />
-                          </div>
-                        )}
+                        <div className="aspect-square w-20 sm:w-24 shrink-0 overflow-hidden rounded-md bg-[hsl(var(--surface-2))]">
+                        <img
+                          src={getArticleImage(art.thumbnailUrl)}
+                          alt={art.title}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          loading="lazy"
+                          onError={handleImageFallback}
+                        />
+                      </div>
                       </Link>
                     ))}
                   </aside>
@@ -372,18 +366,16 @@ export default function Index() {
                     to={`/article/${art.slug}`}
                     className="group press block"
                   >
-                    {art.thumbnailUrl && (
-                      <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
-                        <img
-                          src={art.thumbnailUrl}
-                          alt={art.title}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                          loading="lazy"
-                          onError={handleImageFallback}
-                        />
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="hidden sm:block aspect-[4/3] w-full shrink-0 overflow-hidden rounded-lg bg-[hsl(var(--surface-2))]">
+                    <img
+                      src={getArticleImage(art.thumbnailUrl)}
+                      alt={art.title}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                      onError={handleImageFallback}
+                    />
+                  </div>
+                    <div className="flex items-center gap-2 mb-2 mt-4">
                       <span className="overline text-primary">{art.category}</span>
                       <span className="h-1 w-1 rounded-full bg-border" />
                       <span className="text-[10px] text-muted-foreground font-medium tracking-wide">
@@ -465,17 +457,15 @@ export default function Index() {
 
                       <div className="flex flex-col items-end gap-2 shrink-0">
                         <Link to={`/article/${art.slug}`} className="press block">
-                          {art.thumbnailUrl && (
                             <div className="w-24 h-20 sm:w-32 sm:h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
                               <img
-                                src={art.thumbnailUrl}
+                                src={getArticleImage(art.thumbnailUrl)}
                                 alt={art.title}
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 loading="lazy"
                                 onError={handleImageFallback}
                               />
                             </div>
-                          )}
                         </Link>
                         <button
                           onClick={() => toggleSave(art as any)}

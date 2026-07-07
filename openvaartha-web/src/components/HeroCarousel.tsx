@@ -5,7 +5,7 @@ import type { Article } from '@/lib/types';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ArrowUpRight, Clock, Sparkles, Flame } from 'lucide-react';
 import { Button } from './ui/button';
-import { cn, handleImageFallback } from '../lib/utils';
+import { cn, handleImageFallback, getArticleImage } from '../lib/utils';
 
 interface HeroCarouselProps {
   articles: Article[];
@@ -39,17 +39,15 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
               to={`/article/${article?.slug ?? "#"}`}
               className="relative min-h-[440px] flex-[0_0_100%] min-w-0 sm:min-h-0 sm:aspect-[21/9] group"
             >
-              {article?.thumbnailUrl && (
-                <div className="absolute inset-0 overflow-hidden bg-[hsl(var(--surface-2))]">
-                  <img
-                    src={article.thumbnailUrl}
-                    alt={article?.title || ""}
-                    className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]"
-                    loading={index === 0 ? "eager" : "lazy"}
-                    onError={handleImageFallback}
-                  />
-                </div>
-              )}
+              <div className="absolute inset-0 overflow-hidden bg-[hsl(var(--surface-2))]">
+                <img
+                  src={getArticleImage(article?.thumbnailUrl)}
+                  alt={article?.title || ""}
+                  className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]"
+                  loading={index === 0 ? "eager" : "lazy"}
+                  onError={handleImageFallback}
+                />
+              </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
               <div className="absolute inset-0 flex flex-col justify-end p-6 pb-8 sm:p-10 sm:pb-12 lg:p-14 lg:pb-16">
