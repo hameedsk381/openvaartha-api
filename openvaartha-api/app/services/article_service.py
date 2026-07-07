@@ -1,4 +1,7 @@
 import re
+import base64
+import uuid
+import os
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Optional, Any
 from uuid import uuid4
@@ -22,6 +25,44 @@ def _json_default(value):
     if isinstance(value, datetime):
         return value.isoformat()
     raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+
+def _save_base64_thumbnail(thumbnail_url: str) -> str:
+    """Save a base64 encoded image to the media directory and return its public URL path."""
+    if not thumbnail_url or not thumbnail_url.startswith("data:image/"):
+        return thumbnail_url
+
+    try:
+        # Format: data:image/png;base64,iVBORw0KGgoAAA...
+        header, base64_data = thumbnail_url.split(";base64,", 1)
+        mime_type = header.split("data:image/", 1)[1]
+        
+        # Standardize file extension
+        ext = "png"
+        if mime_type in ("jpeg", "jpg"):
+            ext = "jpg"
+        elif mime_type == "gif":
+            ext = "gif"
+        elif mime_type == "webp":
+            ext = "webp"
+            
+        file_bytes = base64.b64decode(base64_data)
+        filename = f"{uuid.uuid4().hex}.{ext}"
+        
+        # Save path: we create a local 'media' directory.
+        # Since uvicorn runs in /app, saving to './media' puts it in /app/media/
+        media_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "media")
+        os.makedirs(media_dir, exist_ok=True)
+        
+        file_path = os.path.join(media_dir, filename)
+        with open(file_path, "wb") as f:
+            f.write(file_bytes)
+            
+        # Return the public web path
+        return f"/media/{filename}"
+    except Exception:
+        # If decoding fails, fall back to returning original base64 to avoid page crashes
+        return thumbnail_url
 
 
 def _cache_key(namespace: str, **parts: Any) -> str:
@@ -127,6 +168,17 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
     await db["article_content"].create_index("article_id")
     await db["reading_history"].create_index([("user_id", 1), ("article_id", 1)], unique=True)
     await ensure_comment_indexes(db)
+
+    # Auto-migration for existing base64 thumbnails in database
+    try:
+        async for art in db["articles"].find({"thumbnail_url": {"$regex": "^data:image/"}}):
+            old_url = art.get("thumbnail_url")
+            new_url = _save_base64_thumbnail(old_url)
+            if new_url != old_url:
+                await db["articles"].update_one({"_id": art["_id"]}, {"$set": {"thumbnail_url": new_url}})
+                print(f"Migrated base64 thumbnail to file for article {art.get('slug')}")
+    except Exception as e:
+        print(f"Failed to migrate base64 thumbnails: {e}")
     # Backfill: documents created before the status field defaulted to draft
     # would be invisible to the public list. Treat un-tagged docs as published
     # so existing inventories migrate cleanly.
@@ -403,7 +455,7 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
         "is_breaking": article_data.is_breaking,
         "is_editor_pick": article_data.is_editor_pick,
         "is_opinion": getattr(article_data, "is_opinion", False),
-        "thumbnail_url": article_data.thumbnail_url,
+        "thumbnail_url": _save_base64_thumbnail(article_data.thumbnail_url),
         "instagram_url": article_data.instagram_url,
         "published_at": article_data.published_at,
         "last_updated": article_data.last_updated or datetime.now(timezone.utc),
@@ -445,6 +497,9 @@ async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data
 
     if "status" in update_dict and hasattr(update_dict["status"], "value"):
         update_dict["status"] = update_dict["status"].value
+
+    if "thumbnail_url" in update_dict and update_dict["thumbnail_url"]:
+        update_dict["thumbnail_url"] = _save_base64_thumbnail(update_dict["thumbnail_url"])
 
     for field in _PLAIN_TEXT_FIELDS:
         if field in update_dict and update_dict[field] is not None:
