@@ -10,7 +10,17 @@ type DashboardStats = {
   users: { total: number };
   comments: { total: number };
   subscribers: { total: number };
+  views: { total: number };
   recent_articles: Array<{
+    id: string;
+    slug: string;
+    title: string;
+    status: string;
+    category: string;
+    published_at: string;
+    thumbnail_url?: string;
+  }>;
+  top_articles: Array<{
     id: string;
     slug: string;
     title: string;
@@ -21,6 +31,8 @@ type DashboardStats = {
   }>;
   sparkline?: number[];
 };
+
+import { Area, AreaChart, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 
 export default function AdminDashboard() {
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -51,10 +63,10 @@ export default function AdminDashboard() {
 
   const s = data?.articles;
   const cards = [
+    { label: "Total Views", value: data?.views?.total ?? 0, icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950/20" },
     { label: "Published", value: s?.published ?? 0, icon: FileText, color: "text-green-600", bg: "bg-green-50 dark:bg-green-950/20" },
     { label: "Drafts", value: s?.drafts ?? 0, icon: FileText, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/20" },
     { label: "Breaking", value: s?.breaking ?? 0, icon: Zap, color: "text-red-600", bg: "bg-red-50 dark:bg-red-950/20" },
-    { label: "Trending", value: s?.trending ?? 0, icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950/20" },
     { label: "Users", value: data?.users?.total ?? 0, icon: Users, color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-950/20" },
     { label: "Comments", value: data?.comments?.total ?? 0, icon: MessageSquare, color: "text-cyan-600", bg: "bg-cyan-50 dark:bg-cyan-950/20" },
     { label: "Subscribers", value: data?.subscribers?.total ?? 0, icon: Mail, color: "text-indigo-600", bg: "bg-indigo-50 dark:bg-indigo-950/20" },
@@ -67,6 +79,12 @@ export default function AdminDashboard() {
     if (hour < 17) return "Good afternoon";
     return "Good evening";
   };
+
+  const chartData = data?.sparkline?.map((val, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return { name: d.toLocaleDateString(undefined, { weekday: 'short' }), value: val };
+  }) || [];
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -110,46 +128,24 @@ export default function AdminDashboard() {
               <span className="text-2xl font-black tracking-tight">{data.sparkline.reduce((a, b) => a + b, 0)}</span>
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Total this week</p>
             </div>
-            {/* Lightweight SVG Sparkline */}
-            <div className="w-32 h-10 flex items-end">
-              <svg className="w-full h-full" viewBox="0 0 120 30">
-                <defs>
-                  <linearGradient id="sparkline-grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.2" />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                {/* SVG Area Line */}
-                <path
-                  d={(() => {
-                    const maxVal = Math.max(...data.sparkline, 1);
-                    const points = data.sparkline.map((val, idx) => {
-                      const x = (idx / 6) * 120;
-                      const y = 30 - (val / maxVal) * 23 - 3;
-                      return `${x},${y}`;
-                    });
-                    return `M ${points.join(" L ")}`;
-                  })()}
-                  fill="none"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                {/* SVG Fill area */}
-                <path
-                  d={(() => {
-                    const maxVal = Math.max(...data.sparkline, 1);
-                    const points = data.sparkline.map((val, idx) => {
-                      const x = (idx / 6) * 120;
-                      const y = 30 - (val / maxVal) * 23 - 3;
-                      return `${x},${y}`;
-                    });
-                    return `M 0,30 L ${points.join(" L ")} L 120,30 Z`;
-                  })()}
-                  fill="url(#sparkline-grad)"
-                />
-              </svg>
+            <div className="w-64 h-24 flex items-end -mb-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <RechartsTooltip 
+                    contentStyle={{ backgroundColor: "hsl(var(--surface))", borderColor: "hsl(var(--border))", borderRadius: "8px", fontSize: "12px", border: "1px solid hsl(var(--border))" }} 
+                    itemStyle={{ color: "hsl(var(--foreground))" }} 
+                    labelStyle={{ color: "hsl(var(--muted-foreground))" }} 
+                    cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1, strokeDasharray: '3 3' }}
+                  />
+                  <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
@@ -178,41 +174,75 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="border border-border rounded-lg overflow-hidden">
-        <div className="flex items-center justify-between h-11 px-4 border-b border-border bg-[hsl(var(--surface))]">
-          <span className="text-xs font-semibold text-muted-foreground">Recent articles</span>
-          <Link to="/admin/articles" className="text-[11px] font-semibold text-primary hover:underline">View all</Link>
-        </div>
-        <div className="divide-y divide-border">
-          {data?.recent_articles?.length ? (
-            data.recent_articles.map((article) => (
-              <Link
-                key={article.id}
-                to={`/admin/articles/${article.id}/edit`}
-                className="flex items-center gap-3 p-3 hover:bg-[hsl(var(--surface))] transition-colors press group"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold line-clamp-1 group-hover:text-primary transition-colors">{article.title}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-muted-foreground">{article.category}</span>
-                    <span className="text-muted-foreground/30">·</span>
-                    <span className="text-[11px] text-muted-foreground">{new Date(article.published_at).toLocaleDateString()}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="border border-border rounded-lg overflow-hidden">
+          <div className="flex items-center justify-between h-11 px-4 border-b border-border bg-[hsl(var(--surface))]">
+            <span className="text-xs font-semibold text-muted-foreground">Recent articles</span>
+            <Link to="/admin/articles" className="text-[11px] font-semibold text-primary hover:underline">View all</Link>
+          </div>
+          <div className="divide-y divide-border">
+            {data?.recent_articles?.length ? (
+              data.recent_articles.map((article) => (
+                <Link
+                  key={article.id}
+                  to={`/admin/articles/${article.id}/edit`}
+                  className="flex items-center gap-3 p-3 hover:bg-[hsl(var(--surface))] transition-colors press group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold line-clamp-1 group-hover:text-primary transition-colors">{article.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-muted-foreground">{article.category}</span>
+                      <span className="text-muted-foreground/30">·</span>
+                      <span className="text-[11px] text-muted-foreground">{new Date(article.published_at).toLocaleDateString()}</span>
+                    </div>
                   </div>
-                </div>
-                <span className={cn(
-                  "inline-flex items-center h-5 px-2 rounded-sm text-[10px] font-bold uppercase tracking-wider border",
-                  article.status === "published" ? "bg-[hsl(var(--primary-subtle))] text-primary border-primary/20" :
-                  article.status === "draft" ? "bg-muted text-muted-foreground border-border" :
-                  "bg-destructive/10 text-destructive border-destructive/30"
-                )}>
-                  {article.status}
-                </span>
-                <ArrowUpRight className="h-4 w-4 text-muted-foreground shrink-0" />
-              </Link>
-            ))
-          ) : (
-            <div className="p-6 text-sm text-muted-foreground text-center">No articles yet.</div>
-          )}
+                  <span className={cn(
+                    "inline-flex items-center h-5 px-2 rounded-sm text-[10px] font-bold uppercase tracking-wider border",
+                    article.status === "published" ? "bg-[hsl(var(--primary-subtle))] text-primary border-primary/20" :
+                    article.status === "draft" ? "bg-muted text-muted-foreground border-border" :
+                    "bg-destructive/10 text-destructive border-destructive/30"
+                  )}>
+                    {article.status}
+                  </span>
+                  <ArrowUpRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </Link>
+              ))
+            ) : (
+              <div className="p-6 text-sm text-muted-foreground text-center">No articles yet.</div>
+            )}
+          </div>
+        </div>
+
+        <div className="border border-border rounded-lg overflow-hidden">
+          <div className="flex items-center justify-between h-11 px-4 border-b border-border bg-[hsl(var(--surface))]">
+            <span className="text-xs font-semibold text-muted-foreground">Top Articles by Views</span>
+            <Link to="/admin/articles" className="text-[11px] font-semibold text-primary hover:underline">View all</Link>
+          </div>
+          <div className="divide-y divide-border">
+            {data?.top_articles?.length ? (
+              data.top_articles.map((article) => (
+                <Link
+                  key={article.id}
+                  to={`/admin/articles/${article.id}/edit`}
+                  className="flex items-center gap-3 p-3 hover:bg-[hsl(var(--surface))] transition-colors press group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold line-clamp-1 group-hover:text-primary transition-colors">{article.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-muted-foreground">{article.category}</span>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 h-6 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 text-xs font-bold border border-blue-200 dark:border-blue-800/50">
+                    <TrendingUp className="h-3 w-3" />
+                    Top
+                  </span>
+                  <ArrowUpRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </Link>
+              ))
+            ) : (
+              <div className="p-6 text-sm text-muted-foreground text-center">No trending articles yet.</div>
+            )}
+          </div>
         </div>
       </div>
     </div>

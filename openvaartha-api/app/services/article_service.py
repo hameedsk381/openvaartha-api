@@ -474,6 +474,8 @@ async def get_article_by_slug(
     if include_unpublished:
         article = await db["articles"].find_one({"slug": slug})
     else:
+        # Increment view_count for public reads
+        await db["articles"].update_one(_public_query({"slug": slug}), {"$inc": {"view_count": 1}})
         article = await db["articles"].find_one(_public_query({"slug": slug}))
     return await _populate_article_extras(db, article)
 

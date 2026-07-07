@@ -58,6 +58,7 @@ class Article(BaseModel):
     updated_at: Optional[datetime] = None
     content: Optional[ArticleContent] = None
     sources: Optional[List[ArticleSource]] = None
+    view_count: int = 0
 
     @model_validator(mode="before")
     @classmethod

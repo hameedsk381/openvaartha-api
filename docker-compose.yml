@@ -35,6 +35,8 @@ services:
     build:
       context: ./openvaartha-web
       dockerfile: Dockerfile
+      args:
+        VITE_GA_TRACKING_ID: ${VITE_GA_TRACKING_ID:-}
     depends_on:
       - api
     restart: unless-stopped

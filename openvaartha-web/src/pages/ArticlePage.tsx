@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useArticle, useRelatedArticles } from "@/lib/api-hooks";
 import type { Article } from "@/lib/types";
 import Navbar from "@/components/Navbar";
+import ReactMarkdown from 'react-markdown';
 import { ArticleSkeleton } from "@/components/PageSkeletons";
 import {
   Share2, Bookmark, BookmarkCheck, ArrowLeft, ArrowUpRight,
@@ -490,21 +491,13 @@ const ArticlePage = () => {
             <div id="article-body" className={cn("article-body", textSize, "transition-[font-size]")}>
               {isHtml(article.content?.body || "") ? (
                 <div 
-                  className="prose prose-sm sm:prose-base md:prose-lg max-w-none dark:prose-invert font-serif leading-relaxed prose-headings:font-bold prose-a:text-primary prose-a:underline"
+                  className="prose prose-sm sm:prose-base md:prose-lg max-w-none dark:prose-invert font-serif leading-relaxed prose-headings:font-bold prose-a:text-primary prose-a:underline [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-6xl sm:[&>p:first-of-type]:first-letter:text-7xl [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:text-primary [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-1 [&>p:first-of-type]:first-letter:leading-[0.85]"
                   dangerouslySetInnerHTML={{ __html: article.content?.body || "" }} 
                 />
               ) : (
-                bodyParas.map((para, i) => (
-                  <p
-                    key={i}
-                    className={cn(
-                      i === 0 &&
-                        "first-letter:font-serif first-letter:text-6xl sm:first-letter:text-7xl first-letter:font-bold first-letter:text-primary first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:leading-[0.85]"
-                    )}
-                  >
-                    {para}
-                  </p>
-                ))
+                <div className="prose prose-sm sm:prose-base md:prose-lg max-w-none dark:prose-invert font-serif leading-relaxed prose-headings:font-bold prose-a:text-primary prose-a:underline [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-6xl sm:[&>p:first-of-type]:first-letter:text-7xl [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:text-primary [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-1 [&>p:first-of-type]:first-letter:leading-[0.85]">
+                  <ReactMarkdown>{article.content?.body || ""}</ReactMarkdown>
+                </div>
               )}
             </div>
 

@@ -55,6 +55,21 @@ async def dashboard_stats(
         doc["category"] = category["name"] if category else "General"
         recent_articles.append(doc)
 
+    # Fetch top articles by view count
+    top_cursor = db["articles"].find({"status": "published"}).sort("view_count", -1).limit(5)
+    top_docs = await top_cursor.to_list(length=5)
+    top_articles = []
+    for doc in top_docs:
+        doc["id"] = str(doc["_id"])
+        category = await db["categories"].find_one({"_id": doc.get("category_id", "")})
+        doc["category"] = category["name"] if category else "General"
+        top_articles.append(doc)
+        
+    # Calculate total views
+    pipeline = [{"$group": {"_id": None, "total_views": {"$sum": "$view_count"}}}]
+    views_result = await db["articles"].aggregate(pipeline).to_list(length=1)
+    total_views = views_result[0].get("total_views", 0) if views_result else 0
+
     return {
         "articles": {
             "total": total_articles,
@@ -67,7 +82,9 @@ async def dashboard_stats(
         "users": {"total": total_users},
         "comments": {"total": total_comments},
         "subscribers": {"total": total_subscribers},
+        "views": {"total": total_views},
         "recent_articles": recent_articles,
+        "top_articles": top_articles,
         "sparkline": sparkline_data,
     }
 

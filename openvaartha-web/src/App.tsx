@@ -9,6 +9,23 @@ import AdminRoute from "./components/AdminRoute.tsx";
 import InstallPWA from "./components/InstallPWA.tsx";
 import { toast } from "sonner";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
+import ReactGA from "react-ga4";
+import { useLocation } from "react-router-dom";
+
+const gaTrackingId = import.meta.env.VITE_GA_TRACKING_ID;
+if (gaTrackingId) {
+  ReactGA.initialize(gaTrackingId);
+}
+
+const AnalyticsTracker = () => {
+  const location = useLocation();
+  useEffect(() => {
+    if (gaTrackingId) {
+      ReactGA.send({ hitType: "pageview", page: location.pathname + location.search });
+    }
+  }, [location]);
+  return null;
+};
 
 /* ─── Lazy Loaded Pages ──────────────────────────────── */
 
@@ -129,6 +146,7 @@ const App = () => {
       <Sonner />
       <div className="relative min-h-screen overflow-x-hidden bg-background selection:bg-primary/10">
         <BrowserRouter>
+          <AnalyticsTracker />
           <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md focus:shadow-md focus:font-semibold focus:outline-none">Skip to Content</a>
           <ProtectedRoute>
             <ErrorBoundary>

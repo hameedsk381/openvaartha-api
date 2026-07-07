@@ -6,6 +6,10 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+
+ARG VITE_GA_TRACKING_ID
+ENV VITE_GA_TRACKING_ID=${VITE_GA_TRACKING_ID}
+
 RUN npm run build
 
 # Stage 2: Serve with Nginx
