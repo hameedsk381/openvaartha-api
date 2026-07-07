@@ -292,6 +292,7 @@ async def _populate_articles_bulk(db: AsyncIOMotorDatabase, articles: list[dict]
     for a in articles:
         if a is None:
             continue
+        a.pop("thumbnail_url", None)  # Exclude heavy thumbnail_url field from lists
         # Map Category Name
         cid = a.get("category_id")
         if cid:
