@@ -92,6 +92,58 @@ def env_check():
     }
 
 
+@app.get("/health/test-email")
+async def test_email_endpoint(to: str):
+    from app.services.email_service import send_email
+    success = await send_email(
+        to=to,
+        subject="OpenVaartha SMTP Test Check",
+        html_body="<h1>SMTP is Connected!</h1><p>Your production SMTP server is working correctly.</p>"
+    )
+    if success:
+        return {"status": "success", "message": f"Test email sent to {to}"}
+    return {"status": "error", "message": "Failed to send email. Check container logs for SMTP stack trace."}
+
+
+@app.get("/health/test-gcs")
+async def test_gcs_endpoint():
+    if not settings.GCS_BUCKET_NAME:
+        return {"status": "error", "message": "GCS_BUCKET_NAME is not configured."}
+    
+    try:
+        from google.cloud import storage
+        client = storage.Client()
+        bucket = client.bucket(settings.GCS_BUCKET_NAME)
+        blob = bucket.blob("test-gcs-connection.txt")
+        blob.upload_from_string("GCS is connected successfully!", content_type="text/plain")
+        try:
+            blob.delete()
+        except Exception:
+            pass
+        return {"status": "success", "message": f"Successfully wrote and deleted test blob in bucket: {settings.GCS_BUCKET_NAME}"}
+    except Exception as e:
+        return {"status": "error", "message": f"GCS connection failed: {str(e)}"}
+
+
+@app.get("/health/test-google")
+async def test_google_endpoint():
+    if not settings.GOOGLE_CLIENT_ID:
+        return {"status": "error", "message": "GOOGLE_CLIENT_ID is not configured."}
+    
+    import httpx
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get("https://oauth2.googleapis.com/tokeninfo", timeout=5.0)
+            return {
+                "status": "success",
+                "message": "Successfully contacted Google OAuth servers.",
+                "google_response_status": resp.status_code,
+                "client_id_configured": True
+            }
+    except Exception as e:
+        return {"status": "error", "message": f"Failed to contact Google OAuth servers: {str(e)}"}
+
+
 @app.on_event("startup")
 async def startup_checks():
     await ensure_article_indexes(db)
