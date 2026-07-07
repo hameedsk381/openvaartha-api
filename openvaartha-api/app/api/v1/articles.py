@@ -292,6 +292,31 @@ async def get_article(
     return article
 
 
+@router.post("/{id_or_slug}/share")
+async def track_share(
+    id_or_slug: str,
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
+    """Increment the share count for an article."""
+    # Try updating by slug first
+    result = await db["articles"].update_one(
+        {"slug": id_or_slug, "status": "published"}, 
+        {"$inc": {"share_count": 1}}
+    )
+    if result.modified_count == 0:
+        # Fallback to ID
+        result = await db["articles"].update_one(
+            {"_id": id_or_slug, "status": "published"}, 
+            {"$inc": {"share_count": 1}}
+        )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Article not found or not published")
+        
+    return {"status": "success", "message": "Share count incremented"}
+
+
+
 @router.post("/", response_model=Article)
 @limiter.limit(MUTATION_LIMIT)
 async def create_article(

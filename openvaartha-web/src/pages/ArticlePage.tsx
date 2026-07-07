@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import { ArticleSkeleton } from "@/components/PageSkeletons";
 import {
   Share2, Bookmark, BookmarkCheck, ArrowLeft, ArrowUpRight,
-  Clock, Sparkles, User, ExternalLink, History, Type, Flame, Facebook,
+  Clock, Sparkles, User, ExternalLink, History, Type, Flame, Facebook, Eye
 } from "lucide-react";
 import { cn, getArticleImage, handleImageFallback } from "@/lib/utils";
 import { categoryColors } from "@/lib/types";
@@ -185,13 +185,18 @@ const ArticlePage = () => {
   }, [slug]);
 
   const handleShare = useCallback(() => {
+    // Record the share in the backend
+    if (article?.slug) {
+      apiFetch(`/articles/${article.slug}/share`, { method: "POST" }).catch(() => {});
+    }
+
     if (navigator.share) {
       navigator.share({ title: article?.title, url: window.location.href }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
       toast.success("Link copied to clipboard");
     }
-  }, [article?.title]);
+  }, [article?.title, article?.slug]);
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
   const shareTitle = article?.title || "";
@@ -365,10 +370,20 @@ const ArticlePage = () => {
             <div className="sticky top-28 space-y-6">
               <div>
                 <p className="overline mb-3">In this article</p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  <meta property="wordCount" content={article.content?.body?.split(/\s+/).length.toString()} />
-                  {article.readTime} read
+                <div className="flex flex-col gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3 w-3" />
+                    <meta property="wordCount" content={article.content?.body?.split(/\s+/).length.toString()} />
+                    {article.readTime} read
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-3 w-3" />
+                    {article.viewCount?.toLocaleString() || 0} views
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Share2 className="h-3 w-3" />
+                    {article.shareCount?.toLocaleString() || 0} shares
+                  </div>
                 </div>
               </div>
 

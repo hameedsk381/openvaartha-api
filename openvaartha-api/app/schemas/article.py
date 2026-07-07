@@ -63,6 +63,7 @@ class ArticleBase(BaseModel):
     author: str
     author_id: Optional[str] = None
     view_count: int = 0
+    share_count: int = 0
 
     class Config:
         alias_generator = to_camel
