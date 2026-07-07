@@ -206,10 +206,13 @@ async def _populate_articles_bulk(db: AsyncIOMotorDatabase, articles: list[dict]
         if aid:
             article_ids.append(aid)
 
-    # 3. Batch query article contents using $in
+    # 3. Batch query article contents using $in (exclude large body field for list endpoints)
     content_map = {}
     if article_ids:
-        contents = await db["article_content"].find({"article_id": {"$in": article_ids}}).to_list(length=len(article_ids))
+        contents = await db["article_content"].find(
+            {"article_id": {"$in": article_ids}},
+            {"body": 0}
+        ).to_list(length=len(article_ids))
         for c in contents:
             cid = c.get("article_id")
             if cid:
