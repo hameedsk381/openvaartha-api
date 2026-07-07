@@ -20,6 +20,15 @@ x-app-environment: &app-environment
   INSTAGRAM_ACCESS_TOKEN: ${INSTAGRAM_ACCESS_TOKEN:-}
   INSTAGRAM_USER_ID: ${INSTAGRAM_USER_ID:-}
   SITE_URL: ${SITE_URL:-https://openvaartha.com}
+  GCS_BUCKET_NAME: ${GCS_BUCKET_NAME:-}
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-noreply@openvaartha.com}
+  SMTP_FROM_NAME: ${SMTP_FROM_NAME:-OpenVaartha}
+
 
 services:
   web:
