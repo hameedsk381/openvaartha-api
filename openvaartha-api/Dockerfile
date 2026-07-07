@@ -1,14 +1,3 @@
-# Stage 1: build React app.
-FROM node:20-alpine AS web-builder
-WORKDIR /web
-
-COPY openvaartha-web/package*.json ./
-RUN npm ci
-
-COPY openvaartha-web ./
-RUN npm run build
-
-# Stage 2: API runtime with built static assets.
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -25,7 +14,6 @@ COPY openvaartha-api/requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY openvaartha-api/ .
-COPY --from=web-builder /web/dist ./static
 
 RUN addgroup --system app \
     && adduser --system --ingroup app app \

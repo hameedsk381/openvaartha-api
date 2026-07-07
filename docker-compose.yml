@@ -22,6 +22,18 @@ x-app-environment: &app-environment
   SITE_URL: ${SITE_URL:-https://openvaartha.com}
 
 services:
+  web:
+    build:
+      context: ./openvaartha-web
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-3000}:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - openvaartha
+
   api:
     build:
       context: .
