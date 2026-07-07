@@ -26,8 +26,6 @@ services:
     build:
       context: ./openvaartha-web
       dockerfile: Dockerfile
-    ports:
-      - "${PORT:-3000}:80"
     depends_on:
       - api
     restart: unless-stopped
