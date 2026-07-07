@@ -7,7 +7,7 @@ import { apiFetch } from "@/lib/api";
 import { ARTICLE_STATUSES, type Article, type ArticleStatus, type Category } from "./types";
 import { cn } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
-import MDXBodyEditor from "@/components/MDXBodyEditor";
+import MDXBodyEditor from "@/components/LazyMDXBodyEditor";
 import AIGenerateDialog from "@/components/AIGenerateDialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

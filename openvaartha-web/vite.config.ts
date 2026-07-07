@@ -22,17 +22,15 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
+        // Only manually chunk vendors that are actually used on eagerly-loaded
+        // (reader-facing) routes. A named manualChunk gets `modulepreload`ed
+        // from the entry HTML, so naming a lazy-only vendor here (e.g. the
+        // 1.5MB @mdxeditor, or recharts) drags it onto the homepage's critical
+        // path. Those are left unnamed so Vite auto-splits them into the async
+        // chunk of whichever lazy route imports them.
         manualChunks(id) {
-          if (id.includes("node_modules")) {
-            if (id.includes("lucide-react")) {
-              return "vendor-lucide";
-            }
-            if (id.includes("@mdxeditor")) {
-              return "vendor-mdx";
-            }
-            if (id.includes("recharts") || id.includes("d3")) {
-              return "vendor-charts";
-            }
+          if (id.includes("node_modules") && id.includes("lucide-react")) {
+            return "vendor-lucide";
           }
         },
       },
@@ -98,7 +96,11 @@ export default defineConfig(({ mode }) => ({
         screenshots: [],
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 5000000, // Increase cache size limit to 5 MB
+        // Keep the precache to reader-facing bundles (all well under 700KB).
+        // The ~1MB admin markdown-editor chunk deliberately falls above this
+        // ceiling so it isn't background-downloaded onto every reader's device
+        // on first visit — it's fetched on demand if they ever open the editor.
+        maximumFileSizeToCacheInBytes: 700000,
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         runtimeCaching: [
           {
