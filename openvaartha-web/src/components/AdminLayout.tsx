@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, FileText, FolderTree, Users, MessageSquare, Mail, Rss, ArrowLeft, LogOut, Inbox } from "lucide-react";
+import { LayoutDashboard, FileText, FolderTree, Users, MessageSquare, Mail, Rss, ArrowLeft, LogOut, Inbox, BarChart } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useLogout } from "@/hooks/use-logout";
 
@@ -14,6 +14,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/admin", roles: ["admin"] },
+  { label: "Analytics", icon: BarChart, path: "/admin/analytics", roles: ["admin"] },
   { label: "Articles", icon: FileText, path: "/admin/articles", roles: ["admin", "editor"] },
   { label: "Review Queue", icon: Inbox, path: "/admin/contributions", roles: ["admin", "editor"] },
   { label: "Categories", icon: FolderTree, path: "/admin/categories", roles: ["admin", "editor"] },
