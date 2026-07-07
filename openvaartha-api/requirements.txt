@@ -54,3 +54,4 @@ cors==1.0.1
 
 # Cloud Storage
 google-cloud-storage>=2.14.0,<3.0.0
+Pillow>=10.2.0,<11.0.0

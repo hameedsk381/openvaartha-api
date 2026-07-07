@@ -28,26 +28,39 @@ def _json_default(value):
 
 
 def _save_base64_thumbnail(thumbnail_url: str) -> str:
-    """Save a base64 encoded image to Google Cloud Storage (GCS) or local media directory."""
+    """Save a base64 encoded image to Google Cloud Storage (GCS) or local media directory in compressed WebP format."""
     if not thumbnail_url or not thumbnail_url.startswith("data:image/"):
         return thumbnail_url
 
     try:
         # Format: data:image/png;base64,iVBORw0KGgoAAA...
         header, base64_data = thumbnail_url.split(";base64,", 1)
-        mime_type = header.split("data:image/", 1)[1]
         
-        # Standardize file extension
-        ext = "png"
-        if mime_type in ("jpeg", "jpg"):
-            ext = "jpg"
-        elif mime_type == "gif":
-            ext = "gif"
-        elif mime_type == "webp":
-            ext = "webp"
-            
         file_bytes = base64.b64decode(base64_data)
-        filename = f"{uuid.uuid4().hex}.{ext}"
+        
+        # Compress and resize using Pillow
+        from PIL import Image
+        import io
+        
+        img = Image.open(io.BytesIO(file_bytes))
+        
+        # Convert to RGB (to support saving as WebP)
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+            
+        # Resize if width is larger than 800px (to optimize for web card display)
+        max_width = 800
+        if img.width > max_width:
+            ratio = max_width / float(img.width)
+            new_height = int(float(img.height) * float(ratio))
+            img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
+            
+        # Output as WebP
+        out_io = io.BytesIO()
+        img.save(out_io, format="WEBP", quality=75)
+        compressed_bytes = out_io.getvalue()
+        
+        filename = f"{uuid.uuid4().hex}.webp"
 
         # 1. Use Google Cloud Storage if configured
         if settings.GCS_BUCKET_NAME:
@@ -57,8 +70,8 @@ def _save_base64_thumbnail(thumbnail_url: str) -> str:
                 bucket = client.bucket(settings.GCS_BUCKET_NAME)
                 blob = bucket.blob(filename)
                 
-                # Upload the image bytes
-                blob.upload_from_string(file_bytes, content_type=f"image/{ext}")
+                # Upload the WebP image bytes
+                blob.upload_from_string(compressed_bytes, content_type="image/webp")
                 
                 # If GCS bucket has public access, return the public GCS URL
                 return f"https://storage.googleapis.com/{settings.GCS_BUCKET_NAME}/{filename}"
@@ -72,12 +85,13 @@ def _save_base64_thumbnail(thumbnail_url: str) -> str:
         
         file_path = os.path.join(media_dir, filename)
         with open(file_path, "wb") as f:
-            f.write(file_bytes)
+            f.write(compressed_bytes)
             
         # Return the public web path
         return f"/media/{filename}"
-    except Exception:
-        # If decoding fails, fall back to returning original base64 to avoid page crashes
+    except Exception as e:
+        # If decoding fails, log and fall back to returning original base64 to avoid page crashes
+        print(f"Error compressing base64 thumbnail: {e}")
         return thumbnail_url
 
 
