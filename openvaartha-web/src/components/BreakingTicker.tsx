@@ -10,7 +10,7 @@ const BreakingTicker = () => {
   const dur = `${Math.max(25, latest.length * 9)}s`;
 
   return (
-    <div className="marquee-strip flex items-center h-10 border-b border-border bg-[hsl(var(--surface-2))]">
+    <div className="marquee-strip flex items-center h-10 border-b border-border bg-primary">
       <div className="flex items-center gap-1.5 px-4 h-full bg-red-600 shrink-0 border-r border-border z-20 shadow-[4px_0_12px_rgba(220,38,38,0.2)]">
         <Clock className="h-3.5 w-3.5 text-white" />
         <span className="font-display text-xs font-bold uppercase tracking-[0.18em] text-white relative pl-4">
@@ -18,7 +18,7 @@ const BreakingTicker = () => {
           JUST IN
         </span>
       </div>
-      <div className="flex-1 overflow-hidden relative before:absolute before:left-0 before:top-0 before:bottom-0 before:w-8 before:bg-gradient-to-r before:from-[hsl(var(--surface-2))] before:to-transparent before:pointer-events-none before:z-10 after:absolute after:right-0 after:top-0 after:bottom-0 after:w-8 after:bg-gradient-to-l after:from-[hsl(var(--surface-2))] after:to-transparent after:pointer-events-none after:z-10">
+      <div className="flex-1 overflow-hidden relative before:absolute before:left-0 before:top-0 before:bottom-0 before:w-8 before:bg-gradient-to-r before:from-primary before:to-transparent before:pointer-events-none before:z-10 after:absolute after:right-0 after:top-0 after:bottom-0 after:w-8 after:bg-gradient-to-l after:from-primary after:to-transparent after:pointer-events-none after:z-10">
         <div
           className="ticker-track flex items-center gap-8 whitespace-nowrap h-full"
           style={{ '--ticker-duration': dur } as React.CSSProperties}
