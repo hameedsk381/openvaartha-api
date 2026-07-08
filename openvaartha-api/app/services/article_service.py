@@ -76,19 +76,11 @@ def _save_base64_thumbnail(thumbnail_url: str) -> str:
                 # If GCS bucket has public access, return the public GCS URL
                 return f"https://storage.googleapis.com/{settings.GCS_BUCKET_NAME}/{filename}"
             except Exception as e:
-                # Log error and fall back to local disk saving
-                print(f"GCS upload failed, falling back to local storage: {e}")
+                print(f"GCS upload failed: {e}")
+                return thumbnail_url # Fall back to returning original base64
         
-        # 2. Fallback to Local Disk Saving
-        media_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "media")
-        os.makedirs(media_dir, exist_ok=True)
-        
-        file_path = os.path.join(media_dir, filename)
-        with open(file_path, "wb") as f:
-            f.write(compressed_bytes)
-            
-        # Return the public web path
-        return f"/media/{filename}"
+        # If no GCS bucket is configured, fall back to base64
+        return thumbnail_url
     except Exception as e:
         # If decoding fails, log and fall back to returning original base64 to avoid page crashes
         print(f"Error compressing base64 thumbnail: {e}")
