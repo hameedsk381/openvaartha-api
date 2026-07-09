@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { handleImageFallback } from '../lib/utils';
 import { useExplainers } from '@/lib/api-hooks';
 import { ExplainersPageSkeleton } from '@/components/PageSkeletons';
+import { FlipCard } from '@/components/animate-ui/components/community/flip-card';
 
 const relativeTime = (iso: string) => {
   const h = Math.round((Date.now() - new Date(iso).getTime()) / 3_600_000);
@@ -150,33 +151,48 @@ const ExplainersPage = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
               {more.map((art) => (
-                <Link key={art.id} to={`/article/${art.slug}`} className="group press block">
-                  {art.thumbnailUrl && (
-                    <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-4">
-                      <img
-                        src={art.thumbnailUrl}
-                        alt={art.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                        onError={handleImageFallback}
-                        loading="lazy"
-                      />
+                <FlipCard
+                  key={art.id}
+                  className="w-full h-full min-h-[300px]"
+                  frontContent={
+                    <div className="w-full h-full flex flex-col p-4 bg-[hsl(var(--surface-2))] border border-border rounded-lg group">
+                      {art.thumbnailUrl && (
+                        <div className="aspect-[4/3] overflow-hidden rounded-lg mb-4 w-full">
+                          <img
+                            src={art.thumbnailUrl}
+                            alt={art.title}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                            onError={handleImageFallback}
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="overline text-primary">{art.category}</span>
+                        <span className="h-1 w-1 rounded-full bg-border" />
+                        <span className="text-[10px] text-muted-foreground font-medium">{art.readTime}</span>
+                      </div>
+                      <h3 className="font-serif text-lg font-bold leading-snug tracking-tight group-hover:text-primary transition-colors line-clamp-3">
+                        {art.title}
+                      </h3>
                     </div>
-                  )}
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="overline text-primary">{art.category}</span>
-                    <span className="h-1 w-1 rounded-full bg-border" />
-                    <span className="text-[10px] text-muted-foreground font-medium">{art.readTime}</span>
-                  </div>
-                  <h3 className="font-serif text-lg font-bold leading-snug tracking-tight group-hover:text-primary transition-colors line-clamp-3">
-                    {art.title}
-                  </h3>
-                  <p className="font-serif text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
-                    {art.summary}
-                  </p>
-                  <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-primary group-hover:underline underline-offset-4">
-                    Read explainer <ArrowUpRight className="h-3 w-3" />
-                  </span>
-                </Link>
+                  }
+                  backContent={
+                    <Link
+                      to={`/article/${art.slug}`}
+                      className="w-full h-full flex flex-col justify-center p-6 bg-[hsl(var(--surface))] border border-border rounded-lg group hover:border-primary/50 transition-colors"
+                    >
+                      <Compass className="h-6 w-6 text-primary mb-4 opacity-70" />
+                      <h4 className="font-serif font-bold text-lg mb-2">TL;DR</h4>
+                      <p className="font-serif text-sm text-muted-foreground line-clamp-6 leading-relaxed mb-6">
+                        {art.content?.tldr || art.summary}
+                      </p>
+                      <span className="mt-auto inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary group-hover:underline underline-offset-4">
+                        Read explainer <ArrowUpRight className="h-3 w-3" />
+                      </span>
+                    </Link>
+                  }
+                />
               ))}
             </div>
 

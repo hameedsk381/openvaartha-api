@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion, type Transition } from 'motion/react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import type { Article } from '@/lib/types';
@@ -12,8 +13,15 @@ interface HeroCarouselProps {
   articles: Article[];
 }
 
+const transition: Transition = {
+  type: 'spring',
+  stiffness: 240,
+  damping: 24,
+  mass: 1,
+};
+
 const HeroCarousel = ({ articles }: HeroCarouselProps) => {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 5000 })]);
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: 'center' }, [Autoplay({ delay: 5000 })]);
   const [selectedIndex, setSelectedIndex] = React.useState(0);
 
   React.useEffect(() => {
@@ -31,16 +39,25 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
   if (!articles || articles.length === 0) return null;
 
   return (
-    <section className="relative w-full overflow-hidden border-b border-border">
-      <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex">
-          {articles.map((article, index) => (
-            <Link
-              key={article?.id ?? index}
-              to={`/article/${article?.slug ?? "#"}`}
-              className="relative min-h-[440px] flex-[0_0_100%] min-w-0 sm:min-h-0 sm:aspect-[21/9] group"
-            >
-              <div className="absolute inset-0 overflow-hidden bg-[hsl(var(--surface-2))]">
+    <section className="relative w-full overflow-hidden border-b border-border py-4 sm:py-8 bg-black">
+      <div className="overflow-hidden [--slide-spacing:1rem] sm:[--slide-spacing:2rem] [--slide-size:85%] sm:[--slide-size:75%] lg:[--slide-size:65%]" ref={emblaRef}>
+        <div className="flex touch-pan-y touch-pinch-zoom">
+          {articles.map((article, index) => {
+            const isActive = selectedIndex === index;
+            
+            return (
+              <motion.div
+                key={article?.id ?? index}
+                className="mr-[var(--slide-spacing)] basis-[var(--slide-size)] flex-none min-w-0 group"
+                initial={false}
+                animate={{ scale: isActive ? 1 : 0.9, opacity: isActive ? 1 : 0.5 }}
+                transition={transition}
+              >
+                <Link
+                  to={`/article/${article?.slug ?? "#"}`}
+                  className="relative block w-full aspect-[4/5] sm:aspect-[21/9] overflow-hidden rounded-xl border border-white/10"
+                >
+                  <div className="absolute inset-0 overflow-hidden bg-[hsl(var(--surface-2))]">
                 <img
                   src={getArticleImage(article?.thumbnailUrl)}
                   alt={article?.title || ""}
@@ -85,18 +102,25 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
                 </div>
               </div>
             </Link>
-          ))}
-        </div>
-      </div>
+          </motion.div>
+        );
+      })}
+    </div>
+  </div>
 
-      <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-6 flex gap-1.5 z-10">
+      <div className="absolute bottom-6 sm:bottom-12 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
         {articles.slice(0, 5).map((_, i) => (
-          <button
+          <motion.button
             key={i}
-            className={cn(
-              "h-1.5 w-6 rounded-full transition-all press",
-              selectedIndex === i ? "bg-white" : "bg-white/30 hover:bg-white/60"
-            )}
+            layout
+            initial={false}
+            className="rounded-full bg-white press"
+            animate={{
+              width: selectedIndex === i ? 40 : 8,
+              height: 8,
+              opacity: selectedIndex === i ? 1 : 0.3,
+            }}
+            transition={transition}
             onClick={(e) => {
               e.preventDefault();
               emblaApi?.scrollTo(i);
