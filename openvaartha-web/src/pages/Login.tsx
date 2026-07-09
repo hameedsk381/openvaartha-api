@@ -6,7 +6,7 @@ import * as z from 'zod';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { Mail, Lock, User as UserIcon, Loader2, Eye, EyeOff, ArrowLeft, Quote } from 'lucide-react';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, API_BASE } from '@/lib/api';
 import { BRAND } from '@/lib/brand';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import { migrateGuestReadingList, READING_LIST_KEY } from '@/hooks/use-reading-list';
@@ -50,7 +50,7 @@ export default function Login() {
       const body = new URLSearchParams();
       body.append('username', data.email);
       body.append('password', data.password);
-      const res = await fetch('/api/v1/users/login', {
+      const res = await fetch(`${API_BASE}/users/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body,
