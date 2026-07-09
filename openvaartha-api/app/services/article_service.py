@@ -681,6 +681,12 @@ async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data
             update_dict[field] = sanitize_text(update_dict[field])
 
     if update_dict:
+        # If the article is being published, ensure it has a published_at date
+        if update_dict.get("status") == PUBLIC_STATUS:
+            existing = await db["articles"].find_one({"_id": article_id}, {"published_at": 1})
+            if not existing or not existing.get("published_at"):
+                update_dict["published_at"] = datetime.now(timezone.utc)
+                
         update_dict["last_updated"] = datetime.now(timezone.utc)
         update_dict["updated_at"] = datetime.now(timezone.utc)
         await db["articles"].update_one({"_id": article_id}, {"$set": update_dict})

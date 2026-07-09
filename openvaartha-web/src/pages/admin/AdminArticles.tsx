@@ -184,7 +184,7 @@ export default function AdminArticles() {
                 </div>
                 <div className="mb-2 md:mb-0">
                   <span className="text-xs text-muted-foreground md:hidden mr-2">Published:</span>
-                  <span className="text-sm text-muted-foreground">{new Date(article.publishedAt).toLocaleDateString()}</span>
+                  <span className="text-sm text-muted-foreground">{article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : 'N/A'}</span>
                 </div>
                 <div className="flex md:justify-end gap-2">
                   <Link to={`/admin/articles/${article.id}/edit`}>

@@ -37,7 +37,8 @@ function useSEOMeta(article: Article | undefined) {
     const url = window.location.href;
     const image = getArticleImage(article.thumbnailUrl);
     const desc = article.summary || article.content?.tldr || "";
-    const published = new Date(article.publishedAt).toISOString();
+    const effectivePublishedAt = article.publishedAt || article.createdAt || new Date().toISOString();
+    const published = new Date(effectivePublishedAt).toISOString();
 
     document.title = pageTitle(article.title);
 
@@ -221,10 +222,12 @@ const ArticlePage = () => {
     );
   }
 
-  const publishedDate = new Date(article.publishedAt).toLocaleDateString("en-IN", {
+  const effectivePublishedAt = article.publishedAt || article.createdAt || new Date().toISOString();
+  
+  const publishedDate = new Date(effectivePublishedAt).toLocaleDateString("en-IN", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
-  const publishedISO = new Date(article.publishedAt).toISOString();
+  const publishedISO = new Date(effectivePublishedAt).toISOString();
   const updatedISO = article.lastUpdated ? new Date(article.lastUpdated).toISOString() : undefined;
 
   const bodyParas = (article.content?.body || "").split("\n\n");
@@ -268,7 +271,7 @@ const ArticlePage = () => {
               </Link>
               <span className="h-1 w-1 rounded-full bg-border" />
               <time dateTime={publishedISO} className="text-[11px] text-muted-foreground font-medium tracking-wide">
-                {timeAgo(article.publishedAt)}
+                {timeAgo(effectivePublishedAt)}
               </time>
               {article.isBreaking && (
                 <>

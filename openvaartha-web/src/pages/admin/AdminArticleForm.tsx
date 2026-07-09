@@ -809,7 +809,7 @@ export default function AdminArticleForm() {
               <span>·</span>
               <span>{form.readTime}</span>
               <span>·</span>
-              <span>{new Date(form.publishedAt).toLocaleDateString()}</span>
+              <span>{form.publishedAt ? new Date(form.publishedAt).toLocaleDateString() : 'N/A'}</span>
             </div>
           </div>
 
