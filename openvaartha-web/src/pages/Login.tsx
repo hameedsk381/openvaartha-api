@@ -63,8 +63,10 @@ export default function Login() {
       localStorage.setItem('token', result.access_token);
       localStorage.setItem('refresh_token', result.refresh_token);
       localStorage.setItem('user_email', data.email);
+      let role = "user";
       try {
         const me = await apiFetch<any>("/users/me");
+        role = me.role;
         localStorage.setItem("user_role", me.role);
         if (me.contributorStatus) localStorage.setItem("user_contributor_status", me.contributorStatus);
       } catch {
@@ -73,7 +75,12 @@ export default function Login() {
       await migrateGuestReadingList().catch(() => {});
       queryClient.invalidateQueries({ queryKey: READING_LIST_KEY });
       toast.success('Welcome back.');
-      navigate(from, { replace: true });
+      
+      if (role === "admin" && from === "/") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -188,7 +195,12 @@ export default function Login() {
             <GoogleSignInButton
               onSuccess={() => {
                 toast.success('Welcome to Open Vaartha.');
-                navigate(from, { replace: true });
+                const role = localStorage.getItem("user_role");
+                if (role === "admin" && from === "/") {
+                  navigate("/admin", { replace: true });
+                } else {
+                  navigate(from, { replace: true });
+                }
               }}
               onError={(message) => toast.error(message)}
             />

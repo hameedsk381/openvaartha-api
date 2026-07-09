@@ -158,7 +158,21 @@ export function PortalLayout({ children }: { children: ReactNode }) {
               <span className="text-xs font-medium">Feed</span>
             </Link>
             <span className="overline text-primary">{current?.label ?? "Portal"}</span>
-            <div className="w-14" />
+            <div className="w-16 flex justify-end">
+              {isAuthed && (
+                <SignOutButton>
+                  {(onClick) => (
+                    <button
+                      onClick={onClick}
+                      className="flex items-center justify-center h-8 w-8 rounded-full bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 press transition-colors"
+                      aria-label="Sign out"
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </SignOutButton>
+              )}
+            </div>
           </div>
 
           {/* Mobile pill nav */}
