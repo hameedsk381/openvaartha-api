@@ -350,13 +350,24 @@ export default function AdminArticleForm() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <Link
-            to="/admin/articles"
+            to={form.status === "pending" ? "/admin/contributions" : "/admin/articles"}
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-1"
           >
             <ArrowLeft className="h-4 w-4" />
-            Articles
+            {form.status === "pending" ? "Review Queue" : "Articles"}
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight">{isEditing ? "Edit article" : "New article"}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {form.status === "pending" ? "Review Contribution" : isEditing ? "Edit article" : "New article"}
+          </h1>
+          {form.status === "pending" && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-600 border border-amber-500/20">
+                <AlertCircle className="h-3.5 w-3.5" />
+                Pending Review
+              </span>
+              <span className="text-xs text-muted-foreground font-semibold">Submitted by {form.author}</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <AIGenerateDialog onApply={(data) => {
@@ -367,9 +378,26 @@ export default function AdminArticleForm() {
             update("points", data.points.join("\n"));
             if (data.category_id) update("categoryId", data.category_id);
           }} />
+          
+          {form.status === "pending" && (
+            <Button 
+              type="button" 
+              onClick={() => {
+                update("status", "published");
+                update("publishedAt", toDateInput(new Date().toISOString()));
+                setTimeout(() => mutation.mutate(), 50); // Small delay to let state update
+              }}
+              disabled={mutation.isPending} 
+              className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+            >
+              {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Approve & Publish
+            </Button>
+          )}
+
           <Button type="submit" disabled={mutation.isPending} className="gap-2">
             {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Save
+            {form.status === "pending" ? "Save Edits" : "Save"}
             <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-white/20 px-1.5 text-[10px] font-mono opacity-60">{isMac ? "⌘S" : "Ctrl+S"}</kbd>
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => setPreviewOpen(true)} className="gap-1.5">

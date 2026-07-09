@@ -190,6 +190,16 @@ export default function AdminContributions() {
 
               {/* Action Buttons */}
               <div className="pt-4 border-t border-border space-y-2.5">
+                <Link to={`/admin/articles/${selectedArticle.id}/edit`}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full font-semibold gap-1.5 mb-2.5"
+                  >
+                    <FileEdit className="h-4 w-4" /> Edit & Review
+                  </Button>
+                </Link>
+
                 <Button
                   onClick={() => publishMutation.mutate(selectedArticle.id)}
                   disabled={publishMutation.isPending}
