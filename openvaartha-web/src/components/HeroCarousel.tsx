@@ -5,6 +5,7 @@ import Autoplay from 'embla-carousel-autoplay';
 import type { Article } from '@/lib/types';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ArrowUpRight, Clock, Sparkles, Flame } from 'lucide-react';
+import { AnimatedIcon } from '@/components/ui/animated-icon';
 import { Meteors } from '@/components/ui/meteors';
 import { Button } from './ui/button';
 import { cn, handleImageFallback, getArticleImage } from '../lib/utils';
@@ -19,6 +20,8 @@ const transition: Transition = {
   damping: 24,
   mass: 1,
 };
+
+const MotionLink = motion.create(Link);
 
 const HeroCarousel = ({ articles }: HeroCarouselProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: 'center' }, [Autoplay({ delay: 5000 })]);
@@ -53,9 +56,11 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
                 animate={{ scale: isActive ? 1 : 0.9, opacity: isActive ? 1 : 0.5 }}
                 transition={transition}
               >
-                <Link
+                <MotionLink
                   to={`/article/${article?.slug ?? "#"}`}
                   className="relative block w-full aspect-[4/5] sm:aspect-[21/9] overflow-hidden rounded-xl border border-white/10"
+                  initial="initial"
+                  whileHover="hover"
                 >
                   <div className="absolute inset-0 overflow-hidden bg-[hsl(var(--surface-2))]">
                 <img
@@ -97,11 +102,14 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
                   </p>
 
                   <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-secondary group-hover:text-white transition-colors">
-                    Read article <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    Read article
+                    <AnimatedIcon animationType="arrowUpRight" triggerOnHover={false}>
+                      <ArrowUpRight className="h-3.5 w-3.5" />
+                    </AnimatedIcon>
                   </div>
                 </div>
               </div>
-            </Link>
+            </MotionLink>
           </motion.div>
         );
       })}

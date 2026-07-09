@@ -2,10 +2,14 @@ import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import { ArrowUpRight, Compass, Clock, Target, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { handleImageFallback } from '../lib/utils';
 import { useExplainers } from '@/lib/api-hooks';
 import { ExplainersPageSkeleton } from '@/components/PageSkeletons';
 import { FlipCard } from '@/components/animate-ui/components/community/flip-card';
+import { AnimatedIcon } from '@/components/ui/animated-icon';
+
+const MotionLink = motion.create(Link);
 
 const relativeTime = (iso: string) => {
   const h = Math.round((Date.now() - new Date(iso).getTime()) / 3_600_000);
@@ -46,9 +50,11 @@ const ExplainersPage = () => {
 
           {lead && (
             <section className="border-b border-border">
-              <Link
+              <MotionLink
                 to={`/article/${lead.slug}`}
                 className="group press block"
+                initial="initial"
+                whileHover="hover"
               >
                 <div className="grid grid-cols-1 lg:grid-cols-12">
                   {lead.thumbnailUrl && (
@@ -79,11 +85,14 @@ const ExplainersPage = () => {
                       <span className="truncate">{lead.author}</span>
                     </div>
                     <span className="mt-7 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary group-hover:underline underline-offset-4 self-start">
-                      Read the explainer <ArrowUpRight className="h-3.5 w-3.5" />
+                      Read the explainer
+                      <AnimatedIcon animationType="arrowUpRight" triggerOnHover={false}>
+                        <ArrowUpRight className="h-3.5 w-3.5" />
+                      </AnimatedIcon>
                     </span>
                   </div>
                 </div>
-              </Link>
+              </MotionLink>
             </section>
           )}
 
@@ -100,10 +109,12 @@ const ExplainersPage = () => {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
                 {featured.map((art) => (
-                  <Link
+                  <MotionLink
                     key={art.id}
                     to={`/article/${art.slug}`}
                     className="group press block bg-[hsl(var(--surface))] rounded-lg border border-border p-6 sm:p-8 hover:border-primary/40 transition-colors"
+                    initial="initial"
+                    whileHover="hover"
                   >
                     <span className="overline text-primary">{art.category}</span>
                     <h2 className="font-serif text-xl sm:text-2xl font-bold leading-snug tracking-tight mt-3 group-hover:text-primary transition-colors">
@@ -130,9 +141,12 @@ const ExplainersPage = () => {
                     </div>
 
                     <span className="mt-7 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary group-hover:underline underline-offset-4">
-                      Read the full explainer <ArrowUpRight className="h-3.5 w-3.5" />
+                      Read the full explainer
+                      <AnimatedIcon animationType="arrowUpRight" triggerOnHover={false}>
+                        <ArrowUpRight className="h-3.5 w-3.5" />
+                      </AnimatedIcon>
                     </span>
-                  </Link>
+                  </MotionLink>
                 ))}
               </div>
             </section>
@@ -178,9 +192,11 @@ const ExplainersPage = () => {
                     </div>
                   }
                   backContent={
-                    <Link
+                    <MotionLink
                       to={`/article/${art.slug}`}
                       className="w-full h-full flex flex-col justify-center p-6 bg-[hsl(var(--surface))] border border-border rounded-lg group hover:border-primary/50 transition-colors"
+                      initial="initial"
+                      whileHover="hover"
                     >
                       <Compass className="h-6 w-6 text-primary mb-4 opacity-70" />
                       <h4 className="font-serif font-bold text-lg mb-2">TL;DR</h4>
@@ -188,9 +204,12 @@ const ExplainersPage = () => {
                         {art.content?.tldr || art.summary}
                       </p>
                       <span className="mt-auto inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary group-hover:underline underline-offset-4">
-                        Read explainer <ArrowUpRight className="h-3 w-3" />
+                        Read explainer
+                        <AnimatedIcon animationType="arrowUpRight" triggerOnHover={false}>
+                          <ArrowUpRight className="h-3 w-3" />
+                        </AnimatedIcon>
                       </span>
-                    </Link>
+                    </MotionLink>
                   }
                 />
               ))}

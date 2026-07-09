@@ -2,6 +2,8 @@ import { useState, useRef, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { MagicCard } from '@/components/ui/magic-card';
+import { motion } from 'motion/react';
+import { AnimatedIcon } from '@/components/ui/animated-icon';
 import Navbar from '../components/Navbar';
 import BreakingTicker from '../components/BreakingTicker';
 import HeroCarousel from '../components/HeroCarousel';
@@ -38,6 +40,8 @@ const relativeTime = (iso: string | null | undefined) => {
 };
 
 /* ─── Category Strip Component ───────────────────────── */
+
+const MotionLink = motion.create(Link);
 
 function CategoryStrip({ category }: { category: Category }) {
   const { data: articles = [] } = useArticlesByCategory(category.id, 4);
@@ -227,9 +231,11 @@ export default function Index() {
               <section className="hidden lg:block border-b border-border">
                 <div className="grid grid-cols-1 lg:grid-cols-12">
                   <div className="lg:col-span-8 lg:border-r lg:border-border">
-                    <Link
+                    <MotionLink
                       to={`/article/${hero.slug}`}
                       className="block group press relative"
+                      initial="initial"
+                      whileHover="hover"
                     >
                       <div className="relative overflow-hidden aspect-[16/10] bg-[hsl(var(--surface-2))] bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900 border-b border-border">
                         <img
@@ -277,11 +283,13 @@ export default function Index() {
                           </span>
                           <span className="text-white text-xs font-semibold uppercase tracking-[0.18em] flex items-center gap-1.5 group-hover:text-secondary transition-colors">
                             Continue reading
-                            <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                            <AnimatedIcon animationType="arrowUpRight" triggerOnHover={false}>
+                              <ArrowUpRight className="h-3.5 w-3.5" />
+                            </AnimatedIcon>
                           </span>
                         </div>
                       </div>
-                    </Link>
+                    </MotionLink>
                   </div>
 
                   <aside className="lg:col-span-4 flex flex-col">
@@ -356,12 +364,17 @@ export default function Index() {
                     Worth your time
                   </h3>
                 </div>
-                <Link
+                <MotionLink
                   to="/trending"
-                  className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground hover:text-primary transition-colors"
+                  className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground hover:text-primary transition-colors group"
+                  initial="initial"
+                  whileHover="hover"
                 >
-                  View all <ArrowUpRight className="h-3.5 w-3.5" />
-                </Link>
+                  View all 
+                  <AnimatedIcon animationType="arrowUpRight" triggerOnHover={false}>
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </AnimatedIcon>
+                </MotionLink>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Search, Sun, Moon, Bookmark, User, Home, X, ChevronRight, LogOut, Radio } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { useSearch, useCategories, useBreakingArticles } from "@/lib/api-hooks";
 import SignOutButton from "@/components/SignOutButton";
@@ -124,10 +125,12 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
         <div className="flex items-center gap-0.5">
           <button
             onClick={() => setSearchOpen(true)}
-            className="h-11 w-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors press"
+            className="group h-11 w-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors press"
             aria-label="Search"
           >
-            <Search className="h-5 w-5" />
+            <AnimatedIcon animationType="scale" triggerOnHover={false}>
+              <Search className="h-5 w-5" />
+            </AnimatedIcon>
           </button>
 
           {!isTouchDevice() && (
@@ -136,10 +139,12 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
 
           <button
             onClick={toggleDark}
-            className="h-11 w-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors press"
+            className="group h-11 w-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors press"
             aria-label="Toggle theme"
           >
-            {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            <AnimatedIcon animationType="rotate" triggerOnHover={false}>
+              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </AnimatedIcon>
           </button>
 
           <Link
@@ -246,9 +251,11 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
             />
             <button
               onClick={() => { setSearchOpen(false); setQuery(""); }}
-              className="h-11 w-11 rounded-lg flex items-center justify-center hover:bg-muted transition-colors press text-muted-foreground hover:text-foreground"
+              className="group h-11 w-11 rounded-lg flex items-center justify-center hover:bg-muted transition-colors press text-muted-foreground hover:text-foreground"
             >
-              <X className="h-5 w-5" />
+              <AnimatedIcon animationType="rotate" triggerOnHover={false}>
+                <X className="h-5 w-5" />
+              </AnimatedIcon>
             </button>
           </div>
 

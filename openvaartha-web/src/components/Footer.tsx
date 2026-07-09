@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCategories } from "@/lib/api-hooks";
 import { BRAND } from "@/lib/brand";
 import { Instagram, Facebook, Youtube } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -30,28 +31,34 @@ const Footer = () => {
                     href={BRAND.instagramUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors press"
+                    className="group h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors press"
                     aria-label="Instagram"
                   >
-                    <Instagram className="h-4 w-4" />
+                    <AnimatedIcon animationType="bounce" triggerOnHover={false}>
+                      <Instagram className="h-4 w-4" />
+                    </AnimatedIcon>
                   </a>
                   <a
                     href={BRAND.facebookUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors press"
+                    className="group h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors press"
                     aria-label="Facebook"
                   >
-                    <Facebook className="h-4 w-4" />
+                    <AnimatedIcon animationType="bounce" triggerOnHover={false}>
+                      <Facebook className="h-4 w-4" />
+                    </AnimatedIcon>
                   </a>
                   <a
                     href={BRAND.youtubeUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors press"
+                    className="group h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors press"
                     aria-label="YouTube"
                   >
-                    <Youtube className="h-4 w-4" />
+                    <AnimatedIcon animationType="bounce" triggerOnHover={false}>
+                      <Youtube className="h-4 w-4" />
+                    </AnimatedIcon>
                   </a>
                 </div>
               </div>
