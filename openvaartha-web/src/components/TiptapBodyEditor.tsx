@@ -10,6 +10,8 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { useRef, useCallback, useEffect, useSyncExternalStore } from "react";
+import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   List, ListOrdered, Quote, Minus, Undo2, Redo2,
@@ -152,10 +154,28 @@ export default function TiptapBodyEditor({ value, onChange }: Props) {
 
   const addImage = useCallback(() => {
     if (!editor) return;
-    const url = window.prompt("Image URL:");
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
-    }
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        toast.loading("Uploading inline image...", { id: "tiptap-upload" });
+        try {
+          const res = await apiFetch<{ url: string }>("/upload/", {
+            method: "POST",
+            body: formData,
+          });
+          editor.chain().focus().setImage({ src: res.url }).run();
+          toast.success("Image added", { id: "tiptap-upload" });
+        } catch (err) {
+          toast.error("Failed to upload image", { id: "tiptap-upload" });
+        }
+      }
+    };
+    input.click();
   }, [editor]);
 
   const addTable = useCallback(() => {

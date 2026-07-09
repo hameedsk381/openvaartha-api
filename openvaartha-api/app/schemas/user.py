@@ -26,6 +26,7 @@ class UserUpdate(BaseModel):
     current_password: Optional[str] = None
     theme: Optional[str] = None
     font_size: Optional[str] = None
+    avatar_url: Optional[str] = None
 
     class Config:
         alias_generator = to_camel
