@@ -55,7 +55,11 @@
 </head>
 
 <body>
-  <div id="root"></div>
+  <!-- app-body: the API server seeds this container with a server-rendered
+       article shell for /article/* routes (crawlable headline/body + fast first
+       paint). React's createRoot() replaces it on mount. Keep the marker.
+       See openvaartha-api/app/services/meta_service.py. -->
+  <div id="root"><!--app-body--></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 

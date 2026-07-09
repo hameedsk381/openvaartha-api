@@ -20,6 +20,7 @@ x-app-environment: &app-environment
   INSTAGRAM_ACCESS_TOKEN: ${INSTAGRAM_ACCESS_TOKEN:-}
   INSTAGRAM_USER_ID: ${INSTAGRAM_USER_ID:-}
   SITE_URL: ${SITE_URL:-https://openvaartha.com}
+  WEB_INDEX_PATH: ${WEB_INDEX_PATH:-/app/web/index.html}
   GCS_BUCKET_NAME: ${GCS_BUCKET_NAME:-}
   GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
   SMTP_HOST: ${SMTP_HOST:-}
@@ -40,8 +41,13 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+    # Publish the freshly-built index.html to a shared volume on each start so
+    # the API's server-rendered article route injects into the byte-identical
+    # index.html this container serves (guarantees matching hashed asset URLs).
+    command: ["/bin/sh", "-c", "cp /usr/share/nginx/html/index.html /web-shared/index.html && nginx -g 'daemon off;'"]
     volumes:
       - media-data:/usr/share/nginx/html/media
+      - web-dist:/web-shared
     networks:
       - openvaartha
 
@@ -58,6 +64,9 @@ services:
     restart: unless-stopped
     volumes:
       - media-data:/app/media
+      # Read the web build's index.html (published by the web container) so the
+      # server-rendered article route can inject into it. WEB_INDEX_PATH points here.
+      - web-dist:/app/web:ro
     networks:
       - openvaartha
     healthcheck:
@@ -142,6 +151,7 @@ volumes:
   mongo-data:
   redis-data:
   media-data:
+  web-dist:
 
 networks:
   openvaartha:

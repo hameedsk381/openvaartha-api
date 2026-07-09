@@ -1,16 +1,18 @@
 import os
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.api.v1 import admin, articles, categories, comments, feeds, newsletter, search, users
+from app.api.v1 import admin, articles, categories, comments, feeds, newsletter, pages, search, users
 from app.config import settings
+from app.core.dependencies import get_current_active_admin
 from app.core.rate_limit import limiter
 from app.core.security_headers import SecurityHeadersMiddleware
 from app.database import db
+from app.models.user import User as UserModel
 from app.services.article_service import ensure_article_indexes
 from app.services.category_service import ensure_category_indexes
 from app.services.seed_service import ensure_admin_user
@@ -59,8 +61,9 @@ app.include_router(newsletter.router, prefix="/api/v1/newsletter", tags=["Newsle
 app.include_router(comments.router, prefix="/api/v1/comments", tags=["Comments"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 
-# Root-level routes (sitemap, RSS feeds) — must register before SPA catch-all
+# Root-level routes (sitemap, RSS feeds, server-rendered article HTML)
 app.include_router(feeds.router)
+app.include_router(pages.router)
 
 
 @app.get("/health")
@@ -73,7 +76,8 @@ def health_check():
 
 
 @app.get("/health/env")
-def env_check():
+def env_check(current_user: UserModel = Depends(get_current_active_admin)):
+    # Admin-only: discloses exactly which secrets are configured (recon aid).
     # Helper to check if string contains actual config and not default fallback placeholders
     return {
         "MONGODB_URL_set": bool(settings.MONGODB_URL),
@@ -93,7 +97,9 @@ def env_check():
 
 
 @app.get("/health/test-email")
-async def test_email_endpoint(to: str):
+async def test_email_endpoint(to: str, current_user: UserModel = Depends(get_current_active_admin)):
+    # Admin-only: sends mail through the configured SMTP relay. Left open this
+    # would be an unauthenticated open relay (spam / domain-reputation abuse).
     from app.services.email_service import send_email
     success = await send_email(
         to=to,
@@ -106,7 +112,8 @@ async def test_email_endpoint(to: str):
 
 
 @app.get("/health/test-gcs")
-async def test_gcs_endpoint():
+async def test_gcs_endpoint(current_user: UserModel = Depends(get_current_active_admin)):
+    # Admin-only: writes (and deletes) a blob in the storage bucket on demand.
     if not settings.GCS_BUCKET_NAME:
         return {"status": "error", "message": "GCS_BUCKET_NAME is not configured."}
     
@@ -126,7 +133,8 @@ async def test_gcs_endpoint():
 
 
 @app.get("/health/test-google")
-async def test_google_endpoint():
+async def test_google_endpoint(current_user: UserModel = Depends(get_current_active_admin)):
+    # Admin-only: makes an outbound call to Google's OAuth servers.
     if not settings.GOOGLE_CLIENT_ID:
         return {"status": "error", "message": "GOOGLE_CLIENT_ID is not configured."}
     

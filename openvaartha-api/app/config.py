@@ -80,6 +80,12 @@ class Settings(BaseSettings):
     # Site URL (used for sitemaps, RSS feeds, and canonical links)
     SITE_URL: str = "http://localhost:8000"
 
+    # Path to the built SPA index.html that the server-rendered article route
+    # injects into. Populated from the web container via a shared volume in
+    # docker-compose; when the file is absent (local dev / tests) the route
+    # falls back to a minimal template so it still returns valid HTML.
+    WEB_INDEX_PATH: str = "/app/web/index.html"
+
     # CORS — comma-separated list of EXACT origins. Wildcards (``*``) are
     # rejected outright in production because ``allow_credentials=True`` makes
     # wildcard origins both insecure and meaningless.

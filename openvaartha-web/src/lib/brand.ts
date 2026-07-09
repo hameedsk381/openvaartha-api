@@ -15,6 +15,7 @@ export const BRAND = {
   youtubeHandle: "@openvaartha",
   youtubeUrl: "https://youtube.com/@openvaartha",
   copyright: "FOSS Andhra Foundation",
+  contactEmail: "office@openvaartha.com",
   logoPath: "/logo.jpg",
   iconPath: "/icon.svg",
   lang: "en",

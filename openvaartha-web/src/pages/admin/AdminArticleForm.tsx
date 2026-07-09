@@ -31,7 +31,6 @@ type FormState = {
   language: string;
   author: string;
   thumbnailUrl: string;
-  instagramUrl: string;
   publishedAt: string;
   status: ArticleStatus;
   isTrending: boolean;
@@ -53,7 +52,6 @@ const emptyForm: FormState = {
   language: "en",
   author: `${BRAND.name} Desk`,
   thumbnailUrl: "",
-  instagramUrl: "",
   publishedAt: new Date().toISOString().slice(0, 16),
   status: "draft",
   isTrending: false,
@@ -177,7 +175,6 @@ export default function AdminArticleForm() {
       language: article.language,
       author: article.author,
       thumbnailUrl: article.thumbnailUrl || "",
-      instagramUrl: article.instagramUrl || "",
       publishedAt: toDateInput(article.publishedAt),
       status: (article.status ?? "draft") as ArticleStatus,
       isTrending: article.isTrending,
@@ -215,7 +212,6 @@ export default function AdminArticleForm() {
     status: form.status,
     author: form.author,
     thumbnail_url: form.thumbnailUrl || null,
-    instagram_url: form.instagramUrl || null,
     published_at: safeDate(form.publishedAt),
     is_trending: form.isTrending,
     is_breaking: form.isBreaking,
@@ -678,9 +674,6 @@ export default function AdminArticleForm() {
                   </div>
                 )}
               </div>
-            </Field>
-            <Field label="Instagram URL">
-              <Input value={form.instagramUrl} onChange={(e) => update("instagramUrl", e.target.value)} placeholder="https://instagram.com/p/..." />
             </Field>
           </CardSection>
           <CardSection title="Flags">

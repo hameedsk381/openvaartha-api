@@ -16,7 +16,6 @@ import { apiFetch } from "@/lib/api";
 import CommentSection from "@/components/CommentSection";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { toast } from "sonner";
-import InstagramEmbed from "@/components/InstagramEmbed";
 
 const timeAgo = (dateStr: string): string => {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -356,7 +355,7 @@ const ArticlePage = () => {
                 className="w-full aspect-[16/9] sm:aspect-[21/9] object-cover"
                 onError={handleImageFallback}
                 loading="eager"
-                fetchPriority="high"
+                fetchpriority="high"
               />
               <figcaption className="px-4 sm:px-6 lg:px-10 py-3 text-[11px] font-serif italic text-muted-foreground border-t border-border bg-background">
                 {article.title} · {article.category}
@@ -548,13 +547,6 @@ const ArticlePage = () => {
                     </div>
                   ))}
                 </dl>
-              </section>
-            )}
-
-            {article.instagramUrl && (
-              <section className="mt-14 pt-10 border-t border-border">
-                <h2 className="overline text-primary mb-5">From social</h2>
-                <InstagramEmbed url={article.instagramUrl} />
               </section>
             )}
 

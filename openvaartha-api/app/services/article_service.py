@@ -1,7 +1,7 @@
 import re
+import asyncio
 import base64
 import uuid
-import os
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Optional, Any
 from uuid import uuid4
@@ -28,63 +28,72 @@ def _json_default(value):
 
 
 def _save_base64_thumbnail(thumbnail_url: str) -> str:
-    """Save a base64 encoded image to Google Cloud Storage (GCS) or local media directory in compressed WebP format."""
+    """Decode a base64 data-URI thumbnail, compress it to WebP, and upload it to
+    Google Cloud Storage, returning the public GCS URL.
+
+    Raises HTTPException on any failure (unconfigured storage, invalid image, or
+    a failed upload) so that raw base64 is never persisted to the database.
+    Non-data-URI values (e.g. an already-hosted URL) are passed through unchanged.
+    """
     if not thumbnail_url or not thumbnail_url.startswith("data:image/"):
         return thumbnail_url
+
+    if not settings.GCS_BUCKET_NAME:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Image storage is not configured (GCS_BUCKET_NAME is unset).",
+        )
 
     try:
         # Format: data:image/png;base64,iVBORw0KGgoAAA...
         header, base64_data = thumbnail_url.split(";base64,", 1)
-        
+
         file_bytes = base64.b64decode(base64_data)
-        
+
         # Compress and resize using Pillow
         from PIL import Image
         import io
-        
+
         img = Image.open(io.BytesIO(file_bytes))
-        
+
         # Convert to RGB (to support saving as WebP)
         if img.mode in ("RGBA", "P"):
             img = img.convert("RGB")
-            
+
         # Resize if width is larger than 800px (to optimize for web card display)
         max_width = 800
         if img.width > max_width:
             ratio = max_width / float(img.width)
             new_height = int(float(img.height) * float(ratio))
             img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
-            
+
         # Output as WebP
         out_io = io.BytesIO()
         img.save(out_io, format="WEBP", quality=75)
         compressed_bytes = out_io.getvalue()
-        
-        filename = f"{uuid.uuid4().hex}.webp"
-
-        # 1. Use Google Cloud Storage if configured
-        if settings.GCS_BUCKET_NAME:
-            try:
-                from google.cloud import storage
-                client = storage.Client()
-                bucket = client.bucket(settings.GCS_BUCKET_NAME)
-                blob = bucket.blob(filename)
-                
-                # Upload the WebP image bytes
-                blob.upload_from_string(compressed_bytes, content_type="image/webp")
-                
-                # If GCS bucket has public access, return the public GCS URL
-                return f"https://storage.googleapis.com/{settings.GCS_BUCKET_NAME}/{filename}"
-            except Exception as e:
-                print(f"GCS upload failed: {e}")
-                return thumbnail_url # Fall back to returning original base64
-        
-        # If no GCS bucket is configured, fall back to base64
-        return thumbnail_url
     except Exception as e:
-        # If decoding fails, log and fall back to returning original base64 to avoid page crashes
-        print(f"Error compressing base64 thumbnail: {e}")
-        return thumbnail_url
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid image data: {e}",
+        )
+
+    filename = f"{uuid.uuid4().hex}.webp"
+    try:
+        from google.cloud import storage
+        client = storage.Client()
+        bucket = client.bucket(settings.GCS_BUCKET_NAME)
+        blob = bucket.blob(filename)
+
+        # Upload the WebP image bytes
+        blob.upload_from_string(compressed_bytes, content_type="image/webp")
+
+        # Return the public GCS URL (bucket must grant public read access)
+        return f"https://storage.googleapis.com/{settings.GCS_BUCKET_NAME}/{filename}"
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to upload image to storage: {e}",
+        )
 
 
 def _cache_key(namespace: str, **parts: Any) -> str:
@@ -121,6 +130,57 @@ async def _set_cached_list(key: str, value: List[dict]) -> None:
         return
 
 
+def _article_detail_key(slug: str) -> str:
+    # Under the ``openvaartha:articles:`` namespace so invalidate_article_caches
+    # clears it alongside the list caches on any mutation.
+    return f"openvaartha:articles:detail:slug={slug}"
+
+
+async def _get_cached_article(slug: str) -> Optional[dict]:
+    try:
+        redis = await _get_redis()
+        if redis is None:
+            return None
+        cached = await redis.get(_article_detail_key(slug))
+        return json.loads(cached) if cached else None
+    except (RedisError, json.JSONDecodeError):
+        return None
+
+
+async def _set_cached_article(slug: str, value: dict) -> None:
+    try:
+        redis = await _get_redis()
+        if redis is not None:
+            await redis.setex(
+                _article_detail_key(slug),
+                settings.CACHE_TTL_SECONDS,
+                json.dumps(value, default=_json_default),
+            )
+    except (RedisError, TypeError):
+        return
+
+
+# Keep strong references to fire-and-forget tasks so they aren't garbage
+# collected mid-flight (asyncio only holds a weak reference).
+_background_tasks: set = set()
+
+
+def _fire_and_forget(coro) -> None:
+    task = asyncio.create_task(coro)
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
+
+
+async def _increment_view_count(db: AsyncIOMotorDatabase, slug: str) -> None:
+    try:
+        await db["articles"].update_one(
+            _public_query({"slug": slug}), {"$inc": {"view_count": 1}}
+        )
+    except Exception:
+        # A dropped view count must never surface as a request error.
+        pass
+
+
 async def invalidate_article_caches() -> None:
     """Clear cached article list variants after article mutations."""
     try:
@@ -151,6 +211,42 @@ async def generate_unique_slug(db: AsyncIOMotorDatabase, title: str) -> str:
         slug = f"{base_slug}-{suffix}"
         suffix += 1
     return slug
+
+
+async def _backfill_deep_content_flag(db: AsyncIOMotorDatabase) -> None:
+    """One-time: populate ``has_deep_content`` on articles created before the flag
+    existed. Idempotent — only touches docs still missing the field, so it's a
+    no-op on every boot after the first. (Also corrects a latent bug in the old
+    ``/explainers`` query, which used the array operator ``$size`` on the
+    dict-typed ``explainer`` field and so never matched explainer-only articles.)"""
+    missing = await db["articles"].find(
+        {"has_deep_content": {"$exists": False}}, {"_id": 1}
+    ).to_list(length=None)
+    if not missing:
+        return
+    missing_ids = [a["_id"] for a in missing]
+
+    deep = await db["article_content"].find(
+        {
+            "article_id": {"$in": missing_ids},
+            "$or": [
+                {"timeline": {"$nin": [None, []]}},
+                {"explainer": {"$nin": [None, {}]}},
+            ],
+        },
+        {"article_id": 1},
+    ).to_list(length=None)
+    deep_ids = {c["article_id"] for c in deep}
+
+    if deep_ids:
+        await db["articles"].update_many(
+            {"_id": {"$in": list(deep_ids)}}, {"$set": {"has_deep_content": True}}
+        )
+    remaining = [i for i in missing_ids if i not in deep_ids]
+    if remaining:
+        await db["articles"].update_many(
+            {"_id": {"$in": remaining}}, {"$set": {"has_deep_content": False}}
+        )
 
 
 async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
@@ -186,6 +282,12 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
     await db["articles"].create_index([("is_opinion", 1), ("status", 1), ("published_at", -1)])
     await db["articles"].create_index([("is_trending", 1), ("status", 1)])
     await db["articles"].create_index([("is_editor_pick", 1), ("status", 1)])
+    # Contributor dashboard ("my posts") filters by author_id.
+    await db["articles"].create_index([("author_id", 1), ("status", 1), ("published_at", -1)])
+    # /explainers feed: query the denormalized flag directly instead of scanning content.
+    await db["articles"].create_index([("has_deep_content", 1), ("status", 1), ("published_at", -1)])
+
+    await _backfill_deep_content_flag(db)
 
     await db["article_content"].create_index("article_id")
     await db["reading_history"].create_index([("user_id", 1), ("article_id", 1)], unique=True)
@@ -202,42 +304,6 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
     except Exception as e:
         print(f"Failed to migrate base64 thumbnails: {e}")
 
-    # Auto-migration for existing non-webp local file thumbnails on disk
-    try:
-        media_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "media")
-        async for art in db["articles"].find({"thumbnail_url": {"$regex": "^/media/.*\\.(png|jpg|jpeg)$"}}):
-            old_url = art.get("thumbnail_url")
-            filename = old_url.split("/media/", 1)[1]
-            old_file_path = os.path.join(media_dir, filename)
-            
-            if os.path.exists(old_file_path):
-                from PIL import Image
-                import io
-                
-                with open(old_file_path, "rb") as f:
-                    file_bytes = f.read()
-                    
-                img = Image.open(io.BytesIO(file_bytes))
-                if img.mode in ("RGBA", "P"):
-                    img = img.convert("RGB")
-                
-                max_width = 800
-                if img.width > max_width:
-                    ratio = max_width / float(img.width)
-                    new_height = int(float(img.height) * float(ratio))
-                    img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
-                
-                new_filename = f"{os.path.splitext(filename)[0]}.webp"
-                new_file_path = os.path.join(media_dir, new_filename)
-                
-                img.save(new_file_path, format="WEBP", quality=75)
-                
-                new_url = f"/media/{new_filename}"
-                await db["articles"].update_one({"_id": art["_id"]}, {"$set": {"thumbnail_url": new_url}})
-                os.remove(old_file_path)
-                print(f"Compressed existing local thumbnail {filename} to WebP format")
-    except Exception as e:
-        print(f"Failed to migrate existing local thumbnails: {e}")
     # Backfill: documents created before the status field defaulted to draft
     # would be invisible to the public list. Treat un-tagged docs as published
     # so existing inventories migrate cleanly.
@@ -335,7 +401,7 @@ async def _populate_articles_bulk(db: AsyncIOMotorDatabase, articles: list[dict]
     for a in articles:
         if a is None:
             continue
-        a.pop("thumbnail_url", None)  # Exclude heavy thumbnail_url field from lists
+        
         # Map Category Name
         cid = a.get("category_id")
         if cid:
@@ -442,16 +508,13 @@ async def get_editor_pick_articles(db: AsyncIOMotorDatabase, limit: int = 10):
 
 
 async def get_explainer_articles(db: AsyncIOMotorDatabase, skip: int = 0, limit: int = 20):
-    """Get articles with explainer or timeline content (published only)."""
-    articles_with_content = await db["article_content"].find({
-        "$or": [
-            {"explainer": {"$ne": None, "$not": {"$size": 0}}},
-            {"timeline": {"$ne": None, "$not": {"$size": 0}}},
-        ]
-    }).to_list(length=None)
+    """Get articles with explainer or timeline content (published only).
 
-    article_ids = [content["article_id"] for content in articles_with_content]
-    query = _public_query({"_id": {"$in": article_ids}})
+    Uses the denormalized ``has_deep_content`` flag (kept in sync on create/update
+    and backfilled at startup) so this is a single indexed, paginated query
+    instead of loading the entire ``article_content`` collection into memory.
+    """
+    query = _public_query({"has_deep_content": True})
     cursor = db["articles"].find(query).sort("published_at", -1).skip(skip).limit(limit)
     articles = await cursor.to_list(length=limit)
     return await _populate_articles_bulk(db, articles)
@@ -461,15 +524,34 @@ async def get_article_by_slug(
     db: AsyncIOMotorDatabase,
     slug: str,
     include_unpublished: bool = False,
+    count_view: bool = True,
 ):
-    """Get a single article by slug. Drafts/archived are hidden unless caller is admin."""
+    """Get a single article by slug. Drafts/archived are hidden unless caller is admin.
+
+    ``count_view`` lets non-primary readers (e.g. the server-rendered article
+    shell) fetch without inflating the view counter — the client's own
+    ``/api/v1/articles/{slug}`` fetch on the same page load owns the count.
+    """
     if include_unpublished:
+        # Admin reads bypass the cache so drafts/edits are always seen fresh.
         article = await db["articles"].find_one({"slug": slug})
-    else:
-        # Increment view_count for public reads
-        await db["articles"].update_one(_public_query({"slug": slug}), {"$inc": {"view_count": 1}})
-        article = await db["articles"].find_one(_public_query({"slug": slug}))
-    return await _populate_article_extras(db, article)
+        return await _populate_article_extras(db, article)
+
+    # Count the view off the request's critical path (fire-and-forget) so it
+    # never blocks the read; the cached copy's view_count may lag by up to the
+    # cache TTL, which is acceptable for a read-heavy news feed.
+    if count_view:
+        _fire_and_forget(_increment_view_count(db, slug))
+
+    cached = await _get_cached_article(slug)
+    if cached is not None:
+        return cached
+
+    article = await db["articles"].find_one(_public_query({"slug": slug}))
+    populated = await _populate_article_extras(db, article)
+    if populated is not None:
+        await _set_cached_article(slug, populated)
+    return populated
 
 
 async def get_article_by_id(
@@ -491,6 +573,23 @@ async def _assert_category_exists(db: AsyncIOMotorDatabase, category_id: str) ->
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unknown category_id: {category_id}",
         )
+
+
+def _has_deep_content(content: Any) -> bool:
+    """Whether an article carries explainer or timeline content (drives the
+    ``/explainers`` feed). This boolean is denormalized onto the article doc so
+    the feed is a single indexed query instead of a full scan of the
+    ``article_content`` collection. Handles both pydantic content objects and
+    raw dicts; empty dict/list/None all count as "no deep content"."""
+    if content is None:
+        return False
+    if isinstance(content, dict):
+        timeline = content.get("timeline")
+        explainer = content.get("explainer")
+    else:
+        timeline = getattr(content, "timeline", None)
+        explainer = getattr(content, "explainer", None)
+    return bool(timeline) or bool(explainer)
 
 
 async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
@@ -523,6 +622,7 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
         "last_updated": article_data.last_updated or datetime.now(timezone.utc),
         "author": sanitize_text(article_data.author),
         "created_at": datetime.now(timezone.utc),
+        "has_deep_content": _has_deep_content(getattr(article_data, "content", None)),
     }
 
     await db["articles"].insert_one(article_doc)
@@ -590,6 +690,18 @@ async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data
                 {"article_id": article_id},
                 {"$set": sanitized_content, "$setOnInsert": {"article_id": article_id}},
                 upsert=True,
+            )
+
+        # Keep the denormalized ``has_deep_content`` flag in sync whenever the
+        # deep-content fields are touched. Reads back the merged content since
+        # updates are partial and either field alone can flip the flag.
+        if "timeline" in content_data or "explainer" in content_data:
+            merged = await db["article_content"].find_one(
+                {"article_id": article_id}, {"timeline": 1, "explainer": 1}
+            )
+            await db["articles"].update_one(
+                {"_id": article_id},
+                {"$set": {"has_deep_content": _has_deep_content(merged)}},
             )
 
     await invalidate_article_caches()

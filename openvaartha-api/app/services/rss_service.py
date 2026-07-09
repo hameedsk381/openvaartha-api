@@ -185,6 +185,8 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
             "last_updated": datetime.now(timezone.utc),
             "author": entry.get("author") or settings.APP_NAME,
             "created_at": datetime.now(timezone.utc),
+            # RSS-ingested articles carry no timeline/explainer content.
+            "has_deep_content": False,
         }
 
         await db["articles"].insert_one(article_doc)

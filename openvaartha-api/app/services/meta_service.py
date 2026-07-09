@@ -27,6 +27,12 @@ def _base_url() -> str:
     return settings.SITE_URL.rstrip("/")
 
 
+def _slugify(name: str) -> str:
+    # Must match feed_service._slugify — category pages key off the slugified
+    # name, not the UUID _id.
+    return "".join(c.lower() if c.isalnum() or c in "-_" else "-" for c in name).strip("-")
+
+
 def _abs_url(path_or_url: str) -> str:
     if path_or_url.startswith(("http://", "https://")):
         return path_or_url
@@ -245,7 +251,7 @@ def build_article_head(article: Dict[str, Any], category_name: str = "") -> str:
     if category_name:
         breadcrumb_items = [
             breadcrumb_items[0],
-            {"@type": "ListItem", "position": 2, "name": category_name, "item": f"{base}/category/{article.get('category_id', '')}"},
+            {"@type": "ListItem", "position": 2, "name": category_name, "item": f"{base}/category/{_slugify(category_name)}"},
             {"@type": "ListItem", "position": 3, "name": title, "item": url},
         ]
     extra_lines.append(
@@ -271,3 +277,68 @@ def build_article_head(article: Dict[str, Any], category_name: str = "") -> str:
 def inject_head(index_html: str, head_block: str) -> str:
     """Replace the marked head block in index.html; returns html unchanged if markers are missing."""
     return _HEAD_BLOCK_RE.sub(lambda _m: head_block, index_html, count=1)
+
+
+# ── Server-rendered article body shell ──────────────────────────────────────
+# The SPA mounts into `<div id="root">`. We seed that container with a static,
+# crawlable rendering of the article so (a) non-JS crawlers (WhatsApp, Google
+# News/Discover) see real headline + body text and (b) humans get a meaningful
+# first paint before the React bundle loads. React's createRoot() replaces this
+# content on mount, so it is a transient shell, not hydrated markup.
+_BODY_MARKER = "<!--app-body-->"
+
+
+def _plain_paragraphs(text: str) -> str:
+    """Render body text as escaped <p> blocks. The stored body may contain
+    markdown; for the shell we present it as readable, escaped text (crawlers
+    index the words; React later renders the fully-formatted version)."""
+    if not text:
+        return ""
+    blocks = [b.strip() for b in re.split(r"\n\s*\n", text) if b.strip()]
+    return "".join(f"<p>{html.escape(b)}</p>" for b in blocks)
+
+
+def build_article_body_shell(article: Dict[str, Any], category_name: str = "") -> str:
+    e = lambda s: html.escape(s, quote=True)  # noqa: E731
+    content = article.get("content") or {}
+    title = article.get("title") or ""
+    summary = article.get("summary") or ""
+    tldr = content.get("tldr") or ""
+    points = content.get("points") or []
+    body = content.get("body") or ""
+    author = article.get("author") or SITE_NAME
+    published = _iso(article.get("published_at"))
+
+    # Minimal inline styling so the pre-React paint is readable, not full-bleed.
+    parts = ['<article style="max-width:720px;margin:0 auto;padding:24px;font-family:system-ui,-apple-system,sans-serif;line-height:1.6;">']
+    if category_name:
+        parts.append(f'<p style="text-transform:uppercase;letter-spacing:.08em;font-size:12px;font-weight:700;">{e(category_name)}</p>')
+    parts.append(f"<h1>{e(title)}</h1>")
+    if summary:
+        parts.append(f'<p style="font-size:1.15rem;color:#444;">{e(summary)}</p>')
+    byline = f"By {e(author)}"
+    if published:
+        byline += f' · <time datetime="{e(published)}">{e(published[:10])}</time>'
+    parts.append(f'<p style="font-size:13px;color:#666;">{byline}</p>')
+    if tldr:
+        parts.append(f"<h2>TL;DR</h2><p>{e(tldr)}</p>")
+    if points:
+        items = "".join(f"<li>{e(str(p))}</li>" for p in points if p)
+        if items:
+            parts.append(f"<h2>Key points</h2><ul>{items}</ul>")
+    if body:
+        parts.append(_plain_paragraphs(body))
+    parts.append("</article>")
+    return "".join(parts)
+
+
+def inject_body(index_html: str, body_shell: str) -> str:
+    """Seed the SPA mount point with a server-rendered shell. No-op if the
+    marker is absent (e.g. an older index.html)."""
+    return index_html.replace(_BODY_MARKER, body_shell, 1)
+
+
+def render_article_html(template_html: str, article: Dict[str, Any], category_name: str = "") -> str:
+    """Inject per-article <head> meta and a crawlable body shell into index.html."""
+    out = inject_head(template_html, build_article_head(article, category_name))
+    return inject_body(out, build_article_body_shell(article, category_name))
