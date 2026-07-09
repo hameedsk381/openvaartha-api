@@ -6,7 +6,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.api.v1 import admin, articles, categories, comments, feeds, newsletter, pages, search, users
+from app.api.v1 import admin, articles, categories, comments, feeds, newsletter, pages, search, users, authors
 from app.config import settings
 from app.core.dependencies import get_current_active_admin
 from app.core.rate_limit import limiter
@@ -47,7 +47,7 @@ app.add_middleware(
 
 # Security headers — CSP, X-Frame-Options, HSTS, etc.
 app.add_middleware(SecurityHeadersMiddleware)
-from app.api.v1 import articles, categories, users, feeds, search, newsletter, comments, pages, admin, upload
+from app.api.v1 import articles, categories, users, feeds, search, newsletter, comments, pages, admin, upload, authors
 
 # Compress large text responses (JS/CSS bundles, HTML, JSON). Serves the SPA's
 # ~1.8MB JS bundle gzipped to mobile clients, which is the primary access pattern.
@@ -62,6 +62,7 @@ app.include_router(newsletter.router, prefix="/api/v1/newsletter", tags=["Newsle
 app.include_router(comments.router, prefix="/api/v1/comments", tags=["Comments"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(upload.router, prefix="/api/v1/upload", tags=["Upload"])
+app.include_router(authors.router, prefix="/api/v1/authors", tags=["Authors"])
 
 # Root-level routes (sitemap, RSS feeds, server-rendered article HTML)
 app.include_router(feeds.router)

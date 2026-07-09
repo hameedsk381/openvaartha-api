@@ -10,7 +10,7 @@ import HeroCarousel from '../components/HeroCarousel';
 import FeedSkeleton from '../components/FeedSkeleton';
 import Footer from '@/components/Footer';
 import { handleImageFallback, getArticleImage } from '@/lib/utils';
-import { categoryEmojis } from '@/lib/types';
+import { CategoryIcon } from '@/components/CategoryIcon';
 import { Clock, Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame, Loader2, ChevronRight, Radio } from 'lucide-react';
 import { toast } from 'sonner';
 import { useReadingList } from '@/hooks/use-reading-list';
@@ -51,9 +51,9 @@ function CategoryStrip({ category }: { category: Category }) {
   return (
     <div className="py-6 sm:py-8">
       <div className="flex items-baseline justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <span className="text-base sm:text-lg">{categoryEmojis[category.name] || '📰'}</span>
-          <h3 className="font-display text-lg sm:text-xl font-bold tracking-tight">{category.name}</h3>
+        <div className="flex items-center gap-2 text-primary">
+          <CategoryIcon name={category.name} className="h-5 w-5" />
+          <h3 className="font-display text-lg sm:text-xl font-bold tracking-tight text-foreground">{category.name}</h3>
         </div>
         <Link
           to={`/?category=${category.name}`}

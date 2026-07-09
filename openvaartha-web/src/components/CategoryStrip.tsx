@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Article, CategoryName as Category } from '@/lib/types';
-import { categoryEmojis } from '@/lib/types';
+import { CategoryIcon } from './CategoryIcon';
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import FeedCard from './FeedCard';
@@ -16,8 +16,8 @@ const CategoryStrip = ({ category, articles }: CategoryStripProps) => {
   return (
     <section className="mb-10 lg:mb-12">
       <div className="mb-5 flex items-end justify-between gap-3 border-b border-black/5 pb-3 dark:border-white/5 sm:mb-6 sm:gap-4">
-        <div className="flex items-center gap-3">
-          <span className="text-xl leading-none grayscale brightness-75 dark:brightness-110">{categoryEmojis[category]}</span>
+        <div className="flex items-center gap-3 text-primary">
+          <CategoryIcon name={category} className="h-5 w-5" />
           <h2 className="text-xl font-black uppercase tracking-tight text-foreground sm:text-2xl">{category}</h2>
         </div>
 

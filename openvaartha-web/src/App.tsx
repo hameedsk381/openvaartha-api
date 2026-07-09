@@ -59,6 +59,7 @@ const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics.tsx"));
 const AdminArticles = lazy(() => import("./pages/admin/AdminArticles.tsx"));
 const AdminArticleForm = lazy(() => import("./pages/admin/AdminArticleForm.tsx"));
 const AdminCategories = lazy(() => import("./pages/admin/AdminCategories.tsx"));
+const AdminAuthors = lazy(() => import("./pages/admin/AdminAuthors.tsx"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers.tsx"));
 const AdminComments = lazy(() => import("./pages/admin/AdminComments.tsx"));
 const AdminNewsletter = lazy(() => import("./pages/admin/AdminNewsletter.tsx"));
@@ -182,6 +183,7 @@ const App = () => {
                 <Route path="/admin/articles/new" element={<AdminRoute roles={["admin", "editor"]}><AdminLayout><AdminArticleForm /></AdminLayout></AdminRoute>} />
                 <Route path="/admin/articles/:articleId/edit" element={<AdminRoute roles={["admin", "editor"]}><AdminLayout><AdminArticleForm /></AdminLayout></AdminRoute>} />
                 <Route path="/admin/categories" element={<AdminRoute roles={["admin", "editor"]}><AdminLayout><AdminCategories /></AdminLayout></AdminRoute>} />
+                <Route path="/admin/authors" element={<AdminRoute roles={["admin", "editor"]}><AdminLayout><AdminAuthors /></AdminLayout></AdminRoute>} />
                 <Route path="/admin/users" element={<AdminRoute roles={["admin"]}><AdminLayout><AdminUsers /></AdminLayout></AdminRoute>} />
                 <Route path="/admin/comments" element={<AdminRoute roles={["admin", "moderator"]}><AdminLayout><AdminComments /></AdminLayout></AdminRoute>} />
                 <Route path="/admin/newsletter" element={<AdminRoute roles={["admin"]}><AdminLayout><AdminNewsletter /></AdminLayout></AdminRoute>} />

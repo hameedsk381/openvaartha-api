@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useArticle, useRelatedArticles } from "@/lib/api-hooks";
 import type { Article } from "@/lib/types";
 import Navbar from "@/components/Navbar";
@@ -7,7 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import { ArticleSkeleton } from "@/components/PageSkeletons";
 import {
   Share2, Bookmark, BookmarkCheck, ArrowLeft, ArrowUpRight,
-  Clock, Sparkles, User, ExternalLink, History, Type, Flame, Facebook, Eye
+  Clock, Sparkles, User, ExternalLink, History, Type, Flame, Facebook, Eye, Twitter
 } from "lucide-react";
 import { cn, getArticleImage, handleImageFallback } from "@/lib/utils";
 import { categoryColors } from "@/lib/types";
@@ -158,6 +159,11 @@ const ArticlePage = () => {
   };
 
   const { data: article, isLoading } = useArticle(slug || "");
+  const { data: author } = useQuery({
+    queryKey: ["author", article?.authorId],
+    queryFn: () => article?.authorId ? apiFetch<any>(`/authors/${article.authorId}`) : Promise.resolve(null),
+    enabled: !!article?.authorId,
+  });
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   useEffect(() => {
     if (!localStorage.getItem("token")) return;
@@ -297,8 +303,14 @@ const ArticlePage = () => {
 
             <div className="flex flex-wrap items-center justify-between gap-4 mt-8 sm:mt-10 pt-6 border-t border-border">
               <address className="flex items-center gap-3 not-italic">
-                <div className="h-10 w-10 rounded-full gradient-maroon flex items-center justify-center shadow-sm">
-                  <User className="h-4 w-4 text-white" />
+                <div className="h-10 w-10 rounded-full overflow-hidden bg-muted border border-border flex items-center justify-center shadow-sm">
+                  {author?.avatarUrl ? (
+                    <img src={author.avatarUrl} alt={article.author} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="h-full w-full gradient-maroon flex items-center justify-center">
+                      <User className="h-4 w-4 text-white" />
+                    </div>
+                  )}
                 </div>
                 <div className="leading-tight">
                   <div className="overline">By</div>
@@ -553,6 +565,38 @@ const ArticlePage = () => {
               <span className="h-2 w-2 rounded-full bg-primary" />
               <span className="overline">End of article</span>
             </footer>
+
+            {author && (
+              <section className="mt-14 pt-8 border-t border-border">
+                <div className="flex flex-col sm:flex-row gap-5 items-start p-6 rounded-2xl bg-secondary/20 border border-secondary/35">
+                  <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full overflow-hidden bg-muted border-2 border-primary/20 shrink-0 shadow-sm">
+                    {author.avatarUrl ? (
+                      <img src={author.avatarUrl} alt={author.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center bg-primary text-white text-xl font-bold uppercase">
+                        {author.name.charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2 flex-1 w-full">
+                    <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                      <h4 className="text-lg font-bold text-foreground leading-none">{author.name}</h4>
+                      {author.twitter && (
+                        <a
+                          href={`https://twitter.com/${author.twitter.replace("@", "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 font-sans"
+                        >
+                          <Twitter className="h-3.5 w-3.5" /> {author.twitter}
+                        </a>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed font-sans mt-2">{author.bio || `Staff writer for ${BRAND.name}.`}</p>
+                  </div>
+                </div>
+              </section>
+            )}
           </div>
 
           <aside className="hidden lg:block lg:col-span-2" aria-label="Related articles">

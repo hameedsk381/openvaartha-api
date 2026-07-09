@@ -30,6 +30,7 @@ type FormState = {
   readTime: string;
   language: string;
   author: string;
+  authorId: string;
   thumbnailUrl: string;
   publishedAt: string;
   status: ArticleStatus;
@@ -51,6 +52,7 @@ const emptyForm: FormState = {
   readTime: "3 min",
   language: "en",
   author: `${BRAND.name} Desk`,
+  authorId: "",
   thumbnailUrl: "",
   publishedAt: new Date().toISOString().slice(0, 16),
   status: "draft",
@@ -136,6 +138,11 @@ export default function AdminArticleForm() {
     queryFn: () => apiFetch<Category[]>("/categories/"),
   });
 
+  const authorsQuery = useQuery({
+    queryKey: ["admin", "authors"],
+    queryFn: () => apiFetch<any[]>("/authors/"),
+  });
+
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [newCategory, setNewCategory] = useState({ name: "", emoji: "📰", colorCode: "#641313" });
 
@@ -174,6 +181,7 @@ export default function AdminArticleForm() {
       readTime: article.readTime,
       language: article.language,
       author: article.author,
+      authorId: article.authorId || "",
       thumbnailUrl: article.thumbnailUrl || "",
       publishedAt: toDateInput(article.publishedAt),
       status: (article.status ?? "draft") as ArticleStatus,
@@ -211,6 +219,7 @@ export default function AdminArticleForm() {
     language: form.language,
     status: form.status,
     author: form.author,
+    author_id: form.authorId || null,
     thumbnail_url: form.thumbnailUrl || null,
     published_at: safeDate(form.publishedAt),
     is_trending: form.isTrending,
@@ -625,9 +634,49 @@ export default function AdminArticleForm() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Author">
-              <Input value={form.author} onChange={(e) => update("author", e.target.value)} required />
+             <Field label="Author Profile">
+              <Select
+                value={form.authorId || "custom"}
+                onValueChange={(val) => {
+                  if (val === "custom") {
+                    update("authorId", "");
+                  } else {
+                    const selected = authorsQuery.data?.find((a) => a.id === val);
+                    if (selected) {
+                      setForm((current) => ({
+                        ...current,
+                        authorId: val,
+                        author: selected.name,
+                      }));
+                      markDirty();
+                    }
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Author profile" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="custom">Custom / Guest Author</SelectItem>
+                  {authorsQuery.data?.map((author) => (
+                    <SelectItem key={author.id} value={author.id}>
+                      {author.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
+
+            {(form.authorId === "" || !authorsQuery.data?.some((a: any) => a.id === form.authorId)) && (
+              <Field label="Custom Author Name">
+                <Input
+                  value={form.author}
+                  onChange={(e) => update("author", e.target.value)}
+                  required
+                  placeholder="e.g. Agency, RSS Feed, or Guest writer"
+                />
+              </Field>
+            )}
             <Field label="Read time">
               <Input value={form.readTime} onChange={(e) => update("readTime", e.target.value)} required placeholder="e.g. 5 min read" />
             </Field>

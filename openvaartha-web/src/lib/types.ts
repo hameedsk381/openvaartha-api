@@ -28,6 +28,7 @@ export interface Article {
   publishedAt: string;
   lastUpdated?: string | null;
   author: string;
+  authorId?: string | null;
   viewCount: number;
   shareCount: number;
   createdAt: string;

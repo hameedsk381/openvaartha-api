@@ -325,7 +325,41 @@ async def seed_db():
             })
             print(f"  + {email} / {pw}")
 
-    # 3. Articles
+    # 3. Authors
+    print("\n[Authors]")
+    authors_data = [
+        ("Vignesh Kumar", "Senior Political Correspondent with over 10 years covering state legislatures and election policy.", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150", "@vignesh_pol"),
+        ("Sarah Chen", "Tech lead and deep-tech researcher specialized in semiconductor fabrication and AI models.", "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150", "@sarah_tech"),
+        ("Priya Raman", "South India bureau chief reporting on infrastructure, transit grids, and local urban shifts.", "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150", "@priya_raman"),
+        ("Anjali Mehta", "Financial journalist focusing on macroeconomic policy, market systems, and local retail trade.", "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150", "@anjali_biz"),
+        ("Cinema Intel Team", "OpenVaartha's collaborative desk reviewing local releases, box office indexes, and indie cinema.", "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=150", "@cinema_intel"),
+        ("Sports Desk", "OpenVaartha's dedicated sports crew covering national tournaments, athletics, and local club play.", "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=150", "@ov_sports"),
+        ("Karthik Rao", "Resident tech critic covering consumer computing, hardware benchmarks, and open-source stacks.", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150", "@karthik_tech"),
+        ("Lakshmi Narayanan", "Independent photojournalist documenting citizen welfare projects and public policy shifts.", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150", "@lakshmi_n"),
+    ]
+    
+    author_map = {}
+    for name, bio, avatar, twitter in authors_data:
+        existing = await db["authors"].find_one({"name": name})
+        if existing:
+            auth_id = str(existing["_id"])
+            author_map[name] = auth_id
+            print(f"  = {name} (already exists)")
+        else:
+            auth_id = str(uuid4())
+            await db["authors"].insert_one({
+                "_id": auth_id,
+                "id": auth_id,
+                "name": name,
+                "bio": bio,
+                "avatar_url": avatar,
+                "twitter": twitter,
+                "created_at": NOW
+            })
+            author_map[name] = auth_id
+            print(f"  + {name}")
+
+    # 4. Articles
     print("\n[Articles]")
     counts = {"created": 0, "skipped": 0}
     for art in ARTICLES:
@@ -345,10 +379,14 @@ async def seed_db():
         content = art.pop("content")
         art_id = str(uuid4())
 
+        author_name = art.get("author")
+        auth_id = author_map.get(author_name)
+
         doc = {
             "_id": art_id, "id": art_id,
             "slug": slug,
             "category_id": category_map.get(cat_name),
+            "author_id": auth_id,
             **art,
             "status": "published",
             "language": "en",
