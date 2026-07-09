@@ -83,7 +83,6 @@ def _save_base64_thumbnail(thumbnail_url: str) -> str:
         
         if settings.GCS_CREDENTIALS_BASE64:
             import json
-            import base64
             from google.oauth2 import service_account
             
             # Decode the base64 string back into JSON
