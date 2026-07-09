@@ -1,6 +1,6 @@
 from fastapi import APIRouter, File, UploadFile, Depends, HTTPException, status
 from app.core.dependencies import get_current_user
-from app.models.user import UserModel
+from app.models.user import User as UserModel
 from app.config import settings
 from PIL import Image
 import io
