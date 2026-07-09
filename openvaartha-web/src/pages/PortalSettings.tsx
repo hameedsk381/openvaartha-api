@@ -3,6 +3,7 @@ import { Bell, Lock, User, Shield, ChevronRight, Palette, Loader2, Save, X } fro
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { z } from "zod";
+import { Switch } from "@/components/animate-ui/components/headless/switch";
 
 export default function PortalSettings() {
   const [user, setUser] = useState<any>(null);
@@ -423,14 +424,7 @@ function ToggleRow({ label, description, checked, onChange }: {
         <p className="text-sm font-semibold">{label}</p>
         <p className="text-[10px] font-medium text-muted-foreground">{description}</p>
       </div>
-      <button
-        onClick={() => onChange(!checked)}
-        className={`relative w-10 h-6 rounded-full transition-colors press shrink-0 ${checked ? 'bg-primary' : 'bg-muted'}`}
-        role="switch"
-        aria-checked={checked}
-      >
-        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${checked ? 'left-5' : 'left-1'}`} />
-      </button>
+      <Switch checked={checked} onChange={onChange} />
     </div>
   );
 }

@@ -9,6 +9,8 @@ import { ExplainersPageSkeleton } from '@/components/PageSkeletons';
 import { FlipCard } from '@/components/animate-ui/components/community/flip-card';
 import { AnimatedIcon } from '@/components/ui/animated-icon';
 
+import { TabGroup, TabList, Tab } from '@/components/animate-ui/components/headless/tabs';
+
 const MotionLink = motion.create(Link);
 
 const relativeTime = (iso: string) => {
@@ -20,14 +22,22 @@ const relativeTime = (iso: string) => {
 const ExplainersPage = () => {
   const [limit, setLimit] = useState(12);
   const { data: explainers = [], isFetching, isLoading } = useExplainers(0, limit);
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   if (isLoading && explainers.length === 0) {
     return <ExplainersPageSkeleton />;
   }
 
-  const lead = explainers[0];
-  const featured = explainers.slice(1, 3);
-  const more = explainers.slice(3);
+  // Extract categories dynamically
+  const categories = ['All', ...Array.from(new Set(explainers.map(e => e.category)))];
+
+  const filteredExplainers = selectedCategory === 'All'
+    ? explainers
+    : explainers.filter(e => e.category.toLowerCase() === selectedCategory.toLowerCase());
+
+  const lead = filteredExplainers[0];
+  const featured = filteredExplainers.slice(1, 3);
+  const more = filteredExplainers.slice(3);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -47,6 +57,20 @@ const ExplainersPage = () => {
               The "why" behind the headline. Long-form context on the ideas, people and shifts shaping the internet you live in.
             </p>
           </header>
+
+          {categories.length > 2 && (
+            <div className="px-4 sm:px-6 lg:px-10 py-6 border-b border-border bg-background">
+              <TabGroup onChange={(index) => setSelectedCategory(categories[index])}>
+                <TabList>
+                  {categories.map((cat, idx) => (
+                    <Tab key={cat} index={idx}>
+                      {cat}
+                    </Tab>
+                  ))}
+                </TabList>
+              </TabGroup>
+            </div>
+          )}
 
           {lead && (
             <section className="border-b border-border">

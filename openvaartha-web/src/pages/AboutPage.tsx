@@ -3,6 +3,7 @@ import Footer from '@/components/Footer';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, Unlock, Users, Code2 } from 'lucide-react';
 import { BRAND } from '@/lib/brand';
+import { Accordion, AccordionItem, AccordionButton, AccordionPanel } from '@/components/animate-ui/components/headless/accordion';
 
 const AboutPage = () => {
   return (
@@ -77,6 +78,39 @@ const AboutPage = () => {
               >
                 fossap.in <ArrowUpRight className="h-3.5 w-3.5" />
               </a>
+            </div>
+
+            <div className="mt-10 pt-8 border-t border-border">
+              <span className="overline text-primary">FAQ</span>
+              <h2 className="font-display text-2xl font-bold mt-2 mb-6">Frequently Asked Questions</h2>
+              <Accordion className="w-full border border-border rounded-lg p-2 bg-[hsl(var(--surface-2))]">
+                <AccordionItem>
+                  <AccordionButton className="font-semibold text-foreground hover:no-underline hover:text-primary py-3 px-4">
+                    Is OpenVaartha really free?
+                  </AccordionButton>
+                  <AccordionPanel className="text-muted-foreground px-4 pb-4">
+                    Yes, entirely. We do not have paywalls, subscriptions, or invasive advertising. Our mission is to keep digital news open and accessible to everyone.
+                  </AccordionPanel>
+                </AccordionItem>
+
+                <AccordionItem>
+                  <AccordionButton className="font-semibold text-foreground hover:no-underline hover:text-primary py-3 px-4">
+                    Who runs the platform?
+                  </AccordionButton>
+                  <AccordionPanel className="text-muted-foreground px-4 pb-4">
+                    We are a youth-led (Gen Z) independent news initiative. Our platform is supported by the FOSS Andhra Foundation, focusing on building sustainable open-source software and open media platforms.
+                  </AccordionPanel>
+                </AccordionItem>
+
+                <AccordionItem>
+                  <AccordionButton className="font-semibold text-foreground hover:no-underline hover:text-primary py-3 px-4">
+                    Can I contribute or write articles?
+                  </AccordionButton>
+                  <AccordionPanel className="text-muted-foreground px-4 pb-4">
+                    Absolutely! We are an open platform. If you want to pitch an article, request a correction, or contribute to the open-source codebase, head over to our Contact page to get in touch.
+                  </AccordionPanel>
+                </AccordionItem>
+              </Accordion>
             </div>
 
             <div className="mt-10 pt-8 border-t border-border">
