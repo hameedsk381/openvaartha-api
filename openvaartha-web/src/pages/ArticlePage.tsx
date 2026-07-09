@@ -16,6 +16,7 @@ import { apiFetch } from "@/lib/api";
 import CommentSection from "@/components/CommentSection";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { toast } from "sonner";
+import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const timeAgo = (dateStr: string): string => {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -234,12 +235,7 @@ const ArticlePage = () => {
 
   return (
     <div className="relative min-h-screen bg-background selection:bg-primary/15 selection:text-primary pb-20">
-      <div className="fixed top-0 left-0 right-0 z-[60] h-0.5 bg-black/5 dark:bg-white/5">
-        <div
-          className="h-full bg-primary transition-[width] duration-150 ease-out"
-          style={{ width: `${scrollProgress}%` }}
-        />
-      </div>
+      <ScrollProgress className="top-[60px] md:top-[72px]" />
 
       <Navbar />
 

@@ -4,6 +4,7 @@ import { FileText, Users, MessageSquare, Mail, TrendingUp, Zap, Plus, FolderTree
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { SlidingNumber } from "@/components/animate-ui/primitives/texts/sliding-number";
 
 type DashboardStats = {
   articles: { total: number; published: number; drafts: number; archived: number; breaking: number; trending: number };
@@ -105,11 +106,13 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {cards.map((card) => (
-          <div key={card.label} className="border border-border rounded-lg p-4 space-y-2">
+          <div key={card.label} className="border border-border rounded-lg p-4 space-y-2 bg-card text-card-foreground">
             <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", card.bg)}>
               <card.icon className={cn("h-4 w-4", card.color)} />
             </div>
-            <p className="text-2xl font-black tracking-tight">{card.value}</p>
+            <p className="text-2xl font-black tracking-tight flex items-center">
+              <SlidingNumber value={card.value} />
+            </p>
             <p className="text-xs font-semibold text-muted-foreground">{card.label}</p>
           </div>
         ))}
