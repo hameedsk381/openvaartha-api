@@ -121,10 +121,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             </div>
             <span className="text-xs font-bold">Admin</span>
           </Link>
-          <div className="flex items-center gap-2">
-            <Link to="/" className="text-[11px] text-muted-foreground hover:text-foreground press">
+          <div className="flex items-center gap-3">
+            <Link to="/" className="text-[11px] text-muted-foreground hover:text-foreground press" aria-label="Back to site">
               <ArrowLeft className="h-4 w-4" />
             </Link>
+            <button
+              onClick={logout}
+              className="text-red-500 hover:text-red-600 press"
+              aria-label="Sign out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
