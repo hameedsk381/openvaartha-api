@@ -1,5 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { BlurFade } from '@/components/ui/blur-fade';
+import { MagicCard } from '@/components/ui/magic-card';
 import Navbar from '../components/Navbar';
 import BreakingTicker from '../components/BreakingTicker';
 import HeroCarousel from '../components/HeroCarousel';
@@ -59,30 +61,33 @@ function CategoryStrip({ category }: { category: Category }) {
 
       {/* Mobile: horizontal scroll, Desktop: 4-col grid */}
       <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide no-scrollbar sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible sm:pb-0">
-        {articles.map((art) => (
-          <Link
-            key={art.id}
-            to={`/article/${art.slug}`}
-            className="group flex-shrink-0 w-[260px] sm:w-auto"
-          >
-            <div className="aspect-[16/10] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-3">
-              <img
-                src={getArticleImage(art.thumbnailUrl)}
-                alt={art.title}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                loading="lazy"
-                onError={handleImageFallback}
-              />
-            </div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-primary">{art.category}</span>
-              <span className="h-1 w-1 rounded-full bg-border" />
-              <span className="text-[10px] text-muted-foreground">{relativeTime(art.publishedAt)}</span>
-            </div>
-            <h4 className="font-display text-sm sm:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-3">
-              {art.title}
-            </h4>
-          </Link>
+        {articles.map((art, idx) => (
+          <BlurFade key={art.id} delay={0.1 * idx} inView>
+            <Link
+              to={`/article/${art.slug}`}
+              className="group flex-shrink-0 w-[260px] sm:w-auto h-full flex block"
+            >
+              <MagicCard className="w-full flex flex-col p-0 border-none bg-transparent shadow-none" gradientColor="hsl(var(--primary) / 0.1)">
+                <div className="aspect-[16/10] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-3">
+                  <img
+                    src={getArticleImage(art.thumbnailUrl)}
+                    alt={art.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                    onError={handleImageFallback}
+                  />
+                </div>
+                <div className="flex items-center gap-2 mb-1.5 px-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary">{art.category}</span>
+                  <span className="h-1 w-1 rounded-full bg-border" />
+                  <span className="text-[10px] text-muted-foreground">{relativeTime(art.publishedAt)}</span>
+                </div>
+                <h4 className="font-display text-sm sm:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-3 px-1">
+                  {art.title}
+                </h4>
+              </MagicCard>
+            </Link>
+          </BlurFade>
         ))}
       </div>
     </div>

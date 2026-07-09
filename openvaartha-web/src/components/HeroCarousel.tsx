@@ -4,6 +4,7 @@ import Autoplay from 'embla-carousel-autoplay';
 import type { Article } from '@/lib/types';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ArrowUpRight, Clock, Sparkles, Flame } from 'lucide-react';
+import { Meteors } from '@/components/ui/meteors';
 import { Button } from './ui/button';
 import { cn, handleImageFallback, getArticleImage } from '../lib/utils';
 
@@ -49,6 +50,11 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
                 />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+              
+              {/* Meteors Effect Layer */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden mix-blend-screen opacity-70">
+                <Meteors number={15} />
+              </div>
 
               <div className="absolute inset-0 flex flex-col justify-end p-6 pb-8 sm:p-10 sm:pb-12 lg:p-14 lg:pb-16">
                 <div className="max-w-3xl space-y-3 sm:space-y-4">

@@ -180,6 +180,11 @@
     --sidebar-border:              20 12% 14%;
     --sidebar-ring:                0 60% 45%;
   }
+  .theme {
+    --animate-marquee:   marquee var(--duration) infinite linear;
+    --animate-marquee-vertical:   marquee-vertical var(--duration) linear infinite;
+    --animate-meteor:   meteor 5s linear infinite;
+  }
 }
 
 /* ── Base Styles ───────────────────────────────────────────── */
@@ -471,5 +476,37 @@
   }
   .portal-scroll::-webkit-scrollbar-thumb:hover {
     background-color: hsl(var(--muted-foreground));
+  }
+}
+
+@theme inline {
+  @keyframes marquee {
+  from {
+    transform:   translateX(0);
+    }
+  to {
+    transform:   translateX(calc(-100% - var(--gap)));
+    }
+  }
+  @keyframes marquee-vertical {
+  from {
+    transform:   translateY(0);
+    }
+  to {
+    transform:   translateY(calc(-100% - var(--gap)));
+    }
+  }
+  @keyframes meteor {
+  0% {
+    transform:   rotate(var(--angle)) translateX(0);
+    opacity:   1;
+    }
+  70% {
+    opacity:   1;
+    }
+  100% {
+    transform:   rotate(var(--angle)) translateX(-500px);
+    opacity:   0;
+    }
   }
 }
