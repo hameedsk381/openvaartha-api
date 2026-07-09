@@ -56,6 +56,7 @@ class Settings(BaseSettings):
 
     # Google Cloud Storage (GCS)
     GCS_BUCKET_NAME: str = ""
+    GCS_CREDENTIALS_BASE64: str = ""
 
     # Google Sign-In (verifies the ID token's audience — no client secret
     # needed since the frontend uses Google Identity Services' implicit flow)

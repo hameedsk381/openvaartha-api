@@ -80,7 +80,21 @@ def _save_base64_thumbnail(thumbnail_url: str) -> str:
     filename = f"{uuid.uuid4().hex}.webp"
     try:
         from google.cloud import storage
-        client = storage.Client()
+        
+        if settings.GCS_CREDENTIALS_BASE64:
+            import json
+            import base64
+            from google.oauth2 import service_account
+            
+            # Decode the base64 string back into JSON
+            decoded_json = base64.b64decode(settings.GCS_CREDENTIALS_BASE64).decode('utf-8')
+            credentials_info = json.loads(decoded_json)
+            
+            credentials = service_account.Credentials.from_service_account_info(credentials_info)
+            client = storage.Client(credentials=credentials, project=credentials_info.get("project_id"))
+        else:
+            client = storage.Client()
+            
         bucket = client.bucket(settings.GCS_BUCKET_NAME)
         blob = bucket.blob(filename)
 
