@@ -201,6 +201,14 @@ export default {
           from: { transform: "translateX(0)" },
           to:   { transform: "translateX(-50%)" },
         },
+        "marquee": {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(calc(-100% - var(--gap)))" },
+        },
+        "marquee-vertical": {
+          from: { transform: "translateY(0)" },
+          to: { transform: "translateY(calc(-100% - var(--gap)))" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -208,6 +216,8 @@ export default {
         "fade-up":        "fade-up 0.5s ease-out both",
         "fade-in":        "fade-in 0.3s ease-out both",
         "ticker":         "ticker var(--ticker-duration, 30s) linear infinite",
+        "marquee":        "marquee var(--duration) linear infinite",
+        "marquee-vertical": "marquee-vertical var(--duration) linear infinite",
       },
     },
   },
