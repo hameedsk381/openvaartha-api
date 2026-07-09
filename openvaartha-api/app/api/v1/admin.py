@@ -147,6 +147,11 @@ async def update_user(
 
     if not update_data:
         raise HTTPException(status_code=400, detail="No valid fields to update")
+        
+    if "role" in update_data:
+        update_data["is_admin"] = update_data["role"] == "admin"
+    elif "is_admin" in update_data:
+        update_data["role"] = "admin" if update_data["is_admin"] else "user"
 
     updated_doc = await user_service.update_user(db, user_id, update_data)
     if not updated_doc:

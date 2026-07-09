@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Bell, Lock, User, Shield, ChevronRight, Palette, Loader2, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
+import { z } from "zod";
 
 export default function PortalSettings() {
   const [user, setUser] = useState<any>(null);
@@ -59,14 +60,22 @@ export default function PortalSettings() {
     }
   };
 
+  const passwordSchema = z.object({
+    current: z.string().min(1, "Current password is required"),
+    new: z.string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+      .regex(/[0-9]/, "Must contain at least one number"),
+  });
+
   const handlePasswordChange = async () => {
-    if (passwordData.new.length < 6) {
-      toast.error("New password must be at least 6 characters");
-      return;
-    }
-    if (!passwordData.current) {
-      toast.error("Current password is required");
-      return;
+    try {
+      passwordSchema.parse(passwordData);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+        return;
+      }
     }
 
     setIsUpdating(true);
@@ -81,8 +90,7 @@ export default function PortalSettings() {
       toast.success("Password updated successfully");
       setPasswordData({ current: "", new: "" });
     } catch (err: any) {
-      toast.error(err.message || "Update failed");
-      toast.error("Network error");
+      toast.error(err.message || "Update failed. Please check your current password.");
     } finally {
       setIsUpdating(false);
     }

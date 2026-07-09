@@ -85,7 +85,7 @@ async def get_current_active_admin(
     current_user: UserModel = Depends(get_current_user)
 ) -> UserModel:
     """Get the current admin user."""
-    if not current_user.is_admin:
+    if current_user.role != "admin" and not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
@@ -97,7 +97,7 @@ async def get_current_editor(
     current_user: UserModel = Depends(get_current_user)
 ) -> UserModel:
     """Require editor role or admin. Editors can manage articles and categories."""
-    if not current_user.is_admin and current_user.role != "editor":
+    if current_user.role not in ["editor", "admin"] and not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Editor or admin access required"
@@ -109,7 +109,7 @@ async def get_current_moderator(
     current_user: UserModel = Depends(get_current_user)
 ) -> UserModel:
     """Require moderator role or admin. Moderators can manage comments and users."""
-    if not current_user.is_admin and current_user.role != "moderator":
+    if current_user.role not in ["moderator", "admin"] and not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Moderator or admin access required"

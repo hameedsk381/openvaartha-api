@@ -58,15 +58,15 @@ export default function AdminUsers() {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const adminMutation = useMutation({
-    mutationFn: ({ userId, isAdmin }: { userId: string; isAdmin: boolean }) =>
+  const roleMutation = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
       apiFetch(`/admin/users/${userId}`, {
         method: "PUT",
-        body: JSON.stringify({ is_admin: isAdmin }),
+        body: JSON.stringify({ role }),
       }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-      toast.success(variables.isAdmin ? "User promoted to admin" : "Admin rights removed");
+      toast.success(`User role updated to ${variables.role}`);
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -182,7 +182,7 @@ export default function AdminUsers() {
       </div>
 
       <div className="border border-border rounded-lg overflow-hidden">
-        <div className="hidden md:grid grid-cols-[1fr_120px_100px_100px] gap-4 h-11 px-4 items-center border-b border-border bg-[hsl(var(--surface))] text-xs font-semibold text-muted-foreground">
+        <div className="hidden md:grid grid-cols-[1fr_120px_100px_200px] gap-4 h-11 px-4 items-center border-b border-border bg-[hsl(var(--surface))] text-xs font-semibold text-muted-foreground">
           <span>User</span>
           <span>Role</span>
           <span>Status</span>
@@ -209,7 +209,7 @@ export default function AdminUsers() {
               const isActive = user.isActive ?? user.is_active ?? true;
               const name = user.fullName ?? user.full_name ?? "—";
               return (
-                <div key={user.id} className="block md:grid md:grid-cols-[1fr_120px_100px_100px] md:gap-4 md:items-center p-4">
+                <div key={user.id} className="block md:grid md:grid-cols-[1fr_120px_100px_200px] md:gap-4 md:items-center p-4">
                   <div className="mb-1 md:mb-0 min-w-0">
                     <p className="text-sm font-semibold line-clamp-1">{name}</p>
                     <p className="text-xs text-muted-foreground">{user.email}</p>
@@ -236,17 +236,22 @@ export default function AdminUsers() {
                     </span>
                   </div>
                   <div className="flex items-center justify-end md:justify-end gap-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => adminMutation.mutate({ userId: user.id, isAdmin: !isAdmin })}
-                      disabled={adminMutation.isPending}
-                      title={isAdmin ? "Remove admin" : "Make admin"}
+                    <Select
+                      value={user.role || (isAdmin ? "admin" : "user")}
+                      onValueChange={(value) => roleMutation.mutate({ userId: user.id, role: value })}
+                      disabled={roleMutation.isPending}
                     >
-                      {adminMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : isAdmin ? <X className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
-                      <span className="hidden sm:inline">{isAdmin ? "Demote" : "Promote"}</span>
-                    </Button>
+                      <SelectTrigger className="h-8 w-[110px] text-xs">
+                        <SelectValue placeholder="Role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="contributor">Contributor</SelectItem>
+                        <SelectItem value="editor">Editor</SelectItem>
+                        <SelectItem value="moderator">Moderator</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Button
                       type="button"
                       variant="outline"
