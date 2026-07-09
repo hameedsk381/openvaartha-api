@@ -111,7 +111,7 @@ export default function AdminDashboard() {
               <card.icon className={cn("h-4 w-4", card.color)} />
             </div>
             <p className="text-2xl font-black tracking-tight flex items-center">
-              <SlidingNumber value={card.value} />
+              <SlidingNumber number={card.value} />
             </p>
             <p className="text-xs font-semibold text-muted-foreground">{card.label}</p>
           </div>
