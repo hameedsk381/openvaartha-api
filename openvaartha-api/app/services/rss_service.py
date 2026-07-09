@@ -196,8 +196,8 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
             "tldr": result.get("tldr", ""),
             "points": result.get("points", []),
             "body": sanitize_html(result.get("body", "")),
-            "timeline": None,
-            "explainer": None,
+            "timeline": result.get("timeline", None),
+            "explainer": result.get("explainer", None),
         }
         await db["article_content"].insert_one(content_doc)
 

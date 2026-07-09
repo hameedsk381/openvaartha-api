@@ -26,6 +26,8 @@ interface AIResult {
   tldr: string;
   points: string[];
   category_id?: string;
+  timeline?: { date: string; event: string }[];
+  explainer?: { question: string; answer: string }[];
 }
 
 interface Props {

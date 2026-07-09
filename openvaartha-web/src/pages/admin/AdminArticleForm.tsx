@@ -248,7 +248,7 @@ export default function AdminArticleForm() {
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const update = (field: keyof FormState, value: string | boolean) => {
+  const update = (field: keyof FormState, value: any) => {
     markDirty();
     setForm((current) => {
       const next = { ...current, [field]: value };
@@ -377,6 +377,8 @@ export default function AdminArticleForm() {
             update("tldr", data.tldr);
             update("points", data.points.join("\n"));
             if (data.category_id) update("categoryId", data.category_id);
+            if (data.timeline?.length) update("timeline", data.timeline);
+            if (data.explainer?.length) update("explainer", data.explainer);
           }} />
           
           {form.status === "pending" && (

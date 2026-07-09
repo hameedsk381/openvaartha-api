@@ -22,6 +22,8 @@ Rules for article structure:
 - body: 4-6 rich paragraphs of ~60-80 words each (markdown, no H1). Include context, analysis, and background. This is the CORE of the article — do NOT skip or skimp on this.
 - tldr: a sharp one-line takeaway
 - points: 3-5 bullet-point key facts (as a list of strings)
+- timeline: an array of chronological events extracted from the content (e.g., [{"date": "YYYY-MM-DD", "event": "..."}]). Leave empty if not applicable.
+- explainer: an array of 2-3 FAQ-style questions and answers (e.g., [{"question": "...", "answer": "..."}]). Provide deep context.
 
 Additional rules:
 - If source material is provided, base the article strictly on it — extract facts, figures, quotes, and context. Do not invent details outside it.
@@ -64,7 +66,7 @@ Style: {style_guide}
 Tone: {tone_guide}{source_block}
 
 Generate a complete news article with this exact JSON structure:
-{{"title": "", "summary": "", "body": "", "tldr": "", "points": [], "category_id": ""}}"""
+{{"title": "", "summary": "", "body": "", "tldr": "", "points": [], "category_id": "", "timeline": [], "explainer": []}}"""
 
     if not settings.GROQ_API_KEY:
         return None
@@ -115,6 +117,8 @@ Generate a complete news article with this exact JSON structure:
             "tldr": sanitize_text(data["tldr"]),
             "points": [sanitize_text(p) for p in data["points"][:settings.AI_MAX_POINTS]],
             "category_id": sanitize_text(data.get("category_id", "")),
+            "timeline": data.get("timeline", []),
+            "explainer": data.get("explainer", []),
         }
 
     except Exception as e:

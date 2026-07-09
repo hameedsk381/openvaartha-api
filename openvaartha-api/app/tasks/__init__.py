@@ -10,7 +10,7 @@ celery_app = Celery(
     "openvaartha",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
-    include=["app.tasks.rss_generator"],
+    include=["app.tasks.rss_generator", "app.tasks.news_agents_task"],
 )
 
 celery_app.conf.beat_schedule = {
@@ -18,7 +18,12 @@ celery_app.conf.beat_schedule = {
         "task": "app.tasks.rss_generator.process_all_sources",
         "schedule": crontab(minute="*/15"),  # every 15 minutes
     },
+    "process-news-agents": {
+        "task": "app.tasks.news_agents_task.run_agents",
+        "schedule": crontab(minute="0,30"),  # every 30 minutes
+    },
 }
+
 
 
 @celery_app.task(name="app.tasks.health_check")
