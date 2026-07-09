@@ -47,6 +47,7 @@ app.add_middleware(
 
 # Security headers — CSP, X-Frame-Options, HSTS, etc.
 app.add_middleware(SecurityHeadersMiddleware)
+from app.api.v1 import articles, categories, users, feeds, search, newsletter, comments, pages, admin, upload
 
 # Compress large text responses (JS/CSS bundles, HTML, JSON). Serves the SPA's
 # ~1.8MB JS bundle gzipped to mobile clients, which is the primary access pattern.
@@ -60,6 +61,7 @@ app.include_router(search.router, prefix="/api/v1/search", tags=["Search"])
 app.include_router(newsletter.router, prefix="/api/v1/newsletter", tags=["Newsletter"])
 app.include_router(comments.router, prefix="/api/v1/comments", tags=["Comments"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
+app.include_router(upload.router, prefix="/api/v1/upload", tags=["Upload"])
 
 # Root-level routes (sitemap, RSS feeds, server-rendered article HTML)
 app.include_router(feeds.router)

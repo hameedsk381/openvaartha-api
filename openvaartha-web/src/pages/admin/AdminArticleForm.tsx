@@ -622,14 +622,22 @@ export default function AdminArticleForm() {
                   e.stopPropagation();
                   const file = e.dataTransfer.files?.[0];
                   if (file && file.type.startsWith("image/")) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                      if (event.target?.result) {
-                        update("thumbnailUrl", event.target.result as string);
-                        toast.success("Image uploaded successfully (Base64)");
+                    const uploadImage = async (file: File) => {
+                      const formData = new FormData();
+                      formData.append("file", file);
+                      toast.loading("Uploading image...", { id: "upload" });
+                      try {
+                        const res = await apiFetch<{ url: string }>("/upload/", {
+                          method: "POST",
+                          body: formData,
+                        });
+                        update("thumbnailUrl", res.url);
+                        toast.success("Image uploaded successfully", { id: "upload" });
+                      } catch (err) {
+                        toast.error("Failed to upload image", { id: "upload" });
                       }
                     };
-                    reader.readAsDataURL(file);
+                    uploadImage(file);
                   } else {
                     toast.error("Only image files are supported");
                   }
@@ -642,14 +650,22 @@ export default function AdminArticleForm() {
                   input.onchange = (e) => {
                     const file = (e.target as HTMLInputElement).files?.[0];
                     if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (event) => {
-                        if (event.target?.result) {
-                          update("thumbnailUrl", event.target.result as string);
-                          toast.success("Image uploaded successfully (Base64)");
+                      const uploadImage = async (file: File) => {
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        toast.loading("Uploading image...", { id: "upload" });
+                        try {
+                          const res = await apiFetch<{ url: string }>("/upload/", {
+                            method: "POST",
+                            body: formData,
+                          });
+                          update("thumbnailUrl", res.url);
+                          toast.success("Image uploaded successfully", { id: "upload" });
+                        } catch (err) {
+                          toast.error("Failed to upload image", { id: "upload" });
                         }
                       };
-                      reader.readAsDataURL(file);
+                      uploadImage(file);
                     }
                   };
                   input.click();

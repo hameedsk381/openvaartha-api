@@ -380,14 +380,22 @@ export default function PortalWrite() {
                         e.stopPropagation();
                         const file = e.dataTransfer.files?.[0];
                         if (file && file.type.startsWith("image/")) {
-                          const reader = new FileReader();
-                          reader.onload = ev => {
-                            if (ev.target?.result) {
-                              update("thumbnailUrl", ev.target.result as string);
-                              toast.success("Image drop loaded");
+                          const uploadImage = async (file: File) => {
+                            const formData = new FormData();
+                            formData.append("file", file);
+                            toast.loading("Uploading image...", { id: "upload" });
+                            try {
+                              const res = await apiFetch<{ url: string }>("/upload/", {
+                                method: "POST",
+                                body: formData,
+                              });
+                              update("thumbnailUrl", res.url);
+                              toast.success("Image uploaded successfully", { id: "upload" });
+                            } catch (err) {
+                              toast.error("Failed to upload image", { id: "upload" });
                             }
                           };
-                          reader.readAsDataURL(file);
+                          uploadImage(file);
                         }
                       }}
                       onClick={() => {
@@ -397,11 +405,22 @@ export default function PortalWrite() {
                         input.onchange = ev => {
                           const file = (ev.target as HTMLInputElement).files?.[0];
                           if (file) {
-                            const reader = new FileReader();
-                            reader.onload = e => {
-                              if (e.target?.result) update("thumbnailUrl", e.target.result as string);
+                            const uploadImage = async (file: File) => {
+                              const formData = new FormData();
+                              formData.append("file", file);
+                              toast.loading("Uploading image...", { id: "upload" });
+                              try {
+                                const res = await apiFetch<{ url: string }>("/upload/", {
+                                  method: "POST",
+                                  body: formData,
+                                });
+                                update("thumbnailUrl", res.url);
+                                toast.success("Image uploaded successfully", { id: "upload" });
+                              } catch (err) {
+                                toast.error("Failed to upload image", { id: "upload" });
+                              }
                             };
-                            reader.readAsDataURL(file);
+                            uploadImage(file);
                           }
                         };
                         input.click();

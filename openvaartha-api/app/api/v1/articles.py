@@ -199,6 +199,7 @@ async def create_contributor_post(
         is_breaking=False,
         is_editor_pick=False,
         is_opinion=True,
+        thumbnail_url=contribution.thumbnail_url,
         published_at=datetime.now(timezone.utc),
         author=current_user.full_name,
         content=contribution.content,

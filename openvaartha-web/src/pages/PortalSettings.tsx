@@ -158,13 +158,22 @@ export default function PortalSettings() {
             input.onchange = ev => {
               const file = (ev.target as HTMLInputElement).files?.[0];
               if (file) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                  if (e.target?.result) {
-                    handleUpdate("avatar_url", e.target.result as string);
+                const uploadAvatar = async (file: File) => {
+                  const formData = new FormData();
+                  formData.append("file", file);
+                  toast.loading("Uploading avatar...", { id: "upload-avatar" });
+                  try {
+                    const res = await apiFetch<{ url: string }>("/upload/", {
+                      method: "POST",
+                      body: formData,
+                    });
+                    handleUpdate("avatar_url", res.url);
+                    toast.success("Avatar uploaded successfully", { id: "upload-avatar" });
+                  } catch (err) {
+                    toast.error("Failed to upload avatar", { id: "upload-avatar" });
                   }
                 };
-                reader.readAsDataURL(file);
+                uploadAvatar(file);
               }
             };
             input.click();

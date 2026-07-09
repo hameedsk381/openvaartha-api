@@ -81,6 +81,7 @@ class ContributionCreate(BaseModel):
     category_id: str
     read_time: str = "5 min read"
     language: str = "en"
+    thumbnail_url: Optional[str] = None
     content: ArticleContentCreate
 
     class Config:
