@@ -53,7 +53,12 @@ async def upload_image(
         from google.cloud import storage
         if settings.GCS_CREDENTIALS_BASE64:
             from google.oauth2 import service_account
-            decoded_json = base64.b64decode(settings.GCS_CREDENTIALS_BASE64).decode('utf-8')
+            
+            # Safely handle missing base64 padding and whitespace
+            b64_str = settings.GCS_CREDENTIALS_BASE64.strip()
+            # Adding "===" ensures Python's b64decode never fails due to missing padding
+            decoded_json = base64.b64decode(b64_str + "===").decode('utf-8')
+            
             credentials_info = json.loads(decoded_json)
             credentials = service_account.Credentials.from_service_account_info(credentials_info)
             client = storage.Client(credentials=credentials, project=credentials_info.get("project_id"))
