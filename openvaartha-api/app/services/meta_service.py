@@ -117,6 +117,26 @@ _STATIC_ROUTE_META: Dict[str, Dict[str, Optional[str]]] = {
         "description": "Reach the Open Vaartha team — story tips, corrections, feedback, and contributions.",
         "robots": None,
     },
+    "editorial": {
+        "title": f"Editorial Standards — {SITE_NAME}",
+        "description": "Open Vaartha's editorial standards: independence, sourcing and verification, use of AI, and accountability to readers.",
+        "robots": None,
+    },
+    "corrections": {
+        "title": f"Corrections Policy — {SITE_NAME}",
+        "description": "How Open Vaartha reports, reviews, and corrects errors, transparently and promptly.",
+        "robots": None,
+    },
+    "privacy": {
+        "title": f"Privacy Policy — {SITE_NAME}",
+        "description": "Open Vaartha's privacy policy: what data we collect, why, and how to exercise your rights.",
+        "robots": None,
+    },
+    "terms": {
+        "title": f"Terms of Use — {SITE_NAME}",
+        "description": "Open Vaartha's terms of use: acceptable use, content ownership, contributor submissions, and disclaimers.",
+        "robots": None,
+    },
     "search": {
         "title": f"Search — {SITE_NAME}",
         "description": SITE_DESCRIPTION,

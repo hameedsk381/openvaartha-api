@@ -14,7 +14,7 @@ const Footer = () => {
     <footer className="border-t border-border bg-[hsl(var(--surface))]">
       <div className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-10">
-          <div className="md:col-span-5">
+          <div className="md:col-span-4">
             <div className="flex items-start gap-3">
               <div className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0 shadow-sm overflow-hidden border border-border bg-white">
                 <img src={BRAND.logoPath} alt="Open Vaartha" className="h-full w-full object-cover" />
@@ -65,7 +65,7 @@ const Footer = () => {
             </div>
           </div>
 
-          <div className="md:col-span-3">
+          <div className="md:col-span-2">
             <p className="overline mb-4">Sections</p>
             <ul className="space-y-2.5">
               {categoryNames.map((c) => (
@@ -92,6 +92,16 @@ const Footer = () => {
           </div>
 
           <div className="md:col-span-2">
+            <p className="overline mb-4">Trust</p>
+            <ul className="space-y-2.5 text-sm">
+              <li><Link to="/editorial" className="text-muted-foreground hover:text-primary transition-colors">Editorial Standards</Link></li>
+              <li><Link to="/corrections" className="text-muted-foreground hover:text-primary transition-colors">Corrections</Link></li>
+              <li><Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">Privacy</Link></li>
+              <li><Link to="/terms" className="text-muted-foreground hover:text-primary transition-colors">Terms</Link></li>
+            </ul>
+          </div>
+
+          <div className="md:col-span-2">
             <p className="overline mb-4">Account</p>
             <ul className="space-y-2.5 text-sm">
               <li><Link to="/login" className="text-muted-foreground hover:text-primary transition-colors">Sign in</Link></li>
@@ -108,6 +118,8 @@ const Footer = () => {
           <div className="flex gap-5">
             <Link to="/about" className="hover:text-primary transition-colors font-medium">About</Link>
             <Link to="/contact" className="hover:text-primary transition-colors font-medium">Contact</Link>
+            <Link to="/privacy" className="hover:text-primary transition-colors font-medium">Privacy</Link>
+            <Link to="/terms" className="hover:text-primary transition-colors font-medium">Terms</Link>
             <a
               href="https://fossap.in"
               target="_blank"

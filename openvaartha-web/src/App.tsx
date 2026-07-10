@@ -42,6 +42,10 @@ const ExplainersPage = lazy(() => import("./pages/ExplainersPage.tsx"));
 const LiveUpdatesPage = lazy(() => import("./pages/LiveUpdatesPage.tsx"));
 const AboutPage = lazy(() => import("./pages/AboutPage.tsx"));
 const ContactPage = lazy(() => import("./pages/ContactPage.tsx"));
+const EditorialStandardsPage = lazy(() => import("./pages/EditorialStandardsPage.tsx"));
+const CorrectionsPage = lazy(() => import("./pages/CorrectionsPage.tsx"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage.tsx"));
+const TermsPage = lazy(() => import("./pages/TermsPage.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 // Portal Layout & Pages
@@ -167,7 +171,11 @@ const App = () => {
                 <Route path="/live" element={<LiveUpdatesPage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/contact" element={<ContactPage />} />
-                
+                <Route path="/editorial" element={<EditorialStandardsPage />} />
+                <Route path="/corrections" element={<CorrectionsPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/terms" element={<TermsPage />} />
+
                 {/* Portal Routes */}
                 <Route path="/portal" element={<PortalLayout><PortalDashboard /></PortalLayout>} />
                 <Route path="/portal/dashboard" element={<PortalLayout><PortalDashboard /></PortalLayout>} />

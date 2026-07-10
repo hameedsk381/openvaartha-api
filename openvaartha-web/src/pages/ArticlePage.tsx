@@ -367,6 +367,7 @@ const ArticlePage = () => {
                 onError={handleImageFallback}
                 loading="eager"
                 fetchpriority="high"
+                decoding="async"
               />
               <figcaption className="px-4 sm:px-6 lg:px-10 py-3 text-[11px] font-serif italic text-muted-foreground border-t border-border bg-background">
                 {article.title} · {article.category}
@@ -571,7 +572,7 @@ const ArticlePage = () => {
                 <div className="flex flex-col sm:flex-row gap-5 items-start p-6 rounded-2xl bg-secondary/20 border border-secondary/35">
                   <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full overflow-hidden bg-muted border-2 border-primary/20 shrink-0 shadow-sm">
                     {author.avatarUrl ? (
-                      <img src={author.avatarUrl} alt={author.name} className="h-full w-full object-cover" />
+                      <img src={author.avatarUrl} alt={author.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center bg-primary text-white text-xl font-bold uppercase">
                         {author.name.charAt(0)}
@@ -670,6 +671,7 @@ function RelatedArticles({ articleId }: { articleId: string }) {
               className="w-full h-28 object-cover rounded-md mb-2"
               onError={handleImageFallback}
               loading="lazy"
+              decoding="async"
             />
           )}
           <span className="text-xs font-semibold text-primary uppercase tracking-wider">

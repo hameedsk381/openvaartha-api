@@ -59,6 +59,7 @@ const TrendingPage = () => {
                           src={lead.thumbnailUrl}
                           alt=""
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                          decoding="async"
                           onError={handleImageFallback}
                         />
                       </div>
@@ -131,6 +132,8 @@ const TrendingPage = () => {
                               src={art.thumbnailUrl}
                               alt=""
                               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              loading="lazy"
+                              decoding="async"
                               onError={handleImageFallback}
                               loading="lazy"
                             />

@@ -37,6 +37,10 @@ async def build_sitemap(db: AsyncIOMotorDatabase) -> str:
         ("/live", "hourly", "0.7"),
         ("/about", "monthly", "0.5"),
         ("/contact", "monthly", "0.5"),
+        ("/editorial", "yearly", "0.3"),
+        ("/corrections", "yearly", "0.3"),
+        ("/privacy", "yearly", "0.3"),
+        ("/terms", "yearly", "0.3"),
     ]
 
     for path, freq, prio in static_pages:

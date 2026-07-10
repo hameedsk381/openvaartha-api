@@ -96,7 +96,7 @@ export default function PortalDashboard() {
           <Link to={`/article/${featured.slug}`} className="block rounded-xl overflow-hidden border border-border hover:border-primary/40 transition-colors press group relative">
             <div className="relative aspect-[16/7] overflow-hidden bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900">
               {featured.thumbnailUrl && (
-                <img src={featured.thumbnailUrl} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" onError={handleImageFallback} />
+                <img src={featured.thumbnailUrl} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" decoding="async" onError={handleImageFallback} />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
@@ -130,7 +130,7 @@ export default function PortalDashboard() {
             <Link key={art.id} to={`/article/${art.slug}`} className="flex items-center gap-3 p-3 hover:bg-[hsl(var(--surface))] transition-colors press group/row">
               {art.thumbnailUrl && (
                 <div className="h-12 w-14 rounded-lg overflow-hidden bg-secondary/30 shrink-0">
-                  <img src={art.thumbnailUrl} alt="" className="w-full h-full object-cover" onError={handleImageFallback} />
+                  <img src={art.thumbnailUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" onError={handleImageFallback} />
                 </div>
               )}
               <div className="flex-1 min-w-0">

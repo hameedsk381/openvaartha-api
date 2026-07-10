@@ -1,6 +1,11 @@
 from celery import Celery
 from celery.schedules import crontab
 from app.config import settings
+from app.core.observability import init_sentry
+
+# Celery worker/beat are a separate process from the API (uvicorn never imports
+# this module's way in) — they need their own Sentry init call.
+init_sentry()
 
 # `include` makes the worker actually import rss_generator.py at startup so its
 # @celery_app.task-decorated function registers. Without this, the beat entry

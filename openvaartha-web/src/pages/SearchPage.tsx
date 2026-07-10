@@ -219,6 +219,7 @@ const SearchPage = () => {
                               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                               onError={handleImageFallback}
                               loading="lazy"
+                              decoding="async"
                             />
                           </div>
                         )}

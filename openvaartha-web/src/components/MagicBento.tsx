@@ -54,6 +54,8 @@ const ParticleCard: React.FC<BentoCardProps> = ({
             src={article.thumbnailUrl}
             alt=""
             className="w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-all duration-700 group-hover:scale-105"
+            loading="lazy"
+            decoding="async"
             onError={handleImageFallback}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />

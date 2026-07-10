@@ -49,6 +49,7 @@ const FeedCard = ({ article, index = 0, variant = "grid" }: FeedCardProps) => {
               alt={article.title}
               className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
               loading="lazy"
+              decoding="async"
               onError={handleImageFallback}
             />
             {/* Glossy Overlay */}

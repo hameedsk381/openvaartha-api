@@ -91,6 +91,7 @@ const CategoryPage = () => {
                         src={featured.thumbnailUrl}
                         alt={featured.title}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                        decoding="async"
                         onError={handleImageFallback}
                       />
                     )}
@@ -151,6 +152,7 @@ const CategoryPage = () => {
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             onError={handleImageFallback}
                             loading="lazy"
+                            decoding="async"
                           />
                         </div>
                       )}
@@ -202,6 +204,7 @@ const CategoryPage = () => {
                               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                               onError={handleImageFallback}
                               loading="lazy"
+                              decoding="async"
                             />
                           </div>
                         )}

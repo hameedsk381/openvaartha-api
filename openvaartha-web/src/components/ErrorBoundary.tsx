@@ -1,4 +1,5 @@
 import React from 'react';
+import * as Sentry from '@sentry/react';
 import { Button } from './ui/button';
 
 interface Props {
@@ -18,6 +19,11 @@ export default class ErrorBoundary extends React.Component<Props, State> {
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo): void {
+    // No-op if Sentry.init() was never called (VITE_SENTRY_DSN unset) — see main.tsx.
+    Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
   }
 
   handleReset = () => {

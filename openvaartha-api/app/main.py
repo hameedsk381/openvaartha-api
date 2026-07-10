@@ -9,6 +9,7 @@ from slowapi.errors import RateLimitExceeded
 from app.api.v1 import admin, articles, categories, comments, feeds, newsletter, pages, search, users, authors
 from app.config import settings
 from app.core.dependencies import get_current_active_admin
+from app.core.observability import init_sentry
 from app.core.rate_limit import limiter
 from app.core.security_headers import SecurityHeadersMiddleware
 from app.database import db
@@ -19,6 +20,8 @@ from app.services.seed_service import ensure_admin_user
 
 # Block known-unsafe production configs at import time.
 settings.assert_safe_for_production()
+
+init_sentry()
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -172,6 +175,8 @@ async def startup_checks():
             print("Successfully decoded and set GOOGLE_APPLICATION_CREDENTIALS from GOOGLE_CREDENTIALS_B64")
         except Exception as e:
             print(f"Failed to decode GOOGLE_CREDENTIALS_B64: {e}")
+            import sentry_sdk
+            sentry_sdk.capture_exception(e)  # no-op if SENTRY_DSN unset
 
     await ensure_article_indexes(db)
     await ensure_category_indexes(db)

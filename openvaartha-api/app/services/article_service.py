@@ -316,6 +316,8 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
                 print(f"Migrated base64 thumbnail to file for article {art.get('slug')}")
     except Exception as e:
         print(f"Failed to migrate base64 thumbnails: {e}")
+        import sentry_sdk
+        sentry_sdk.capture_exception(e)  # no-op if SENTRY_DSN unset
 
     # Backfill: documents created before the status field defaulted to draft
     # would be invisible to the public list. Treat un-tagged docs as published

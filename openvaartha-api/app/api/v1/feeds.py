@@ -82,9 +82,7 @@ async def agents_json():
         "name": SITE_NAME,
         "description": SITE_DESCRIPTION,
         "url": base,
-        # No contact field: the footer's "Contact" link isn't wired to a real
-        # page yet (see openvaartha-web/src/components/Footer.tsx) — omitting
-        # rather than publishing an address/URL that doesn't resolve.
+        "contact": "office@openvaartha.com",
         "type": "NewsMediaOrganization",
         "language": ["en"],
         "capabilities": {

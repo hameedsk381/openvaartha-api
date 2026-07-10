@@ -55,3 +55,6 @@ cors==1.0.1
 # Cloud Storage
 google-cloud-storage>=2.14.0,<3.0.0
 Pillow>=10.2.0,<11.0.0
+
+# Observability — error tracking (no-ops until SENTRY_DSN is set, see config.py)
+sentry-sdk[fastapi]>=2.0.0,<3.0.0

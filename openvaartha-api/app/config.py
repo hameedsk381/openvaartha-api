@@ -132,6 +132,14 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
 
+    # Observability — error tracking (sentry.io). Empty DSN disables it entirely;
+    # sentry_sdk's capture_* calls are safe no-ops with no client initialized, so
+    # call sites never need to check settings.SENTRY_DSN themselves.
+    SENTRY_DSN: str = ""
+    # Fraction of requests to trace for performance monitoring (0.0-1.0). Kept low
+    # by default — this is billed/rate-limited on most Sentry plans.
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.1
+
     class Config:
         env_file = (".env", "../.env")
         case_sensitive = True

@@ -30,6 +30,8 @@ x-app-environment: &app-environment
   SMTP_PASSWORD: ${SMTP_PASSWORD:-}
   SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-noreply@openvaartha.com}
   SMTP_FROM_NAME: ${SMTP_FROM_NAME:-OpenVaartha}
+  SENTRY_DSN: ${SENTRY_DSN:-}
+  SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0.1}
 
 
 services:
@@ -39,6 +41,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_GA_TRACKING_ID: ${VITE_GA_TRACKING_ID:-}
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
     depends_on:
       - api
     restart: unless-stopped

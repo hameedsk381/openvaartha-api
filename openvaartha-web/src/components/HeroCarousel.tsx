@@ -68,6 +68,7 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
                   alt={article?.title || ""}
                   className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]"
                   loading={index === 0 ? "eager" : "lazy"}
+                  decoding="async"
                   onError={handleImageFallback}
                 />
               </div>

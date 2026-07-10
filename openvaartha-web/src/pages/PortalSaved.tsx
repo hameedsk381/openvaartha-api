@@ -36,6 +36,8 @@ export default function PortalSaved() {
                       src={article.thumbnailUrl}
                       alt=""
                       className="w-full h-full object-cover transition-transform group-hover/row:scale-[1.03]"
+                      loading="lazy"
+                      decoding="async"
                       onError={handleImageFallback}
                     />
                   </div>
