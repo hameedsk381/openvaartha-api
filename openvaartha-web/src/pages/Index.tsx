@@ -99,9 +99,9 @@ function CategoryStrip({ category }: { category: Category }) {
   );
 }
 
-/* ─── Live Updates Mini-Feed ─────────────────────────── */
+/* ─── Bytes Mini-Feed ────────────────────────────────── */
 
-function LiveMini() {
+function BytesMini() {
   const { data: dispatches = [] } = useDispatches(5);
 
   if (dispatches.length === 0) return null;
@@ -114,9 +114,9 @@ function LiveMini() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
           </span>
-          <h3 className="font-display text-sm font-bold uppercase tracking-wide">Live</h3>
+          <h3 className="font-display text-sm font-bold uppercase tracking-wide">Bytes</h3>
         </div>
-        <Link to="/live" className="text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+        <Link to="/bytes" className="text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
           See all <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
@@ -606,8 +606,8 @@ export default function Index() {
                   </form>
                 </div>
 
-                {/* Live Updates Mini */}
-                <LiveMini />
+                {/* Bytes Mini */}
+                <BytesMini />
               </div>
             </aside>
           </section>

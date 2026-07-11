@@ -217,54 +217,29 @@ export const ExplainersPageSkeleton = () => (
   </div>
 );
 
-/* ─── LiveUpdatesPage Skeleton ───────────────────────── */
+/* ─── BytesPage Skeleton ─────────────────────────────── */
 
-export const LiveUpdatesPageSkeleton = () => (
+export const BytesPageSkeleton = () => (
   <div className="min-h-screen bg-background animate-fade-in">
-    <div className="max-w-screen-2xl mx-auto pt-24 pb-16">
-      {/* Header */}
-      <header className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14 border-b border-border bg-muted/10 space-y-4">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-10 sm:h-12 w-64" />
-        <Skeleton className="h-4 w-96" />
-      </header>
+    <div className="max-w-2xl mx-auto pt-24 pb-16">
+      {/* Sticky header */}
+      <div className="px-4 py-4 border-b border-border flex items-center justify-between">
+        <Skeleton className="h-6 w-20" />
+        <Skeleton className="h-3.5 w-16" />
+      </div>
+      <div className="px-4 pt-4 pb-2">
+        <Skeleton className="h-4 w-72" />
+      </div>
 
-      {/* Content Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 px-4 sm:px-6 lg:px-10 py-10">
-        {/* Left Live feed */}
-        <div className="lg:col-span-8 space-y-8">
-          <Skeleton className="h-6 w-32" />
-
-          {/* Timeline skeleton */}
-          <div className="relative">
-            <div className="absolute left-4 top-0 bottom-0 w-px bg-border/60" />
-            <div className="space-y-8">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="relative pl-12">
-                  {/* Timeline dot */}
-                  <div className="absolute left-2.5 top-1.5 h-3.5 w-3.5 rounded-full bg-border ring-4 ring-background" />
-                  <div className="space-y-2.5">
-                    <Skeleton className="h-3.5 w-24" />
-                    <Skeleton className="h-5 w-full" />
-                    <Skeleton className="h-5 w-11/12" />
-                    <Skeleton className="h-4 w-2/3" />
-                  </div>
-                </div>
-              ))}
-            </div>
+      {/* Byte rows */}
+      <div className="divide-y divide-border">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="px-4 py-4 space-y-2">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
           </div>
-        </div>
-
-        {/* Right sidebar */}
-        <div className="lg:col-span-4 space-y-6">
-          <Skeleton className="h-5 w-36" />
-          {[1, 2].map((i) => (
-            <div key={i} className="space-y-2 border border-border/40 p-4 rounded-xl">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-3 w-16" />
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
     </div>
   </div>

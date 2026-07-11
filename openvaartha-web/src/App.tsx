@@ -1,6 +1,6 @@
 import { useEffect, lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -39,7 +39,7 @@ const CategoryPage = lazy(() => import("./pages/CategoryPage.tsx"));
 const SearchPage = lazy(() => import("./pages/SearchPage.tsx"));
 const TrendingPage = lazy(() => import("./pages/TrendingPage.tsx"));
 const ExplainersPage = lazy(() => import("./pages/ExplainersPage.tsx"));
-const LiveUpdatesPage = lazy(() => import("./pages/LiveUpdatesPage.tsx"));
+const BytesPage = lazy(() => import("./pages/BytesPage.tsx"));
 const AboutPage = lazy(() => import("./pages/AboutPage.tsx"));
 const ContactPage = lazy(() => import("./pages/ContactPage.tsx"));
 const EditorialStandardsPage = lazy(() => import("./pages/EditorialStandardsPage.tsx"));
@@ -169,7 +169,9 @@ const App = () => {
                 <Route path="/search" element={<SearchPage />} />
                 <Route path="/trending" element={<TrendingPage />} />
                 <Route path="/explainers" element={<ExplainersPage />} />
-                <Route path="/live" element={<LiveUpdatesPage />} />
+                <Route path="/bytes" element={<BytesPage />} />
+                {/* Renamed from /live — keep old links/bookmarks working. */}
+                <Route path="/live" element={<Navigate to="/bytes" replace />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/editorial" element={<EditorialStandardsPage />} />

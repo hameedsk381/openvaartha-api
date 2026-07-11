@@ -102,9 +102,9 @@ _STATIC_ROUTE_META: Dict[str, Dict[str, Optional[str]]] = {
         "description": "In-depth explainers that break down the ideas and shifts shaping the internet you live in.",
         "robots": None,
     },
-    "live": {
-        "title": f"Live Updates — {SITE_NAME}",
-        "description": "Live, rolling coverage of developing stories — verified, timestamped, no rumours.",
+    "bytes": {
+        "title": f"Bytes — {SITE_NAME}",
+        "description": "Quick hits from the desk — short, timestamped news bytes, scroll for the latest.",
         "robots": None,
     },
     "about": {

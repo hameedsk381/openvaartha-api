@@ -18,7 +18,7 @@ async def list_dispatches(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Public: recent breaking-news dispatches — powers the JUST IN ticker and
-    the Live Updates timeline."""
+    the Bytes page."""
     return await dispatch_service.list_dispatches(db, limit=limit)
 
 

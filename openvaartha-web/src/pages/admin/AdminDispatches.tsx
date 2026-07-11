@@ -72,7 +72,7 @@ export default function AdminDispatches() {
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Short breaking-news blurbs — not full articles. These power the homepage
-          "JUST IN" scrolling ticker and the Live Updates timeline. Optionally link
+          "JUST IN" scrolling ticker and the Bytes page. Optionally link
           one to a full article once you've published it.
         </p>
       </div>
@@ -158,7 +158,7 @@ export default function AdminDispatches() {
         open={!!deleteTarget}
         onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
         title="Delete dispatch"
-        description="This removes it from the JUST IN ticker and Live Updates immediately."
+        description="This removes it from the JUST IN ticker and Bytes immediately."
         confirmLabel="Delete"
         onConfirm={() => { if (deleteTarget) { deleteMutation.mutate(deleteTarget.id); setDeleteTarget(null); } }}
       />

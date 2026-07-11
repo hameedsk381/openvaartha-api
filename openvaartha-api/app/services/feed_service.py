@@ -34,7 +34,7 @@ async def build_sitemap(db: AsyncIOMotorDatabase) -> str:
         ("/", "daily", "1.0"),
         ("/trending", "daily", "0.9"),
         ("/explainers", "weekly", "0.8"),
-        ("/live", "hourly", "0.7"),
+        ("/bytes", "hourly", "0.7"),
         ("/about", "monthly", "0.5"),
         ("/contact", "monthly", "0.5"),
         ("/editorial", "yearly", "0.3"),

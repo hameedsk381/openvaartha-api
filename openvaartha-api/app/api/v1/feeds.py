@@ -60,7 +60,7 @@ async def llms_txt(db: AsyncIOMotorDatabase = Depends(get_db)):
 
 - Homepage: {base}/
 - Trending: {base}/trending
-- Live updates: {base}/live
+- Bytes (quick news updates): {base}/bytes
 - Explainers: {base}/explainers
 - Search: {base}/search
 - Sitemap: {base}/sitemap.xml

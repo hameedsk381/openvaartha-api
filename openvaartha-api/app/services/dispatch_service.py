@@ -1,8 +1,8 @@
 """Dispatches: short, headline-only breaking-news blurbs — deliberately not
 full articles. They power both the homepage "JUST IN" scrolling ticker and the
-Live Updates timeline, so editors have one lightweight form for "something
-just happened" instead of having to publish a complete article just to get a
-line into the ticker.
+Bytes page (/bytes), so editors have one lightweight form for "something just
+happened" instead of having to publish a complete article just to get a line
+into the ticker.
 """
 
 from motor.motor_asyncio import AsyncIOMotorDatabase

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Search, Sun, Moon, Bookmark, User, Home, X, ChevronRight, LogOut, Radio } from "lucide-react";
+import { Search, Sun, Moon, Bookmark, User, Home, X, ChevronRight, LogOut, MessageSquare } from "lucide-react";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { useSearch, useCategories, useBreakingArticles } from "@/lib/api-hooks";
@@ -220,11 +220,11 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
           <BottomNavItem
             icon={
               <div className="relative">
-                <Radio className="h-5 w-5" />
+                <MessageSquare className="h-5 w-5" />
                 {hasBreaking && <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-red-500 rounded-full" />}
               </div>
             }
-            label="Live" to="/live" active={location.pathname === "/live"} />
+            label="Bytes" to="/bytes" active={location.pathname === "/bytes"} />
           <BottomNavItem
             icon={
               <div className="relative">
