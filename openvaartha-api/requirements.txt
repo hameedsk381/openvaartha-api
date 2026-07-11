@@ -58,3 +58,6 @@ Pillow>=10.2.0,<11.0.0
 
 # Observability — error tracking (no-ops until SENTRY_DSN is set, see config.py)
 sentry-sdk[fastapi]>=2.0.0,<3.0.0
+
+# Web Push (VAPID) — no-ops until VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY are set
+pywebpush>=2.0.0,<3.0.0

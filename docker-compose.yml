@@ -32,6 +32,9 @@ x-app-environment: &app-environment
   SMTP_FROM_NAME: ${SMTP_FROM_NAME:-OpenVaartha}
   SENTRY_DSN: ${SENTRY_DSN:-}
   SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0.1}
+  VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+  VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+  VAPID_CLAIMS_EMAIL: ${VAPID_CLAIMS_EMAIL:-mailto:office@openvaartha.com}
 
 
 services:

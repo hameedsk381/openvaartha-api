@@ -15,8 +15,13 @@ celery_app = Celery(
     "openvaartha",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
-    include=["app.tasks.rss_generator", "app.tasks.news_agents_task"],
+    include=["app.tasks.rss_generator", "app.tasks.news_agents_task", "app.tasks.morning_briefing"],
 )
+
+# "Morning Briefing" in Settings promises 8 AM specifically for an Indian
+# audience — without this, crontab(hour=8) fires at 8 AM UTC (1:30 PM IST).
+celery_app.conf.timezone = "Asia/Kolkata"
+celery_app.conf.enable_utc = False
 
 celery_app.conf.beat_schedule = {
     "process-rss-sources": {
@@ -26,6 +31,10 @@ celery_app.conf.beat_schedule = {
     "process-news-agents": {
         "task": "app.tasks.news_agents_task.run_agents",
         "schedule": crontab(minute="0,30"),  # every 30 minutes
+    },
+    "morning-briefing": {
+        "task": "app.tasks.morning_briefing.send_morning_briefing",
+        "schedule": crontab(hour=8, minute=0),  # 8:00 AM IST
     },
 }
 

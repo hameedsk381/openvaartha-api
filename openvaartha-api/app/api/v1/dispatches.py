@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List
 
@@ -7,7 +7,7 @@ from app.core.rate_limit import limiter, MUTATION_LIMIT
 from app.database import get_db
 from app.models.user import User as UserModel
 from app.schemas.dispatch import Dispatch as DispatchSchema, DispatchCreate
-from app.services import dispatch_service
+from app.services import dispatch_service, push_service
 
 router = APIRouter()
 
@@ -27,16 +27,31 @@ async def list_dispatches(
 async def create_dispatch(
     request: Request,
     body: DispatchCreate,
+    background_tasks: BackgroundTasks,
     db: AsyncIOMotorDatabase = Depends(get_db),
     current_user: UserModel = Depends(get_current_editor),
 ):
-    """Create a dispatch (admin/editor only)."""
+    """Create a dispatch (admin/editor only). Also pushes to subscribers with
+    "Breaking News" enabled — fired after the response so a large subscriber
+    base never delays the admin's save."""
     try:
-        return await dispatch_service.create_dispatch(
+        dispatch = await dispatch_service.create_dispatch(
             db, text=body.text, article_id=body.article_id, created_by=current_user.id
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+    background_tasks.add_task(
+        push_service.send_to_segment,
+        db,
+        "breaking",
+        {
+            "title": "Breaking — Open Vaartha",
+            "body": dispatch["text"],
+            "url": f"/article/{dispatch['article_slug']}" if dispatch.get("article_slug") else "/bytes",
+        },
+    )
+    return dispatch
 
 
 @router.delete("/{dispatch_id}")

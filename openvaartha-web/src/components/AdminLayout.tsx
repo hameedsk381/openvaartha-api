@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { LayoutDashboard, FileText, FolderTree, Users, MessageSquare, Mail, Rss, ArrowLeft, LogOut, Inbox, BarChart, User as UserIcon, Radio } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useLogout } from "@/hooks/use-logout";
+import { BRAND } from "@/lib/brand";
 
 interface NavItem {
   label: string;
@@ -66,7 +67,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <aside className="hidden sm:flex flex-col w-56 shrink-0 border-r border-border bg-[hsl(var(--surface))] min-h-screen">
           <div className="px-4 py-5 border-b border-border">
             <Link to="/">
-              <img src="/logo.jpg" alt="Open Vaartha" className="h-9 w-9 rounded-md object-cover" />
+              <img src={BRAND.iconMaroonPath} alt="Open Vaartha" className="h-9 w-9 dark:hidden" />
+              <img src={BRAND.iconWhitePath} alt="Open Vaartha" className="h-9 w-9 hidden dark:block" />
             </Link>
             <p className="text-[11px] text-muted-foreground mt-1 font-medium">{user?.fullName || user?.email || "Loading..."}</p>
           </div>

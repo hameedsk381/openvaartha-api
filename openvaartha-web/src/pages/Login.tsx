@@ -126,8 +126,11 @@ export default function Login() {
           </Link>
 
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="h-11 w-11 rounded-lg flex items-center justify-center overflow-hidden border border-white/20 bg-white">
-              <img src={BRAND.logoPath} alt="Open Vaartha" className="h-full w-full object-cover" />
+            {/* Always the white mark — this panel is a fixed bg-primary
+                (maroon) editorial surface, not theme-reactive, so a
+                dark-mode-conditional swap would never trigger here. */}
+            <div className="h-11 w-11 flex items-center justify-center">
+              <img src={BRAND.iconWhitePath} alt="Open Vaartha" className="h-full w-full object-contain" />
             </div>
             <span className="font-serif text-2xl font-bold tracking-tight">
               Open<span className="text-secondary">vaartha</span>
@@ -169,8 +172,9 @@ export default function Login() {
           {/* Mobile logo */}
           <div className="lg:hidden flex justify-center mb-8">
             <Link to="/" className="flex items-center gap-2.5">
-              <div className="h-10 w-10 rounded-lg flex items-center justify-center overflow-hidden border border-border bg-white">
-                <img src={BRAND.logoPath} alt="Open Vaartha" className="h-full w-full object-cover" />
+              <div className="h-10 w-10 flex items-center justify-center">
+                <img src={BRAND.iconMaroonPath} alt="Open Vaartha" className="h-full w-full object-contain dark:hidden" />
+                <img src={BRAND.iconWhitePath} alt="Open Vaartha" className="h-full w-full object-contain hidden dark:block" />
               </div>
               <span className="font-serif text-lg font-bold tracking-tight">
                 Open<span className="text-primary">vaartha</span>

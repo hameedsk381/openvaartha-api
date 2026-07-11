@@ -16,8 +16,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-10">
           <div className="md:col-span-4">
             <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0 shadow-sm overflow-hidden border border-border bg-white">
-                <img src={BRAND.logoPath} alt="Open Vaartha" className="h-full w-full object-cover" />
+              <div className="h-10 w-10 flex items-center justify-center shrink-0">
+                <img src={BRAND.iconMaroonPath} alt="Open Vaartha" className="h-full w-full object-contain dark:hidden" />
+                <img src={BRAND.iconWhitePath} alt="Open Vaartha" className="h-full w-full object-contain hidden dark:block" />
               </div>
               <div>
                 <div className="font-display text-2xl font-extrabold tracking-tight">

@@ -98,7 +98,7 @@ function useSEOMeta(article: Article | undefined) {
         name: BRAND.name,
         logo: {
           "@type": "ImageObject",
-          url: `${window.location.origin}/icon.svg`,
+          url: `${window.location.origin}/pwa-512x512.png`,
         },
       },
       mainEntityOfPage: {

@@ -19,8 +19,9 @@ const NotFound = () => {
       <div className="border-b border-border bg-[hsl(var(--surface))]">
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="h-9 w-9 rounded-lg flex items-center justify-center overflow-hidden border border-border bg-white">
-              <img src={BRAND.logoPath} alt="Open Vaartha" className="h-full w-full object-cover" />
+            <div className="h-9 w-9 flex items-center justify-center">
+              <img src={BRAND.iconMaroonPath} alt="Open Vaartha" className="h-full w-full object-contain dark:hidden" />
+              <img src={BRAND.iconWhitePath} alt="Open Vaartha" className="h-full w-full object-contain hidden dark:block" />
             </div>
             <span className="font-serif text-lg font-bold tracking-tight">
               Open<span className="text-primary">vaartha</span>

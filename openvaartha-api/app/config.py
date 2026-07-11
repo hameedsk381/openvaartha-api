@@ -140,6 +140,14 @@ class Settings(BaseSettings):
     # by default — this is billed/rate-limited on most Sentry plans.
     SENTRY_TRACES_SAMPLE_RATE: float = 0.1
 
+    # Web Push (VAPID) — empty keys disable sending entirely; the subscribe
+    # endpoint returns 503 until both are set. Generate a keypair once with
+    # scripts/generate_vapid_keys.py and set these as real env vars — never
+    # commit actual key values, same rule as JWT_SECRET_KEY.
+    VAPID_PUBLIC_KEY: str = ""
+    VAPID_PRIVATE_KEY: str = ""
+    VAPID_CLAIMS_EMAIL: str = "mailto:office@openvaartha.com"
+
     class Config:
         env_file = (".env", "../.env")
         case_sensitive = True

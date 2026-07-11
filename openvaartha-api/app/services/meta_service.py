@@ -16,8 +16,15 @@ SITE_DESCRIPTION = (
     "journalism built by Gen Z, for a freer internet."
 )
 TWITTER_HANDLE = "@openvaartha"
-DEFAULT_IMAGE = "/logo.jpg"
-PUBLISHER_LOGO = "/icon.svg"
+# Proper 1200x630 social-card composite (wordmark on the brand's cream
+# background) — /logo.jpg is a square product-icon-shaped JPG with its own
+# white background, a poor fit for link-preview cards on every platform.
+DEFAULT_IMAGE = "/og-image.png"
+# The actual current brand mark (maroon "D" wordmark) — /icon.svg is a stale,
+# visually different placeholder (an "OV / VAARTHA" square badge) that was
+# never updated after the real logo shipped. Every NewsArticle/Organization
+# JSON-LD publisher.logo was serving that wrong image until this was fixed.
+PUBLISHER_LOGO = "/pwa-512x512.png"
 
 # The block in index.html (between these markers) that gets replaced per-request.
 _HEAD_BLOCK_RE = re.compile(r"<!--app-head-->.*?<!--/app-head-->", re.DOTALL)

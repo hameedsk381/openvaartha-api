@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { z } from "zod";
 import { Switch } from "@/components/animate-ui/components/headless/switch";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 export default function PortalSettings() {
   const [user, setUser] = useState<any>(null);
@@ -13,10 +14,54 @@ export default function PortalSettings() {
   const [editValue, setEditValue] = useState("");
   const [passwordData, setPasswordData] = useState({ current: "", new: "" });
 
-  const [notifications, setNotifications] = useState({
-    breaking: localStorage.getItem("notify_breaking") !== "false",
-    morning: localStorage.getItem("notify_morning") !== "false",
-  });
+  const push = usePushNotifications();
+  // Start false rather than trusting a stale localStorage flag — a toggle
+  // showing "on" before a real browser subscription exists would be exactly
+  // the fake-preference problem this replaces. Reconciled against the actual
+  // subscription state on mount, below.
+  const [notifications, setNotifications] = useState({ breaking: false, morning: false });
+
+  useEffect(() => {
+    push.getExistingSubscription().then((sub) => {
+      if (sub) {
+        setNotifications({
+          breaking: localStorage.getItem("notify_breaking") !== "false",
+          morning: localStorage.getItem("notify_morning") !== "false",
+        });
+      } else {
+        localStorage.setItem("notify_breaking", "false");
+        localStorage.setItem("notify_morning", "false");
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleNotificationToggle = async (flag: "breaking" | "morning", value: boolean) => {
+    const previous = notifications;
+    const next = { ...notifications, [flag]: value };
+    setNotifications(next);
+    localStorage.setItem(`notify_${flag}`, String(value));
+
+    try {
+      const existing = await push.getExistingSubscription();
+      if (!existing && value) {
+        await push.subscribe(next);
+        toast.success("Notifications enabled");
+      } else if (existing && !next.breaking && !next.morning) {
+        await push.unsubscribe();
+        toast.success("Notifications turned off");
+      } else if (existing) {
+        await push.updatePreferences({ [flag]: value });
+        toast.success("Notification preferences saved");
+      }
+    } catch (err) {
+      // Revert — don't let the toggle claim a state that failed to apply
+      // (e.g. the browser blocked the permission prompt).
+      setNotifications(previous);
+      localStorage.setItem(`notify_${flag}`, String(previous[flag]));
+      toast.error(err instanceof Error ? err.message : "Failed to update notifications");
+    }
+  };
 
   const [appearance, setAppearance] = useState({
     theme: localStorage.getItem('theme') || 'Light',
@@ -267,21 +312,13 @@ export default function PortalSettings() {
           label="Breaking News"
           description="Instant high-priority alerts (this device only)"
           checked={notifications.breaking}
-          onChange={v => {
-            setNotifications(p => ({ ...p, breaking: v }));
-            localStorage.setItem("notify_breaking", String(v));
-            toast.success("Notification preferences saved");
-          }}
+          onChange={v => handleNotificationToggle("breaking", v)}
         />
         <ToggleRow
           label="Morning Briefing"
           description="Daily 8 AM summary (this device only)"
           checked={notifications.morning}
-          onChange={v => {
-            setNotifications(p => ({ ...p, morning: v }));
-            localStorage.setItem("notify_morning", String(v));
-            toast.success("Notification preferences saved");
-          }}
+          onChange={v => handleNotificationToggle("morning", v)}
         />
       </SettingsSection>
 

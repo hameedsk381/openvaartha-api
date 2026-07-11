@@ -17,7 +17,13 @@ export const BRAND = {
   copyright: "FOSS Andhra Foundation",
   contactEmail: "office@openvaartha.com",
   logoPath: "/logo.jpg",
-  iconPath: "/icon.svg",
+  iconPath: "/pwa-512x512.png",
+  // Transparent-background icon mark, in both colorways — pair these with
+  // Tailwind's dark: variant (see Navbar/Footer/Login/NotFound/AdminLayout)
+  // instead of the white-boxed logoPath wherever the icon sits directly on a
+  // theme-aware surface.
+  iconMaroonPath: "/icon-maroon.png",
+  iconWhitePath: "/icon-white.png",
   lang: "en",
   themeColor: "#550000",
   backgroundColor: "#f8f5f0",

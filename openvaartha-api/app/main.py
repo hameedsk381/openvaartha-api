@@ -6,7 +6,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.api.v1 import admin, articles, categories, comments, dispatches, feeds, newsletter, pages, search, users, authors
+from app.api.v1 import admin, articles, categories, comments, dispatches, feeds, newsletter, pages, push, search, users, authors
 from app.config import settings
 from app.core.dependencies import get_current_active_admin
 from app.core.observability import init_sentry
@@ -17,6 +17,7 @@ from app.models.user import User as UserModel
 from app.services.article_service import ensure_article_indexes
 from app.services.category_service import ensure_category_indexes
 from app.services.dispatch_service import ensure_dispatch_indexes
+from app.services.push_service import ensure_push_indexes
 from app.services.seed_service import ensure_admin_user
 
 # Block known-unsafe production configs at import time.
@@ -65,6 +66,7 @@ app.include_router(search.router, prefix="/api/v1/search", tags=["Search"])
 app.include_router(newsletter.router, prefix="/api/v1/newsletter", tags=["Newsletter"])
 app.include_router(comments.router, prefix="/api/v1/comments", tags=["Comments"])
 app.include_router(dispatches.router, prefix="/api/v1/dispatches", tags=["Dispatches"])
+app.include_router(push.router, prefix="/api/v1/push", tags=["Push"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(upload.router, prefix="/api/v1/upload", tags=["Upload"])
 app.include_router(authors.router, prefix="/api/v1/authors", tags=["Authors"])
@@ -183,6 +185,7 @@ async def startup_checks():
     await ensure_article_indexes(db)
     await ensure_category_indexes(db)
     await ensure_dispatch_indexes(db)
+    await ensure_push_indexes(db)
     await ensure_admin_user(db)
     if not settings.GROQ_API_KEY:
         print("WARNING: GROQ_API_KEY is not set. AI article generation will be unavailable.")

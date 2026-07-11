@@ -40,7 +40,13 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["icon.svg", "robots.txt", "logo.jpg"],
+      // injectManifest (a custom src/sw.ts, precompiled by Vite) instead of
+      // generateSW's fully auto-generated worker — needed for the push /
+      // notificationclick handlers generateSW has no hook for.
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
+      includeAssets: ["robots.txt", "logo.jpg", "og-image.png", "icon-maroon.png", "icon-white.png"],
       manifest: {
         name: "Open Vaartha — An Open News Platform, Built by Gen Z",
         short_name: "Open Vaartha",
@@ -59,12 +65,6 @@ export default defineConfig(({ mode }) => ({
         categories: ["news", "politics", "technology", "entertainment", "business"],
         icons: [
           {
-            src: "/icon.svg",
-            sizes: "any",
-            type: "image/svg+xml",
-            purpose: "any maskable",
-          },
-          {
             src: "/pwa-192x192.png",
             sizes: "192x192",
             type: "image/png",
@@ -76,6 +76,15 @@ export default defineConfig(({ mode }) => ({
             type: "image/png",
             purpose: "any",
           },
+          {
+            // White mark on a solid maroon field with Android-safe-zone
+            // padding — survives circle/squircle/teardrop launcher masks
+            // without the "D" getting clipped (unlike a tight-cropped icon).
+            src: "/pwa-maskable-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
         ],
         shortcuts: [
           {
@@ -83,44 +92,26 @@ export default defineConfig(({ mode }) => ({
             short_name: "Trending",
             description: "Trending stories",
             url: "/trending",
-            icons: [{ src: "/icon.svg", sizes: "any" }],
+            icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }],
           },
           {
             name: "Saved",
             short_name: "Saved",
             description: "Bookmarked articles",
-            url: "/saved",
-            icons: [{ src: "/icon.svg", sizes: "any" }],
+            url: "/portal/saved",
+            icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }],
           },
         ],
         screenshots: [],
       },
-      workbox: {
-        // Keep the precache to reader-facing bundles (all well under 700KB).
-        // The ~1MB admin markdown-editor chunk deliberately falls above this
-        // ceiling so it isn't background-downloaded onto every reader's device
-        // on first visit — it's fetched on demand if they ever open the editor.
+      // Precache config + runtime caching rules live in src/sw.ts now (the
+      // `workbox` option only applies to generateSW mode). Same 700KB ceiling
+      // and glob pattern as before — the ~1MB admin markdown-editor chunk
+      // still deliberately falls above it so it isn't background-downloaded
+      // onto every reader's device, only fetched on demand.
+      injectManifest: {
         maximumFileSizeToCacheInBytes: 700000,
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        runtimeCaching: [
-          {
-            urlPattern: /^https?:\/\/.*\/api\/v1\//i,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "openvaartha-api",
-              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 },
-              networkTimeoutSeconds: 5,
-            },
-          },
-          {
-            urlPattern: /^https?:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "google-fonts",
-              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
-            },
-          },
-        ],
       },
     }),
     mode === "development" && componentTagger(),

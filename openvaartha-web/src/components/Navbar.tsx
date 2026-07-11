@@ -6,6 +6,7 @@ import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { useSearch, useCategories, useBreakingArticles } from "@/lib/api-hooks";
 import SignOutButton from "@/components/SignOutButton";
+import { BRAND } from "@/lib/brand";
 
 interface NavbarProps { isInsideStack?: boolean; }
 
@@ -98,7 +99,8 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
       )}>
         <div className="h-14 flex items-center justify-between px-4 sm:px-6 max-w-screen-2xl mx-auto">
           <Link to="/" className="press shrink-0 flex items-center gap-2.5">
-            <img src="/logo.jpg" alt="Open Vaartha" className="h-9 w-9 rounded-lg object-cover border-2 border-foreground" />
+            <img src={BRAND.iconMaroonPath} alt="Open Vaartha" className="h-9 w-9 dark:hidden" />
+            <img src={BRAND.iconWhitePath} alt="Open Vaartha" className="h-9 w-9 hidden dark:block" />
             <span className="hidden sm:inline font-display text-lg font-extrabold tracking-tight">
               Open<span className="text-primary">vaartha</span>
             </span>
