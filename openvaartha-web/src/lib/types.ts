@@ -55,6 +55,15 @@ export const categoryColors: Record<string, string> = {
   Sports: "bg-[#ddb892]",
 };
 
+export interface Dispatch {
+  id: string;
+  text: string;
+  articleId?: string | null;
+  articleSlug?: string | null;
+  articleTitle?: string | null;
+  createdAt: string;
+}
+
 export interface Comment {
   id: string;
   articleId: string;

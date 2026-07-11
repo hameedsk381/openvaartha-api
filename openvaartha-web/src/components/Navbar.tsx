@@ -159,10 +159,10 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
           </Link>
 
           {localStorage.getItem('token') ? (
-            <div className="hidden sm:flex items-center gap-1 ml-1">
+            <div className="flex items-center gap-1 ml-1">
               <Link
                 to="/portal/dashboard"
-                className="h-11 w-11 rounded-full gradient-maroon flex items-center justify-center press shadow-sm shadow-primary/20 hover:shadow-maroon transition-shadow"
+                className="hidden sm:flex h-11 w-11 rounded-full gradient-maroon items-center justify-center press shadow-sm shadow-primary/20 hover:shadow-maroon transition-shadow"
                 aria-label="Portal"
               >
                 <User className="h-5 w-5 text-white" />

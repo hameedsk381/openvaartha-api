@@ -21,7 +21,7 @@ import {
   useCategories,
   useNewsletterSubscribe,
   useArticlesByCategory,
-  useLiveUpdates,
+  useDispatches,
 } from '@/lib/api-hooks';
 import type { Article, Category } from '@/lib/types';
 
@@ -102,9 +102,9 @@ function CategoryStrip({ category }: { category: Category }) {
 /* ─── Live Updates Mini-Feed ─────────────────────────── */
 
 function LiveMini() {
-  const { data: updates = [] } = useLiveUpdates(5);
+  const { data: dispatches = [] } = useDispatches(5);
 
-  if (updates.length === 0) return null;
+  if (dispatches.length === 0) return null;
 
   return (
     <div className="border-t border-border">
@@ -121,18 +121,29 @@ function LiveMini() {
         </Link>
       </div>
       <ul className="divide-y divide-border">
-        {updates.map((u) => (
-          <li key={u.id} className="px-4 sm:px-6 lg:px-6 py-3">
-            <Link to={`/article/${u.slug}`} className="group">
-              <span className="text-[10px] text-muted-foreground font-medium">
-                {new Date(u.time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-              </span>
-              <p className="text-xs font-semibold leading-snug text-foreground group-hover:text-primary transition-colors mt-0.5 line-clamp-2">
-                {u.text || u.title}
-              </p>
-            </Link>
-          </li>
-        ))}
+        {dispatches.map((u) => {
+          const time = (
+            <span className="text-[10px] text-muted-foreground font-medium">
+              {new Date(u.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          );
+          const text = (
+            <p className="text-xs font-semibold leading-snug text-foreground group-hover:text-primary transition-colors mt-0.5 line-clamp-2">
+              {u.text}
+            </p>
+          );
+          return (
+            <li key={u.id} className="px-4 sm:px-6 lg:px-6 py-3">
+              {u.articleSlug ? (
+                <Link to={`/article/${u.articleSlug}`} className="group">
+                  {time}{text}
+                </Link>
+              ) : (
+                <div>{time}{text}</div>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

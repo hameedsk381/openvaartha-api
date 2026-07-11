@@ -69,6 +69,7 @@ const AdminComments = lazy(() => import("./pages/admin/AdminComments.tsx"));
 const AdminNewsletter = lazy(() => import("./pages/admin/AdminNewsletter.tsx"));
 const AdminSources = lazy(() => import("./pages/admin/AdminSources.tsx"));
 const AdminContributions = lazy(() => import("./pages/admin/AdminContributions.tsx"));
+const AdminDispatches = lazy(() => import("./pages/admin/AdminDispatches.tsx"));
 
 /* ─── Premium Loading Screen ─────────────────────────── */
 
@@ -197,6 +198,7 @@ const App = () => {
                 <Route path="/admin/newsletter" element={<AdminRoute roles={["admin"]}><AdminLayout><AdminNewsletter /></AdminLayout></AdminRoute>} />
                 <Route path="/admin/sources" element={<AdminRoute roles={["admin"]}><AdminLayout><AdminSources /></AdminLayout></AdminRoute>} />
                 <Route path="/admin/contributions" element={<AdminRoute roles={["admin", "editor"]}><AdminLayout><AdminContributions /></AdminLayout></AdminRoute>} />
+                <Route path="/admin/dispatches" element={<AdminRoute roles={["admin", "editor"]}><AdminLayout><AdminDispatches /></AdminLayout></AdminRoute>} />
 
                 <Route path="*" element={<NotFound />} />
               </Routes>

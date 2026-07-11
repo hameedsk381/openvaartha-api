@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Article, Category, Comment } from "./types";
+import type { Article, Category, Comment, Dispatch } from "./types";
 import { apiFetch } from "./api";
 
 export function useArticles(params?: {
@@ -75,12 +75,12 @@ export function useRelatedArticles(articleId: string, limit = 5) {
   });
 }
 
-export function useLiveUpdates(limit = 20) {
-  return useQuery<{ id: string; time: string; text: string; type: string; title: string; slug: string }[]>({
-    queryKey: ["articles", "live-updates", limit],
-    queryFn: () => apiFetch(`/articles/live-updates?limit=${limit}`),
+export function useDispatches(limit = 20) {
+  return useQuery<Dispatch[]>({
+    queryKey: ["dispatches", limit],
+    queryFn: () => apiFetch<Dispatch[]>(`/dispatches/?limit=${limit}`),
     placeholderData: [],
-    refetchInterval: 10000, // Poll every 10 seconds
+    refetchInterval: 10000, // Poll every 10 seconds — dispatches are meant to feel live
   });
 }
 

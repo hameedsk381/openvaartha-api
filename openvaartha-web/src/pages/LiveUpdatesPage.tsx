@@ -3,23 +3,14 @@ import Navbar from '../components/Navbar';
 import { Bell, ArrowUpRight, Radio, RefreshCw, Loader2 } from 'lucide-react';
 import { cn, handleImageFallback } from '@/lib/utils';
 import { Link } from 'react-router-dom';
-import { useArticles, useLiveUpdates } from '@/lib/api-hooks';
+import { useArticles, useDispatches } from '@/lib/api-hooks';
 import { BRAND } from '@/lib/brand';
 import { LiveUpdatesPageSkeleton } from '@/components/PageSkeletons';
-
-type LiveUpdate = {
-  id: string;
-  time: string;
-  text: string;
-  type: string;
-  title: string;
-  slug: string;
-};
 
 const LiveUpdatesPage = () => {
   const [now, setNow] = useState(new Date());
   const { data: articles = [] } = useArticles({ limit: 3 });
-  const { data: liveUpdates = [], isLoading } = useLiveUpdates(100);
+  const { data: liveUpdates = [], isLoading } = useDispatches(100);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 30_000);
@@ -85,30 +76,25 @@ const LiveUpdatesPage = () => {
                 <div className="relative">
                   <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
                   <div className="space-y-0">
-                    {liveUpdates.map((update: LiveUpdate) => (
+                    {liveUpdates.map((update) => (
                       <div key={update.id} className="relative pl-12 pb-6 last:pb-0">
                         <div className="absolute left-2.5 top-1.5 h-3 w-3 rounded-full bg-primary ring-4 ring-background" />
                         <div className="text-xs text-muted-foreground font-medium mb-1">
-                          {new Date(update.time).toLocaleTimeString('en-IN', {
+                          {new Date(update.createdAt).toLocaleTimeString('en-IN', {
                             hour: '2-digit', minute: '2-digit',
                           })}
                         </div>
-                        {update.slug ? (
+                        <p className="font-serif text-sm font-bold text-foreground leading-snug">
+                          {update.text}
+                        </p>
+                        {update.articleSlug && (
                           <Link
-                            to={`/article/${update.slug}`}
-                            className="group block press"
+                            to={`/article/${update.articleSlug}`}
+                            className="group inline-flex items-center gap-1 mt-1.5 text-xs font-semibold text-primary hover:underline underline-offset-4"
                           >
-                            <h4 className="font-serif text-sm font-bold leading-snug tracking-tight group-hover:text-primary transition-colors">
-                              {update.title}
-                            </h4>
-                            <p className="font-serif text-sm text-muted-foreground mt-1 leading-relaxed">
-                              {update.text}
-                            </p>
+                            Full story{update.articleTitle ? `: ${update.articleTitle}` : ""}
+                            <ArrowUpRight className="h-3 w-3" />
                           </Link>
-                        ) : (
-                          <p className="font-serif text-sm text-foreground leading-relaxed">
-                            {update.text}
-                          </p>
                         )}
                       </div>
                     ))}

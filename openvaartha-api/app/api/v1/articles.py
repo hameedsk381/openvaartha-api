@@ -95,57 +95,6 @@ async def get_explainer_articles(
     return await article_service.get_explainer_articles(db, skip=skip, limit=limit)
 
 
-@router.get("/live-updates")
-async def get_live_updates(
-    limit: int = Query(20, ge=1, le=100),
-    db: AsyncIOMotorDatabase = Depends(get_db),
-):
-    """Get live timeline updates for developing stories (published only)."""
-    breaking_cursor = db["articles"].find({
-        "is_breaking": True,
-        "$or": [{"status": "published"}, {"status": {"$exists": False}}],
-    }).sort("published_at", -1).limit(limit)
-    breaking_articles = await breaking_cursor.to_list(length=None)
-
-    # Batch query article_content timeline data (only load timeline and article_id to avoid large bodies)
-    breaking_ids = [a["_id"] for a in breaking_articles]
-    contents = []
-    if breaking_ids:
-        contents = await db["article_content"].find(
-            {"article_id": {"$in": breaking_ids}},
-            {"timeline": 1, "article_id": 1}
-        ).to_list(length=len(breaking_ids))
-    content_map = {c["article_id"]: c for c in contents}
-
-    updates = []
-    for article in breaking_articles:
-        updates.append({
-            "id": str(article["_id"]),
-            "time": article["published_at"].strftime("%H:%M") if article.get("published_at") else "00:00",
-            "text": article["summary"],
-            "type": "major",
-            "title": article["title"],
-            "slug": article["slug"],
-            "published_at": article.get("published_at"),
-        })
-
-        content = content_map.get(article["_id"])
-        if content and content.get("timeline"):
-            for timeline_item in content["timeline"]:
-                updates.append({
-                    "id": f"{article['_id']}-{timeline_item.get('date', '')}",
-                    "time": timeline_item.get("date", ""),
-                    "text": timeline_item.get("event", ""),
-                    "type": "major",
-                    "title": article["title"],
-                    "slug": article["slug"],
-                    "published_at": article.get("published_at"),
-                })
-
-    updates.sort(key=lambda x: str(x.get("published_at", "")), reverse=True)
-    return updates[:limit]
-
-
 @router.get("/editor-picks", response_model=List[Article])
 async def get_editor_picks(
     limit: int = Query(10, ge=1, le=50),
