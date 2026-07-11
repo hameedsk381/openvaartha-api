@@ -21,6 +21,7 @@ class ArticleContent(BaseModel):
     body: Optional[str] = ""
     timeline: Optional[List[Dict[str, Any]]] = None
     explainer: Optional[Dict[str, Any]] = None
+    video_url: Optional[str] = None
 
 
 class ArticleSource(BaseModel):

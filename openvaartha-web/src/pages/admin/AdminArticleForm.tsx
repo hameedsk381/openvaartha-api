@@ -32,6 +32,7 @@ type FormState = {
   author: string;
   authorId: string;
   thumbnailUrl: string;
+  videoUrl: string;
   publishedAt: string;
   status: ArticleStatus;
   isTrending: boolean;
@@ -54,6 +55,7 @@ const emptyForm: FormState = {
   author: `${BRAND.name} Desk`,
   authorId: "",
   thumbnailUrl: "",
+  videoUrl: "",
   publishedAt: new Date().toISOString().slice(0, 16),
   status: "draft",
   isTrending: false,
@@ -183,6 +185,7 @@ export default function AdminArticleForm() {
       author: article.author,
       authorId: article.authorId || "",
       thumbnailUrl: article.thumbnailUrl || "",
+      videoUrl: article.content?.videoUrl || "",
       publishedAt: toDateInput(article.publishedAt),
       status: (article.status ?? "draft") as ArticleStatus,
       isTrending: article.isTrending,
@@ -231,6 +234,7 @@ export default function AdminArticleForm() {
       body: form.body,
       timeline: form.timeline.length > 0 ? form.timeline : null,
       explainer: form.explainer.length > 0 ? form.explainer : null,
+      video_url: form.videoUrl || null,
     },
   }), [form]);
 
@@ -766,6 +770,90 @@ export default function AdminArticleForm() {
                   <div className="space-y-1 text-muted-foreground">
                     <p className="text-xs font-bold text-foreground">Click to upload or drag & drop</p>
                     <p className="text-[10px]">PNG, JPG, WEBP up to 5MB</p>
+                  </div>
+                )}
+              </div>
+            </Field>
+
+            <Field label="Video">
+              <div className="flex gap-2">
+                <Input value={form.videoUrl} onChange={(e) => update("videoUrl", e.target.value)} placeholder="https://..." className="flex-1" />
+                {form.videoUrl && (
+                  <Button type="button" variant="outline" size="icon" onClick={() => update("videoUrl", "")} aria-label="Remove video">
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file && file.type.startsWith("video/")) {
+                    const uploadVideo = async (file: File) => {
+                      const formData = new FormData();
+                      formData.append("file", file);
+                      toast.loading("Uploading video — this can take a moment...", { id: "video-upload" });
+                      try {
+                        const res = await apiFetch<{ url: string }>("/upload/video", {
+                          method: "POST",
+                          body: formData,
+                        });
+                        update("videoUrl", res.url);
+                        toast.success("Video uploaded successfully", { id: "video-upload" });
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "Failed to upload video", { id: "video-upload" });
+                      }
+                    };
+                    uploadVideo(file);
+                  } else {
+                    toast.error("Only MP4, WebM, or MOV video files are supported");
+                  }
+                }}
+                className="mt-2 border-2 border-dashed border-border rounded-lg p-4 text-center hover:bg-muted/50 hover:border-primary/40 transition-colors cursor-pointer"
+                onClick={() => {
+                  const input = document.createElement("input");
+                  input.type = "file";
+                  input.accept = "video/mp4,video/webm,video/quicktime";
+                  input.onchange = (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (file) {
+                      const uploadVideo = async (file: File) => {
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        toast.loading("Uploading video — this can take a moment...", { id: "video-upload" });
+                        try {
+                          const res = await apiFetch<{ url: string }>("/upload/video", {
+                            method: "POST",
+                            body: formData,
+                          });
+                          update("videoUrl", res.url);
+                          toast.success("Video uploaded successfully", { id: "video-upload" });
+                        } catch (err) {
+                          toast.error(err instanceof Error ? err.message : "Failed to upload video", { id: "video-upload" });
+                        }
+                      };
+                      uploadVideo(file);
+                    }
+                  };
+                  input.click();
+                }}
+              >
+                {form.videoUrl ? (
+                  <div className="relative rounded overflow-hidden">
+                    <video src={form.videoUrl} className="w-full h-32 object-cover" muted />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <span className="text-white text-xs font-semibold">Change video</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1 text-muted-foreground">
+                    <p className="text-xs font-bold text-foreground">Click to upload or drag & drop</p>
+                    <p className="text-[10px]">MP4, WebM, or MOV up to 200MB</p>
                   </div>
                 )}
               </div>

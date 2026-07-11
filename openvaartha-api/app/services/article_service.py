@@ -650,6 +650,7 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
             "body": sanitize_html(article_data.content.body),
             "timeline": article_data.content.timeline,
             "explainer": article_data.content.explainer,
+            "video_url": article_data.content.video_url,
         }
         await db["article_content"].insert_one(content_doc)
 

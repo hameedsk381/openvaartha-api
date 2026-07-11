@@ -8,6 +8,7 @@ export interface ArticleContent {
   body: string;
   timeline?: { date: string; event: string }[] | null;
   explainer?: { question: string; answer: string }[] | null;
+  videoUrl?: string | null;
 }
 
 export interface Article {

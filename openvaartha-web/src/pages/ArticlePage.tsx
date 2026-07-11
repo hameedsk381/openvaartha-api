@@ -401,6 +401,7 @@ const ArticlePage = () => {
               <nav aria-label="Table of contents" className="border-t border-border pt-5">
                 <p className="overline mb-2">Contents</p>
                 <ul className="space-y-1.5 text-xs text-muted-foreground">
+                  {article.content?.videoUrl && <li><a href="#video" className="hover:text-primary transition-colors">Video</a></li>}
                   {article.content?.tldr && <li><a href="#takeaway" className="hover:text-primary transition-colors">The takeaway</a></li>}
                   {article.content?.points?.length ? <li><a href="#key-points" className="hover:text-primary transition-colors">Key points</a></li> : null}
                   <li><a href="#article-body" className="hover:text-primary transition-colors">Full story</a></li>
@@ -483,6 +484,19 @@ const ArticlePage = () => {
                 ))}
               </div>
             </div>
+
+            {article.content?.videoUrl && (
+              <section id="video" className="mb-10">
+                <video
+                  controls
+                  preload="metadata"
+                  className="w-full aspect-video rounded-lg bg-black"
+                  poster={article.thumbnailUrl || undefined}
+                >
+                  <source src={article.content.videoUrl} />
+                </video>
+              </section>
+            )}
 
             {article.content?.tldr && (
               <section id="takeaway" className="tldr-block mb-10">

@@ -10,6 +10,7 @@ _CSP = (
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style;"
     "font-src 'self' https://fonts.gstatic.com data:;"
     "img-src 'self' data: blob: https: https://www.googletagmanager.com;"
+    "media-src 'self' https://storage.googleapis.com;"
     "connect-src 'self' https://accounts.google.com https://www.google-analytics.com;"
     "frame-src https://accounts.google.com;"
     "base-uri 'self';"
