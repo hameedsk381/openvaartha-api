@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import AdminRoute from "./components/AdminRoute.tsx";
 import InstallPWA from "./components/InstallPWA.tsx";
+import SignupPrompt from "./components/SignupPrompt.tsx";
 import { toast } from "sonner";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
 import ReactGA from "react-ga4";
@@ -207,6 +208,7 @@ const App = () => {
             </Suspense>
             </ErrorBoundary>
           </ProtectedRoute>
+          <SignupPrompt />
         </BrowserRouter>
         <InstallPWA />
       </div>
