@@ -1,7 +1,14 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ExternalLink, Loader2, Plus, Save, Trash2, X, AlertCircle, RotateCcw } from "lucide-react";
+import { Save, AlertCircle } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { ArrowLeft } from "@/components/animate-ui/icons/arrow-left";
+import { ExternalLink } from "@/components/animate-ui/icons/external-link";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
+import { Plus } from "@/components/animate-ui/icons/plus";
+import { RotateCcw } from "@/components/animate-ui/icons/rotate-ccw";
+import { X } from "@/components/animate-ui/icons/x";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { ARTICLE_STATUSES, type Article, type ArticleStatus, type Category } from "./types";
@@ -338,7 +345,7 @@ export default function AdminArticleForm() {
   if (articleQuery.isLoading) {
     return (
       <div className="h-80 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+        <LoaderCircle className="h-8 w-8 text-primary" animate />
       </div>
     );
   }
@@ -350,7 +357,7 @@ export default function AdminArticleForm() {
         <p className="text-sm font-semibold text-destructive">Failed to load article</p>
         <p className="text-xs text-muted-foreground max-w-md text-center">{(articleQuery.error as Error)?.message}</p>
         <Button variant="outline" size="sm" onClick={() => articleQuery.refetch()}>
-          <RotateCcw className="h-3.5 w-3.5" /> Retry
+          <RotateCcw className="h-3.5 w-3.5" animateOnHover /> Retry
         </Button>
       </div>
     );
@@ -366,7 +373,7 @@ export default function AdminArticleForm() {
             to={form.status === "pending" ? "/admin/contributions" : "/admin/articles"}
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-1"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" animateOnHover />
             {form.status === "pending" ? "Review Queue" : "Articles"}
           </Link>
           <h1 className="text-2xl font-bold tracking-tight">
@@ -405,18 +412,18 @@ export default function AdminArticleForm() {
               disabled={mutation.isPending} 
               className="gap-2 bg-green-600 hover:bg-green-700 text-white"
             >
-              {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {mutation.isPending ? <LoaderCircle className="h-4 w-4" animate /> : <AnimatedIcon animationType="scale"><Save className="h-4 w-4" /></AnimatedIcon>}
               Approve & Publish
             </Button>
           )}
 
           <Button type="submit" disabled={mutation.isPending} className="gap-2">
-            {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {mutation.isPending ? <LoaderCircle className="h-4 w-4" animate /> : <AnimatedIcon animationType="scale"><Save className="h-4 w-4" /></AnimatedIcon>}
             {form.status === "pending" ? "Save Edits" : "Save"}
             <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-white/20 px-1.5 text-[10px] font-mono opacity-60">{isMac ? "⌘S" : "Ctrl+S"}</kbd>
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => setPreviewOpen(true)} className="gap-1.5">
-            <ExternalLink className="h-4 w-4" /> Preview
+            <ExternalLink className="h-4 w-4" animateOnHover /> Preview
           </Button>
         </div>
       </div>
@@ -440,7 +447,7 @@ export default function AdminArticleForm() {
                 {(form.slug || articleQuery.data?.slug) && (
                   <Button type="button" variant="outline" size="icon" asChild>
                     <a href={`/${form.slug || articleQuery.data?.slug}`} target="_blank" rel="noopener noreferrer" title="Preview article">
-                      <ExternalLink className="h-4 w-4" />
+                      <ExternalLink className="h-4 w-4" animateOnHover />
                     </a>
                   </Button>
                 )}
@@ -473,7 +480,7 @@ export default function AdminArticleForm() {
             title="Timeline"
             action={
               <Button type="button" variant="outline" size="sm" onClick={addTimelineEntry}>
-                <Plus className="h-3.5 w-3.5" /> Add entry
+                <Plus className="h-3.5 w-3.5" animateOnHover /> Add entry
               </Button>
             }
           >
@@ -495,7 +502,7 @@ export default function AdminArticleForm() {
                     placeholder="Event description"
                   />
                   <Button type="button" variant="outline" size="icon" onClick={() => removeTimelineEntry(i)} className="shrink-0 text-destructive hover:text-destructive">
-                    <X className="h-4 w-4" />
+                    <X className="h-4 w-4" animateOnHover />
                   </Button>
                 </div>
               ))}
@@ -507,7 +514,7 @@ export default function AdminArticleForm() {
             title="Explainer Q&A"
             action={
               <Button type="button" variant="outline" size="sm" onClick={addExplainerEntry}>
-                <Plus className="h-3.5 w-3.5" /> Add Q&A
+                <Plus className="h-3.5 w-3.5" animateOnHover /> Add Q&A
               </Button>
             }
           >
@@ -524,7 +531,7 @@ export default function AdminArticleForm() {
                     onClick={() => removeExplainerEntry(i)}
                     className="absolute top-3 right-3 h-7 w-7 text-muted-foreground hover:text-destructive"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-3.5 w-3.5" animateOnHover />
                   </Button>
                   <Input
                     value={entry.question}
@@ -580,7 +587,7 @@ export default function AdminArticleForm() {
                           onMouseDown={(e) => { e.preventDefault(); setCategoryDialogOpen(true); }}
                           className="relative flex w-full cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
                         >
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-4 w-4" animateOnHover />
                           Create new category
                         </button>
                       </DialogTrigger>
@@ -627,7 +634,7 @@ export default function AdminArticleForm() {
                               onClick={() => createCategoryMutation.mutate()}
                               disabled={!newCategory.name.trim() || createCategoryMutation.isPending}
                             >
-                              {createCategoryMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                              {createCategoryMutation.isPending && <LoaderCircle className="h-4 w-4 mr-2" animate />}
                               Create
                             </Button>
                           </div>
@@ -780,7 +787,7 @@ export default function AdminArticleForm() {
                 <Input value={form.videoUrl} onChange={(e) => update("videoUrl", e.target.value)} placeholder="https://..." className="flex-1" />
                 {form.videoUrl && (
                   <Button type="button" variant="outline" size="icon" onClick={() => update("videoUrl", "")} aria-label="Remove video">
-                    <X className="h-4 w-4" />
+                    <X className="h-4 w-4" animateOnHover />
                   </Button>
                 )}
               </div>
@@ -918,10 +925,10 @@ export default function AdminArticleForm() {
         </div>
         <div className="flex items-center gap-2 flex-1 justify-end">
           <Button type="button" variant="outline" className="h-10 px-3 shrink-0" onClick={() => setPreviewOpen(true)}>
-            <ExternalLink className="h-4 w-4" />
+            <ExternalLink className="h-4 w-4" animateOnHover />
           </Button>
           <Button type="submit" disabled={mutation.isPending} className="h-10 gap-2 flex-1 justify-center">
-            {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {mutation.isPending ? <LoaderCircle className="h-4 w-4" animate /> : <AnimatedIcon animationType="scale"><Save className="h-4 w-4" /></AnimatedIcon>}
             Save
           </Button>
         </div>

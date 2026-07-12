@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Download, Loader2, Mail, AlertCircle, RotateCcw, Trash2 } from "lucide-react";
+import { Mail, AlertCircle } from "lucide-react";
+import { ChevronLeft } from "@/components/animate-ui/icons/chevron-left";
+import { ChevronRight } from "@/components/animate-ui/icons/chevron-right";
+import { Download } from "@/components/animate-ui/icons/download";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
+import { RotateCcw } from "@/components/animate-ui/icons/rotate-ccw";
+import { Trash2 } from "@/components/animate-ui/icons/trash-2";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -87,7 +93,7 @@ export default function AdminNewsletter() {
           <p className="text-sm text-muted-foreground mt-1">Manage subscriber mailing list and exports.</p>
         </div>
         <Button type="button" variant="outline" onClick={exportCSV} disabled={isExporting || subscribers.length === 0}>
-          {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          {isExporting ? <LoaderCircle className="h-4 w-4" animate /> : <Download className="h-4 w-4" animateOnHover />}
           {isExporting ? "Exporting..." : "Export CSV"}
         </Button>
       </div>
@@ -107,7 +113,7 @@ export default function AdminNewsletter() {
 
       {isLoading ? (
         <div className="h-48 flex items-center justify-center">
-          <Loader2 className="h-7 w-7 text-primary animate-spin" />
+          <LoaderCircle className="h-7 w-7 text-primary" animate />
         </div>
       ) : isError ? (
         <div className="h-48 flex flex-col items-center justify-center gap-3">
@@ -115,7 +121,7 @@ export default function AdminNewsletter() {
           <p className="text-sm font-semibold text-destructive">Failed to load subscribers</p>
           <p className="text-xs text-muted-foreground max-w-md text-center">{(error as Error)?.message}</p>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RotateCcw className="h-3.5 w-3.5" /> Retry
+            <RotateCcw className="h-3.5 w-3.5" animateOnHover /> Retry
           </Button>
         </div>
       ) : subscribers.length === 0 && page === 0 ? (
@@ -155,7 +161,7 @@ export default function AdminNewsletter() {
                     onClick={() => unsubscribeMutation.mutate(sub.email)}
                     disabled={unsubscribeMutation.isPending}
                   >
-                    {unsubscribeMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3 mr-1" />}
+                    {unsubscribeMutation.isPending ? <LoaderCircle className="h-3 w-3" animate /> : <Trash2 className="h-3 w-3 mr-1" animateOnHover />}
                     Unsubscribe
                   </Button>
                 </div>
@@ -170,7 +176,7 @@ export default function AdminNewsletter() {
           <span>{total} subscribers total</span>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
-              <ChevronLeft className="h-4 w-4" /> Previous
+              <ChevronLeft className="h-4 w-4" animateOnHover /> Previous
             </Button>
             {Array.from({ length: totalPages }, (_, i) => (
               <Button
@@ -184,7 +190,7 @@ export default function AdminNewsletter() {
               </Button>
             ))}
             <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
-              Next <ChevronRight className="h-4 w-4" />
+              Next <ChevronRight className="h-4 w-4" animateOnHover />
             </Button>
           </div>
         </div>

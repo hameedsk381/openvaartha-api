@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { useComments, useCommentCount, useCreateComment, useDeleteComment, useToggleCommentLike } from "@/lib/api-hooks";
 import type { Comment } from "@/lib/types";
-import { MessageCircle, Heart, Trash2, Reply, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { MessageCircle, Reply } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Heart } from "@/components/animate-ui/icons/heart";
+import { Trash2 } from "@/components/animate-ui/icons/trash-2";
+import { ChevronDown } from "@/components/animate-ui/icons/chevron-down";
+import { ChevronUp } from "@/components/animate-ui/icons/chevron-up";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import ConfirmDialog from "./ConfirmDialog";
@@ -66,7 +72,7 @@ function ReplyForm({
           disabled={createComment.isPending || !body.trim()}
           className="h-8 px-3 rounded-md bg-primary text-white text-xs font-semibold inline-flex items-center gap-2 disabled:opacity-50 press"
         >
-          {createComment.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+          {createComment.isPending ? <LoaderCircle className="h-3.5 w-3.5" animate /> : null}
           Reply
         </button>
       </div>
@@ -143,7 +149,7 @@ function CommentCard({
                 isLiked ? "text-primary" : "text-muted-foreground hover:text-primary"
               )}
             >
-              <Heart className={cn("h-3.5 w-3.5", isLiked && "fill-current")} />
+              <Heart className={cn("h-3.5 w-3.5", isLiked && "fill-current")} animateOnHover />
               {comment.likes.length > 0 && comment.likes.length}
             </button>
             {currentUserId && !isReply && (
@@ -151,7 +157,7 @@ function CommentCard({
                 onClick={() => setShowReplyForm(!showReplyForm)}
                 className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-primary transition-colors press"
               >
-                <Reply className="h-3.5 w-3.5" />
+                <AnimatedIcon animationType="scale"><Reply className="h-3.5 w-3.5" /></AnimatedIcon>
                 Reply
               </button>
             )}
@@ -161,7 +167,7 @@ function CommentCard({
                 disabled={deleteComment.isPending}
                 className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors press"
               >
-                {deleteComment.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                {deleteComment.isPending ? <LoaderCircle className="h-3.5 w-3.5" animate /> : <Trash2 className="h-3.5 w-3.5" animateOnHover />}
                 Delete
               </button>
             )}
@@ -170,7 +176,7 @@ function CommentCard({
                 onClick={() => setShowReplies(!showReplies)}
                 className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-primary transition-colors press"
               >
-                {showReplies ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                {showReplies ? <ChevronUp className="h-3.5 w-3.5" animateOnHover /> : <ChevronDown className="h-3.5 w-3.5" animateOnHover />}
                 {comment.replyCount} {comment.replyCount === 1 ? "reply" : "replies"}
               </button>
             )}
@@ -290,7 +296,7 @@ export default function CommentSection({
                 disabled={createComment.isPending || !body.trim()}
                 className="h-9 px-4 rounded-md bg-primary text-white text-xs font-semibold inline-flex items-center gap-2 disabled:opacity-50 press"
               >
-                {createComment.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                {createComment.isPending ? <LoaderCircle className="h-3.5 w-3.5" animate /> : null}
                 Post comment
               </button>
             </div>
@@ -312,7 +318,7 @@ export default function CommentSection({
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 text-primary animate-spin" />
+          <LoaderCircle className="h-6 w-6 text-primary" animate />
         </div>
       ) : comments.length === 0 ? (
         <div className="py-12 text-center border border-dashed border-border rounded-lg">

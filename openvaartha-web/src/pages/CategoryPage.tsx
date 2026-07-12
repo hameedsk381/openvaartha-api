@@ -1,7 +1,10 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { Clock, Flame, ArrowUpRight, Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
+import { Flame, ArrowUpRight, Bookmark, BookmarkCheck } from 'lucide-react';
+import { AnimatedIcon } from '@/components/ui/animated-icon';
+import { Clock } from '@/components/animate-ui/icons/clock';
+import { LoaderCircle } from '@/components/animate-ui/icons/loader-circle';
 import { handleImageFallback } from '../lib/utils';
 import { BRAND } from '@/lib/brand';
 import { useReadingList } from '@/hooks/use-reading-list';
@@ -118,7 +121,7 @@ const CategoryPage = () => {
                       {featured.summary}
                     </p>
                     <span className="inline-flex items-center gap-1.5 mt-5 text-xs font-semibold uppercase tracking-[0.18em] group-hover:text-secondary transition-colors">
-                      Read article <ArrowUpRight className="h-3.5 w-3.5" />
+                      Read article <AnimatedIcon animationType="arrowUpRight"><ArrowUpRight className="h-3.5 w-3.5" /></AnimatedIcon>
                     </span>
                   </div>
                 </Link>
@@ -234,9 +237,11 @@ const CategoryPage = () => {
                             ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
                           aria-label="Save"
                         >
-                          {isSaved(art.id)
-                            ? <BookmarkCheck className="h-4 w-4 fill-current" />
-                            : <Bookmark className="h-4 w-4" />}
+                          <AnimatedIcon animationType="scale">
+                            {isSaved(art.id)
+                              ? <BookmarkCheck className="h-4 w-4 fill-current" />
+                              : <Bookmark className="h-4 w-4" />}
+                          </AnimatedIcon>
                         </button>
                       </div>
                     </article>
@@ -252,7 +257,7 @@ const CategoryPage = () => {
                       className="w-full max-w-xs h-11 rounded-md border border-border bg-background text-foreground text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface))] transition-colors press disabled:opacity-50"
                     >
                       {isFetching ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        <LoaderCircle className="h-4 w-4 text-muted-foreground" animate />
                       ) : (
                         "Load more stories"
                       )}

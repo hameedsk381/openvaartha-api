@@ -1,6 +1,7 @@
 import { useEffect, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { BRAND, pageTitle, SITE_TITLE } from "@/lib/brand";
@@ -63,7 +64,7 @@ const PolicyLayout = ({ eyebrow, title, intro, description, updated, children }:
                 href={`mailto:${BRAND.contactEmail}`}
                 className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary hover:underline underline-offset-4"
               >
-                {BRAND.contactEmail} <ArrowUpRight className="h-3.5 w-3.5" />
+                {BRAND.contactEmail} <AnimatedIcon animationType="arrowUpRight"><ArrowUpRight className="h-3.5 w-3.5" /></AnimatedIcon>
               </a>
               <p className="mt-4 text-sm text-muted-foreground">
                 See also our{" "}

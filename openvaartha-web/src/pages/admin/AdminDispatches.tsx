@@ -1,6 +1,9 @@
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, Radio, Trash2 } from "lucide-react";
+import { Radio } from "@/components/animate-ui/icons/radio";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
+import { Plus } from "@/components/animate-ui/icons/plus";
+import { Trash2 } from "@/components/animate-ui/icons/trash-2";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { Textarea } from "@/components/ui/textarea";
@@ -105,7 +108,7 @@ export default function AdminDispatches() {
           </Select>
         </div>
         <Button type="submit" disabled={createMutation.isPending || !text.trim()}>
-          {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          {createMutation.isPending ? <LoaderCircle className="h-4 w-4" animate /> : <Plus className="h-4 w-4" animateOnHover />}
           Post dispatch
         </Button>
       </form>
@@ -113,7 +116,7 @@ export default function AdminDispatches() {
       <div className="border border-border rounded-xl overflow-hidden">
         {isLoading ? (
           <div className="h-32 flex items-center justify-center">
-            <Loader2 className="h-6 w-6 text-primary animate-spin" />
+            <LoaderCircle className="h-6 w-6 text-primary" animate />
           </div>
         ) : (
           <div className="divide-y divide-border">
@@ -140,9 +143,9 @@ export default function AdminDispatches() {
                   disabled={deleteMutation.isPending && deleteMutation.variables === d.id}
                 >
                   {deleteMutation.isPending && deleteMutation.variables === d.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <LoaderCircle className="h-4 w-4" animate />
                   ) : (
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" animateOnHover />
                   )}
                 </Button>
               </div>

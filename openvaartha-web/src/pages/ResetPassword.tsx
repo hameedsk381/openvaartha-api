@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import { Lock, Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { Lock, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Lock as LockAnimated } from "@/components/animate-ui/icons/lock";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 
@@ -58,7 +61,7 @@ export default function ResetPassword() {
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
           <Link to="/login" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground hover:text-primary transition-colors mb-12">
-            <Lock className="h-3.5 w-3.5" /> Back to sign in
+            <LockAnimated className="h-3.5 w-3.5" animateOnHover /> Back to sign in
           </Link>
 
           <div className="mb-8">
@@ -96,7 +99,9 @@ export default function ResetPassword() {
                     onClick={() => setShowPwd((v) => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
                   >
-                    {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    <AnimatedIcon animationType="scale">
+                      {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </AnimatedIcon>
                   </button>
                 </div>
               </div>
@@ -118,7 +123,7 @@ export default function ResetPassword() {
                 disabled={loading || !password || !confirm}
                 className="w-full h-12 rounded-md bg-primary text-white text-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 press"
               >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reset password"}
+                {loading ? <LoaderCircle className="h-4 w-4" animate /> : "Reset password"}
               </button>
             </form>
           )}

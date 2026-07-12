@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Article, CategoryName as Category } from '@/lib/types';
 import { CategoryIcon } from './CategoryIcon';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight } from '@/components/animate-ui/icons/chevron-right';
 import { Link } from 'react-router-dom';
 import FeedCard from './FeedCard';
 
@@ -25,7 +25,7 @@ const CategoryStrip = ({ category, articles }: CategoryStripProps) => {
           to={`/category/${category.toLowerCase().replace(' ', '-')}`}
           className="flex shrink-0 items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest text-primary transition-all hover:gap-2 sm:text-[10px]"
         >
-          Explore All <ChevronRight className="h-3 w-3" />
+          Explore All <ChevronRight className="h-3 w-3" animateOnHover />
         </Link>
       </div>
       

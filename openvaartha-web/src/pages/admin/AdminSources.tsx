@@ -1,6 +1,14 @@
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, AlertCircle, Check, Loader2, Pencil, Plus, RotateCcw, Rss, Trash2, X } from "lucide-react";
+import { AlertCircle, Pencil, Rss } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Activity } from "@/components/animate-ui/icons/activity";
+import { Check } from "@/components/animate-ui/icons/check";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
+import { Plus } from "@/components/animate-ui/icons/plus";
+import { RotateCcw } from "@/components/animate-ui/icons/rotate-ccw";
+import { Trash2 } from "@/components/animate-ui/icons/trash-2";
+import { X } from "@/components/animate-ui/icons/x";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { Input } from "@/components/ui/input";
@@ -164,9 +172,9 @@ export default function AdminSources() {
           disabled={processMutation.isPending}
         >
           {processMutation.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <LoaderCircle className="h-4 w-4" animate />
           ) : (
-            <Activity className="h-4 w-4" />
+            <Activity className="h-4 w-4" animateOnHover />
           )}
           Process All
         </Button>
@@ -178,7 +186,7 @@ export default function AdminSources() {
           <p className="text-sm font-semibold text-destructive">Failed to load sources</p>
           <p className="text-xs text-muted-foreground">{(error as Error)?.message}</p>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RotateCcw className="h-3.5 w-3.5" /> Retry
+            <RotateCcw className="h-3.5 w-3.5" animateOnHover /> Retry
           </Button>
         </div>
       )}
@@ -250,7 +258,7 @@ export default function AdminSources() {
           </Select>
         </div>
         <Button type="submit" disabled={createMutation.isPending}>
-          {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          {createMutation.isPending ? <LoaderCircle className="h-4 w-4" animate /> : <Plus className="h-4 w-4" animateOnHover />}
           Add
         </Button>
       </form>
@@ -266,7 +274,7 @@ export default function AdminSources() {
         </div>
         {isLoading ? (
           <div className="h-32 flex items-center justify-center">
-            <Loader2 className="h-6 w-6 text-primary animate-spin" />
+            <LoaderCircle className="h-6 w-6 text-primary" animate />
           </div>
         ) : (
         <div className="divide-y divide-border">
@@ -364,10 +372,10 @@ export default function AdminSources() {
                   {isEditing ? (
                     <>
                       <Button type="button" size="icon" onClick={() => updateMutation.mutate(source.id)} disabled={isMutating || !edit.name.trim() || !edit.feed_url.trim()}>
-                        {isMutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                        {isMutating ? <LoaderCircle className="h-4 w-4" animate /> : <Check className="h-4 w-4" animateOnHover />}
                       </Button>
                       <Button type="button" variant="outline" size="icon" onClick={cancelEdit}>
-                        <X className="h-4 w-4" />
+                        <X className="h-4 w-4" animateOnHover />
                       </Button>
                     </>
                   ) : (
@@ -380,14 +388,14 @@ export default function AdminSources() {
                         onClick={() => processSingleMutation.mutate(source.id)}
                         disabled={isMutating}
                       >
-                        {isMutating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Activity className="h-3 w-3 mr-1 text-orange-500" />}
+                        {isMutating ? <LoaderCircle className="h-3 w-3 mr-1" animate /> : <Activity className="h-3 w-3 mr-1 text-orange-500" animateOnHover />}
                         Process
                       </Button>
                       <Button type="button" variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => startEdit(source)}>
-                        <Pencil className="h-4 w-4" />
+                        <AnimatedIcon animationType="scale"><Pencil className="h-4 w-4" /></AnimatedIcon>
                       </Button>
                       <Button type="button" variant="outline" size="icon" className="h-8 w-8 text-destructive hover:text-destructive shrink-0" onClick={() => confirmDelete(source)} disabled={isMutating}>
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" animateOnHover />
                       </Button>
                     </>
                   )}

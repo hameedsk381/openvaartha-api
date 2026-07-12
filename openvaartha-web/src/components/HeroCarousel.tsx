@@ -4,8 +4,9 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import type { Article } from '@/lib/types';
 import { Link } from 'react-router-dom';
-import { ChevronRight, ArrowUpRight, Clock, Sparkles, Flame } from 'lucide-react';
+import { ArrowUpRight, Flame } from 'lucide-react';
 import { AnimatedIcon } from '@/components/ui/animated-icon';
+import { Clock } from '@/components/animate-ui/icons/clock';
 import { Meteors } from '@/components/ui/meteors';
 import { Button } from './ui/button';
 import { cn, handleImageFallback, getArticleImage } from '../lib/utils';
@@ -104,7 +105,7 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
 
                   <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-secondary group-hover:text-white transition-colors">
                     Read article
-                    <AnimatedIcon animationType="arrowUpRight" triggerOnHover={false}>
+                    <AnimatedIcon animationType="arrowUpRight">
                       <ArrowUpRight className="h-3.5 w-3.5" />
                     </AnimatedIcon>
                   </div>

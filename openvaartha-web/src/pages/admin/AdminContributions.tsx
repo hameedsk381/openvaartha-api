@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Inbox, Loader2, CheckCircle2, XCircle, FileEdit, AlertCircle, RotateCcw, ExternalLink, User } from "lucide-react";
+import { Inbox, CheckCircle2, XCircle, FileEdit, AlertCircle, User } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
+import { RotateCcw } from "@/components/animate-ui/icons/rotate-ccw";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -94,14 +97,14 @@ export default function AdminContributions() {
 
           {pendingQuery.isLoading ? (
             <div className="p-12 text-center">
-              <Loader2 className="h-6 w-6 text-primary animate-spin mx-auto" />
+              <LoaderCircle className="h-6 w-6 text-primary mx-auto" animate />
             </div>
           ) : pendingQuery.isError ? (
             <div className="p-8 text-center space-y-3">
               <AlertCircle className="h-8 w-8 text-destructive mx-auto" />
               <p className="text-sm font-semibold text-destructive">Failed to load review queue</p>
               <Button variant="outline" size="sm" onClick={() => pendingQuery.refetch()}>
-                <RotateCcw className="h-3.5 w-3.5 mr-1" /> Retry
+                <RotateCcw className="h-3.5 w-3.5 mr-1" animateOnHover /> Retry
               </Button>
             </div>
           ) : pendingArticles.length === 0 ? (
@@ -196,7 +199,7 @@ export default function AdminContributions() {
                     variant="outline"
                     className="w-full font-semibold gap-1.5 mb-2.5"
                   >
-                    <FileEdit className="h-4 w-4" /> Edit & Review
+                    <AnimatedIcon animationType="scale"><FileEdit className="h-4 w-4" /></AnimatedIcon> Edit & Review
                   </Button>
                 </Link>
 
@@ -206,9 +209,9 @@ export default function AdminContributions() {
                   className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold gap-1.5 shadow-sm"
                 >
                   {publishMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <LoaderCircle className="h-4 w-4" animate />
                   ) : (
-                    <CheckCircle2 className="h-4 w-4" />
+                    <AnimatedIcon animationType="scale"><CheckCircle2 className="h-4 w-4" /></AnimatedIcon>
                   )}
                   Publish Column
                 </Button>
@@ -220,7 +223,7 @@ export default function AdminContributions() {
                     className="gap-1.5 font-semibold text-xs"
                   >
                     <Link to={`/admin/articles/${selectedArticle.id}/edit`}>
-                      <FileEdit className="h-3.5 w-3.5" /> Full Editor
+                      <AnimatedIcon animationType="scale"><FileEdit className="h-3.5 w-3.5" /></AnimatedIcon> Full Editor
                     </Link>
                   </Button>
 
@@ -235,9 +238,9 @@ export default function AdminContributions() {
                     className="gap-1.5 font-semibold text-xs text-red-600 hover:bg-red-50 border-red-100"
                   >
                     {rejectMutation.isPending ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <LoaderCircle className="h-3.5 w-3.5" animate />
                     ) : (
-                      <XCircle className="h-3.5 w-3.5" />
+                      <AnimatedIcon animationType="scale"><XCircle className="h-3.5 w-3.5" /></AnimatedIcon>
                     )}
                     Reject & Archive
                   </Button>

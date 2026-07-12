@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Navbar from '../components/Navbar';
-import { ArrowUpRight, Compass, Clock, Target, Loader2 } from 'lucide-react';
+import { ArrowUpRight, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { handleImageFallback } from '../lib/utils';
@@ -8,6 +8,9 @@ import { useExplainers } from '@/lib/api-hooks';
 import { ExplainersPageSkeleton } from '@/components/PageSkeletons';
 import { FlipCard } from '@/components/animate-ui/components/community/flip-card';
 import { AnimatedIcon } from '@/components/ui/animated-icon';
+import { Compass } from '@/components/animate-ui/icons/compass';
+import { Clock } from '@/components/animate-ui/icons/clock';
+import { LoaderCircle } from '@/components/animate-ui/icons/loader-circle';
 
 import { TabGroup, TabList, Tab } from '@/components/animate-ui/components/headless/tabs';
 
@@ -110,7 +113,7 @@ const ExplainersPage = () => {
                     </div>
                     <span className="mt-7 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary group-hover:underline underline-offset-4 self-start">
                       Read the explainer
-                      <AnimatedIcon animationType="arrowUpRight" triggerOnHover={false}>
+                      <AnimatedIcon animationType="arrowUpRight">
                         <ArrowUpRight className="h-3.5 w-3.5" />
                       </AnimatedIcon>
                     </span>
@@ -166,7 +169,7 @@ const ExplainersPage = () => {
 
                     <span className="mt-7 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary group-hover:underline underline-offset-4">
                       Read the full explainer
-                      <AnimatedIcon animationType="arrowUpRight" triggerOnHover={false}>
+                      <AnimatedIcon animationType="arrowUpRight">
                         <ArrowUpRight className="h-3.5 w-3.5" />
                       </AnimatedIcon>
                     </span>
@@ -229,7 +232,7 @@ const ExplainersPage = () => {
                       </p>
                       <span className="mt-auto inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary group-hover:underline underline-offset-4">
                         Read explainer
-                        <AnimatedIcon animationType="arrowUpRight" triggerOnHover={false}>
+                        <AnimatedIcon animationType="arrowUpRight">
                           <ArrowUpRight className="h-3 w-3" />
                         </AnimatedIcon>
                       </span>
@@ -248,7 +251,7 @@ const ExplainersPage = () => {
                   className="w-full max-w-xs h-11 rounded-md border border-border bg-background text-foreground text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface))] transition-colors press disabled:opacity-50"
                 >
                   {isFetching ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    <LoaderCircle className="h-4 w-4 text-muted-foreground" animate />
                   ) : (
                     "Load more stories"
                   )}

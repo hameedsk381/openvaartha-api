@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Newspaper, Bookmark, ArrowUpRight, ChevronRight, TrendingUp, Loader2 } from "lucide-react";
+import { Newspaper, Bookmark, ArrowUpRight, TrendingUp } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { ChevronRight } from "@/components/animate-ui/icons/chevron-right";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
 import { handleImageFallback } from "@/lib/utils";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { useTrendingArticles } from "@/lib/api-hooks";
@@ -49,7 +52,7 @@ export default function PortalDashboard() {
   if (isLoading) {
     return (
       <div className="h-96 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+        <LoaderCircle className="h-8 w-8 text-primary" animate />
       </div>
     );
   }
@@ -66,7 +69,7 @@ export default function PortalDashboard() {
           to="/"
           className="mt-4 inline-flex items-center gap-1.5 h-11 px-4 rounded-lg bg-secondary text-[hsl(var(--secondary-foreground))] text-sm font-semibold hover:bg-beige-200 transition-colors press"
         >
-          Browse feed <ArrowUpRight className="h-3.5 w-3.5" />
+          Browse feed <AnimatedIcon animationType="arrowUpRight"><ArrowUpRight className="h-3.5 w-3.5" /></AnimatedIcon>
         </Link>
       </div>
 
@@ -113,7 +116,7 @@ export default function PortalDashboard() {
           <span className="overline">Recently read</span>
           {history.length > 0 && (
             <Link to="/portal/history" className="text-xs text-primary font-semibold flex items-center gap-0.5 hover:underline underline-offset-2 press">
-              View all <ChevronRight className="h-3 w-3" />
+              View all <ChevronRight className="h-3 w-3" animateOnHover />
             </Link>
           )}
         </div>
@@ -121,7 +124,7 @@ export default function PortalDashboard() {
           <div className="border border-dashed border-border rounded-xl p-6 text-center">
             <p className="text-sm text-muted-foreground">Nothing read yet — open an article and it'll show up here.</p>
             <Link to="/" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline underline-offset-2">
-              Browse feed <ArrowUpRight className="h-3 w-3" />
+              Browse feed <AnimatedIcon animationType="arrowUpRight"><ArrowUpRight className="h-3 w-3" /></AnimatedIcon>
             </Link>
           </div>
         ) : (
@@ -137,7 +140,7 @@ export default function PortalDashboard() {
                 <span className="tag mb-1.5">{art.category}</span>
                 <p className="text-xs font-semibold text-foreground leading-snug line-clamp-2">{art.title}</p>
               </div>
-              <ArrowUpRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              <AnimatedIcon animationType="arrowUpRight"><ArrowUpRight className="h-4 w-4 text-muted-foreground shrink-0" /></AnimatedIcon>
             </Link>
           ))}
         </div>
@@ -155,7 +158,7 @@ export default function PortalDashboard() {
               <p className="text-sm font-semibold">{label}</p>
               <p className="text-xs text-muted-foreground">{sub}</p>
             </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" animateOnHover />
           </Link>
         ))}
       </div>

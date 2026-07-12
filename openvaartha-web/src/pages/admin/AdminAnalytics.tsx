@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { TrendingUp, AlertCircle, Loader2, RotateCcw, ArrowUpRight } from "lucide-react";
+import { TrendingUp, AlertCircle, ArrowUpRight } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
+import { RotateCcw } from "@/components/animate-ui/icons/rotate-ccw";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Area, AreaChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis, CartesianGrid } from "recharts";
@@ -28,7 +31,7 @@ export default function AdminAnalytics() {
   if (isLoading) {
     return (
       <div className="h-96 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+        <LoaderCircle className="h-8 w-8 text-primary" animate />
       </div>
     );
   }
@@ -40,7 +43,7 @@ export default function AdminAnalytics() {
         <p className="text-sm font-semibold text-destructive">Failed to load analytics</p>
         <p className="text-xs text-muted-foreground max-w-md text-center">{(error as Error)?.message}</p>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RotateCcw className="h-3.5 w-3.5" /> Retry
+          <RotateCcw className="h-3.5 w-3.5" animateOnHover /> Retry
         </Button>
       </div>
     );
@@ -128,7 +131,9 @@ export default function AdminAnalytics() {
                     <span className="text-[11px] text-muted-foreground">{new Date(article.published_at).toLocaleDateString()}</span>
                   </div>
                 </div>
-                <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-primary shrink-0 opacity-50 group-hover:opacity-100 transition-all" />
+                <AnimatedIcon animationType="arrowUpRight">
+                  <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-primary shrink-0 opacity-50 group-hover:opacity-100 transition-all" />
+                </AnimatedIcon>
               </Link>
             ))
           ) : (

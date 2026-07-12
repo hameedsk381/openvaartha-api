@@ -1,7 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { PenSquare, ArrowLeft, Loader2, Save, X, ExternalLink, AlertCircle, Plus, BookOpen, Clock, FileText, ChevronRight, CheckCircle2, AlertTriangle, Eye } from "lucide-react";
+import { Save, BookOpen, AlertTriangle, Eye } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Plus } from "@/components/animate-ui/icons/plus";
+import { X } from "@/components/animate-ui/icons/x";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { Input } from "@/components/ui/input";
@@ -177,7 +181,7 @@ export default function PortalWrite() {
           <h1 className="text-2xl font-black tracking-tight">Opinion Columns</h1>
         </div>
         <Button onClick={() => setEditorOpen(true)} className="gap-2 self-start sm:self-auto shadow-maroon">
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4" animateOnHover />
           Write Column
         </Button>
       </div>
@@ -206,7 +210,7 @@ export default function PortalWrite() {
         
         {contributionsQuery.isLoading ? (
           <div className="p-8 text-center">
-            <Loader2 className="h-6 w-6 text-primary animate-spin mx-auto" />
+            <LoaderCircle className="h-6 w-6 text-primary mx-auto" animate />
           </div>
         ) : contributions.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground space-y-2">
@@ -240,7 +244,7 @@ export default function PortalWrite() {
                   {c.status === "published" ? (
                     <Button variant="outline" size="sm" asChild className="h-8">
                       <Link to={`/article/${c.slug}`}>
-                        <Eye className="h-3.5 w-3.5 mr-1" /> View Live
+                        <AnimatedIcon animationType="scale"><Eye className="h-3.5 w-3.5 mr-1" /></AnimatedIcon> View Live
                       </Link>
                     </Button>
                   ) : (
@@ -259,7 +263,7 @@ export default function PortalWrite() {
                         disabled={withdrawMutation.isPending}
                         className="h-8 text-destructive border-destructive/20 hover:bg-destructive/5 hover:text-destructive"
                       >
-                        {withdrawMutation.isPending && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+                        {withdrawMutation.isPending && <LoaderCircle className="h-3 w-3 mr-1" animate />}
                         Withdraw
                       </Button>
                     </>
@@ -284,7 +288,7 @@ export default function PortalWrite() {
                 <p className="text-[10px] text-muted-foreground">Draft your column piece for editorial approval.</p>
               </div>
               <button onClick={closeEditor} className="h-8 w-8 hover:bg-muted rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground">
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5" animateOnHover />
               </button>
             </div>
 
@@ -456,7 +460,7 @@ export default function PortalWrite() {
               {/* Action buttons */}
               <div className="pt-4 border-t border-border flex items-center justify-between gap-4">
                 <Button type="button" variant="outline" onClick={() => setPreviewOpen(true)} className="gap-1.5 h-11 px-4">
-                  <Eye className="h-4 w-4" /> Live Preview
+                  <AnimatedIcon animationType="scale"><Eye className="h-4 w-4" /></AnimatedIcon> Live Preview
                 </Button>
                 <div className="flex items-center gap-2">
                   <Button type="button" variant="outline" onClick={closeEditor} className="h-11 px-4">
@@ -464,9 +468,9 @@ export default function PortalWrite() {
                   </Button>
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="gap-2 h-11 px-5 shadow-maroon">
                     {(createMutation.isPending || updateMutation.isPending) ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <LoaderCircle className="h-4 w-4" animate />
                     ) : (
-                      <Save className="h-4 w-4" />
+                      <AnimatedIcon animationType="scale"><Save className="h-4 w-4" /></AnimatedIcon>
                     )}
                     Submit for Approval
                   </Button>

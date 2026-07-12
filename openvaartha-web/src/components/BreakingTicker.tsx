@@ -1,5 +1,5 @@
 import { useDispatches } from '@/lib/api-hooks';
-import { Clock } from 'lucide-react';
+import { Clock } from '@/components/animate-ui/icons/clock';
 import { Link } from 'react-router-dom';
 import { Marquee } from '@/components/ui/marquee';
 

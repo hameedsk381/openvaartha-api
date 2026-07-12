@@ -1,6 +1,7 @@
 import Navbar from '../components/Navbar';
 import Footer from '@/components/Footer';
 import { ArrowUpRight, Instagram, Facebook, Github, Globe } from 'lucide-react';
+import { AnimatedIcon } from '@/components/ui/animated-icon';
 import { BRAND } from '@/lib/brand';
 
 const CHANNELS = [
@@ -65,7 +66,9 @@ const ContactPage = () => {
                   <Icon className="h-6 w-6 text-primary mb-4" />
                   <h2 className="font-display text-lg font-bold flex items-center gap-1.5">
                     {name}
-                    <ArrowUpRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
+                    <AnimatedIcon animationType="arrowUpRight">
+                      <ArrowUpRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
+                    </AnimatedIcon>
                   </h2>
                   <p className="text-sm font-semibold text-primary mt-0.5 break-all">{handle}</p>
                   <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{description}</p>

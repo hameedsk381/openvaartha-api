@@ -1,7 +1,9 @@
 import Navbar from '../components/Navbar';
 import Footer from '@/components/Footer';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, Unlock, Users, Code2 } from 'lucide-react';
+import { ArrowUpRight, Unlock, Code2 } from 'lucide-react';
+import { AnimatedIcon } from '@/components/ui/animated-icon';
+import { Users } from '@/components/animate-ui/icons/users';
 import { BRAND } from '@/lib/brand';
 import { Accordion, AccordionItem, AccordionButton, AccordionPanel } from '@/components/animate-ui/components/headless/accordion';
 
@@ -76,7 +78,7 @@ const AboutPage = () => {
                 rel="noopener noreferrer"
                 className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary hover:underline underline-offset-4"
               >
-                fossap.in <ArrowUpRight className="h-3.5 w-3.5" />
+                fossap.in <AnimatedIcon animationType="arrowUpRight"><ArrowUpRight className="h-3.5 w-3.5" /></AnimatedIcon>
               </a>
             </div>
 
@@ -121,7 +123,7 @@ const AboutPage = () => {
                 to="/contact"
                 className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary hover:underline underline-offset-4"
               >
-                Contact us <ArrowUpRight className="h-3.5 w-3.5" />
+                Contact us <AnimatedIcon animationType="arrowUpRight"><ArrowUpRight className="h-3.5 w-3.5" /></AnimatedIcon>
               </Link>
             </div>
           </section>

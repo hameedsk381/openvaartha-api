@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Navigate } from "react-router-dom";
 import type { ReactNode } from "react";
 import { apiFetch } from "@/lib/api";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
 
 type AllowedRole = "admin" | "editor" | "moderator";
 
@@ -28,7 +28,7 @@ export default function AdminRoute({ children, roles }: AdminRouteProps) {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-6 w-6 text-primary animate-spin" />
+        <LoaderCircle className="h-6 w-6 text-primary" animate />
       </div>
     );
   }

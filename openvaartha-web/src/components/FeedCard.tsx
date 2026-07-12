@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { cn, handleImageFallback } from "@/lib/utils";
 import type { Article } from "@/lib/types";
-import { ChevronRight, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+import { ChevronRight } from "@/components/animate-ui/icons/chevron-right";
 
 interface FeedCardProps {
   article: Article;
@@ -101,7 +102,7 @@ const FeedCard = ({ article, index = 0, variant = "grid" }: FeedCardProps) => {
               <span className="text-xs font-medium tabular-nums">{article.readTime}</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs font-medium group/link">
-              Read more <ChevronRight className="h-3 w-3 group-hover/link:translate-x-1 transition-transform" />
+              Read more <ChevronRight className="h-3 w-3 group-hover/link:translate-x-1 transition-transform" animateOnHover />
             </div>
           </div>
         </div>

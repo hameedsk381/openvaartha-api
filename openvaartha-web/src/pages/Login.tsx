@@ -5,7 +5,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import { Mail, Lock, User as UserIcon, Loader2, Eye, EyeOff, ArrowLeft, Quote } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, Eye, EyeOff, Quote } from 'lucide-react';
+import { AnimatedIcon } from '@/components/ui/animated-icon';
+import { ArrowLeft } from '@/components/animate-ui/icons/arrow-left';
+import { LoaderCircle } from '@/components/animate-ui/icons/loader-circle';
 import { apiFetch, API_BASE } from '@/lib/api';
 import { BRAND } from '@/lib/brand';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
@@ -122,7 +125,7 @@ export default function Login() {
 
         <div className="relative">
           <Link to="/" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/70 hover:text-white transition-colors mb-12">
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to feed
+            <ArrowLeft className="h-3.5 w-3.5" animateOnHover /> Back to feed
           </Link>
 
           <Link to="/" className="flex items-center gap-3 group">
@@ -276,7 +279,9 @@ export default function Login() {
                     onClick={() => setShowPwd(v => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
                   >
-                    {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    <AnimatedIcon animationType="scale">
+                      {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </AnimatedIcon>
                   </button>
                 </div>
                 {loginForm.formState.errors.password && (
@@ -289,7 +294,7 @@ export default function Login() {
                 disabled={isLoading}
                 className="w-full h-12 rounded-md bg-primary text-white text-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 press"
               >
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign in'}
+                {isLoading ? <LoaderCircle className="h-4 w-4" animate /> : 'Sign in'}
               </button>
             </form>
           ) : (
@@ -344,7 +349,9 @@ export default function Login() {
                     onClick={() => setShowPwd(v => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
                   >
-                    {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    <AnimatedIcon animationType="scale">
+                      {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </AnimatedIcon>
                   </button>
                 </div>
                 {regForm.formState.errors.password && (
@@ -368,7 +375,9 @@ export default function Login() {
                     onClick={() => setShowCPwd(v => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
                   >
-                    {showCPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    <AnimatedIcon animationType="scale">
+                      {showCPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </AnimatedIcon>
                   </button>
                 </div>
                 {regForm.formState.errors.confirmPassword && (
@@ -381,7 +390,7 @@ export default function Login() {
                 disabled={isLoading}
                 className="w-full h-12 rounded-md bg-primary text-white text-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 press"
               >
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create account'}
+                {isLoading ? <LoaderCircle className="h-4 w-4" animate /> : 'Create account'}
               </button>
             </form>
           )}

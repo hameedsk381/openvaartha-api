@@ -7,9 +7,14 @@ import Navbar from "@/components/Navbar";
 import ReactMarkdown from 'react-markdown';
 import { ArticleSkeleton } from "@/components/PageSkeletons";
 import {
-  Share2, Bookmark, BookmarkCheck, ArrowLeft, ArrowUpRight,
-  Clock, Sparkles, User, ExternalLink, History, Type, Flame, Facebook, Eye, Twitter
+  Share2, Bookmark, BookmarkCheck,
+  History, Type, Flame, Facebook, Eye, Twitter
 } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { ArrowLeft } from "@/components/animate-ui/icons/arrow-left";
+import { Clock } from "@/components/animate-ui/icons/clock";
+import { Sparkles } from "@/components/animate-ui/icons/sparkles";
+import { User } from "@/components/animate-ui/icons/user";
 import { cn, getArticleImage, handleImageFallback } from "@/lib/utils";
 import { categoryColors } from "@/lib/types";
 import { BRAND, pageTitle, SITE_TITLE } from "@/lib/brand";
@@ -222,7 +227,7 @@ const ArticlePage = () => {
         <div className="mx-auto max-w-2xl px-5 py-24 text-center">
           <p className="font-serif italic text-muted-foreground mb-6">Article not found.</p>
           <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold hover:translate-x-1 transition-all">
-            <ArrowLeft className="h-4 w-4" /> Back to feed
+            <ArrowLeft className="h-4 w-4" animateOnHover /> Back to feed
           </Link>
         </div>
       </div>
@@ -332,7 +337,9 @@ const ArticlePage = () => {
                   className="h-10 w-10 sm:h-10 sm:w-auto sm:px-4 rounded-full border border-border flex items-center justify-center sm:gap-2 hover:bg-primary hover:text-white hover:border-primary transition-colors press"
                   aria-label="Share this article"
                 >
-                  <Share2 className="h-4 w-4" />
+                  <AnimatedIcon animationType="scale">
+                    <Share2 className="h-4 w-4" />
+                  </AnimatedIcon>
                   <span className="hidden sm:inline text-xs font-semibold uppercase tracking-wider">Share</span>
                 </button>
                 <button
@@ -345,9 +352,11 @@ const ArticlePage = () => {
                   )}
                   aria-label={isSaved(article.id) ? "Remove from bookmarks" : "Bookmark this article"}
                 >
-                  {isSaved(article.id)
-                    ? <BookmarkCheck className="h-4 w-4 fill-current" />
-                    : <Bookmark className="h-4 w-4" />}
+                  <AnimatedIcon animationType="scale">
+                    {isSaved(article.id)
+                      ? <BookmarkCheck className="h-4 w-4 fill-current" />
+                      : <Bookmark className="h-4 w-4" />}
+                  </AnimatedIcon>
                   <span className="hidden sm:inline text-xs font-semibold uppercase tracking-wider">
                     {isSaved(article.id) ? "Saved" : "Save"}
                   </span>
@@ -436,7 +445,9 @@ const ArticlePage = () => {
                     onClick={handleShare}
                     className="w-full h-10 px-4 rounded-md border border-border flex items-center justify-center gap-2 hover:bg-primary hover:text-white hover:border-primary transition-colors press"
                   >
-                    <Share2 className="h-4 w-4" />
+                    <AnimatedIcon animationType="scale">
+                      <Share2 className="h-4 w-4" />
+                    </AnimatedIcon>
                     <span className="text-xs font-semibold uppercase tracking-wider">Share</span>
                   </button>
                   <div className="flex gap-2">
@@ -447,7 +458,9 @@ const ArticlePage = () => {
                       className="flex-1 h-9 rounded-md border border-border flex items-center justify-center gap-1.5 text-muted-foreground hover:bg-[#1877F2] hover:text-white hover:border-[#1877F2] transition-colors press"
                       aria-label="Share on Facebook"
                     >
-                      <Facebook className="h-3.5 w-3.5" />
+                      <AnimatedIcon animationType="bounce">
+                        <Facebook className="h-3.5 w-3.5" />
+                      </AnimatedIcon>
                       <span className="text-[10px] font-semibold uppercase tracking-wider">Facebook</span>
                     </a>
                     <a
@@ -603,7 +616,9 @@ const ArticlePage = () => {
                           rel="noopener noreferrer"
                           className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 font-sans"
                         >
-                          <Twitter className="h-3.5 w-3.5" /> {author.twitter}
+                          <AnimatedIcon animationType="scale">
+                            <Twitter className="h-3.5 w-3.5" />
+                          </AnimatedIcon> {author.twitter}
                         </a>
                       )}
                     </div>
@@ -637,7 +652,9 @@ const ArticlePage = () => {
               className="h-9 w-9 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-[#1877F2] hover:text-white transition-colors press"
               aria-label="Share on Facebook"
             >
-              <Facebook className="h-4 w-4" />
+              <AnimatedIcon animationType="bounce">
+                <Facebook className="h-4 w-4" />
+              </AnimatedIcon>
             </a>
             <a
               href={`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`}
@@ -653,7 +670,9 @@ const ArticlePage = () => {
               onClick={handleShare}
               className="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 hover:opacity-90 transition-opacity press"
             >
-              <Share2 className="h-3.5 w-3.5" />
+              <AnimatedIcon animationType="scale">
+                <Share2 className="h-3.5 w-3.5" />
+              </AnimatedIcon>
               Share
             </button>
           </div>

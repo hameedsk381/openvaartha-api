@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import Navbar from '../components/Navbar';
-import { Flame, Clock, ArrowUpRight, BarChart3, Bookmark, BookmarkCheck } from 'lucide-react';
+import { Flame, BarChart3, Bookmark, BookmarkCheck } from 'lucide-react';
+import { AnimatedIcon } from '@/components/ui/animated-icon';
+import { Clock } from '@/components/animate-ui/icons/clock';
 import { cn, handleImageFallback } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useReadingList } from '@/hooks/use-reading-list';
@@ -146,7 +148,9 @@ const TrendingPage = () => {
                           ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
                         aria-label="Save"
                       >
-                        {isSaved(art.id) ? <BookmarkCheck className="h-4 w-4 fill-current" /> : <Bookmark className="h-4 w-4" />}
+                        <AnimatedIcon animationType="scale">
+                          {isSaved(art.id) ? <BookmarkCheck className="h-4 w-4 fill-current" /> : <Bookmark className="h-4 w-4" />}
+                        </AnimatedIcon>
                       </button>
                     </div>
                   </li>

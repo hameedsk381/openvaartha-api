@@ -1,7 +1,9 @@
 import { useReadingList } from "@/hooks/use-reading-list";
 import { Link } from "react-router-dom";
 import { handleImageFallback } from "@/lib/utils";
-import { Clock, Trash2, ArrowUpRight, BookmarkX } from "lucide-react";
+import { BookmarkX } from "lucide-react";
+import { Clock } from "@/components/animate-ui/icons/clock";
+import { Trash2 } from "@/components/animate-ui/icons/trash-2";
 
 export default function PortalSaved() {
   const { saved, remove } = useReadingList();
@@ -57,7 +59,7 @@ export default function PortalSaved() {
                 className="h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors press shrink-0 mt-0.5"
                 aria-label="Remove"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-3.5 w-3.5" animateOnHover />
               </button>
             </div>
           ))}

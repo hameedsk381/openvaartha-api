@@ -1,6 +1,13 @@
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Check, Loader2, Pencil, Plus, RotateCcw, Trash2, X } from "lucide-react";
+import { AlertCircle, Pencil } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Check } from "@/components/animate-ui/icons/check";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
+import { Plus } from "@/components/animate-ui/icons/plus";
+import { RotateCcw } from "@/components/animate-ui/icons/rotate-ccw";
+import { Trash2 } from "@/components/animate-ui/icons/trash-2";
+import { X } from "@/components/animate-ui/icons/x";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import type { Category } from "./types";
@@ -100,7 +107,7 @@ export default function AdminCategories() {
           <p className="text-sm font-semibold text-destructive">Failed to load categories</p>
           <p className="text-xs text-muted-foreground">{(error as Error)?.message}</p>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RotateCcw className="h-3.5 w-3.5" /> Retry
+            <RotateCcw className="h-3.5 w-3.5" animateOnHover /> Retry
           </Button>
         </div>
       )}
@@ -124,7 +131,7 @@ export default function AdminCategories() {
           />
         </div>
         <Button type="submit" disabled={createMutation.isPending}>
-          {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          {createMutation.isPending ? <LoaderCircle className="h-4 w-4" animate /> : <Plus className="h-4 w-4" animateOnHover />}
           Add
         </Button>
       </form>
@@ -138,7 +145,7 @@ export default function AdminCategories() {
         </div>
         {isLoading ? (
           <div className="h-32 flex items-center justify-center">
-            <Loader2 className="h-6 w-6 text-primary animate-spin" />
+            <LoaderCircle className="h-6 w-6 text-primary" animate />
           </div>
         ) : (
         <div className="divide-y divide-border">
@@ -185,19 +192,19 @@ export default function AdminCategories() {
                   {isEditing ? (
                     <>
                       <Button type="button" size="icon" onClick={() => updateMutation.mutate(category.id)} disabled={isMutating || !edit.name.trim()}>
-                        {isMutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                        {isMutating ? <LoaderCircle className="h-4 w-4" animate /> : <Check className="h-4 w-4" animateOnHover />}
                       </Button>
                       <Button type="button" variant="outline" size="icon" onClick={cancelEdit}>
-                        <X className="h-4 w-4" />
+                        <X className="h-4 w-4" animateOnHover />
                       </Button>
                     </>
                   ) : (
                     <>
                       <Button type="button" variant="outline" size="icon" onClick={() => startEdit(category)}>
-                        <Pencil className="h-4 w-4" />
+                        <AnimatedIcon animationType="scale"><Pencil className="h-4 w-4" /></AnimatedIcon>
                       </Button>
                       <Button type="button" variant="outline" size="icon" onClick={() => confirmDelete(category)} disabled={isMutating} className="text-destructive hover:text-destructive">
-                        {isMutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        {isMutating ? <LoaderCircle className="h-4 w-4" animate /> : <Trash2 className="h-4 w-4" animateOnHover />}
                       </Button>
                     </>
                   )}

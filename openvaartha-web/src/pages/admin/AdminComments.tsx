@@ -1,6 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AlertCircle, ChevronLeft, ChevronRight, Loader2, MessageSquare, RotateCcw, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertCircle, MessageSquare } from "lucide-react";
+import { ChevronLeft } from "@/components/animate-ui/icons/chevron-left";
+import { ChevronRight } from "@/components/animate-ui/icons/chevron-right";
+import { ChevronDown } from "@/components/animate-ui/icons/chevron-down";
+import { ChevronUp } from "@/components/animate-ui/icons/chevron-up";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
+import { RotateCcw } from "@/components/animate-ui/icons/rotate-ccw";
+import { Trash2 } from "@/components/animate-ui/icons/trash-2";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -104,7 +111,7 @@ export default function AdminComments() {
           size="sm"
           onClick={() => setShowInactive((v) => !v)}
         >
-          {showInactive ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          {showInactive ? <ChevronUp className="h-3.5 w-3.5" animateOnHover /> : <ChevronDown className="h-3.5 w-3.5" animateOnHover />}
           {showInactive ? "Active only" : "Show deleted"}
         </Button>
       </div>
@@ -149,14 +156,14 @@ export default function AdminComments() {
           <p className="text-sm font-semibold text-destructive">Failed to load comments</p>
           <p className="text-xs text-muted-foreground">{(error as Error)?.message}</p>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RotateCcw className="h-3.5 w-3.5" /> Retry
+            <RotateCcw className="h-3.5 w-3.5" animateOnHover /> Retry
           </Button>
         </div>
       )}
 
       {isLoading ? (
         <div className="h-48 flex items-center justify-center">
-          <Loader2 className="h-7 w-7 text-primary animate-spin" />
+          <LoaderCircle className="h-7 w-7 text-primary" animate />
         </div>
       ) : displayed.length === 0 ? (
         <div className="border border-dashed border-border rounded-xl flex flex-col items-center justify-center py-16 text-center space-y-3">
@@ -237,7 +244,7 @@ export default function AdminComments() {
                           onClick={() => setDeleteTarget(comment)}
                           title="Delete comment"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-3.5 w-3.5" animateOnHover />
                         </Button>
                       )}
                     </div>
@@ -255,7 +262,7 @@ export default function AdminComments() {
           <span>{total} comments total</span>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
-              <ChevronLeft className="h-4 w-4" /> Previous
+              <ChevronLeft className="h-4 w-4" animateOnHover /> Previous
             </Button>
             {Array.from({ length: totalPages }, (_, i) => (
               <Button
@@ -269,7 +276,7 @@ export default function AdminComments() {
               </Button>
             ))}
             <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
-              Next <ChevronRight className="h-4 w-4" />
+              Next <ChevronRight className="h-4 w-4" animateOnHover />
             </Button>
           </div>
         </div>

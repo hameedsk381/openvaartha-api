@@ -1,7 +1,9 @@
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, FileText, FolderTree, Users, MessageSquare, Mail, Rss, ArrowLeft, LogOut, Inbox, BarChart, User as UserIcon, Radio } from "lucide-react";
+import { LayoutDashboard, FileText, FolderTree, Users, MessageSquare, Mail, Rss, Inbox, BarChart, User as UserIcon, Radio } from "lucide-react";
+import { ArrowLeft } from "@/components/animate-ui/icons/arrow-left";
+import { LogOut } from "@/components/animate-ui/icons/log-out";
 import { apiFetch } from "@/lib/api";
 import { useLogout } from "@/hooks/use-logout";
 import { BRAND } from "@/lib/brand";
@@ -104,14 +106,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               to="/"
               className="flex items-center gap-3 w-full px-3 h-10 rounded-lg text-sm font-medium text-muted-foreground hover:bg-[hsl(var(--surface-3))] hover:text-foreground transition-all press"
             >
-              <ArrowLeft className="h-4 w-4 shrink-0" />
+              <ArrowLeft className="h-4 w-4 shrink-0" animateOnHover />
               Back to site
             </Link>
             <button
               onClick={logout}
               className="flex items-center gap-3 w-full px-3 h-10 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-all press"
             >
-              <LogOut className="h-4 w-4 shrink-0" />
+              <LogOut className="h-4 w-4 shrink-0" animateOnHover />
               Sign out
             </button>
           </div>
@@ -127,14 +129,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </Link>
           <div className="flex items-center gap-3">
             <Link to="/" className="text-[11px] text-muted-foreground hover:text-foreground press" aria-label="Back to site">
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" animateOnHover />
             </Link>
             <button
               onClick={logout}
               className="text-red-500 hover:text-red-600 press"
               aria-label="Sign out"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-4 w-4" animateOnHover />
             </button>
           </div>
         </div>

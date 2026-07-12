@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { handleImageFallback } from "@/lib/utils";
-import { Clock, CalendarDays, ArrowUpRight, History, Loader2 } from "lucide-react";
+import { Clock, CalendarDays, ArrowUpRight, History } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
 import { apiFetch } from "@/lib/api";
 
 type HistoryArticle = {
@@ -53,7 +55,7 @@ export default function PortalHistory() {
 
       {isLoading ? (
         <div className="h-48 flex items-center justify-center">
-          <Loader2 className="h-7 w-7 text-primary animate-spin" />
+          <LoaderCircle className="h-7 w-7 text-primary" animate />
         </div>
       ) : isError || history.length === 0 ? (
         <div className="border border-dashed border-border rounded-xl bg-[hsl(var(--surface))] flex flex-col items-center justify-center py-16 px-8 text-center space-y-3">
@@ -103,7 +105,9 @@ export default function PortalHistory() {
                         <Clock className="h-2.5 w-2.5" /> {article.readTime}
                       </div>
                     </div>
-                    <ArrowUpRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <AnimatedIcon animationType="arrowUpRight">
+                      <ArrowUpRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </AnimatedIcon>
                   </Link>
                 ))}
               </div>

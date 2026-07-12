@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Zap, Shield, TrendingUp, Globe, Briefcase, ArrowUpRight } from 'lucide-react';
+import { AnimatedIcon } from '@/components/ui/animated-icon';
 import './MagicBento.css';
 import { cn, handleImageFallback } from "@/lib/utils";
 import type { Article } from "@/lib/types";
@@ -101,7 +102,9 @@ const ParticleCard: React.FC<BentoCardProps> = ({
       
       <div className="bento-glow" />
       <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">
-        <ArrowUpRight className="text-white h-6 w-6" />
+        <AnimatedIcon animationType="arrowUpRight">
+          <ArrowUpRight className="text-white h-6 w-6" />
+        </AnimatedIcon>
       </div>
     </Link>
   );

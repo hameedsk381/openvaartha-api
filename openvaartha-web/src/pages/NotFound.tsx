@@ -1,6 +1,8 @@
 import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { ArrowLeft } from "@/components/animate-ui/icons/arrow-left";
 import { useArticles } from "@/lib/api-hooks";
 import { BRAND } from "@/lib/brand";
 
@@ -51,13 +53,13 @@ const NotFound = () => {
                 to="/"
                 className="inline-flex items-center gap-2 h-12 px-5 rounded-md bg-primary text-white text-xs font-bold uppercase tracking-wider hover:bg-primary/90 transition-colors press"
               >
-                <ArrowLeft className="h-4 w-4" /> Back to today's feed
+                <ArrowLeft className="h-4 w-4" animateOnHover /> Back to today's feed
               </Link>
               <Link
                 to="/"
                 className="inline-flex items-center gap-2 h-12 px-5 rounded-md border border-border text-xs font-semibold uppercase tracking-wider hover:border-primary hover:text-primary transition-colors press"
               >
-                Search the archive <ArrowUpRight className="h-4 w-4" />
+                Search the archive <AnimatedIcon animationType="arrowUpRight"><ArrowUpRight className="h-4 w-4" /></AnimatedIcon>
               </Link>
             </div>
 

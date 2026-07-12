@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { FileText, Users, MessageSquare, Mail, TrendingUp, Zap, Plus, FolderTree, Loader2, ArrowUpRight, AlertCircle, RotateCcw } from "lucide-react";
+import { FileText, Users, MessageSquare, Mail, TrendingUp, Zap, FolderTree, AlertCircle, ArrowUpRight } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Plus } from "@/components/animate-ui/icons/plus";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
+import { RotateCcw } from "@/components/animate-ui/icons/rotate-ccw";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -44,7 +48,7 @@ export default function AdminDashboard() {
   if (isLoading) {
     return (
       <div className="h-96 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+        <LoaderCircle className="h-8 w-8 text-primary" animate />
       </div>
     );
   }
@@ -56,7 +60,7 @@ export default function AdminDashboard() {
         <p className="text-sm font-semibold text-destructive">Failed to load dashboard</p>
         <p className="text-xs text-muted-foreground max-w-md text-center">{(error as Error)?.message}</p>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RotateCcw className="h-3.5 w-3.5" /> Retry
+          <RotateCcw className="h-3.5 w-3.5" animateOnHover /> Retry
         </Button>
       </div>
     );
@@ -96,10 +100,10 @@ export default function AdminDashboard() {
         </div>
         <div className="flex gap-2">
           <Link to="/admin/articles/new">
-            <Button size="sm"><Plus className="h-4 w-4" /> New article</Button>
+            <Button size="sm"><Plus className="h-4 w-4" animateOnHover /> New article</Button>
           </Link>
           <Link to="/admin/categories">
-            <Button variant="outline" size="sm"><FolderTree className="h-4 w-4" /> Categories</Button>
+            <Button variant="outline" size="sm"><AnimatedIcon animationType="scale"><FolderTree className="h-4 w-4" /></AnimatedIcon> Categories</Button>
           </Link>
         </div>
       </div>
@@ -207,7 +211,9 @@ export default function AdminDashboard() {
                   )}>
                     {article.status}
                   </span>
-                  <ArrowUpRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <AnimatedIcon animationType="arrowUpRight">
+                    <ArrowUpRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </AnimatedIcon>
                 </Link>
               ))
             ) : (
@@ -239,7 +245,9 @@ export default function AdminDashboard() {
                     <TrendingUp className="h-3 w-3" />
                     Top
                   </span>
-                  <ArrowUpRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <AnimatedIcon animationType="arrowUpRight">
+                    <ArrowUpRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </AnimatedIcon>
                 </Link>
               ))
             ) : (

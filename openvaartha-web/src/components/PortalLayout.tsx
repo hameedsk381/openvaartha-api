@@ -2,7 +2,10 @@ import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Bookmark, History, Settings, ArrowLeft, LogOut, Lock, ArrowUpRight, PenSquare } from "lucide-react";
+import { LayoutDashboard, Bookmark, History, Settings, Lock, ArrowUpRight, PenSquare } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { ArrowLeft } from "@/components/animate-ui/icons/arrow-left";
+import { LogOut } from "@/components/animate-ui/icons/log-out";
 import { apiFetch } from "@/lib/api";
 import Navbar from "./Navbar";
 import SignOutButton from "./SignOutButton";
@@ -40,7 +43,7 @@ function SignInRequired({ label }: { label: string }) {
             to="/login"
             className="h-12 px-6 inline-flex items-center justify-center gap-2 rounded-md bg-primary text-white text-xs font-bold uppercase tracking-wider hover:bg-primary/90 transition-colors press"
           >
-            Sign in <ArrowUpRight className="h-4 w-4" />
+            Sign in <AnimatedIcon animationType="arrowUpRight"><ArrowUpRight className="h-4 w-4" /></AnimatedIcon>
           </Link>
           <Link
             to="/login?mode=register"
@@ -53,7 +56,7 @@ function SignInRequired({ label }: { label: string }) {
           to="/"
           className="mt-8 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> Continue reading instead
+          <ArrowLeft className="h-3.5 w-3.5" animateOnHover /> Continue reading instead
         </Link>
       </div>
     </div>
@@ -133,7 +136,7 @@ export function PortalLayout({ children }: { children: ReactNode }) {
                     onClick={onClick}
                     className="flex items-center gap-3 w-full px-3 h-11 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-all press"
                   >
-                    <LogOut className="h-4 w-4 shrink-0" />
+                    <LogOut className="h-4 w-4 shrink-0" animateOnHover />
                     Sign out
                   </button>
                 )}
@@ -154,7 +157,7 @@ export function PortalLayout({ children }: { children: ReactNode }) {
           {/* Mobile breadcrumb */}
           <div className="sm:hidden flex items-center justify-between h-11 px-4 border-b border-border bg-[hsl(var(--surface))]">
             <Link to="/" className="flex items-center gap-1.5 text-muted-foreground press">
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" animateOnHover />
               <span className="text-xs font-medium">Feed</span>
             </Link>
             <span className="overline text-primary">{current?.label ?? "Portal"}</span>
@@ -167,7 +170,7 @@ export function PortalLayout({ children }: { children: ReactNode }) {
                       className="flex items-center justify-center h-8 w-8 rounded-full bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 press transition-colors"
                       aria-label="Sign out"
                     >
-                      <LogOut className="h-3.5 w-3.5" />
+                      <LogOut className="h-3.5 w-3.5" animateOnHover />
                     </button>
                   )}
                 </SignOutButton>

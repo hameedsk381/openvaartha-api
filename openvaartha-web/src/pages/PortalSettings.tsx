@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { Bell, Lock, User, Shield, ChevronRight, Palette, Loader2, Save, X } from "lucide-react";
+import { Shield, Palette, Save } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Bell } from "@/components/animate-ui/icons/bell";
+import { Lock } from "@/components/animate-ui/icons/lock";
+import { User } from "@/components/animate-ui/icons/user";
+import { ChevronRight } from "@/components/animate-ui/icons/chevron-right";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
+import { X } from "@/components/animate-ui/icons/x";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { z } from "zod";
@@ -174,7 +181,7 @@ export default function PortalSettings() {
   if (isLoading) {
     return (
       <div className="h-96 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+        <LoaderCircle className="h-8 w-8 text-primary" animate />
       </div>
     );
   }
@@ -283,7 +290,7 @@ export default function PortalSettings() {
                 disabled={isUpdating || !passwordData.new || !passwordData.current}
                 className="w-full h-11 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center"
               >
-                {isUpdating ? <Loader2 className="h-3 w-3 animate-spin mx-auto" /> : "Update Password"}
+                {isUpdating ? <LoaderCircle className="h-3 w-3 mx-auto" animate /> : "Update Password"}
               </button>
             </div>
           </div>
@@ -394,8 +401,8 @@ function EditableRow({ label, value, onSave, isUpdating }: { label: string; valu
           value={val}
           onChange={e => setVal(e.target.value)}
         />
-        <button onClick={() => { onSave(val); setIsEditing(false); }} className="p-1.5 text-green-600 hover:bg-green-50 rounded-md"><Save className="h-4 w-4" /></button>
-        <button onClick={() => { setVal(value); setIsEditing(false); }} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md"><X className="h-4 w-4" /></button>
+        <button onClick={() => { onSave(val); setIsEditing(false); }} className="p-1.5 text-green-600 hover:bg-green-50 rounded-md"><AnimatedIcon animationType="scale"><Save className="h-4 w-4" /></AnimatedIcon></button>
+        <button onClick={() => { setVal(value); setIsEditing(false); }} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md"><X className="h-4 w-4" animateOnHover /></button>
       </div>
     );
   }

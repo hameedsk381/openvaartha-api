@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Edit, Plus, Trash2, Search, AlertCircle, RotateCcw, FileText, CheckCircle2, Clock, Archive } from "lucide-react";
+import { Edit, Search, AlertCircle, FileText, CheckCircle2, Clock, Archive } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Plus } from "@/components/animate-ui/icons/plus";
+import { Trash2 } from "@/components/animate-ui/icons/trash-2";
+import { RotateCcw } from "@/components/animate-ui/icons/rotate-ccw";
 import { useState } from "react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
@@ -92,7 +96,7 @@ export default function AdminArticles() {
         </div>
         <Link to="/admin/articles/new">
           <Button>
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4" animateOnHover />
             New article
           </Button>
         </Link>
@@ -136,7 +140,7 @@ export default function AdminArticles() {
           <p className="text-sm font-semibold text-destructive">Failed to load articles</p>
           <p className="text-xs text-muted-foreground">{(error as Error)?.message}</p>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RotateCcw className="h-3.5 w-3.5" /> Retry
+            <RotateCcw className="h-3.5 w-3.5" animateOnHover /> Retry
           </Button>
         </div>
       )}
@@ -189,7 +193,7 @@ export default function AdminArticles() {
                 <div className="flex md:justify-end gap-2">
                   <Link to={`/admin/articles/${article.id}/edit`}>
                     <Button type="button" variant="outline" size="icon" aria-label="Edit article">
-                      <Edit className="h-4 w-4" />
+                      <AnimatedIcon animationType="scale"><Edit className="h-4 w-4" /></AnimatedIcon>
                     </Button>
                   </Link>
                   <Button
@@ -200,7 +204,7 @@ export default function AdminArticles() {
                     aria-label="Delete article"
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" animateOnHover />
                   </Button>
                 </div>
               </div>

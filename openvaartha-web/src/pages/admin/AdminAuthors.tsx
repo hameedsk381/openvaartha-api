@@ -1,6 +1,14 @@
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Check, Loader2, Pencil, Plus, RotateCcw, Trash2, X, Twitter, User as UserIcon } from "lucide-react";
+import { AlertCircle, Pencil, Twitter } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Check } from "@/components/animate-ui/icons/check";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
+import { Plus } from "@/components/animate-ui/icons/plus";
+import { RotateCcw } from "@/components/animate-ui/icons/rotate-ccw";
+import { Trash2 } from "@/components/animate-ui/icons/trash-2";
+import { X } from "@/components/animate-ui/icons/x";
+import { User as UserIcon } from "@/components/animate-ui/icons/user";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { Input } from "@/components/ui/input";
@@ -151,7 +159,7 @@ export default function AdminAuthors() {
           <p className="text-sm font-semibold text-destructive">Failed to load authors</p>
           <p className="text-xs text-muted-foreground">{(error as Error)?.message}</p>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RotateCcw className="h-3.5 w-3.5" /> Retry
+            <RotateCcw className="h-3.5 w-3.5" animateOnHover /> Retry
           </Button>
         </div>
       )}
@@ -189,7 +197,7 @@ export default function AdminAuthors() {
         </div>
 
         <Button type="submit" disabled={createMutation.isPending} className="w-full sm:w-auto">
-          {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          {createMutation.isPending ? <LoaderCircle className="h-4 w-4" animate /> : <Plus className="h-4 w-4" animateOnHover />}
           Add Author
         </Button>
       </form>
@@ -204,7 +212,7 @@ export default function AdminAuthors() {
         </div>
         {isLoading ? (
           <div className="h-32 flex items-center justify-center">
-            <Loader2 className="h-6 w-6 text-primary animate-spin" />
+            <LoaderCircle className="h-6 w-6 text-primary" animate />
           </div>
         ) : (
           <div className="divide-y divide-border">
@@ -295,7 +303,7 @@ export default function AdminAuthors() {
                           disabled={isMutating}
                           className="h-8 w-8 text-green-600 hover:bg-green-50"
                         >
-                          <Check className="h-4 w-4" />
+                          <Check className="h-4 w-4" animateOnHover />
                         </Button>
                         <Button
                           size="icon"
@@ -304,7 +312,7 @@ export default function AdminAuthors() {
                           disabled={isMutating}
                           className="h-8 w-8 text-red-600 hover:bg-red-50"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-4 w-4" animateOnHover />
                         </Button>
                       </>
                     ) : (
@@ -316,7 +324,7 @@ export default function AdminAuthors() {
                           disabled={isMutating}
                           className="h-8 w-8 hover:bg-secondary"
                         >
-                          <Pencil className="h-4 w-4" />
+                          <AnimatedIcon animationType="scale"><Pencil className="h-4 w-4" /></AnimatedIcon>
                         </Button>
                         <Button
                           size="icon"
@@ -325,7 +333,7 @@ export default function AdminAuthors() {
                           disabled={isMutating}
                           className="h-8 w-8 text-destructive hover:bg-destructive/10"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" animateOnHover />
                         </Button>
                       </>
                     )}

@@ -1,8 +1,16 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Search, Sun, Moon, Bookmark, User, Home, X, ChevronRight, LogOut, MessageSquare } from "lucide-react";
+import { Bookmark, Home } from "lucide-react";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Search } from "@/components/animate-ui/icons/search";
+import { Sun } from "@/components/animate-ui/icons/sun";
+import { Moon } from "@/components/animate-ui/icons/moon";
+import { X } from "@/components/animate-ui/icons/x";
+import { ChevronRight } from "@/components/animate-ui/icons/chevron-right";
+import { LogOut } from "@/components/animate-ui/icons/log-out";
+import { MessageSquare } from "@/components/animate-ui/icons/message-square";
+import { User } from "@/components/animate-ui/icons/user";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { useSearch, useCategories, useBreakingArticles } from "@/lib/api-hooks";
 import SignOutButton from "@/components/SignOutButton";
@@ -130,9 +138,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
             className="group h-11 w-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors press"
             aria-label="Search"
           >
-            <AnimatedIcon animationType="scale" triggerOnHover={false}>
-              <Search className="h-5 w-5" />
-            </AnimatedIcon>
+            <Search className="h-5 w-5" animateOnHover />
           </button>
 
           {!isTouchDevice() && (
@@ -144,9 +150,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
             className="group h-11 w-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors press"
             aria-label="Toggle theme"
           >
-            <AnimatedIcon animationType="rotate" triggerOnHover={false}>
-              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </AnimatedIcon>
+            {isDark ? <Sun className="h-5 w-5" animateOnTap /> : <Moon className="h-5 w-5" animateOnTap />}
           </button>
 
           <Link
@@ -154,7 +158,9 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
             className="hidden sm:flex h-11 w-11 rounded-lg items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors press relative"
             aria-label="Saved articles"
           >
-            <Bookmark className="h-5 w-5" />
+            <AnimatedIcon animationType="scale">
+              <Bookmark className="h-5 w-5" />
+            </AnimatedIcon>
             {saved.length > 0 && (
               <span className="absolute top-2 right-2 h-2 w-2 bg-primary rounded-full" />
             )}
@@ -167,7 +173,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
                 className="hidden sm:flex h-11 w-11 rounded-full gradient-maroon items-center justify-center press shadow-sm shadow-primary/20 hover:shadow-maroon transition-shadow"
                 aria-label="Portal"
               >
-                <User className="h-5 w-5 text-white" />
+                <User className="h-5 w-5 text-white" animateOnHover />
               </Link>
               <SignOutButton>
                 {(onClick) => (
@@ -177,7 +183,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
                     aria-label="Log out"
                     title="Log out"
                   >
-                    <LogOut className="h-5 w-5" />
+                    <LogOut className="h-5 w-5" animateOnHover />
                   </button>
                 )}
               </SignOutButton>
@@ -217,12 +223,12 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
 
       <nav className="bottom-nav sm:hidden">
         <div className="flex items-center justify-around h-16 px-1">
-          <BottomNavItem icon={<Home className="h-5 w-5" />} label="Feed" to="/" active={location.pathname === "/"} />
-          <BottomNavItem icon={<Search className="h-5 w-5" />} label="Search" onClick={() => setSearchOpen(true)} active={false} />
+          <BottomNavItem icon={<AnimatedIcon animationType="scale"><Home className="h-5 w-5" /></AnimatedIcon>} label="Feed" to="/" active={location.pathname === "/"} />
+          <BottomNavItem icon={<Search className="h-5 w-5" animateOnHover />} label="Search" onClick={() => setSearchOpen(true)} active={false} />
           <BottomNavItem
             icon={
               <div className="relative">
-                <MessageSquare className="h-5 w-5" />
+                <MessageSquare className="h-5 w-5" animateOnHover />
                 {hasBreaking && <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-red-500 rounded-full" />}
               </div>
             }
@@ -230,12 +236,14 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
           <BottomNavItem
             icon={
               <div className="relative">
-                <Bookmark className="h-5 w-5" />
+                <AnimatedIcon animationType="scale">
+                  <Bookmark className="h-5 w-5" />
+                </AnimatedIcon>
                 {saved.length > 0 && <span className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-primary text-white text-[7px] font-semibold rounded-full flex items-center justify-center">{saved.length > 9 ? "9+" : saved.length}</span>}
               </div>
             }
             label="Saved" to="/portal/saved" active={location.pathname === "/portal/saved"} />
-          <BottomNavItem icon={<User className="h-5 w-5" />} label="Portal" to="/portal/dashboard" active={location.pathname.startsWith("/portal")} />
+          <BottomNavItem icon={<User className="h-5 w-5" animateOnHover />} label="Portal" to="/portal/dashboard" active={location.pathname.startsWith("/portal")} />
         </div>
       </nav>
 
@@ -255,9 +263,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
               onClick={() => { setSearchOpen(false); setQuery(""); }}
               className="group h-11 w-11 rounded-lg flex items-center justify-center hover:bg-muted transition-colors press text-muted-foreground hover:text-foreground"
             >
-              <AnimatedIcon animationType="rotate" triggerOnHover={false}>
-                <X className="h-5 w-5" />
-              </AnimatedIcon>
+              <X className="h-5 w-5" animateOnHover />
             </button>
           </div>
 
@@ -301,7 +307,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
                       <span className="tag mb-1.5">{article.category}</span>
                       <p className="text-sm font-semibold text-foreground leading-snug line-clamp-2">{article.title}</p>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" animateOnHover />
                   </button>
                 ))}
               </div>

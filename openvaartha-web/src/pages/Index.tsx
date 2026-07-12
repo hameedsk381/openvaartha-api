@@ -11,7 +11,10 @@ import FeedSkeleton from '../components/FeedSkeleton';
 import Footer from '@/components/Footer';
 import { handleImageFallback, getArticleImage } from '@/lib/utils';
 import { CategoryIcon } from '@/components/CategoryIcon';
-import { Clock, Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame, Loader2, ChevronRight, Radio } from 'lucide-react';
+import { Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame } from 'lucide-react';
+import { Clock } from '@/components/animate-ui/icons/clock';
+import { LoaderCircle } from '@/components/animate-ui/icons/loader-circle';
+import { ChevronRight } from '@/components/animate-ui/icons/chevron-right';
 import { toast } from 'sonner';
 import { useReadingList } from '@/hooks/use-reading-list';
 import {
@@ -59,7 +62,7 @@ function CategoryStrip({ category }: { category: Category }) {
           to={`/?category=${category.name}`}
           className="text-[11px] font-bold uppercase tracking-[0.15em] text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
         >
-          View all <ChevronRight className="h-3 w-3" />
+          View all <ChevronRight className="h-3 w-3" animateOnHover />
         </Link>
       </div>
 
@@ -117,7 +120,7 @@ function BytesMini() {
           <h3 className="font-display text-sm font-bold uppercase tracking-wide">Bytes</h3>
         </div>
         <Link to="/bytes" className="text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
-          See all <ChevronRight className="h-3 w-3" />
+          See all <ChevronRight className="h-3 w-3" animateOnHover />
         </Link>
       </div>
       <ul className="divide-y divide-border">
@@ -265,9 +268,11 @@ export default function Index() {
                         className="absolute top-4 right-4 h-10 w-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-primary transition-colors press"
                         aria-label="Save article"
                       >
-                        {isSaved(hero.id)
-                          ? <BookmarkCheck className="h-4 w-4 fill-current" />
-                          : <Bookmark className="h-4 w-4" />}
+                        <AnimatedIcon animationType="scale">
+                          {isSaved(hero.id)
+                            ? <BookmarkCheck className="h-4 w-4 fill-current" />
+                            : <Bookmark className="h-4 w-4" />}
+                        </AnimatedIcon>
                       </button>
 
                       <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 lg:p-10">
@@ -295,7 +300,7 @@ export default function Index() {
                           </span>
                           <span className="text-white text-xs font-semibold uppercase tracking-[0.18em] flex items-center gap-1.5 group-hover:text-secondary transition-colors">
                             Continue reading
-                            <AnimatedIcon animationType="arrowUpRight" triggerOnHover={false}>
+                            <AnimatedIcon animationType="arrowUpRight">
                               <ArrowUpRight className="h-3.5 w-3.5" />
                             </AnimatedIcon>
                           </span>
@@ -383,7 +388,7 @@ export default function Index() {
                   whileHover="hover"
                 >
                   View all 
-                  <AnimatedIcon animationType="arrowUpRight" triggerOnHover={false}>
+                  <AnimatedIcon animationType="arrowUpRight">
                     <ArrowUpRight className="h-3.5 w-3.5" />
                   </AnimatedIcon>
                 </MotionLink>
@@ -503,7 +508,9 @@ export default function Index() {
                             ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
                           aria-label="Save"
                         >
-                          {isSaved(art.id) ? <BookmarkCheck className="h-4 w-4 fill-current" /> : <Bookmark className="h-4 w-4" />}
+                          <AnimatedIcon animationType="scale">
+                            {isSaved(art.id) ? <BookmarkCheck className="h-4 w-4 fill-current" /> : <Bookmark className="h-4 w-4" />}
+                          </AnimatedIcon>
                         </button>
                       </div>
                     </article>
@@ -518,7 +525,7 @@ export default function Index() {
                         className="w-full max-w-xs h-11 rounded-md border border-border bg-background text-foreground text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface))] transition-colors press disabled:opacity-50"
                       >
                         {isFetching ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          <LoaderCircle className="h-4 w-4 text-muted-foreground" animate />
                         ) : (
                           "Load more stories"
                         )}
@@ -601,7 +608,7 @@ export default function Index() {
                       disabled={subscribeMutation.isPending}
                       className="h-11 px-4 rounded-md bg-white text-primary text-sm font-bold inline-flex items-center gap-2 hover:bg-secondary transition-colors press disabled:opacity-50 shrink-0"
                     >
-                      {subscribeMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending</> : 'Subscribe'}
+                      {subscribeMutation.isPending ? <><LoaderCircle className="h-4 w-4" animate /> Sending</> : 'Subscribe'}
                     </button>
                   </form>
                 </div>

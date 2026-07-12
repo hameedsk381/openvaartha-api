@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Sparkles, Loader2, AlertCircle, FileText, Type } from "lucide-react";
+import { AlertCircle, FileText, Type } from "lucide-react";
+import { Sparkles } from "@/components/animate-ui/icons/sparkles";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import {
@@ -86,7 +88,7 @@ export default function AIGenerateDialog({ onApply }: Props) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button type="button" variant="outline" className="gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
+          <Sparkles className="h-4 w-4 text-primary" animateOnHover />
           <span>AI Generate</span>
         </Button>
       </DialogTrigger>
@@ -183,7 +185,7 @@ export default function AIGenerateDialog({ onApply }: Props) {
             Cancel
           </Button>
           <Button type="button" onClick={() => mutation.mutate()} disabled={!canGenerate || mutation.isPending}>
-            {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {mutation.isPending ? <LoaderCircle className="h-4 w-4" animate /> : <Sparkles className="h-4 w-4" animateOnHover />}
             {mutation.isPending ? "Generating..." : "Generate"}
           </Button>
         </DialogFooter>

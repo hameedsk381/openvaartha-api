@@ -35,7 +35,7 @@ const Footer = () => {
                     className="group h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors press"
                     aria-label="Instagram"
                   >
-                    <AnimatedIcon animationType="bounce" triggerOnHover={false}>
+                    <AnimatedIcon animationType="bounce">
                       <Instagram className="h-4 w-4" />
                     </AnimatedIcon>
                   </a>
@@ -46,7 +46,7 @@ const Footer = () => {
                     className="group h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors press"
                     aria-label="Facebook"
                   >
-                    <AnimatedIcon animationType="bounce" triggerOnHover={false}>
+                    <AnimatedIcon animationType="bounce">
                       <Facebook className="h-4 w-4" />
                     </AnimatedIcon>
                   </a>
@@ -57,7 +57,7 @@ const Footer = () => {
                     className="group h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors press"
                     aria-label="YouTube"
                   >
-                    <AnimatedIcon animationType="bounce" triggerOnHover={false}>
+                    <AnimatedIcon animationType="bounce">
                       <Youtube className="h-4 w-4" />
                     </AnimatedIcon>
                   </a>

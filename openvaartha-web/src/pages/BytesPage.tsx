@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import { ArrowUpRight } from 'lucide-react';
+import { AnimatedIcon } from '@/components/ui/animated-icon';
 import { Link } from 'react-router-dom';
 import { useDispatches } from '@/lib/api-hooks';
 import { BytesPageSkeleton } from '@/components/PageSkeletons';
@@ -71,7 +72,7 @@ const BytesPage = () => {
                       </span>
                       {byte.articleSlug && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-primary shrink-0">
-                          Full story <ArrowUpRight className="h-3 w-3" />
+                          Full story <AnimatedIcon animationType="arrowUpRight"><ArrowUpRight className="h-3 w-3" /></AnimatedIcon>
                         </span>
                       )}
                     </div>

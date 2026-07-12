@@ -1,7 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { Search, X, Hash, Clock, ArrowUpRight, Loader2 } from 'lucide-react';
+import { Hash, ArrowUpRight } from 'lucide-react';
+import { AnimatedIcon } from '@/components/ui/animated-icon';
+import { Search } from '@/components/animate-ui/icons/search';
+import { X } from '@/components/animate-ui/icons/x';
+import { Clock } from '@/components/animate-ui/icons/clock';
+import { LoaderCircle } from '@/components/animate-ui/icons/loader-circle';
 import { handleImageFallback } from '@/lib/utils';
 import { BRAND } from '@/lib/brand';
 import { useSearch, useCategories, useArticles } from '@/lib/api-hooks';
@@ -104,7 +109,7 @@ const SearchPage = () => {
                   className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center rounded-md hover:bg-muted transition-colors"
                   aria-label="Clear"
                 >
-                  <X className="h-4 w-4 text-muted-foreground" />
+                  <X className="h-4 w-4 text-muted-foreground" animateOnHover />
                 </button>
               )}
             </div>
@@ -161,7 +166,7 @@ const SearchPage = () => {
                         </div>
                         <span className="text-[11px] text-muted-foreground font-medium mt-1 inline-flex items-center gap-1">
                           {allArticles.filter(a => a.category === c).length} stories
-                          <ArrowUpRight className="h-3 w-3" />
+                          <AnimatedIcon animationType="arrowUpRight"><ArrowUpRight className="h-3 w-3" /></AnimatedIcon>
                         </span>
                       </button>
                     ))}
@@ -237,7 +242,7 @@ const SearchPage = () => {
                       className="w-full max-w-xs h-11 rounded-md border border-border bg-background text-foreground text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface))] transition-colors press disabled:opacity-50"
                     >
                       {isFetching ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        <LoaderCircle className="h-4 w-4 text-muted-foreground" animate />
                       ) : (
                         "Load more stories"
                       )}

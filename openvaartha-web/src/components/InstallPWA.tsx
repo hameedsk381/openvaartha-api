@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
-import { Download, Share, X } from "lucide-react";
+import { Share } from "lucide-react";
 import { BRAND } from "@/lib/brand";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
+import { Download } from "@/components/animate-ui/icons/download";
+import { X } from "@/components/animate-ui/icons/x";
 
 const DISMISS_KEY = "pwa_install_dismissed_at";
 // Re-offer after a couple weeks rather than permanently hiding on one dismiss —
@@ -84,9 +87,11 @@ export default function InstallPWA() {
     <div className="fixed bottom-20 sm:bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 z-50 p-4 rounded-xl bg-card border border-border shadow-xl flex items-center gap-3">
       <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center shrink-0">
         {iosInstructions ? (
-          <Share className="h-5 w-5 text-white" />
+          <AnimatedIcon animationType="bounce" isActive>
+            <Share className="h-5 w-5 text-white" />
+          </AnimatedIcon>
         ) : (
-          <Download className="h-5 w-5 text-white" />
+          <Download className="h-5 w-5 text-white" animate loop />
         )}
       </div>
       <div className="flex-1 min-w-0">
@@ -110,7 +115,7 @@ export default function InstallPWA() {
         className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground shrink-0 press"
         aria-label="Dismiss"
       >
-        <X className="h-4 w-4" />
+        <X className="h-4 w-4" animateOnHover />
       </button>
     </div>
   );
