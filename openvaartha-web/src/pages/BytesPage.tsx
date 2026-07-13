@@ -153,6 +153,10 @@ const BytesPage = () => {
         </main>
       )}
 
+      {/* Reserves room for Navbar's fixed mobile bottom-nav (.bottom-nav,
+          sm:hidden) so it never covers the last card's footer/Share button. */}
+      <div className="sm:hidden shrink-0 h-[calc(4rem+env(safe-area-inset-bottom))]" />
+
       {filteredBytes.length > 1 && (
         <div className="hidden sm:flex fixed right-6 top-1/2 -translate-y-1/2 z-20 flex-col items-center gap-3">
           <button

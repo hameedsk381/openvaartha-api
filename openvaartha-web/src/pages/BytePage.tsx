@@ -49,6 +49,10 @@ const BytePage = () => {
       <main className="flex-1 min-h-0">
         <ByteCard byte={byte} shareUrl={window.location.href} />
       </main>
+
+      {/* Reserves room for Navbar's fixed mobile bottom-nav (.bottom-nav,
+          sm:hidden) so it never covers the card's footer/Share button. */}
+      <div className="sm:hidden shrink-0 h-[calc(4rem+env(safe-area-inset-bottom))]" />
     </div>
   );
 };
