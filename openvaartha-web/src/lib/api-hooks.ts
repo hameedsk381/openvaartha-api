@@ -85,6 +85,15 @@ export function useDispatches(limit = 20, options: { todayOnly?: boolean } = {})
   });
 }
 
+// Powers /bytes/:id share permalinks — resolves regardless of same-day scoping.
+export function useDispatch(id?: string) {
+  return useQuery<Dispatch>({
+    queryKey: ["dispatch", id],
+    queryFn: () => apiFetch<Dispatch>(`/dispatches/${id}`),
+    enabled: !!id,
+  });
+}
+
 export function useCategories() {
   return useQuery<Category[]>({
     queryKey: ["categories"],

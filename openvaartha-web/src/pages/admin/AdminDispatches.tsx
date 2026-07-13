@@ -1,10 +1,13 @@
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ImagePlus } from "lucide-react";
+import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { Radio } from "@/components/animate-ui/icons/radio";
 import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
 import { Plus } from "@/components/animate-ui/icons/plus";
 import { Sparkles } from "@/components/animate-ui/icons/sparkles";
 import { Trash2 } from "@/components/animate-ui/icons/trash-2";
+import { X } from "@/components/animate-ui/icons/x";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +23,8 @@ export default function AdminDispatches() {
   const queryClient = useQueryClient();
   const [text, setText] = useState("");
   const [articleId, setArticleId] = useState(NONE);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Dispatch | null>(null);
 
   const { data: dispatches = [], isLoading } = useQuery({
@@ -40,6 +45,7 @@ export default function AdminDispatches() {
         body: JSON.stringify({
           text: text.trim(),
           articleId: articleId === NONE ? null : articleId,
+          imageUrl: imageUrl || null,
         }),
       }),
     onSuccess: () => {
@@ -47,10 +53,32 @@ export default function AdminDispatches() {
       queryClient.invalidateQueries({ queryKey: ["dispatches"] });
       setText("");
       setArticleId(NONE);
+      setImageUrl(null);
       toast.success("Dispatch posted");
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
+  const handleImageUpload = (file: File) => {
+    setIsUploadingImage(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    apiFetch<{ url: string }>("/upload/", { method: "POST", body: formData })
+      .then((res) => setImageUrl(res.url))
+      .catch(() => toast.error("Failed to upload image"))
+      .finally(() => setIsUploadingImage(false));
+  };
+
+  const pickImage = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) handleImageUpload(file);
+    };
+    input.click();
+  };
 
   const backfillMutation = useMutation({
     mutationFn: () => apiFetch<{ message: string; updated: number }>("/dispatches/backfill-categories", { method: "POST" }),
@@ -135,6 +163,34 @@ export default function AdminDispatches() {
             </SelectContent>
           </Select>
         </div>
+        <div className="space-y-2">
+          <Label>Cover image (optional)</Label>
+          <p className="text-xs text-muted-foreground">
+            Bytes are built for sharing — a photo makes a much stronger card. Without one, the Open Vaartha mark is used as a placeholder.
+          </p>
+          {imageUrl ? (
+            <div className="relative rounded-lg overflow-hidden border border-border w-40 h-24">
+              <img src={imageUrl} alt="Byte cover" className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={() => setImageUrl(null)}
+                className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center press"
+                aria-label="Remove image"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <Button type="button" variant="outline" size="sm" onClick={pickImage} disabled={isUploadingImage}>
+              {isUploadingImage ? (
+                <LoaderCircle className="h-4 w-4" animate />
+              ) : (
+                <AnimatedIcon animationType="scale"><ImagePlus className="h-4 w-4" /></AnimatedIcon>
+              )}
+              Upload image
+            </Button>
+          )}
+        </div>
         <Button type="submit" disabled={createMutation.isPending || !text.trim()}>
           {createMutation.isPending ? <LoaderCircle className="h-4 w-4" animate /> : <Plus className="h-4 w-4" animateOnHover />}
           Post dispatch
@@ -150,6 +206,9 @@ export default function AdminDispatches() {
           <div className="divide-y divide-border">
             {dispatches.map((d) => (
               <div key={d.id} className="flex items-start justify-between gap-4 p-4">
+                {d.imageUrl && (
+                  <img src={d.imageUrl} alt="" className="h-12 w-16 rounded-md object-cover shrink-0 border border-border" />
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium leading-snug">{d.text}</p>
                   <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">

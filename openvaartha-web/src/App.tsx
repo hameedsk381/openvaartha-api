@@ -41,6 +41,7 @@ const SearchPage = lazy(() => import("./pages/SearchPage.tsx"));
 const TrendingPage = lazy(() => import("./pages/TrendingPage.tsx"));
 const ExplainersPage = lazy(() => import("./pages/ExplainersPage.tsx"));
 const BytesPage = lazy(() => import("./pages/BytesPage.tsx"));
+const BytePage = lazy(() => import("./pages/BytePage.tsx"));
 const AboutPage = lazy(() => import("./pages/AboutPage.tsx"));
 const ContactPage = lazy(() => import("./pages/ContactPage.tsx"));
 const EditorialStandardsPage = lazy(() => import("./pages/EditorialStandardsPage.tsx"));
@@ -171,6 +172,7 @@ const App = () => {
                 <Route path="/trending" element={<TrendingPage />} />
                 <Route path="/explainers" element={<ExplainersPage />} />
                 <Route path="/bytes" element={<BytesPage />} />
+                <Route path="/bytes/:byteId" element={<BytePage />} />
                 {/* Renamed from /live — keep old links/bookmarks working. */}
                 <Route path="/live" element={<Navigate to="/bytes" replace />} />
                 <Route path="/about" element={<AboutPage />} />

@@ -37,7 +37,8 @@ async def create_dispatch(
     base never delays the admin's save."""
     try:
         dispatch = await dispatch_service.create_dispatch(
-            db, text=body.text, article_id=body.article_id, created_by=current_user.id
+            db, text=body.text, article_id=body.article_id, created_by=current_user.id,
+            image_url=body.image_url,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -67,6 +68,20 @@ async def backfill_dispatch_categories(
     dispatches are skipped, so this also catches any new backlog over time."""
     updated = await dispatch_service.backfill_categories(db)
     return {"message": f"Categorized {updated} dispatch(es)", "updated": updated}
+
+
+@router.get("/{dispatch_id}", response_model=DispatchSchema)
+async def get_dispatch(
+    dispatch_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Public: fetch a single dispatch by id — powers shared /bytes/:id
+    permalinks, which must keep resolving even after a byte has rolled out of
+    the same-day feed."""
+    dispatch = await dispatch_service.get_dispatch(db, dispatch_id)
+    if not dispatch:
+        raise HTTPException(status_code=404, detail="Dispatch not found")
+    return dispatch
 
 
 @router.delete("/{dispatch_id}")

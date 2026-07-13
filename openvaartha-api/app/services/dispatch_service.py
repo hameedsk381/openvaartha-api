@@ -81,11 +81,24 @@ async def list_dispatches(db: AsyncIOMotorDatabase, limit: int = 50, today_only:
     return await _populate_dispatch_extras(db, dispatches)
 
 
+async def get_dispatch(db: AsyncIOMotorDatabase, dispatch_id: str) -> Optional[dict]:
+    """Fetch a single dispatch by id, regardless of what day it was posted —
+    shared links (see /bytes/:id) must keep working even after a byte has
+    rolled out of the same-day feed."""
+    doc = await db["dispatches"].find_one({"_id": dispatch_id})
+    if not doc:
+        return None
+    dispatch = {**doc, "id": doc.pop("_id")}
+    populated = await _populate_dispatch_extras(db, [dispatch])
+    return populated[0]
+
+
 async def create_dispatch(
     db: AsyncIOMotorDatabase,
     text: str,
     article_id: Optional[str],
     created_by: Optional[str],
+    image_url: Optional[str] = None,
 ) -> dict:
     if article_id and not await db["articles"].find_one({"_id": article_id}, {"_id": 1}):
         raise ValueError(f"Unknown article_id: {article_id}")
@@ -103,6 +116,7 @@ async def create_dispatch(
         "_id": dispatch_id,
         "text": sanitize_text(text),
         "article_id": article_id,
+        "image_url": image_url or None,
         "category_id": category_id,
         "created_at": datetime.now(timezone.utc),
         "created_by": created_by,

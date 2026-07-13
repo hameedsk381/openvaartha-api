@@ -7,6 +7,9 @@ from datetime import datetime
 class DispatchCreate(BaseModel):
     text: str = Field(..., min_length=1, max_length=280)
     article_id: Optional[str] = None
+    # Optional cover image — bytes are built for sharing (WhatsApp/Instagram/
+    # X), and a photo makes a far stronger share card than plain text.
+    image_url: Optional[str] = None
 
     class Config:
         alias_generator = to_camel
@@ -17,6 +20,7 @@ class Dispatch(BaseModel):
     id: str
     text: str
     article_id: Optional[str] = None
+    image_url: Optional[str] = None
     # Denormalized at read time from the linked article (see dispatch_service);
     # never stored, so a later slug/title change is picked up automatically.
     article_slug: Optional[str] = None

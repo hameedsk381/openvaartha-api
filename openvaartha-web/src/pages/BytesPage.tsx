@@ -1,46 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Navbar from '../components/Navbar';
-import { ArrowUpRight } from 'lucide-react';
-import { AnimatedIcon } from '@/components/ui/animated-icon';
 import { ChevronUp } from '@/components/animate-ui/icons/chevron-up';
 import { ChevronDown } from '@/components/animate-ui/icons/chevron-down';
 import { useNavigate } from 'react-router-dom';
 import { useDispatches } from '@/lib/api-hooks';
-import { BRAND } from '@/lib/brand';
+import ByteCard, { TONES } from '@/components/ByteCard';
 import { BytesPageSkeleton } from '@/components/PageSkeletons';
-
-const relativeTime = (iso: string) => {
-  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.round(hours / 24)}d ago`;
-};
-
-// Each tone pairs a brand background with the CSS-variable foreground it was
-// designed for (see index.css's documented contrast ratios), so text always
-// reads clearly regardless of theme — never hardcode white/black against these.
-const TONES = [
-  {
-    bg: 'gradient-maroon',
-    text: 'text-primary-foreground',
-    tagBg: 'bg-black/15',
-    logo: 'white' as const,
-  },
-  {
-    bg: 'gradient-beige',
-    text: 'text-secondary-foreground',
-    tagBg: 'bg-black/10',
-    logo: 'maroon' as const,
-  },
-];
 
 /**
  * Bytes: a full-screen, swipe-through stack of TODAY's dispatches — Inshorts
- * style. One headline per screen; swipe (or scroll/arrow-key) to the next.
- * Scoped to the current day server-side (see useDispatches(todayOnly)) —
- * yesterday's bytes don't carry over, so it always feels freshly filed.
+ * style, built to be shared (see ByteCard's Share button + /bytes/:id
+ * permalinks). One headline per screen; swipe (or scroll/arrow-key) to the
+ * next. Scoped to the current day server-side (see useDispatches(todayOnly))
+ * — yesterday's bytes don't carry over, so it always feels freshly filed.
  */
 const BytesPage = () => {
   const { data: bytes = [], isLoading } = useDispatches(100, { todayOnly: true });
@@ -151,57 +123,18 @@ const BytesPage = () => {
           onScroll={() => setShowHint(false)}
         >
           {filteredBytes.map((byte, index) => {
-            const tone = TONES[index % TONES.length];
             const card = (
               <div
                 ref={(el) => (cardRefs.current[index] = el)}
                 key={byte.id}
-                className={`relative h-[calc(100vh-7rem)] snap-start snap-always flex flex-col justify-center px-6 sm:px-16 ${tone.bg}`}
+                className="h-[calc(100vh-7rem)] snap-start snap-always"
               >
-                <div className="max-w-2xl mx-auto w-full">
-                  <div className={`flex items-center gap-2 mb-8 ${tone.text}`}>
-                    <img
-                      src={tone.logo === 'white' ? BRAND.iconWhitePath : BRAND.iconMaroonPath}
-                      alt=""
-                      className="h-6 w-6 object-contain opacity-90"
-                    />
-                    <span className="text-xs font-black uppercase tracking-[0.2em] opacity-90">
-                      {BRAND.shortName}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 mb-6">
-                    <span className={`relative inline-flex h-2 w-2 ${tone.text}`}>
-                      <span className="absolute inline-flex h-full w-full rounded-full bg-current opacity-60 animate-ping" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-current" />
-                    </span>
-                    <span className={`text-[11px] font-bold uppercase tracking-[0.2em] opacity-80 ${tone.text}`}>
-                      {relativeTime(byte.createdAt)}
-                    </span>
-                    {byte.category && (
-                      <span className={`text-[10px] font-bold uppercase tracking-wider rounded-full px-2.5 py-1 ${tone.tagBg} ${tone.text}`}>
-                        {byte.category}
-                      </span>
-                    )}
-                  </div>
-
-                  <p className={`font-serif text-2xl sm:text-4xl font-bold leading-[1.2] tracking-tight ${tone.text}`}>
-                    {byte.text}
-                  </p>
-
-                  {byte.articleSlug && (
-                    <span className={`mt-8 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.18em] ${tone.text}`}>
-                      Read full story
-                      <AnimatedIcon animationType="arrowUpRight">
-                        <ArrowUpRight className="h-3.5 w-3.5" />
-                      </AnimatedIcon>
-                    </span>
-                  )}
-                </div>
-
-                <span className={`absolute bottom-6 left-1/2 -translate-x-1/2 text-[11px] font-semibold tabular-nums opacity-70 ${tone.text}`}>
-                  {index + 1} / {filteredBytes.length}
-                </span>
+                <ByteCard
+                  byte={byte}
+                  toneIndex={index}
+                  shareUrl={`${window.location.origin}/bytes/${byte.id}`}
+                  counter={{ current: index + 1, total: filteredBytes.length }}
+                />
               </div>
             );
 
