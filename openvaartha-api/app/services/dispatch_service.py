@@ -10,11 +10,24 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Optional
 from uuid import uuid4
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from app.core.sanitize import sanitize_text
 from app.services import ai_service
 
 logger = logging.getLogger(__name__)
+
+# Bytes is a same-day feed for Indian readers — "today" means the calendar
+# day in IST, not UTC, so the feed doesn't roll over at 5:30am local time.
+IST = ZoneInfo("Asia/Kolkata")
+
+
+def _ist_day_bounds_utc() -> tuple[datetime, datetime]:
+    """UTC [start, end) bounds of the current IST calendar day."""
+    now_ist = datetime.now(IST)
+    start_ist = now_ist.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_ist = start_ist.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return start_ist.astimezone(timezone.utc), end_ist.astimezone(timezone.utc)
 
 
 async def ensure_dispatch_indexes(db: AsyncIOMotorDatabase) -> None:
@@ -56,9 +69,14 @@ async def _populate_dispatch_extras(db: AsyncIOMotorDatabase, dispatches: List[d
     return dispatches
 
 
-async def list_dispatches(db: AsyncIOMotorDatabase, limit: int = 50) -> List[dict]:
-    """Most recent dispatches, newest first."""
-    cursor = db["dispatches"].find().sort("created_at", -1).limit(limit)
+async def list_dispatches(db: AsyncIOMotorDatabase, limit: int = 50, today_only: bool = False) -> List[dict]:
+    """Most recent dispatches, newest first. ``today_only`` scopes to the
+    current IST calendar day — Bytes is meant to be a fresh, same-day feed."""
+    query: dict = {}
+    if today_only:
+        start, end = _ist_day_bounds_utc()
+        query["created_at"] = {"$gte": start, "$lte": end}
+    cursor = db["dispatches"].find(query).sort("created_at", -1).limit(limit)
     dispatches = [{**d, "id": d.pop("_id")} for d in await cursor.to_list(length=limit)]
     return await _populate_dispatch_extras(db, dispatches)
 

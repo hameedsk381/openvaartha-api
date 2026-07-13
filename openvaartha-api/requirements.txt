@@ -35,6 +35,10 @@ python-dotenv==1.0.0
 loguru==0.7.2
 python-dateutil==2.8.2
 feedparser==6.0.10
+# IANA tz database for zoneinfo.ZoneInfo — python:3.11-slim has no system
+# tzdata package, so ZoneInfo("Asia/Kolkata") (Bytes' day-scoping) would
+# raise ZoneInfoNotFoundError without this.
+tzdata==2024.1
 
 # Testing
 pytest==7.4.4

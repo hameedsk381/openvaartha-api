@@ -15,11 +15,12 @@ router = APIRouter()
 @router.get("/", response_model=List[DispatchSchema])
 async def list_dispatches(
     limit: int = Query(50, ge=1, le=100),
+    today_only: bool = Query(False),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Public: recent breaking-news dispatches — powers the JUST IN ticker and
-    the Bytes page."""
-    return await dispatch_service.list_dispatches(db, limit=limit)
+    the Bytes page. ``today_only`` scopes Bytes to the current IST day."""
+    return await dispatch_service.list_dispatches(db, limit=limit, today_only=today_only)
 
 
 @router.post("/", response_model=DispatchSchema, status_code=201)

@@ -42,13 +42,20 @@ def _extract_thumbnail(entry) -> Optional[str]:
 
 
 def _parse_date(entry) -> Optional[datetime]:
-    """Extract a datetime from a feed entry's published_parsed or updated_parsed."""
+    """Extract a datetime from a feed entry's published_parsed or updated_parsed.
+
+    feedparser normalizes these to a UTC struct_time. ``time.mktime`` assumes
+    its input is *local* time, so using it here silently shifted every
+    RSS-sourced article's published_at by the server's UTC offset (a real bug
+    on any container not running with TZ=UTC). ``calendar.timegm`` is the
+    correct, timezone-independent inverse of a UTC struct_time.
+    """
     for attr in ("published_parsed", "updated_parsed"):
         parsed = getattr(entry, attr, None)
         if parsed:
             try:
-                from time import mktime
-                return datetime.fromtimestamp(mktime(parsed), tz=timezone.utc)
+                from calendar import timegm
+                return datetime.fromtimestamp(timegm(parsed), tz=timezone.utc)
             except Exception:
                 continue
     return None

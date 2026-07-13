@@ -75,10 +75,11 @@ export function useRelatedArticles(articleId: string, limit = 5) {
   });
 }
 
-export function useDispatches(limit = 20) {
+export function useDispatches(limit = 20, options: { todayOnly?: boolean } = {}) {
+  const { todayOnly = false } = options;
   return useQuery<Dispatch[]>({
-    queryKey: ["dispatches", limit],
-    queryFn: () => apiFetch<Dispatch[]>(`/dispatches/?limit=${limit}`),
+    queryKey: ["dispatches", limit, todayOnly],
+    queryFn: () => apiFetch<Dispatch[]>(`/dispatches/?limit=${limit}&today_only=${todayOnly}`),
     placeholderData: [],
     refetchInterval: 10000, // Poll every 10 seconds — dispatches are meant to feel live
   });

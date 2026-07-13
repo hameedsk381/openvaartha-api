@@ -52,6 +52,17 @@ type FormState = {
   explainer: ExplainerEntry[];
 };
 
+// `datetime-local` inputs expect (and return) wall-clock LOCAL time with no
+// timezone info. `Date#toISOString()` always returns UTC, so using it here
+// silently displayed/saved times shifted by the browser's UTC offset — e.g.
+// an editor in IST publishing "now" actually got a timestamp 5.5h in the
+// past. Format from local getters instead.
+const toDateInput = (value?: string) => {
+  const d = value ? new Date(value) : new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 const emptyForm: FormState = {
   title: "",
   slug: "",
@@ -63,7 +74,7 @@ const emptyForm: FormState = {
   authorId: "",
   thumbnailUrl: "",
   videoUrl: "",
-  publishedAt: new Date().toISOString().slice(0, 16),
+  publishedAt: toDateInput(),
   status: "draft",
   isTrending: false,
   isBreaking: false,
@@ -73,11 +84,6 @@ const emptyForm: FormState = {
   body: "",
   timeline: [],
   explainer: [],
-};
-
-const toDateInput = (value?: string) => {
-  if (!value) return new Date().toISOString().slice(0, 16);
-  return new Date(value).toISOString().slice(0, 16);
 };
 
 export default function AdminArticleForm() {
