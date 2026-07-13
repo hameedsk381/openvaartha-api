@@ -21,6 +21,9 @@ class Dispatch(BaseModel):
     # never stored, so a later slug/title change is picked up automatically.
     article_slug: Optional[str] = None
     article_title: Optional[str] = None
+    # Auto-derived from the linked article's category, never stored — a
+    # dispatch with no article_id (a standalone blurb) has no category.
+    category: Optional[str] = None
     created_at: datetime
     created_by: Optional[str] = None
 

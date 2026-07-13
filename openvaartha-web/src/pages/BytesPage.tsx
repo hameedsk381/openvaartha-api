@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Navbar from '../components/Navbar';
 import { ArrowUpRight } from 'lucide-react';
 import { AnimatedIcon } from '@/components/ui/animated-icon';
@@ -24,11 +24,22 @@ const relativeTime = (iso: string) => {
 const BytesPage = () => {
   const { data: bytes = [], isLoading } = useDispatches(100);
   const [now, setNow] = useState(new Date());
+  const [activeCategory, setActiveCategory] = useState('All');
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(t);
   }, []);
+
+  const categories = useMemo(
+    () => Array.from(new Set(bytes.map((b) => b.category).filter((c): c is string => !!c))),
+    [bytes]
+  );
+
+  const filteredBytes = useMemo(
+    () => (activeCategory === 'All' ? bytes : bytes.filter((b) => b.category === activeCategory)),
+    [bytes, activeCategory]
+  );
 
   if (isLoading && bytes.length === 0) {
     return <BytesPageSkeleton />;
@@ -57,19 +68,40 @@ const BytesPage = () => {
             Quick hits from the desk — scroll for the latest, tap for the full story.
           </p>
 
-          {bytes.length === 0 ? (
+          {categories.length > 0 && (
+            <div className="px-4 pb-3 flex items-center gap-2 overflow-x-auto no-scrollbar">
+              {(['All', ...categories]).map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`shrink-0 h-8 px-3.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-colors border press ${
+                    activeCategory === cat
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-primary'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {filteredBytes.length === 0 ? (
             <p className="font-serif italic text-muted-foreground text-center py-16 px-4">
-              No bytes yet. Check back soon.
+              {bytes.length === 0 ? 'No bytes yet. Check back soon.' : 'No bytes in this section yet.'}
             </p>
           ) : (
             <ul className="divide-y divide-border">
-              {bytes.map((byte) => {
+              {filteredBytes.map((byte) => {
                 const row = (
                   <div className="px-4 py-4">
                     <div className="flex items-center justify-between gap-3 mb-1.5">
-                      <span className="text-[11px] text-muted-foreground font-medium tabular-nums">
-                        {relativeTime(byte.createdAt)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-muted-foreground font-medium tabular-nums">
+                          {relativeTime(byte.createdAt)}
+                        </span>
+                        {byte.category && <span className="tag">{byte.category}</span>}
+                      </div>
                       {byte.articleSlug && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-primary shrink-0">
                           Full story <AnimatedIcon animationType="arrowUpRight"><ArrowUpRight className="h-3 w-3" /></AnimatedIcon>

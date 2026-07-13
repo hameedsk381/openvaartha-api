@@ -126,6 +126,12 @@ export default function AdminDispatches() {
                   <p className="text-sm font-medium leading-snug">{d.text}</p>
                   <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
                     <span>{new Date(d.createdAt).toLocaleString()}</span>
+                    {d.category && (
+                      <>
+                        <span>·</span>
+                        <span className="tag">{d.category}</span>
+                      </>
+                    )}
                     {d.articleTitle && (
                       <>
                         <span>·</span>

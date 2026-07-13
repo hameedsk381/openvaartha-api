@@ -18,23 +18,33 @@ async def ensure_dispatch_indexes(db: AsyncIOMotorDatabase) -> None:
 
 
 async def _populate_article_links(db: AsyncIOMotorDatabase, dispatches: List[dict]) -> List[dict]:
-    """Batch-attach slug/title for dispatches that link to a full article."""
+    """Batch-attach slug/title/category for dispatches that link to a full
+    article — category is auto-derived here rather than stored, so a later
+    re-categorization of the article is reflected immediately."""
     article_ids = [d["article_id"] for d in dispatches if d.get("article_id")]
     if not article_ids:
         for d in dispatches:
             d.setdefault("article_slug", None)
             d.setdefault("article_title", None)
+            d.setdefault("category", None)
         return dispatches
 
     articles = await db["articles"].find(
-        {"_id": {"$in": article_ids}}, {"slug": 1, "title": 1}
+        {"_id": {"$in": article_ids}}, {"slug": 1, "title": 1, "category_id": 1}
     ).to_list(length=len(article_ids))
     by_id = {a["_id"]: a for a in articles}
+
+    category_ids = {a["category_id"] for a in articles if a.get("category_id")}
+    categories = await db["categories"].find(
+        {"_id": {"$in": list(category_ids)}}, {"name": 1}
+    ).to_list(length=len(category_ids)) if category_ids else []
+    category_names = {c["_id"]: c["name"] for c in categories}
 
     for d in dispatches:
         article = by_id.get(d.get("article_id"))
         d["article_slug"] = article.get("slug") if article else None
         d["article_title"] = article.get("title") if article else None
+        d["category"] = category_names.get(article.get("category_id")) if article else None
     return dispatches
 
 

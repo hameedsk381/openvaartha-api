@@ -62,6 +62,7 @@ export interface Dispatch {
   articleId?: string | null;
   articleSlug?: string | null;
   articleTitle?: string | null;
+  category?: string | null;
   createdAt: string;
 }
 
