@@ -1,8 +1,9 @@
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus } from "lucide-react";
+import { ImagePlus, Pencil } from "lucide-react";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { Radio } from "@/components/animate-ui/icons/radio";
+import { Check } from "@/components/animate-ui/icons/check";
 import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
 import { Plus } from "@/components/animate-ui/icons/plus";
 import { Sparkles } from "@/components/animate-ui/icons/sparkles";
@@ -15,16 +16,141 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import type { Dispatch, Article } from "@/lib/types";
+import type { Dispatch, Article, Category } from "@/lib/types";
 
 const NONE = "__none__";
 
+type DraftDispatch = {
+  text: string;
+  articleId: string;
+  categoryId: string;
+  imageUrl: string | null;
+};
+
+const emptyDraft: DraftDispatch = { text: "", articleId: NONE, categoryId: NONE, imageUrl: null };
+
+function ImagePicker({
+  imageUrl,
+  onChange,
+}: {
+  imageUrl: string | null;
+  onChange: (url: string | null) => void;
+}) {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const pickImage = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+      apiFetch<{ url: string }>("/upload/", { method: "POST", body: formData })
+        .then((res) => onChange(res.url))
+        .catch(() => toast.error("Failed to upload image"))
+        .finally(() => setIsUploading(false));
+    };
+    input.click();
+  };
+
+  return imageUrl ? (
+    <div className="relative rounded-lg overflow-hidden border border-border w-40 h-24">
+      <img src={imageUrl} alt="Byte cover" className="w-full h-full object-cover" />
+      <button
+        type="button"
+        onClick={() => onChange(null)}
+        className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center press"
+        aria-label="Remove image"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  ) : (
+    <Button type="button" variant="outline" size="sm" onClick={pickImage} disabled={isUploading}>
+      {isUploading ? (
+        <LoaderCircle className="h-4 w-4" animate />
+      ) : (
+        <AnimatedIcon animationType="scale"><ImagePlus className="h-4 w-4" /></AnimatedIcon>
+      )}
+      Upload image
+    </Button>
+  );
+}
+
+function DispatchFields({
+  draft,
+  onChange,
+  articles,
+  categories,
+}: {
+  draft: DraftDispatch;
+  onChange: (next: DraftDispatch) => void;
+  articles: Article[];
+  categories: Category[];
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Headline</Label>
+        <Textarea
+          value={draft.text}
+          onChange={(e) => onChange({ ...draft, text: e.target.value })}
+          required
+          maxLength={280}
+          rows={2}
+          placeholder="e.g. Police launch investigation after viral video shows assault in Barabanki"
+        />
+        <p className="text-xs text-muted-foreground text-right">{draft.text.length}/280</p>
+      </div>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Category</Label>
+          <Select value={draft.categoryId} onValueChange={(v) => onChange({ ...draft, categoryId: v })}>
+            <SelectTrigger>
+              <SelectValue placeholder="No category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE}>No category</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.emoji} {c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Link to article (optional)</Label>
+          <Select value={draft.articleId} onValueChange={(v) => onChange({ ...draft, articleId: v })}>
+            <SelectTrigger>
+              <SelectValue placeholder="No linked article" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE}>No linked article</SelectItem>
+              {articles.map((a) => (
+                <SelectItem key={a.id} value={a.id}>{a.title}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label>Cover image (optional)</Label>
+        <p className="text-xs text-muted-foreground">
+          Bytes are built for sharing — a photo makes a much stronger card. Without one, the Open Vaartha mark is used as a placeholder.
+        </p>
+        <ImagePicker imageUrl={draft.imageUrl} onChange={(url) => onChange({ ...draft, imageUrl: url })} />
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDispatches() {
   const queryClient = useQueryClient();
-  const [text, setText] = useState("");
-  const [articleId, setArticleId] = useState(NONE);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [draft, setDraft] = useState<DraftDispatch>(emptyDraft);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [edit, setEdit] = useState<DraftDispatch>(emptyDraft);
   const [deleteTarget, setDeleteTarget] = useState<Dispatch | null>(null);
 
   const { data: dispatches = [], isLoading } = useQuery({
@@ -38,47 +164,50 @@ export default function AdminDispatches() {
     queryFn: () => apiFetch<Article[]>("/articles/?limit=50"),
   });
 
+  const { data: categories = [] } = useQuery({
+    queryKey: ["admin", "categories"],
+    queryFn: () => apiFetch<Category[]>("/categories/"),
+  });
+
   const createMutation = useMutation({
     mutationFn: () =>
       apiFetch<Dispatch>("/dispatches/", {
         method: "POST",
         body: JSON.stringify({
-          text: text.trim(),
-          articleId: articleId === NONE ? null : articleId,
-          imageUrl: imageUrl || null,
+          text: draft.text.trim(),
+          articleId: draft.articleId === NONE ? null : draft.articleId,
+          categoryId: draft.categoryId === NONE ? null : draft.categoryId,
+          imageUrl: draft.imageUrl || null,
         }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "dispatches"] });
       queryClient.invalidateQueries({ queryKey: ["dispatches"] });
-      setText("");
-      setArticleId(NONE);
-      setImageUrl(null);
+      setDraft(emptyDraft);
       toast.success("Dispatch posted");
     },
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const handleImageUpload = (file: File) => {
-    setIsUploadingImage(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    apiFetch<{ url: string }>("/upload/", { method: "POST", body: formData })
-      .then((res) => setImageUrl(res.url))
-      .catch(() => toast.error("Failed to upload image"))
-      .finally(() => setIsUploadingImage(false));
-  };
-
-  const pickImage = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) handleImageUpload(file);
-    };
-    input.click();
-  };
+  const updateMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiFetch<Dispatch>(`/dispatches/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          text: edit.text.trim(),
+          articleId: edit.articleId === NONE ? null : edit.articleId,
+          categoryId: edit.categoryId === NONE ? null : edit.categoryId,
+          imageUrl: edit.imageUrl || null,
+        }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "dispatches"] });
+      queryClient.invalidateQueries({ queryKey: ["dispatches"] });
+      setEditingId(null);
+      toast.success("Dispatch updated");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
 
   const backfillMutation = useMutation({
     mutationFn: () => apiFetch<{ message: string; updated: number }>("/dispatches/backfill-categories", { method: "POST" }),
@@ -102,8 +231,23 @@ export default function AdminDispatches() {
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
-    if (!text.trim()) return;
+    if (!draft.text.trim()) return;
     createMutation.mutate();
+  };
+
+  const startEdit = (d: Dispatch) => {
+    setEditingId(d.id);
+    setEdit({
+      text: d.text,
+      articleId: d.articleId || NONE,
+      categoryId: d.categoryId || NONE,
+      imageUrl: d.imageUrl || null,
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEdit(emptyDraft);
   };
 
   return (
@@ -125,7 +269,7 @@ export default function AdminDispatches() {
           className="shrink-0"
           onClick={() => backfillMutation.mutate()}
           disabled={backfillMutation.isPending}
-          title="AI-classify a category for every standalone dispatch that doesn't have one yet"
+          title="AI-classify a category for every standalone dispatch that still has no category"
         >
           {backfillMutation.isPending ? (
             <LoaderCircle className="h-4 w-4" animate />
@@ -137,61 +281,8 @@ export default function AdminDispatches() {
       </div>
 
       <form onSubmit={onSubmit} className="border border-border rounded-xl p-5 space-y-4">
-        <div className="space-y-2">
-          <Label>Headline</Label>
-          <Textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            required
-            maxLength={280}
-            rows={2}
-            placeholder="e.g. Police launch investigation after viral video shows assault in Barabanki"
-          />
-          <p className="text-xs text-muted-foreground text-right">{text.length}/280</p>
-        </div>
-        <div className="space-y-2">
-          <Label>Link to article (optional)</Label>
-          <Select value={articleId} onValueChange={setArticleId}>
-            <SelectTrigger>
-              <SelectValue placeholder="No linked article" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NONE}>No linked article</SelectItem>
-              {articles.map((a) => (
-                <SelectItem key={a.id} value={a.id}>{a.title}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>Cover image (optional)</Label>
-          <p className="text-xs text-muted-foreground">
-            Bytes are built for sharing — a photo makes a much stronger card. Without one, the Open Vaartha mark is used as a placeholder.
-          </p>
-          {imageUrl ? (
-            <div className="relative rounded-lg overflow-hidden border border-border w-40 h-24">
-              <img src={imageUrl} alt="Byte cover" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={() => setImageUrl(null)}
-                className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center press"
-                aria-label="Remove image"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ) : (
-            <Button type="button" variant="outline" size="sm" onClick={pickImage} disabled={isUploadingImage}>
-              {isUploadingImage ? (
-                <LoaderCircle className="h-4 w-4" animate />
-              ) : (
-                <AnimatedIcon animationType="scale"><ImagePlus className="h-4 w-4" /></AnimatedIcon>
-              )}
-              Upload image
-            </Button>
-          )}
-        </div>
-        <Button type="submit" disabled={createMutation.isPending || !text.trim()}>
+        <DispatchFields draft={draft} onChange={setDraft} articles={articles} categories={categories} />
+        <Button type="submit" disabled={createMutation.isPending || !draft.text.trim()}>
           {createMutation.isPending ? <LoaderCircle className="h-4 w-4" animate /> : <Plus className="h-4 w-4" animateOnHover />}
           Post dispatch
         </Button>
@@ -204,45 +295,78 @@ export default function AdminDispatches() {
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {dispatches.map((d) => (
-              <div key={d.id} className="flex items-start justify-between gap-4 p-4">
-                {d.imageUrl && (
-                  <img src={d.imageUrl} alt="" className="h-12 w-16 rounded-md object-cover shrink-0 border border-border" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium leading-snug">{d.text}</p>
-                  <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
-                    <span>{new Date(d.createdAt).toLocaleString()}</span>
-                    {d.category && (
-                      <>
-                        <span>·</span>
-                        <span className="tag">{d.category}</span>
-                      </>
-                    )}
-                    {d.articleTitle && (
-                      <>
-                        <span>·</span>
-                        <span className="truncate">Linked: {d.articleTitle}</span>
-                      </>
-                    )}
+            {dispatches.map((d) => {
+              const isEditing = editingId === d.id;
+              const isMutating = updateMutation.isPending && updateMutation.variables === d.id;
+
+              if (isEditing) {
+                return (
+                  <div key={d.id} className="p-4 space-y-4 bg-muted/30">
+                    <DispatchFields draft={edit} onChange={setEdit} articles={articles} categories={categories} />
+                    <div className="flex items-center gap-2">
+                      <Button type="button" size="sm" onClick={() => updateMutation.mutate(d.id)} disabled={isMutating || !edit.text.trim()}>
+                        {isMutating ? <LoaderCircle className="h-4 w-4" animate /> : <Check className="h-4 w-4" animateOnHover />}
+                        Save
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={cancelEdit} disabled={isMutating}>
+                        <X className="h-4 w-4" animateOnHover /> Cancel
+                      </Button>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={d.id} className="flex items-start justify-between gap-4 p-4">
+                  {d.imageUrl && (
+                    <img src={d.imageUrl} alt="" className="h-12 w-16 rounded-md object-cover shrink-0 border border-border" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium leading-snug">{d.text}</p>
+                    <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
+                      <span>{new Date(d.createdAt).toLocaleString()}</span>
+                      {d.category && (
+                        <>
+                          <span>·</span>
+                          <span className="tag">{d.category}</span>
+                        </>
+                      )}
+                      {d.articleTitle && (
+                        <>
+                          <span>·</span>
+                          <span className="truncate">Linked: {d.articleTitle}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => startEdit(d)}
+                    >
+                      <AnimatedIcon animationType="scale"><Pencil className="h-4 w-4" /></AnimatedIcon>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => setDeleteTarget(d)}
+                      disabled={deleteMutation.isPending && deleteMutation.variables === d.id}
+                    >
+                      {deleteMutation.isPending && deleteMutation.variables === d.id ? (
+                        <LoaderCircle className="h-4 w-4" animate />
+                      ) : (
+                        <Trash2 className="h-4 w-4" animateOnHover />
+                      )}
+                    </Button>
                   </div>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 text-destructive hover:text-destructive shrink-0"
-                  onClick={() => setDeleteTarget(d)}
-                  disabled={deleteMutation.isPending && deleteMutation.variables === d.id}
-                >
-                  {deleteMutation.isPending && deleteMutation.variables === d.id ? (
-                    <LoaderCircle className="h-4 w-4" animate />
-                  ) : (
-                    <Trash2 className="h-4 w-4" animateOnHover />
-                  )}
-                </Button>
-              </div>
-            ))}
+              );
+            })}
             {!isLoading && dispatches.length === 0 && (
               <div className="p-8 text-sm text-muted-foreground text-center">No dispatches yet.</div>
             )}

@@ -6,7 +6,7 @@ from app.core.dependencies import get_current_editor
 from app.core.rate_limit import limiter, MUTATION_LIMIT
 from app.database import get_db
 from app.models.user import User as UserModel
-from app.schemas.dispatch import Dispatch as DispatchSchema, DispatchCreate
+from app.schemas.dispatch import Dispatch as DispatchSchema, DispatchCreate, DispatchUpdate
 from app.services import dispatch_service, push_service
 
 router = APIRouter()
@@ -38,7 +38,7 @@ async def create_dispatch(
     try:
         dispatch = await dispatch_service.create_dispatch(
             db, text=body.text, article_id=body.article_id, created_by=current_user.id,
-            image_url=body.image_url,
+            image_url=body.image_url, category_id=body.category_id,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -79,6 +79,28 @@ async def get_dispatch(
     permalinks, which must keep resolving even after a byte has rolled out of
     the same-day feed."""
     dispatch = await dispatch_service.get_dispatch(db, dispatch_id)
+    if not dispatch:
+        raise HTTPException(status_code=404, detail="Dispatch not found")
+    return dispatch
+
+
+@router.put("/{dispatch_id}", response_model=DispatchSchema)
+@limiter.limit(MUTATION_LIMIT)
+async def update_dispatch(
+    request: Request,
+    dispatch_id: str,
+    body: DispatchUpdate,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_editor),
+):
+    """Edit a dispatch (admin/editor only)."""
+    try:
+        dispatch = await dispatch_service.update_dispatch(
+            db, dispatch_id, text=body.text, article_id=body.article_id,
+            image_url=body.image_url, category_id=body.category_id,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     if not dispatch:
         raise HTTPException(status_code=404, detail="Dispatch not found")
     return dispatch

@@ -93,23 +93,22 @@ async def get_dispatch(db: AsyncIOMotorDatabase, dispatch_id: str) -> Optional[d
     return populated[0]
 
 
+async def _assert_valid_refs(db: AsyncIOMotorDatabase, article_id: Optional[str], category_id: Optional[str]) -> None:
+    if article_id and not await db["articles"].find_one({"_id": article_id}, {"_id": 1}):
+        raise ValueError(f"Unknown article_id: {article_id}")
+    if category_id and not await db["categories"].find_one({"_id": category_id}, {"_id": 1}):
+        raise ValueError(f"Unknown category_id: {category_id}")
+
+
 async def create_dispatch(
     db: AsyncIOMotorDatabase,
     text: str,
     article_id: Optional[str],
     created_by: Optional[str],
     image_url: Optional[str] = None,
+    category_id: Optional[str] = None,
 ) -> dict:
-    if article_id and not await db["articles"].find_one({"_id": article_id}, {"_id": 1}):
-        raise ValueError(f"Unknown article_id: {article_id}")
-
-    category_id = None
-    if not article_id:
-        # Standalone dispatches have nothing to derive a category from — try
-        # to auto-classify by text so Bytes' category filter still works.
-        # Best-effort: a failed/disabled classification just leaves it uncategorized.
-        categories = await db["categories"].find({}, {"name": 1}).to_list(length=100)
-        category_id = await ai_service.classify_category(text, categories)
+    await _assert_valid_refs(db, article_id, category_id)
 
     dispatch_id = str(uuid4())
     doc = {
@@ -127,6 +126,30 @@ async def create_dispatch(
     del result["_id"]
     populated = await _populate_dispatch_extras(db, [result])
     return populated[0]
+
+
+async def update_dispatch(
+    db: AsyncIOMotorDatabase,
+    dispatch_id: str,
+    text: str,
+    article_id: Optional[str],
+    image_url: Optional[str] = None,
+    category_id: Optional[str] = None,
+) -> Optional[dict]:
+    await _assert_valid_refs(db, article_id, category_id)
+
+    result = await db["dispatches"].update_one(
+        {"_id": dispatch_id},
+        {"$set": {
+            "text": sanitize_text(text),
+            "article_id": article_id,
+            "image_url": image_url or None,
+            "category_id": category_id,
+        }},
+    )
+    if result.matched_count == 0:
+        return None
+    return await get_dispatch(db, dispatch_id)
 
 
 async def delete_dispatch(db: AsyncIOMotorDatabase, dispatch_id: str) -> bool:

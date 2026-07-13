@@ -10,6 +10,21 @@ class DispatchCreate(BaseModel):
     # Optional cover image — bytes are built for sharing (WhatsApp/Instagram/
     # X), and a photo makes a far stronger share card than plain text.
     image_url: Optional[str] = None
+    # Manually chosen by the editor — a standalone dispatch (no article_id)
+    # has no other source for a category. See dispatch_service.backfill_categories
+    # for AI-classifying older dispatches that predate this field.
+    category_id: Optional[str] = None
+
+    class Config:
+        alias_generator = to_camel
+        populate_by_name = True
+
+
+class DispatchUpdate(BaseModel):
+    text: str = Field(..., min_length=1, max_length=280)
+    article_id: Optional[str] = None
+    image_url: Optional[str] = None
+    category_id: Optional[str] = None
 
     class Config:
         alias_generator = to_camel
@@ -21,13 +36,16 @@ class Dispatch(BaseModel):
     text: str
     article_id: Optional[str] = None
     image_url: Optional[str] = None
+    # The dispatch's own explicit category choice (None if it instead
+    # inherits one from a linked article — see `category` below). Exposed
+    # mainly so the admin edit form can prefill the category picker.
+    category_id: Optional[str] = None
     # Denormalized at read time from the linked article (see dispatch_service);
     # never stored, so a later slug/title change is picked up automatically.
     article_slug: Optional[str] = None
     article_title: Optional[str] = None
     # Resolved at read time (see dispatch_service._populate_dispatch_extras)
-    # from either the dispatch's own category_id (set at creation via AI
-    # classification, or by backfill_categories) or its linked article's.
+    # from either the dispatch's own category_id or its linked article's.
     category: Optional[str] = None
     created_at: datetime
     created_by: Optional[str] = None
