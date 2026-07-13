@@ -5,46 +5,54 @@ happened" instead of having to publish a complete article just to get a line
 into the ticker.
 """
 
+import logging
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Optional
 from uuid import uuid4
 from datetime import datetime, timezone
 
 from app.core.sanitize import sanitize_text
+from app.services import ai_service
+
+logger = logging.getLogger(__name__)
 
 
 async def ensure_dispatch_indexes(db: AsyncIOMotorDatabase) -> None:
     await db["dispatches"].create_index([("created_at", -1)])
 
 
-async def _populate_article_links(db: AsyncIOMotorDatabase, dispatches: List[dict]) -> List[dict]:
-    """Batch-attach slug/title/category for dispatches that link to a full
-    article — category is auto-derived here rather than stored, so a later
-    re-categorization of the article is reflected immediately."""
-    article_ids = [d["article_id"] for d in dispatches if d.get("article_id")]
-    if not article_ids:
-        for d in dispatches:
-            d.setdefault("article_slug", None)
-            d.setdefault("article_title", None)
-            d.setdefault("category", None)
-        return dispatches
-
-    articles = await db["articles"].find(
-        {"_id": {"$in": article_ids}}, {"slug": 1, "title": 1, "category_id": 1}
-    ).to_list(length=len(article_ids))
-    by_id = {a["_id"]: a for a in articles}
-
-    category_ids = {a["category_id"] for a in articles if a.get("category_id")}
+async def _category_names_for(db: AsyncIOMotorDatabase, category_ids: set) -> dict:
+    if not category_ids:
+        return {}
     categories = await db["categories"].find(
         {"_id": {"$in": list(category_ids)}}, {"name": 1}
-    ).to_list(length=len(category_ids)) if category_ids else []
-    category_names = {c["_id"]: c["name"] for c in categories}
+    ).to_list(length=len(category_ids))
+    return {c["_id"]: c["name"] for c in categories}
+
+
+async def _populate_dispatch_extras(db: AsyncIOMotorDatabase, dispatches: List[dict]) -> List[dict]:
+    """Batch-attach slug/title/category. Category is resolved at read time —
+    never stored redundantly on top of category_id — so a later
+    re-categorization (of the dispatch itself or its linked article) is
+    reflected immediately. A dispatch's own category_id (set at creation, via
+    AI classification, or backfilled) takes priority over the linked
+    article's, since an editor's explicit choice should win."""
+    article_ids = [d["article_id"] for d in dispatches if d.get("article_id")]
+    articles = await db["articles"].find(
+        {"_id": {"$in": article_ids}}, {"slug": 1, "title": 1, "category_id": 1}
+    ).to_list(length=len(article_ids)) if article_ids else []
+    articles_by_id = {a["_id"]: a for a in articles}
+
+    category_ids = {d["category_id"] for d in dispatches if d.get("category_id")}
+    category_ids |= {a["category_id"] for a in articles if a.get("category_id")}
+    category_names = await _category_names_for(db, category_ids)
 
     for d in dispatches:
-        article = by_id.get(d.get("article_id"))
+        article = articles_by_id.get(d.get("article_id"))
         d["article_slug"] = article.get("slug") if article else None
         d["article_title"] = article.get("title") if article else None
-        d["category"] = category_names.get(article.get("category_id")) if article else None
+        resolved_category_id = d.get("category_id") or (article.get("category_id") if article else None)
+        d["category"] = category_names.get(resolved_category_id)
     return dispatches
 
 
@@ -52,7 +60,7 @@ async def list_dispatches(db: AsyncIOMotorDatabase, limit: int = 50) -> List[dic
     """Most recent dispatches, newest first."""
     cursor = db["dispatches"].find().sort("created_at", -1).limit(limit)
     dispatches = [{**d, "id": d.pop("_id")} for d in await cursor.to_list(length=limit)]
-    return await _populate_article_links(db, dispatches)
+    return await _populate_dispatch_extras(db, dispatches)
 
 
 async def create_dispatch(
@@ -64,11 +72,20 @@ async def create_dispatch(
     if article_id and not await db["articles"].find_one({"_id": article_id}, {"_id": 1}):
         raise ValueError(f"Unknown article_id: {article_id}")
 
+    category_id = None
+    if not article_id:
+        # Standalone dispatches have nothing to derive a category from — try
+        # to auto-classify by text so Bytes' category filter still works.
+        # Best-effort: a failed/disabled classification just leaves it uncategorized.
+        categories = await db["categories"].find({}, {"name": 1}).to_list(length=100)
+        category_id = await ai_service.classify_category(text, categories)
+
     dispatch_id = str(uuid4())
     doc = {
         "_id": dispatch_id,
         "text": sanitize_text(text),
         "article_id": article_id,
+        "category_id": category_id,
         "created_at": datetime.now(timezone.utc),
         "created_by": created_by,
     }
@@ -76,10 +93,37 @@ async def create_dispatch(
 
     result = {**doc, "id": dispatch_id}
     del result["_id"]
-    populated = await _populate_article_links(db, [result])
+    populated = await _populate_dispatch_extras(db, [result])
     return populated[0]
 
 
 async def delete_dispatch(db: AsyncIOMotorDatabase, dispatch_id: str) -> bool:
     result = await db["dispatches"].delete_one({"_id": dispatch_id})
     return result.deleted_count > 0
+
+
+async def backfill_categories(db: AsyncIOMotorDatabase) -> int:
+    """One-time (re-runnable) sweep: AI-classify a category for every
+    standalone dispatch (no article_id) that doesn't have one yet. Safe to
+    call repeatedly — already-categorized or article-linked dispatches are
+    skipped."""
+    categories = await db["categories"].find({}, {"name": 1}).to_list(length=100)
+    if not categories:
+        return 0
+
+    cursor = db["dispatches"].find(
+        {"article_id": None, "category_id": None},
+        {"text": 1},
+    )
+    uncategorized = await cursor.to_list(length=None)
+
+    updated = 0
+    for d in uncategorized:
+        category_id = await ai_service.classify_category(d["text"], categories)
+        if not category_id:
+            continue
+        await db["dispatches"].update_one({"_id": d["_id"]}, {"$set": {"category_id": category_id}})
+        updated += 1
+
+    logger.info(f"Dispatch category backfill: classified {updated}/{len(uncategorized)} standalone dispatches")
+    return updated

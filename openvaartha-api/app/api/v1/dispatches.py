@@ -54,6 +54,20 @@ async def create_dispatch(
     return dispatch
 
 
+@router.post("/backfill-categories")
+@limiter.limit(MUTATION_LIMIT)
+async def backfill_dispatch_categories(
+    request: Request,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_editor),
+):
+    """AI-classify a category for every standalone dispatch (no linked
+    article) that doesn't have one yet. Safe to re-run — already-categorized
+    dispatches are skipped, so this also catches any new backlog over time."""
+    updated = await dispatch_service.backfill_categories(db)
+    return {"message": f"Categorized {updated} dispatch(es)", "updated": updated}
+
+
 @router.delete("/{dispatch_id}")
 @limiter.limit(MUTATION_LIMIT)
 async def delete_dispatch(

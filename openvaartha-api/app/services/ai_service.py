@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Optional
+from typing import List, Optional
 import httpx
 
 from app.config import settings
@@ -123,4 +123,58 @@ Generate a complete news article with this exact JSON structure:
 
     except Exception as e:
         logger.error(f"Groq AI generation failed: {e}", exc_info=True)
+        return None
+
+
+async def classify_category(text: str, categories: List[dict]) -> Optional[str]:
+    """Pick the best-fit category_id for a short piece of text (e.g. a
+    standalone dispatch with no linked article to derive a category from)."""
+    if not settings.GROQ_API_KEY or not categories:
+        return None
+
+    options = "\n".join(f'- id "{c["_id"]}": {c["name"]}' for c in categories)
+    prompt = f"""Categories:
+{options}
+
+Text: "{text.strip()}"
+
+Pick the single best-fit category for this text. Return ONLY JSON: {{"category_id": "<id from the list above>"}}"""
+
+    try:
+        headers = {
+            "Authorization": f"Bearer {settings.GROQ_API_KEY}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": settings.GROQ_MODEL,
+            "messages": [
+                {"role": "system", "content": "You are a news editor sorting short headlines into existing categories. Always pick one of the exact ids provided, never invent a new one."},
+                {"role": "user", "content": prompt},
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0,
+            "max_tokens": 100,
+        }
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=settings.AI_TIMEOUT,
+            )
+            response.raise_for_status()
+            res_data = response.json()
+
+        content = res_data["choices"][0]["message"]["content"]
+        if not content:
+            return None
+
+        data = json.loads(content.strip())
+        category_id = data.get("category_id")
+        valid_ids = {c["_id"] for c in categories}
+        return category_id if category_id in valid_ids else None
+
+    except Exception as e:
+        logger.error(f"Groq category classification failed: {e}", exc_info=True)
         return None

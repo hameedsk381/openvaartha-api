@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Radio } from "@/components/animate-ui/icons/radio";
 import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
 import { Plus } from "@/components/animate-ui/icons/plus";
+import { Sparkles } from "@/components/animate-ui/icons/sparkles";
 import { Trash2 } from "@/components/animate-ui/icons/trash-2";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
@@ -51,6 +52,16 @@ export default function AdminDispatches() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const backfillMutation = useMutation({
+    mutationFn: () => apiFetch<{ message: string; updated: number }>("/dispatches/backfill-categories", { method: "POST" }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "dispatches"] });
+      queryClient.invalidateQueries({ queryKey: ["dispatches"] });
+      toast.success(data.message);
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiFetch<{ message: string }>(`/dispatches/${id}`, { method: "DELETE" }),
     onSuccess: () => {
@@ -69,15 +80,32 @@ export default function AdminDispatches() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Radio className="h-5 w-5 text-primary" /> Dispatches
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Short breaking-news blurbs — not full articles. These power the homepage
-          "JUST IN" scrolling ticker and the Bytes page. Optionally link
-          one to a full article once you've published it.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Radio className="h-5 w-5 text-primary" /> Dispatches
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Short breaking-news blurbs — not full articles. These power the homepage
+            "JUST IN" scrolling ticker and the Bytes page. Optionally link
+            one to a full article once you've published it.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="shrink-0"
+          onClick={() => backfillMutation.mutate()}
+          disabled={backfillMutation.isPending}
+          title="AI-classify a category for every standalone dispatch that doesn't have one yet"
+        >
+          {backfillMutation.isPending ? (
+            <LoaderCircle className="h-4 w-4" animate />
+          ) : (
+            <Sparkles className="h-4 w-4" animateOnHover />
+          )}
+          Auto-categorize
+        </Button>
       </div>
 
       <form onSubmit={onSubmit} className="border border-border rounded-xl p-5 space-y-4">
