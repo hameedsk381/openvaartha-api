@@ -153,7 +153,6 @@ const BytesPage = () => {
                   byte={byte}
                   toneIndex={index}
                   shareUrl={`${window.location.origin}/bytes/${byte.id}`}
-                  counter={{ current: index + 1, total: filteredBytes.length }}
                 />
               );
 

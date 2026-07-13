@@ -36,23 +36,31 @@ interface ByteCardProps {
   byte: Dispatch;
   toneIndex?: number;
   shareUrl: string;
-  counter?: { current: number; total: number };
 }
 
 /**
  * A single byte card: image (or brand watermark, if no photo) on top as its
  * own region, all text below it on a plain readable surface — never text
- * laid over a photo. Laid out as three fixed-flow regions (visual / content
- * / footer) so long headlines scroll within the content region instead of
- * pushing the share/counter footer off-screen or growing into the page's
- * fixed header above.
+ * laid over a photo. Long headlines scroll within the content region
+ * instead of growing into the page's fixed header above or the visual
+ * region's fixed height.
  */
-export default function ByteCard({ byte, toneIndex = 0, shareUrl, counter }: ByteCardProps) {
+export default function ByteCard({ byte, toneIndex = 0, shareUrl }: ByteCardProps) {
   const hasImage = !!byte.imageUrl;
   const tone = TONES[toneIndex % TONES.length];
 
   return (
-    <div className="h-full w-full flex flex-col bg-card overflow-hidden">
+    <div className="relative h-full w-full flex flex-col bg-card overflow-hidden">
+      <button
+        onClick={(e) => { e.stopPropagation(); shareByte(byte, shareUrl); }}
+        aria-label="Share this byte"
+        className="absolute top-4 right-4 z-10 h-10 w-10 rounded-full bg-background/90 backdrop-blur border border-border flex items-center justify-center text-foreground shadow-md press"
+      >
+        <AnimatedIcon animationType="scale">
+          <Share2 className="h-4 w-4" />
+        </AnimatedIcon>
+      </button>
+
       {/* Visual region */}
       <div
         className={`relative w-full shrink-0 overflow-hidden flex items-center justify-center ${hasImage ? 'h-[38%] sm:h-[42%] bg-black' : `h-24 sm:h-28 ${tone.bg}`}`}
@@ -95,26 +103,6 @@ export default function ByteCard({ byte, toneIndex = 0, shareUrl, counter }: Byt
             </span>
           )}
         </div>
-      </div>
-
-      {/* Footer — always in-flow, never overlaps content or the page chrome above/below */}
-      <div className="shrink-0 flex items-center justify-between gap-4 px-6 sm:px-10 h-14 border-t border-border">
-        {counter ? (
-          <span className="text-[11px] font-semibold tabular-nums text-muted-foreground">
-            {counter.current} / {counter.total}
-          </span>
-        ) : <span />}
-
-        <button
-          onClick={(e) => { e.stopPropagation(); shareByte(byte, shareUrl); }}
-          aria-label="Share this byte"
-          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider bg-muted text-foreground press"
-        >
-          <AnimatedIcon animationType="scale">
-            <Share2 className="h-3.5 w-3.5" />
-          </AnimatedIcon>
-          Share
-        </button>
       </div>
     </div>
   );
