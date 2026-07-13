@@ -34,10 +34,10 @@ const BytePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="h-screen flex flex-col overflow-hidden bg-background text-foreground">
       <Navbar />
 
-      <header className="h-14 px-4 border-b border-border bg-background flex items-center">
+      <header className="shrink-0 h-14 px-4 border-b border-border bg-background flex items-center">
         <button
           onClick={() => navigate('/bytes')}
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors press"
@@ -46,7 +46,7 @@ const BytePage = () => {
         </button>
       </header>
 
-      <main className="h-[calc(100vh-7rem)]">
+      <main className="flex-1 min-h-0">
         <ByteCard byte={byte} shareUrl={window.location.href} />
       </main>
     </div>
