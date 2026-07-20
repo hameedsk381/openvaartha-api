@@ -279,6 +279,7 @@ class GenerateArticleRequest(BaseModel):
     source_content: Optional[str] = None
     style: str = "standard"
     tone: str = "neutral"
+    length: str = "standard"
 
 
 class GenerateArticleResponse(BaseModel):
@@ -293,7 +294,13 @@ class GenerateArticleResponse(BaseModel):
 @router.post("/ai/generate-article", response_model=GenerateArticleResponse)
 async def ai_generate_article(body: GenerateArticleRequest):
     """Generate a complete article draft from a topic prompt using Groq."""
-    result = await generate_article(topic=body.topic, source_content=body.source_content, style=body.style, tone=body.tone)
+    result = await generate_article(
+        topic=body.topic,
+        source_content=body.source_content,
+        style=body.style,
+        tone=body.tone,
+        length=body.length
+    )
     if not result:
         raise HTTPException(
             status_code=503,

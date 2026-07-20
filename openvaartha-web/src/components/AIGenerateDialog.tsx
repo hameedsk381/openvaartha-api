@@ -49,6 +49,12 @@ const TONES = [
   { value: "narrative", label: "Narrative" },
 ];
 
+const LENGTHS = [
+  { value: "short", label: "Short" },
+  { value: "standard", label: "Standard" },
+  { value: "long", label: "Long" },
+];
+
 export default function AIGenerateDialog({ onApply }: Props) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState("topic");
@@ -56,6 +62,7 @@ export default function AIGenerateDialog({ onApply }: Props) {
   const [sourceContent, setSourceContent] = useState("");
   const [style, setStyle] = useState("standard");
   const [tone, setTone] = useState("neutral");
+  const [length, setLength] = useState("standard");
 
   const mutation = useMutation({
     mutationFn: () => {
@@ -68,6 +75,7 @@ export default function AIGenerateDialog({ onApply }: Props) {
           source_content: mode === "content" ? sourceContent : null,
           style,
           tone,
+          length,
         }),
         signal: controller.signal,
       }).finally(() => clearTimeout(timer));
@@ -144,7 +152,7 @@ export default function AIGenerateDialog({ onApply }: Props) {
           </TabsContent>
         </Tabs>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <div className="space-y-2">
             <Label>Style</Label>
             <Select value={style} onValueChange={setStyle} disabled={mutation.isPending}>
@@ -167,6 +175,19 @@ export default function AIGenerateDialog({ onApply }: Props) {
               <SelectContent>
                 {TONES.map((t) => (
                   <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Length</Label>
+            <Select value={length} onValueChange={setLength} disabled={mutation.isPending}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LENGTHS.map((l) => (
+                  <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

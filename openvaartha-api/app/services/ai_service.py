@@ -1,7 +1,9 @@
 import json
 import logging
 from typing import List, Optional
+from datetime import datetime
 import httpx
+from duckduckgo_search import DDGS
 
 from app.config import settings
 from app.core.sanitize import sanitize_html, sanitize_text
@@ -19,7 +21,7 @@ reproduce source text in another language.
 Rules for article structure:
 - title: compelling, accurate, not clickbait — front-page quality
 - summary: 2-3 punchy sentences that make readers want to read more
-- body: 4-6 rich paragraphs of ~60-80 words each (markdown, no H1). Include context, analysis, and background. This is the CORE of the article — do NOT skip or skimp on this.
+- body: {BODY_RULE} Include context, analysis, and background. This is the CORE of the article — do NOT skip or skimp on this.
 - tldr: a sharp one-line takeaway
 - points: 3-5 bullet-point key facts (as a list of strings)
 - timeline: an array of chronological events extracted from the content (e.g., [{"date": "YYYY-MM-DD", "event": "..."}]). Leave empty if not applicable.
@@ -38,6 +40,7 @@ async def generate_article(
     source_content: Optional[str] = None,
     style: str = "standard",
     tone: str = "neutral",
+    length: str = "standard",
 ) -> Optional[dict]:
     """Generate a complete article draft from a topic prompt using Groq."""
     theme_guide = {
@@ -54,14 +57,33 @@ async def generate_article(
         "narrative": "Storytelling style with scene-setting and narrative flow.",
     }.get(tone, "Neutral, objective, fact-based journalism.")
 
+    length_rules = {
+        "short": "2-3 short paragraphs of ~40-50 words each (markdown, no H1).",
+        "standard": "4-6 rich paragraphs of ~60-80 words each (markdown, no H1).",
+        "long": "7-10 detailed paragraphs of ~80-100 words each (markdown, no H1).",
+    }
+    body_rule = length_rules.get(length, length_rules["standard"])
+
+    search_context = ""
+    try:
+        results = DDGS().text(topic, max_results=3)
+        if results:
+            search_context = "\nWeb Research context:\n" + "\n".join(f"- {r['title']}: {r['body']}" for r in results)
+    except Exception as e:
+        logger.warning(f"Web search failed for topic '{topic}': {e}")
+
+    combined_source = (source_content or "") + "\n" + search_context
     source_block = ""
-    if source_content and source_content.strip():
+    if combined_source.strip():
         source_block = f"""
 Source material to base the article on (extract facts, quotes, and details from this):
-{source_content.strip()}
+{combined_source.strip()}
 """
 
-    prompt = f"""Topic: {topic}
+    current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    prompt = f"""Today's date and time is: {current_date}
+Topic: {topic}
 Style: {style_guide}
 Tone: {tone_guide}{source_block}
 
@@ -79,7 +101,7 @@ Generate a complete news article with this exact JSON structure:
         payload = {
             "model": settings.GROQ_MODEL,
             "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "system", "content": SYSTEM_PROMPT.replace("{BODY_RULE}", body_rule)},
                 {"role": "user", "content": prompt},
             ],
             "response_format": {"type": "json_object"},
