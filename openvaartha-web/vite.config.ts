@@ -102,6 +102,15 @@ export default defineConfig(({ mode }) => ({
             icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }],
           },
         ],
+        share_target: {
+          action: "/search",
+          method: "GET",
+          params: {
+            title: "q",
+            text: "q",
+            url: "q"
+          }
+        },
         screenshots: [],
       },
       // Precache config + runtime caching rules live in src/sw.ts now (the

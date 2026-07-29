@@ -142,6 +142,29 @@ const App = () => {
     // Listen for local changes (from same tab)
     window.addEventListener('appearance-change', handleUpdate);
 
+    // Clear App Badge when opened
+    if ('clearAppBadge' in navigator) {
+      (navigator as any).clearAppBadge().catch(() => {});
+    }
+
+    // Register Periodic Background Sync if supported
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(async (registration) => {
+        if ('periodicSync' in registration) {
+          try {
+            const status = await navigator.permissions.query({ name: 'periodic-background-sync' as any });
+            if (status.state === 'granted') {
+              await (registration as any).periodicSync.register('fetch-latest-news', {
+                minInterval: 12 * 60 * 60 * 1000, // 12 hours
+              });
+            }
+          } catch (e) {
+            // Permission not granted or unsupported
+          }
+        }
+      });
+    }
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);

@@ -8,17 +8,31 @@ import { precacheAndRoute, matchPrecache } from "workbox-precaching";
 import { registerRoute, NavigationRoute } from "workbox-routing";
 import { NetworkFirst, CacheFirst, NetworkOnly } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
+import { BackgroundSyncPlugin } from "workbox-background-sync";
 
 declare const self: ServiceWorkerGlobalScope;
 
 precacheAndRoute(self.__WB_MANIFEST);
 
+const bgSyncPlugin = new BackgroundSyncPlugin("openvaartha-mutations", {
+  maxRetentionTime: 24 * 60, // Retry for max of 24 Hours
+});
+
+// Cache GET requests to the API for offline reading
 registerRoute(
-  ({ url }) => /\/api\/v1\//i.test(url.href),
+  ({ url, request }) => /\/api\/v1\//i.test(url.href) && request.method === 'GET',
   new NetworkFirst({
     cacheName: "openvaartha-api",
     networkTimeoutSeconds: 5,
     plugins: [new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 })],
+  })
+);
+
+// Queue POST/PUT/DELETE requests for Background Sync if offline
+registerRoute(
+  ({ url, request }) => /\/api\/v1\//i.test(url.href) && ['POST', 'PUT', 'DELETE'].includes(request.method),
+  new NetworkOnly({
+    plugins: [bgSyncPlugin],
   })
 );
 
@@ -66,13 +80,36 @@ self.addEventListener("push", (event: PushEvent) => {
 
   const title = data.title || "Open Vaartha";
   event.waitUntil(
-    self.registration.showNotification(title, {
-      body: data.body,
-      icon: "/pwa-192x192.png",
-      badge: "/pwa-192x192.png",
-      data: { url: data.url || "/" },
-    })
+    Promise.all([
+      self.registration.showNotification(title, {
+        body: data.body,
+        icon: "/pwa-192x192.png",
+        badge: "/pwa-192x192.png",
+        data: { url: data.url || "/" },
+      }),
+      ('setAppBadge' in navigator) ? (navigator as any).setAppBadge(1).catch(() => {}) : Promise.resolve()
+    ])
   );
+});
+
+self.addEventListener("periodicsync", (event: any) => {
+  if (event.tag === "fetch-latest-news") {
+    event.waitUntil(
+      fetch("/api/v1/articles")
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to fetch latest news");
+          const cachePromise = caches.open("openvaartha-api")
+            .then(cache => cache.put("/api/v1/articles", res.clone()));
+          
+          const badgePromise = ('setAppBadge' in navigator) 
+            ? (navigator as any).setAppBadge(1).catch(() => {}) 
+            : Promise.resolve();
+            
+          return Promise.all([cachePromise, badgePromise]);
+        })
+        .catch(console.error)
+    );
+  }
 });
 
 self.addEventListener("notificationclick", (event: NotificationEvent) => {
