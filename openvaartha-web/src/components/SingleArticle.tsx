@@ -158,6 +158,7 @@ function useSEOMeta(article: Article | undefined) {
 }
 
 const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: (slug: string, title: string) => void }) => {
+  const { ref, inView } = useInView({ threshold: 0.1, triggerOnce: false });
   const slug = articleId;
   const [scrollProgress, setScrollProgress] = useState(0);
   const [quoteCardOpen, setQuoteCardOpen] = useState(false);
@@ -196,6 +197,12 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
     if (!article || !localStorage.getItem("token")) return;
     apiFetch(`/users/me/history/${article.id}`, { method: "POST" }).catch(() => {});
   }, [article?.id]);
+
+  useEffect(() => {
+    if (inView && onInView && article) {
+      onInView(article.slug, article.title);
+    }
+  }, [inView, onInView, article]);
 
   useEffect(() => {
     window.scrollTo(0, 0);

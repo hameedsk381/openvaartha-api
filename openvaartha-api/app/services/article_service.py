@@ -18,9 +18,18 @@ from app.core.sanitize import sanitize_html, sanitize_points, sanitize_text
 from app.models.article import ArticleStatus, PUBLIC_STATUS
 from app.services.comment_service import ensure_comment_indexes
 
+import math
 _redis_client: Optional[redis_async.Redis] = None
 
-
+def _cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
+    if not vec1 or not vec2 or len(vec1) != len(vec2):
+        return 0.0
+    dot_product = sum(a * b for a, b in zip(vec1, vec2))
+    norm1 = math.sqrt(sum(a * a for a in vec1))
+    norm2 = math.sqrt(sum(b * b for b in vec2))
+    if norm1 == 0 or norm2 == 0:
+        return 0.0
+    return dot_product / (norm1 * norm2)
 def _json_default(value):
     if isinstance(value, datetime):
         return value.isoformat()
@@ -536,44 +545,79 @@ async def get_for_you_articles(db: AsyncIOMotorDatabase, user_id: Optional[str] 
         return await get_trending_articles(db, limit=limit)
 
     # Fetch user's recent reading history
-    history = await db["reading_history"].find({"user_id": user_id}).sort("read_at", -1).to_list(length=30)
+    history = await db["reading_history"].find({"user_id": user_id}).sort("read_at", -1).to_list(length=20)
     if not history:
         return await get_trending_articles(db, limit=limit)
 
     read_article_ids = [h["article_id"] for h in history]
 
-    # Aggregate category counts from read articles
-    read_articles = await db["articles"].find({"_id": {"$in": read_article_ids}}, {"category_id": 1}).to_list(length=50)
-    cat_counts = {}
-    for a in read_articles:
-        cid = a.get("category_id")
-        if cid:
-            cat_counts[cid] = cat_counts.get(cid, 0) + 1
+    # Retrieve embeddings for read articles
+    read_articles = await db["articles"].find(
+        {"_id": {"$in": read_article_ids}, "embedding": {"$exists": True, "$ne": None}}, 
+        {"embedding": 1, "category_id": 1}
+    ).to_list(length=20)
 
-    if not cat_counts:
+    # If no embeddings found in history, fallback to category logic
+    if not read_articles:
+        read_articles_fallback = await db["articles"].find({"_id": {"$in": read_article_ids}}, {"category_id": 1}).to_list(length=50)
+        cat_counts = {}
+        for a in read_articles_fallback:
+            cid = a.get("category_id")
+            if cid:
+                cat_counts[cid] = cat_counts.get(cid, 0) + 1
+        
+        if not cat_counts:
+            return await get_trending_articles(db, limit=limit)
+            
+        top_categories = sorted(cat_counts.keys(), key=lambda c: cat_counts[c], reverse=True)[:3]
+        query = _public_query({
+            "category_id": {"$in": top_categories},
+            "_id": {"$nin": read_article_ids},
+        })
+        cursor = db["articles"].find(query).sort("published_at", -1).limit(limit)
+        articles = await cursor.to_list(length=limit)
+        
+        if len(articles) < limit:
+            remaining = limit - len(articles)
+            fetched_ids = [a["_id"] for a in articles] + read_article_ids
+            fallback_cursor = db["articles"].find(_public_query({"_id": {"$nin": fetched_ids}})).sort("published_at", -1).limit(remaining)
+            articles.extend(await fallback_cursor.to_list(length=remaining))
+            
+        return await _populate_articles_bulk(db, articles)
+
+    # Compute average embedding (profile vector)
+    embeddings = [a["embedding"] for a in read_articles if "embedding" in a]
+    if not embeddings:
+        return await get_trending_articles(db, limit=limit)
+        
+    embedding_length = len(embeddings[0])
+    profile_vector = [sum(e[i] for e in embeddings) / len(embeddings) for i in range(embedding_length)]
+
+    # Fetch pool of recent unread articles to rank
+    pool_cursor = db["articles"].find(
+        _public_query({"_id": {"$nin": read_article_ids}, "embedding": {"$exists": True, "$ne": None}}),
+        {"title": 1, "summary": 1, "category_id": 1, "published_at": 1, "thumbnail_url": 1, "author": 1, "slug": 1, "status": 1, "read_time": 1, "embedding": 1}
+    ).sort("published_at", -1).limit(200) # Get a decent pool of recent articles
+    
+    article_pool = await pool_cursor.to_list(length=200)
+    
+    if not article_pool:
+        # No unread articles with embeddings, just return trending
         return await get_trending_articles(db, limit=limit)
 
-    # Get top 3 categories by read count
-    top_categories = sorted(cat_counts.keys(), key=lambda c: cat_counts[c], reverse=True)[:3]
+    # Rank by cosine similarity
+    for article in article_pool:
+        article["_sim_score"] = _cosine_similarity(profile_vector, article["embedding"])
 
-    # Query published articles matching user's favorite categories, excluding already read articles
-    query = _public_query({
-        "category_id": {"$in": top_categories},
-        "_id": {"$nin": read_article_ids},
-    })
+    article_pool.sort(key=lambda a: a["_sim_score"], reverse=True)
+    top_articles = article_pool[:limit]
 
-    cursor = db["articles"].find(query).sort("published_at", -1).limit(limit)
-    articles = await cursor.to_list(length=limit)
+    # Remove the temporary score and embedding before populating (though they'd be ignored by schema, good to clean up)
+    for article in top_articles:
+        article.pop("_sim_score", None)
+        article.pop("embedding", None)
 
-    # If not enough unread articles in top categories, fallback to general recent articles
-    if len(articles) < limit:
-        remaining_limit = limit - len(articles)
-        fetched_ids = [a["_id"] for a in articles] + read_article_ids
-        fallback_cursor = db["articles"].find(_public_query({"_id": {"$nin": fetched_ids}})).sort("published_at", -1).limit(remaining_limit)
-        fallback_articles = await fallback_cursor.to_list(length=remaining_limit)
-        articles.extend(fallback_articles)
-
-    return await _populate_articles_bulk(db, articles)
+    return await _populate_articles_bulk(db, top_articles)
 
 
 async def get_breaking_articles(db: AsyncIOMotorDatabase, limit: int = 5):
@@ -730,6 +774,21 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
         }
         await db["article_content"].insert_one(content_doc)
 
+    from app.services.gemini_service import generate_embedding
+    
+    # Generate vector embedding for personalization
+    text_to_embed = f"{article_data.title}\n{article_data.summary}"
+    tags = getattr(article_data, "tags", [])
+    if tags:
+        text_to_embed += f"\nTags: {', '.join(tags)}"
+    
+    embedding = await generate_embedding(text_to_embed)
+    if embedding:
+        await db["articles"].update_one(
+            {"_id": article_id}, 
+            {"$set": {"embedding": embedding}}
+        )
+
     await invalidate_article_caches()
     return await get_article_by_id(db, article_id, include_unpublished=True)
 
@@ -801,6 +860,25 @@ async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data
                 {"_id": article_id},
                 {"$set": {"has_deep_content": _has_deep_content(merged)}},
             )
+
+    if "title" in update_dict or "summary" in update_dict or "tags" in update_dict:
+        from app.services.gemini_service import generate_embedding
+        existing = await db["articles"].find_one({"_id": article_id}, {"title": 1, "summary": 1, "tags": 1})
+        if existing:
+            title = update_dict.get("title", existing.get("title", ""))
+            summary = update_dict.get("summary", existing.get("summary", ""))
+            tags = update_dict.get("tags", existing.get("tags", []))
+            
+            text_to_embed = f"{title}\n{summary}"
+            if tags:
+                text_to_embed += f"\nTags: {', '.join(tags)}"
+                
+            embedding = await generate_embedding(text_to_embed)
+            if embedding:
+                await db["articles"].update_one(
+                    {"_id": article_id}, 
+                    {"$set": {"embedding": embedding}}
+                )
 
     await invalidate_article_caches()
     return await get_article_by_id(db, article_id, include_unpublished=True)

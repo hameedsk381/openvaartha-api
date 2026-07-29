@@ -146,6 +146,7 @@ class Article(ArticleBase):
     updated_at: Optional[datetime] = None
     category: str = ""  # Default to empty string, will be populated with category name
     content: Optional[ArticleContent] = None
+    embedding: Optional[List[float]] = None
 
     class Config:
         alias_generator = to_camel

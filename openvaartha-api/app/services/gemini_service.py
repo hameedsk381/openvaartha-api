@@ -78,3 +78,18 @@ async def analyze_article_facts(article_text: str) -> Optional[dict]:
     except Exception as e:
         logger.error(f"Gemini fact checking failed: {e}", exc_info=True)
         return None
+
+async def generate_embedding(text: str) -> Optional[list[float]]:
+    """Generates a text embedding using Gemini."""
+    if not _init_gemini():
+        return None
+    try:
+        result = await genai.embed_content_async(
+            model="models/text-embedding-004",
+            content=text,
+            task_type="retrieval_document"
+        )
+        return result['embedding']
+    except Exception as e:
+        logger.error(f"Gemini embedding failed: {e}", exc_info=True)
+        return None
