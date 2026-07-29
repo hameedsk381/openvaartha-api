@@ -21,13 +21,29 @@ async def search_articles(
     return articles
 
 
+import re
+from app.services.article_service import _public_query
+
+
 @router.get("/suggestions")
 async def search_suggestions(
     q: str = Query(..., min_length=1, description="Search query"),
-    limit: int = Query(5, ge=1, le=10),
+    limit: int = Query(6, ge=1, le=10),
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
-    """Get search suggestions based on article titles."""
-    articles = await article_service.search_articles(db, query=q, skip=0, limit=limit)
-    suggestions = [article["title"] for article in articles]
-    return {"suggestions": suggestions}
+    """Get rich search suggestions including titles, tags, and categories."""
+    regex = {"$regex": f"{re.escape(q)}", "$options": "i"}
+
+    articles = await db["articles"].find(
+        _public_query({"title": regex}),
+        {"title": 1, "slug": 1}
+    ).limit(limit).to_list(length=limit)
+
+    tags = await db["articles"].distinct("tags", _public_query({"tags": regex}))
+    categories = await db["categories"].find({"name": regex}, {"name": 1}).to_list(length=3)
+
+    return {
+        "titles": [{"title": a["title"], "slug": a.get("slug", "")} for a in articles],
+        "tags": tags[:4],
+        "categories": [c["name"] for c in categories],
+    }

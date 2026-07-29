@@ -71,6 +71,13 @@ async def dashboard_stats(
     views_result = await db["articles"].aggregate(pipeline).to_list(length=1)
     total_views = views_result[0].get("total_views", 0) if views_result else 0
 
+    # Reaction analytics breakdown
+    reaction_pipeline = [
+        {"$group": {"_id": "$reaction_type", "count": {"$sum": 1}}}
+    ]
+    reactions_docs = await db["article_reactions"].aggregate(reaction_pipeline).to_list(length=10)
+    reaction_stats = {r["_id"]: r["count"] for r in reactions_docs}
+
     return {
         "articles": {
             "total": total_articles,
@@ -84,6 +91,7 @@ async def dashboard_stats(
         "comments": {"total": total_comments},
         "subscribers": {"total": total_subscribers},
         "views": {"total": total_views},
+        "reactions": reaction_stats,
         "recent_articles": recent_articles,
         "top_articles": top_articles,
         "sparkline": sparkline_data,

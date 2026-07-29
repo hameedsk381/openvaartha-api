@@ -9,6 +9,8 @@ import { Clock } from '@/components/animate-ui/icons/clock';
 import { LoaderCircle } from '@/components/animate-ui/icons/loader-circle';
 import { handleImageFallback } from '@/lib/utils';
 import { BRAND } from '@/lib/brand';
+import { useQuery } from '@tanstack/react-query';
+import { apiFetch } from '@/lib/api';
 import { useSearch, useCategories, useArticles } from '@/lib/api-hooks';
 
 const relativeTime = (iso: string) => {
@@ -59,6 +61,12 @@ const SearchPage = () => {
   });
 
   const { data: searchResults = [], isFetching: searchFetching } = useSearch(query, 0, limit);
+
+  const { data: suggestionsData } = useQuery({
+    queryKey: ["search", "suggestions", query],
+    queryFn: () => apiFetch<{ titles: Array<{ title: string; slug: string }>; tags: string[]; categories: string[] }>(`/search/suggestions?q=${encodeURIComponent(query)}`),
+    enabled: query.trim().length >= 2,
+  });
 
   const isFetching = allFetching || searchFetching;
 
@@ -111,6 +119,43 @@ const SearchPage = () => {
                 >
                   <X className="h-4 w-4 text-muted-foreground" animateOnHover />
                 </button>
+              )}
+
+              {query.trim().length >= 2 && suggestionsData && (suggestionsData.titles?.length > 0 || suggestionsData.tags?.length > 0) && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-border">
+                  {suggestionsData.titles.length > 0 && (
+                    <div className="p-3">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-2">Matching Stories</span>
+                      <div className="mt-1 space-y-1">
+                        {suggestionsData.titles.map((t) => (
+                          <Link
+                            key={t.slug}
+                            to={`/article/${t.slug}`}
+                            className="block px-2 py-1.5 rounded-md text-sm font-semibold text-foreground hover:bg-primary/10 hover:text-primary transition-colors line-clamp-1"
+                          >
+                            {t.title}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {suggestionsData.tags.length > 0 && (
+                    <div className="p-3 flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Topics:</span>
+                      {suggestionsData.tags.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => setQuery(tag)}
+                          className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium hover:bg-primary hover:text-white transition-colors"
+                        >
+                          #{tag}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 

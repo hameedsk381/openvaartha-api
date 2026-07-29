@@ -23,6 +23,7 @@ import CommentSection from "@/components/CommentSection";
 import ReactionBar from "@/components/ReactionBar";
 import QuoteCardModal from "@/components/QuoteCardModal";
 import SeriesBanner from "@/components/SeriesBanner";
+import AudioPlayer from "@/components/AudioPlayer";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { toast } from "sonner";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
@@ -312,6 +313,8 @@ const ArticlePage = () => {
             <p className="font-serif text-lg sm:text-xl text-muted-foreground mt-5 sm:mt-6 leading-relaxed max-w-3xl">
               {article.summary}
             </p>
+
+            <AudioPlayer title={article.title} bodyText={(article.summary || "") + " " + (article.content?.body || "")} />
 
             <div className="flex flex-wrap items-center justify-between gap-4 mt-8 sm:mt-10 pt-6 border-t border-border">
               <address className="flex items-center gap-3 not-italic">

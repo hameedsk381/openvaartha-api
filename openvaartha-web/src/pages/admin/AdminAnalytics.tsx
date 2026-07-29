@@ -10,6 +10,7 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis
 
 type DashboardStats = {
   views: { total: number };
+  reactions?: Record<string, number>;
   top_articles: Array<{
     id: string;
     slug: string;
@@ -74,7 +75,22 @@ export default function AdminAnalytics() {
           <p className="text-sm font-semibold text-muted-foreground mt-1 relative z-10">Total Lifetime Views</p>
         </div>
 
-        <div className="md:col-span-2 border border-border rounded-lg p-6 bg-[hsl(var(--surface))]">
+        <div className="md:col-span-3 grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {[
+            { type: "fire", label: "🔥 Hot", count: data?.reactions?.fire || 0 },
+            { type: "applause", label: "👏 Bravo", count: data?.reactions?.applause || 0 },
+            { type: "idea", label: "💡 Insightful", count: data?.reactions?.idea || 0 },
+            { type: "sad", label: "😢 Sad", count: data?.reactions?.sad || 0 },
+            { type: "mindblown", label: "🤯 Mindblown", count: data?.reactions?.mindblown || 0 },
+          ].map(({ type, label, count }) => (
+            <div key={type} className="border border-border rounded-lg p-3.5 bg-[hsl(var(--surface))]">
+              <span className="text-xs font-semibold">{label}</span>
+              <p className="text-xl font-bold tracking-tight text-foreground mt-1">{count}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="md:col-span-3 border border-border rounded-lg p-6 bg-[hsl(var(--surface))]">
           <div className="flex items-center justify-between mb-6">
              <div>
                <h3 className="text-base font-bold tracking-tight">7-Day Publishing Trend</h3>
