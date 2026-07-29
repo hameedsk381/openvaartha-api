@@ -5,7 +5,7 @@ import BreakingTicker from '../components/BreakingTicker';
 import Footer from '@/components/Footer';
 
 // Extracted Home Components
-import HeroBento from '@/components/home/HeroBento';
+import HeroClassic from '@/components/home/HeroClassic';
 import CategoryStrip from '@/components/home/CategoryStrip';
 import EditorPicks from '@/components/home/EditorPicks';
 import MainFeed from '@/components/home/MainFeed';
@@ -83,8 +83,8 @@ export default function Index() {
             </div>
           )}
 
-          {/* Bento Box Hero Section */}
-          <HeroBento articles={filtered.slice(0, 5)} />
+          {/* Classic Hero Section */}
+          <HeroClassic articles={filtered.slice(0, 5)} />
 
           {/* Category Quick Strips */}
           {!isFiltered && categories.length > 0 && (
