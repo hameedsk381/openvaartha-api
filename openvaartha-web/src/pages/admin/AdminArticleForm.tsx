@@ -53,6 +53,7 @@ type FormState = {
   timeline: TimelineEntry[];
   explainer: ExplainerEntry[];
   pollId: string;
+  factCheck: any; // We can use the proper type if imported, but any works for form state to avoid import clutter if not needed
 };
 
 // `datetime-local` inputs expect (and return) wall-clock LOCAL time with no
@@ -90,6 +91,7 @@ const emptyForm: FormState = {
   timeline: [],
   explainer: [],
   pollId: "",
+  factCheck: null,
 };
 
 export default function AdminArticleForm() {
@@ -218,6 +220,7 @@ export default function AdminArticleForm() {
       timeline: article.content?.timeline?.filter((t): t is TimelineEntry => !!t) || [],
       explainer: article.content?.explainer?.filter((e): e is ExplainerEntry => !!e) || [],
       pollId: article.content?.pollId || "",
+      factCheck: article.content?.factCheck || null,
     });
     resetDirty();
   }, [articleQuery.data]);
@@ -260,6 +263,7 @@ export default function AdminArticleForm() {
       explainer: form.explainer.length > 0 ? form.explainer : null,
       video_url: form.videoUrl || null,
       poll_id: form.pollId || null,
+      fact_check: form.factCheck || null,
     },
   }), [form]);
 
@@ -930,6 +934,66 @@ export default function AdminArticleForm() {
               <FlagRow label="Breaking" checked={form.isBreaking} onCheckedChange={(checked) => update("isBreaking", checked)} />
               <FlagRow label="Editor pick" checked={form.isEditorPick} onCheckedChange={(checked) => update("isEditorPick", checked)} />
             </div>
+          </CardSection>
+
+          <CardSection title="Fact Check & Bias (AI)">
+            {form.factCheck ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-2">
+                    <span className="text-xs font-bold px-2 py-1 bg-primary/10 text-primary rounded">Score: {form.factCheck.confidenceScore}/100</span>
+                    <span className="text-xs font-bold px-2 py-1 bg-secondary text-secondary-foreground rounded">{form.factCheck.biasRating}</span>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" onClick={() => update("factCheck", null)}>
+                    Clear
+                  </Button>
+                </div>
+                <p className="text-sm font-medium">{form.factCheck.summary}</p>
+                <div className="space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Claims Verified</p>
+                  <ul className="space-y-2">
+                    {form.factCheck.claims.map((claim: any, idx: number) => (
+                      <li key={idx} className="p-3 border border-border rounded-lg bg-muted/20">
+                        <p className="text-sm font-bold mb-1">{claim.claim}</p>
+                        <p className="text-xs text-muted-foreground mb-2">Assessment: {claim.assessment}</p>
+                        {claim.sourceUrl && (
+                          <a href={claim.sourceUrl} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                            <ExternalLink className="w-3 h-3" />
+                            Source
+                          </a>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Generate a trust report using Gemini. This will analyze the article text for factual claims and potential bias.
+                </p>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  disabled={!isEditing || !form.body}
+                  onClick={async () => {
+                    toast.loading("Analyzing article facts with Gemini...", { id: "fact-check" });
+                    try {
+                      const res = await apiFetch<any>(`/articles/${articleId}/fact-check`, { method: "POST" });
+                      update("factCheck", res.fact_check);
+                      toast.success("Fact check generated successfully!", { id: "fact-check" });
+                    } catch (err: any) {
+                      toast.error(err.message || "Failed to generate fact check", { id: "fact-check" });
+                    }
+                  }}
+                >
+                  <AnimatedIcon icon={LoaderCircle} className="w-4 h-4 mr-2" />
+                  Generate Fact Check
+                </Button>
+                {!isEditing && <p className="text-[10px] text-destructive">You must save the article first before generating a fact check.</p>}
+              </div>
+            )}
           </CardSection>
 
           {/* Local Revisions */}

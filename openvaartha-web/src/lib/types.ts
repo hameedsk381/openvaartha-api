@@ -2,6 +2,19 @@ export type ArticleStatus = "draft" | "pending" | "scheduled" | "published" | "a
 
 export const ARTICLE_STATUSES: ArticleStatus[] = ["draft", "pending", "scheduled", "published", "archived"];
 
+export interface FactCheckClaim {
+  claim: string;
+  assessment: string;
+  sourceUrl?: string | null;
+}
+
+export interface FactCheck {
+  claims: FactCheckClaim[];
+  biasRating: string;
+  confidenceScore: number;
+  summary: string;
+}
+
 export interface ArticleContent {
   tldr: string;
   points: string[];
@@ -9,6 +22,8 @@ export interface ArticleContent {
   timeline?: { date: string; event: string }[] | null;
   explainer?: { question: string; answer: string }[] | null;
   videoUrl?: string | null;
+  pollId?: string | null;
+  factCheck?: FactCheck | null;
 }
 
 export interface Article {

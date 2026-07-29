@@ -31,6 +31,7 @@ import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { Button } from "@/components/ui/button";
 import { useInView } from "react-intersection-observer";
 import { InteractivePoll } from "./InteractivePoll";
+import FactCheckOverlay from "./FactCheckOverlay";
 
 const timeAgo = (dateStr: string): string => {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -315,6 +316,10 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
             </p>
 
             <AudioPlayer title={article.title} bodyText={(article.summary || "") + " " + (article.content?.body || "")} />
+
+            {article.content?.factCheck && (
+              <FactCheckOverlay factCheck={article.content.factCheck} />
+            )}
 
             <div className="flex flex-wrap items-center justify-between gap-4 mt-8 sm:mt-10 pt-6 border-t border-border">
               <address className="flex items-center gap-3 not-italic">

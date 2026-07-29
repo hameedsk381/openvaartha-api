@@ -321,6 +321,42 @@ async def update_article(
     return await article_service.update_article(db, article_id, article_data)
 
 
+@router.post("/{article_id}/fact-check")
+@limiter.limit(MUTATION_LIMIT)
+async def generate_fact_check(
+    request: Request,
+    article_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_editor),
+):
+    """Generate and save a Gemini fact check for an article."""
+    existing = await article_service.get_article_by_id(db, article_id, include_unpublished=True)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    body = existing.get("content", {}).get("body", "")
+    if not body:
+        raise HTTPException(status_code=400, detail="Article has no body content to analyze")
+
+    from app.services.gemini_service import analyze_article_facts
+    fact_check_data = await analyze_article_facts(body)
+
+    if not fact_check_data:
+        raise HTTPException(status_code=500, detail="Failed to generate fact check with Gemini")
+
+    # Update article content
+    content = existing.get("content", {})
+    content["fact_check"] = fact_check_data
+    
+    await db["articles"].update_one(
+        {"_id": article_id},
+        {"$set": {"content": content}}
+    )
+
+    return {"message": "Fact check generated successfully", "fact_check": fact_check_data}
+
+
+
 @router.delete("/{article_id}")
 @limiter.limit(MUTATION_LIMIT)
 async def delete_article(

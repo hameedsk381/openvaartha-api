@@ -6,6 +6,21 @@ from datetime import datetime
 from app.models.article import ArticleStatus
 
 
+class FactCheckClaim(BaseModel):
+    claim: str
+    assessment: str
+    source_url: Optional[str] = None
+
+class FactCheck(BaseModel):
+    claims: List[FactCheckClaim] = Field(default_factory=list)
+    bias_rating: str = "Neutral"
+    confidence_score: int = 0
+    summary: str = ""
+
+    class Config:
+        alias_generator = to_camel
+        populate_by_name = True
+
 class ArticleContentBase(BaseModel):
     tldr: Optional[str] = ""
     points: Optional[List[str]] = Field(default_factory=list)
@@ -14,6 +29,7 @@ class ArticleContentBase(BaseModel):
     explainer: Optional[List[dict]] = None
     video_url: Optional[str] = None
     poll_id: Optional[str] = None
+    fact_check: Optional[FactCheck] = None
 
     class Config:
         alias_generator = to_camel
@@ -34,6 +50,7 @@ class ArticleContentUpdate(BaseModel):
     explainer: Optional[List[dict]] = None
     video_url: Optional[str] = None
     poll_id: Optional[str] = None
+    fact_check: Optional[FactCheck] = None
 
     class Config:
         alias_generator = to_camel
