@@ -27,6 +27,8 @@ Rules for article structure:
 - points: 3-5 bullet-point key facts (as a list of strings)
 - timeline: an array of chronological events extracted from the content (e.g., [{{"date": "YYYY-MM-DD", "event": "..."}}]). Leave empty if not applicable.
 - explainer: an array of 2-3 FAQ-style questions and answers (e.g., [{{"question": "...", "answer": "..."}}]). Provide deep context.
+- tags: an array of 3-5 relevant SEO keywords/tags (e.g., ["politics", "election"]).
+- read_time: estimated reading time in minutes as a string (e.g., "4 min").
 
 Additional rules:
 - CRITICAL: If source material is provided, you MUST include ALL information, facts, quotes, figures, and context from the source material. Do not omit, truncate, or summarize away any details. The generated article must be comprehensive and cover the given content in its entirety. Do not invent details outside it.
@@ -154,6 +156,8 @@ Generate a complete news article with this exact JSON structure:
             "tldr": safe_str(data.get("tldr")),
             "points": [safe_str(p) for p in pts[:settings.AI_MAX_POINTS] if p],
             "category_id": safe_str(data.get("category_id")),
+            "tags": [safe_str(t) for t in (data.get("tags") or []) if t],
+            "read_time": safe_str(data.get("read_time")),
             "timeline": [
                 {"date": safe_str(t.get("date")), "event": safe_str(t.get("event"))}
                 for t in (data.get("timeline") or []) if isinstance(t, dict)

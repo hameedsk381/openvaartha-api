@@ -30,6 +30,8 @@ interface AIResult {
   category_id?: string;
   timeline?: { date: string; event: string }[];
   explainer?: { question: string; answer: string }[];
+  tags?: string[];
+  read_time?: string;
 }
 
 interface Props {

@@ -413,6 +413,8 @@ export default function AdminArticleForm() {
             if (data.category_id) update("categoryId", data.category_id);
             if (data.timeline?.length) update("timeline", data.timeline);
             if (data.explainer?.length) update("explainer", data.explainer);
+            if (data.tags?.length) update("tags", data.tags.join(", "));
+            if (data.read_time) update("readTime", data.read_time);
           }} />
           
           {form.status === "pending" && (

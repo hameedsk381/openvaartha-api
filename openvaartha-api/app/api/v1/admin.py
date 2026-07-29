@@ -300,6 +300,8 @@ class GenerateArticleResponse(BaseModel):
     category_id: str = ""
     timeline: List[dict] = []
     explainer: List[dict] = []
+    tags: List[str] = []
+    read_time: str = ""
 
 
 @router.post("/ai/generate-article", response_model=GenerateArticleResponse)
