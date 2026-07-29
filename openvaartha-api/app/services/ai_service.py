@@ -135,23 +135,32 @@ Generate a complete news article with this exact JSON structure:
             logger.warning(f"AI response missing keys, got: {list(data.keys())}")
             return None
 
-        if isinstance(data.get("points"), str):
-            data["points"] = [p.strip().strip("-* ") for p in data["points"].split("\n") if p.strip()]
+        def safe_str(val):
+            res = sanitize_text(val if val is not None else "")
+            return res if res is not None else ""
+
+        def safe_html(val):
+            res = sanitize_html(val if val is not None else "")
+            return res if res is not None else ""
+
+        pts = data.get("points")
+        if not isinstance(pts, list):
+            pts = []
 
         return {
-            "title": sanitize_text(data["title"]),
-            "summary": sanitize_text(data["summary"]),
-            "body": sanitize_html(data["body"]),
-            "tldr": sanitize_text(data["tldr"]),
-            "points": [sanitize_text(p) for p in data["points"][:settings.AI_MAX_POINTS]],
-            "category_id": sanitize_text(data.get("category_id", "")),
+            "title": safe_str(data.get("title")),
+            "summary": safe_str(data.get("summary")),
+            "body": safe_html(data.get("body")),
+            "tldr": safe_str(data.get("tldr")),
+            "points": [safe_str(p) for p in pts[:settings.AI_MAX_POINTS] if p],
+            "category_id": safe_str(data.get("category_id")),
             "timeline": [
-                {"date": sanitize_text(t.get("date", "")), "event": sanitize_text(t.get("event", ""))}
-                for t in data.get("timeline", []) if isinstance(t, dict)
+                {"date": safe_str(t.get("date")), "event": safe_str(t.get("event"))}
+                for t in (data.get("timeline") or []) if isinstance(t, dict)
             ],
             "explainer": [
-                {"question": sanitize_text(e.get("question", "")), "answer": sanitize_text(e.get("answer", ""))}
-                for e in data.get("explainer", []) if isinstance(e, dict)
+                {"question": safe_str(e.get("question")), "answer": safe_str(e.get("answer"))}
+                for e in (data.get("explainer") or []) if isinstance(e, dict)
             ],
         }
 
