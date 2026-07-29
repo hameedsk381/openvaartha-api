@@ -161,6 +161,7 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
             result = await generate_article(
                 topic=entry["title"],
                 source_content=source_text,
+                web_search=False,
             )
         except Exception as e:
             logger.error("AI generation failed for entry %s: %s", guid, e)
@@ -202,7 +203,7 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
             "article_id": article_id,
             "tldr": result.get("tldr", ""),
             "points": result.get("points", []),
-            "body": sanitize_html(result.get("body", "")),
+            "body": result.get("body", ""),
             "timeline": result.get("timeline", None),
             "explainer": result.get("explainer", None),
         }

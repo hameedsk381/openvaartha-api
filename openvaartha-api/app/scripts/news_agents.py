@@ -93,6 +93,7 @@ async def process_articles(db: AsyncIOMotorDatabase, raw_articles: list[dict], c
             result = await generate_article(
                 topic=raw["title"],
                 source_content=source_content,
+                web_search=False,
             )
         except Exception as e:
             logger.error(f"AI generation failed for {url}: {e}")

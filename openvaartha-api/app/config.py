@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     MUTATION_RATE_LIMIT: str = "60/minute"
 
     # AI generation
-    AI_TEMPERATURE: float = 0.7
+    AI_TEMPERATURE: float = 0.3
     AI_MAX_OUTPUT_TOKENS: int = 4096
     AI_MAX_POINTS: int = 8
     AI_TIMEOUT: int = 60  # seconds for AI API call

@@ -1,7 +1,8 @@
 import json
 import logging
 from typing import List, Optional
-from datetime import datetime
+import asyncio
+from datetime import datetime, timezone
 import httpx
 from duckduckgo_search import DDGS
 
@@ -10,7 +11,7 @@ from app.core.sanitize import sanitize_html, sanitize_text
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are a senior news editor at Open Vaartha, an independent, youth-led news initiative
+_BASE_SYSTEM_PROMPT = """You are a senior news editor at Open Vaartha, an independent, youth-led news initiative
 operated by Gen Z — an open news platform built for the liberation of digital spaces.
 You have decades of experience crafting compelling, well-structured news articles.
 
@@ -21,15 +22,15 @@ reproduce source text in another language.
 Rules for article structure:
 - title: compelling, accurate, not clickbait — front-page quality
 - summary: 2-3 punchy sentences that make readers want to read more
-- body: {BODY_RULE} Include context, analysis, and background. This is the CORE of the article — do NOT skip or skimp on this.
+- body: {body_rule} Include context, analysis, and background. This is the CORE of the article — do NOT skip or skimp on this.
 - tldr: a sharp one-line takeaway
 - points: 3-5 bullet-point key facts (as a list of strings)
-- timeline: an array of chronological events extracted from the content (e.g., [{"date": "YYYY-MM-DD", "event": "..."}]). Leave empty if not applicable.
-- explainer: an array of 2-3 FAQ-style questions and answers (e.g., [{"question": "...", "answer": "..."}]). Provide deep context.
+- timeline: an array of chronological events extracted from the content (e.g., [{{"date": "YYYY-MM-DD", "event": "..."}}]). Leave empty if not applicable.
+- explainer: an array of 2-3 FAQ-style questions and answers (e.g., [{{"question": "...", "answer": "..."}}]). Provide deep context.
 
 Additional rules:
 - If source material is provided, base the article strictly on it — extract facts, figures, quotes, and context. Do not invent details outside it.
-- If only a topic is given, generate realistic specifics (figures, dates, locations) but never fabricate quotes.
+- If only a topic is given, use ONLY facts from the web research context provided. Do NOT invent specific figures, statistics, dates, or locations that are not in the source material. If insufficient data is available, acknowledge the limitation rather than fabricating details.
 - Use "said" attribution sparingly and only when justified.
 - Write in neutral, third-person journalistic tone.
 - Return ONLY valid JSON — no markdown fences, no commentary outside the JSON."""
@@ -41,6 +42,7 @@ async def generate_article(
     style: str = "standard",
     tone: str = "neutral",
     length: str = "standard",
+    web_search: bool = True,
 ) -> Optional[dict]:
     """Generate a complete article draft from a topic prompt using Groq."""
     theme_guide = {
@@ -65,12 +67,16 @@ async def generate_article(
     body_rule = length_rules.get(length, length_rules["standard"])
 
     search_context = ""
-    try:
-        results = DDGS().text(topic, max_results=3)
-        if results:
-            search_context = "\nWeb Research context:\n" + "\n".join(f"- {r['title']}: {r['body']}" for r in results)
-    except Exception as e:
-        logger.warning(f"Web search failed for topic '{topic}': {e}")
+    if web_search:
+        try:
+            loop = asyncio.get_running_loop()
+            results = await loop.run_in_executor(
+                None, lambda: DDGS().text(topic, max_results=3)
+            )
+            if results:
+                search_context = "\nWeb Research context:\n" + "\n".join(f"- {r['title']}: {r['body']}" for r in results)
+        except Exception as e:
+            logger.warning(f"Web search failed for topic '{topic}': {e}")
 
     combined_source = (source_content or "") + "\n" + search_context
     source_block = ""
@@ -80,7 +86,7 @@ Source material to base the article on (extract facts, quotes, and details from 
 {combined_source.strip()}
 """
 
-    current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     prompt = f"""Today's date and time is: {current_date}
 Topic: {topic}
@@ -101,7 +107,7 @@ Generate a complete news article with this exact JSON structure:
         payload = {
             "model": settings.GROQ_MODEL,
             "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT.replace("{BODY_RULE}", body_rule)},
+                {"role": "system", "content": _BASE_SYSTEM_PROMPT.format(body_rule=body_rule)},
                 {"role": "user", "content": prompt},
             ],
             "response_format": {"type": "json_object"},
@@ -139,8 +145,14 @@ Generate a complete news article with this exact JSON structure:
             "tldr": sanitize_text(data["tldr"]),
             "points": [sanitize_text(p) for p in data["points"][:settings.AI_MAX_POINTS]],
             "category_id": sanitize_text(data.get("category_id", "")),
-            "timeline": data.get("timeline", []),
-            "explainer": data.get("explainer", []),
+            "timeline": [
+                {"date": sanitize_text(t.get("date", "")), "event": sanitize_text(t.get("event", ""))}
+                for t in data.get("timeline", []) if isinstance(t, dict)
+            ],
+            "explainer": [
+                {"question": sanitize_text(e.get("question", "")), "answer": sanitize_text(e.get("answer", ""))}
+                for e in data.get("explainer", []) if isinstance(e, dict)
+            ],
         }
 
     except Exception as e:

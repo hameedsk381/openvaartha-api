@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from typing import List, Optional, Literal
 from pydantic import BaseModel
 
 from app.core.dependencies import get_current_active_admin
@@ -277,9 +277,9 @@ async def list_subscribers(
 class GenerateArticleRequest(BaseModel):
     topic: str
     source_content: Optional[str] = None
-    style: str = "standard"
-    tone: str = "neutral"
-    length: str = "standard"
+    style: Literal["standard", "investigative", "briefing", "opinion"] = "standard"
+    tone: Literal["neutral", "analytical", "narrative"] = "neutral"
+    length: Literal["short", "standard", "long"] = "standard"
 
 
 class GenerateArticleResponse(BaseModel):
@@ -289,6 +289,8 @@ class GenerateArticleResponse(BaseModel):
     tldr: str
     points: List[str]
     category_id: str = ""
+    timeline: List[dict] = []
+    explainer: List[dict] = []
 
 
 @router.post("/ai/generate-article", response_model=GenerateArticleResponse)

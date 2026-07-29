@@ -67,7 +67,7 @@ export default function AIGenerateDialog({ onApply }: Props) {
   const mutation = useMutation({
     mutationFn: () => {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 60000);
+      const timer = setTimeout(() => controller.abort(), 90000);
       return apiFetch<AIResult>("/admin/ai/generate-article", {
         method: "POST",
         body: JSON.stringify({
