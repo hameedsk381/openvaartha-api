@@ -59,7 +59,7 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
               >
                 <MotionLink
                   to={`/article/${article?.slug ?? "#"}`}
-                  className="relative block w-full aspect-[4/5] sm:aspect-[21/9] overflow-hidden sm:rounded-xl sm:border border-white/10"
+                  className="relative block w-full aspect-[16/10] sm:aspect-[21/9] overflow-hidden sm:rounded-xl sm:border border-white/10"
                   initial="initial"
                   whileHover="hover"
                 >
