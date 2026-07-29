@@ -3,6 +3,7 @@ import { useCategories } from "@/lib/api-hooks";
 import { BRAND } from "@/lib/brand";
 import { Instagram, Facebook, Youtube } from "lucide-react";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
+import NewsletterCapture from "@/components/NewsletterCapture";
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -88,27 +89,20 @@ const Footer = () => {
               <li><Link to="/trending" className="text-muted-foreground hover:text-primary transition-colors">Trending</Link></li>
               <li><Link to="/bytes" className="text-muted-foreground hover:text-primary transition-colors">Bytes</Link></li>
               <li><Link to="/explainers" className="text-muted-foreground hover:text-primary transition-colors">Explainers</Link></li>
-              <li><Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">About</Link></li>
             </ul>
           </div>
 
           <div className="md:col-span-2">
-            <p className="overline mb-4">Trust</p>
-            <ul className="space-y-2.5 text-sm">
-              <li><Link to="/editorial" className="text-muted-foreground hover:text-primary transition-colors">Editorial Standards</Link></li>
-              <li><Link to="/corrections" className="text-muted-foreground hover:text-primary transition-colors">Corrections</Link></li>
-              <li><Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">Privacy</Link></li>
-              <li><Link to="/terms" className="text-muted-foreground hover:text-primary transition-colors">Terms</Link></li>
-            </ul>
-          </div>
-
-          <div className="md:col-span-2">
-            <p className="overline mb-4">Account</p>
+            <p className="overline mb-4">Account & Trust</p>
             <ul className="space-y-2.5 text-sm">
               <li><Link to="/login" className="text-muted-foreground hover:text-primary transition-colors">Sign in</Link></li>
               <li><Link to="/portal/saved" className="text-muted-foreground hover:text-primary transition-colors">Saved</Link></li>
-              <li><Link to="/portal/dashboard" className="text-muted-foreground hover:text-primary transition-colors">Portal</Link></li>
+              <li><Link to="/editorial" className="text-muted-foreground hover:text-primary transition-colors">Editorial</Link></li>
             </ul>
+          </div>
+
+          <div className="md:col-span-3">
+            <NewsletterCapture variant="footer" className="p-0 border-0" />
           </div>
         </div>
 

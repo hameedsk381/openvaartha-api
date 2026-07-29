@@ -23,6 +23,7 @@ import CommentSection from "@/components/CommentSection";
 import ReactionBar from "@/components/ReactionBar";
 import QuoteCardModal from "@/components/QuoteCardModal";
 import SeriesBanner from "@/components/SeriesBanner";
+import NewsletterCapture from "@/components/NewsletterCapture";
 import AudioPlayer from "@/components/AudioPlayer";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { toast } from "sonner";
@@ -682,6 +683,10 @@ const ArticlePage = () => {
                 </div>
               </section>
             )}
+
+            <div className="mt-14">
+              <NewsletterCapture />
+            </div>
           </div>
 
           <aside className="hidden lg:block lg:col-span-2" aria-label="Related articles">
