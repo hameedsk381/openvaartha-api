@@ -29,7 +29,7 @@ Rules for article structure:
 - explainer: an array of 2-3 FAQ-style questions and answers (e.g., [{{"question": "...", "answer": "..."}}]). Provide deep context.
 
 Additional rules:
-- If source material is provided, base the article strictly on it — extract facts, figures, quotes, and context. Do not invent details outside it.
+- CRITICAL: If source material is provided, you MUST include ALL information, facts, quotes, figures, and context from the source material. Do not omit, truncate, or summarize away any details. The generated article must be comprehensive and cover the given content in its entirety. Do not invent details outside it.
 - If only a topic is given, use ONLY facts from the web research context provided. Do NOT invent specific figures, statistics, dates, or locations that are not in the source material. If insufficient data is available, acknowledge the limitation rather than fabricating details.
 - Use "said" attribution sparingly and only when justified.
 - Write in neutral, third-person journalistic tone.
@@ -60,9 +60,9 @@ async def generate_article(
     }.get(tone, "Neutral, objective, fact-based journalism.")
 
     length_rules = {
-        "short": "2-3 short paragraphs of ~40-50 words each (markdown, no H1).",
-        "standard": "4-6 rich paragraphs of ~60-80 words each (markdown, no H1).",
-        "long": "7-10 detailed paragraphs of ~80-100 words each (markdown, no H1).",
+        "short": "Concise summary format. Cover ALL key facts from the source material in ~3-4 short paragraphs (markdown, no H1). Do not omit crucial details.",
+        "standard": "Comprehensive format. You MUST include ALL facts, quotes, and nuances from the source material in rich paragraphs (markdown, no H1). Do not artificially truncate.",
+        "long": "Extensive format. Provide incredibly detailed coverage including ALL facts, quotes, data, and nuances from the source material (markdown, no H1).",
     }
     body_rule = length_rules.get(length, length_rules["standard"])
 
