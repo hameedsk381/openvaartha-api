@@ -73,7 +73,7 @@ function CategoryStrip({ category }: { category: Category }) {
           <BlurFade key={art.id} delay={0.1 * idx} inView>
             <Link
               to={`/article/${art.slug}`}
-              className="group flex-shrink-0 w-[260px] sm:w-auto h-full flex block snap-start"
+              className="group flex-shrink-0 w-full sm:w-auto h-full flex block snap-start"
             >
               <MagicCard className="w-full flex flex-col p-0 border-none bg-transparent shadow-none" gradientColor="hsl(var(--primary) / 0.1)">
                 <div className="aspect-[16/10] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-3">

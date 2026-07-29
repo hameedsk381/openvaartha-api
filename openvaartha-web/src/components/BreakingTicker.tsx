@@ -19,7 +19,7 @@ const BreakingTicker = () => {
         </span>
       </div>
       <div className="flex-1 relative overflow-hidden flex items-center h-full">
-        <Marquee pauseOnHover className="[--duration:40s] [--gap:0]" style={{ padding: 0 }}>
+        <Marquee pauseOnHover className="[--duration:40s] [--gap:0px]" style={{ padding: 0 }}>
           {dispatches.map((item) => {
             const content = (
               <>
