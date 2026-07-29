@@ -35,7 +35,8 @@ type RegisterValues = z.infer<typeof registerSchema>;
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as any)?.from?.pathname || '/';
+  const state = location.state as { from?: { pathname: string } } | null;
+  const from = state?.from?.pathname || '/';
   const initMode = new URLSearchParams(location.search).get('mode') === 'register' ? 'register' : 'login';
 
   const [mode, setMode] = useState<'login' | 'register'>(initMode);

@@ -11,6 +11,9 @@ from app.core.sanitize import sanitize_html, sanitize_text
 
 logger = logging.getLogger(__name__)
 
+# Shared HTTP client for all Groq API calls to prevent connection thrashing
+_http_client = httpx.AsyncClient()
+
 _BASE_SYSTEM_PROMPT = """You are a senior news editor at Open Vaartha, an independent, youth-led news initiative
 operated by Gen Z — an open news platform built for the liberation of digital spaces.
 You have decades of experience crafting compelling, well-structured news articles.
@@ -117,15 +120,14 @@ Generate a complete news article with this exact JSON structure:
             "max_tokens": settings.AI_MAX_OUTPUT_TOKENS,
         }
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers=headers,
-                json=payload,
-                timeout=settings.AI_TIMEOUT,
-            )
-            response.raise_for_status()
-            res_data = response.json()
+        response = await _http_client.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=settings.AI_TIMEOUT,
+        )
+        response.raise_for_status()
+        res_data = response.json()
 
         content = res_data["choices"][0]["message"]["content"]
         if not content:
@@ -203,15 +205,14 @@ Pick the single best-fit category for this text. Return ONLY JSON: {{"category_i
             "max_tokens": 100,
         }
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers=headers,
-                json=payload,
-                timeout=settings.AI_TIMEOUT,
-            )
-            response.raise_for_status()
-            res_data = response.json()
+        response = await _http_client.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=settings.AI_TIMEOUT,
+        )
+        response.raise_for_status()
+        res_data = response.json()
 
         content = res_data["choices"][0]["message"]["content"]
         if not content:
@@ -263,15 +264,14 @@ async def ai_assist_editor(action: str, text: str, context: Optional[str] = None
             "max_tokens": 1500,
         }
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers=headers,
-                json=payload,
-                timeout=settings.AI_TIMEOUT,
-            )
-            response.raise_for_status()
-            res_data = response.json()
+        response = await _http_client.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=settings.AI_TIMEOUT,
+        )
+        response.raise_for_status()
+        res_data = response.json()
 
         content = res_data["choices"][0]["message"]["content"]
         if not content:

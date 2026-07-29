@@ -7,6 +7,7 @@ import io
 import uuid
 import base64
 import json
+import asyncio
 
 router = APIRouter()
 
@@ -49,6 +50,35 @@ def _gcs_bucket():
     return client.bucket(settings.GCS_BUCKET_NAME)
 
 
+def _upload_image_sync(contents: bytes) -> str:
+    try:
+        img = Image.open(io.BytesIO(contents))
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        out_io = io.BytesIO()
+        img.save(out_io, format="WEBP", quality=75)
+        compressed_bytes = out_io.getvalue()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid image data: {e}"
+        )
+
+    filename = f"{uuid.uuid4().hex}.webp"
+    try:
+        bucket = _gcs_bucket()
+        blob = bucket.blob(filename)
+        blob.upload_from_string(compressed_bytes, content_type="image/webp")
+        return f"https://storage.googleapis.com/{settings.GCS_BUCKET_NAME}/{filename}"
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to upload image to storage: {e}"
+        )
+
+
 @router.post("/")
 async def upload_image(
     file: UploadFile = File(...),
@@ -70,37 +100,24 @@ async def upload_image(
             detail="Only image files are allowed."
         )
 
-    try:
-        contents = await file.read()
-        img = Image.open(io.BytesIO(contents))
+    contents = await file.read()
+    url = await asyncio.to_thread(_upload_image_sync, contents)
+    return {"url": url}
 
-        if img.mode in ("RGBA", "P"):
-            img = img.convert("RGB")
 
-        out_io = io.BytesIO()
-        img.save(out_io, format="WEBP", quality=75)
-        compressed_bytes = out_io.getvalue()
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid image data: {e}"
-        )
-
-    filename = f"{uuid.uuid4().hex}.webp"
-
+def _upload_video_sync(spooled_file, content_type: str, extension: str) -> str:
+    filename = f"{uuid.uuid4().hex}.{extension}"
     try:
         bucket = _gcs_bucket()
         blob = bucket.blob(filename)
-        blob.upload_from_string(compressed_bytes, content_type="image/webp")
-
-        url = f"https://storage.googleapis.com/{settings.GCS_BUCKET_NAME}/{filename}"
-        return {"url": url}
+        blob.upload_from_file(spooled_file, content_type=content_type)
+        return f"https://storage.googleapis.com/{settings.GCS_BUCKET_NAME}/{filename}"
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload image to storage: {e}"
+            detail=f"Failed to upload video to storage: {e}",
         )
 
 
@@ -140,22 +157,6 @@ async def upload_video(
                    f"{_MAX_VIDEO_BYTES / 1024 / 1024:.0f}MB.",
         )
 
-    filename = f"{uuid.uuid4().hex}.{extension}"
-
-    try:
-        bucket = _gcs_bucket()
-        blob = bucket.blob(filename)
-        # Streams from the spooled temp file rather than buffering the whole
-        # video in memory (unlike the image path, where recompression already
-        # requires a full in-memory copy for Pillow to work on).
-        blob.upload_from_file(file.file, content_type=file.content_type)
-
-        url = f"https://storage.googleapis.com/{settings.GCS_BUCKET_NAME}/{filename}"
-        return {"url": url}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload video to storage: {e}",
+    url = await asyncio.to_thread(_upload_video_sync, file.file, file.content_type, extension)
+    return {"url": url}
         )

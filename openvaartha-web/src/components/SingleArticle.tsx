@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { useInView } from "react-intersection-observer";
 import { InteractivePoll } from "./InteractivePoll";
 import FactCheckOverlay from "./FactCheckOverlay";
+import DOMPurify from "dompurify";
 
 const timeAgo = (dateStr: string): string => {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -581,7 +582,7 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
               {isHtml(article.content?.body || "") ? (
                 <div 
                   className="prose prose-sm sm:prose-base md:prose-lg max-w-none prose-neutral dark:prose-invert prose-headings:font-display prose-p:font-serif prose-a:text-primary leading-relaxed [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-6xl sm:[&>p:first-of-type]:first-letter:text-7xl [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:text-primary [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-1 [&>p:first-of-type]:first-letter:leading-[0.85]"
-                  dangerouslySetInnerHTML={{ __html: article.content?.body || "" }} 
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content?.body || "") }} 
                 />
               ) : (
                 <div className="prose prose-sm sm:prose-base md:prose-lg max-w-none prose-neutral dark:prose-invert prose-headings:font-display prose-p:font-serif prose-a:text-primary leading-relaxed [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-6xl sm:[&>p:first-of-type]:first-letter:text-7xl [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:text-primary [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-1 [&>p:first-of-type]:first-letter:leading-[0.85]">
@@ -615,10 +616,10 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
                     <li key={i} className="relative">
                       <span className="absolute -left-[31px] top-1 h-4 w-4 rounded-full bg-background border-2 border-primary" />
                       <time className="font-serif italic text-xs text-primary uppercase tracking-wider mb-1 block">
-                        {(item as any).date}
+                        {item.date}
                       </time>
                       <p className="font-serif text-base sm:text-lg text-foreground leading-snug">
-                        {(item as any).event}
+                        {item.event}
                       </p>
                     </li>
                   ))}
@@ -633,8 +634,8 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
                 <dl className="space-y-7">
                   {article.content.explainer.map((qa, i) => (
                     <div key={i}>
-                      <dt className="font-serif text-lg font-bold text-foreground mb-2">{(qa as any).question}</dt>
-                      <dd className="text-base text-muted-foreground leading-relaxed">{(qa as any).answer}</dd>
+                      <dt className="font-serif text-lg font-bold text-foreground mb-2">{qa.question}</dt>
+                      <dd className="text-base text-muted-foreground leading-relaxed">{qa.answer}</dd>
                     </div>
                   ))}
                 </dl>

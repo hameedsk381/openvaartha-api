@@ -267,7 +267,7 @@ export default function Index() {
                       </div>
 
                       <button
-                        onClick={(e) => { e.preventDefault(); toggleSave(hero as any); }}
+                        onClick={(e) => { e.preventDefault(); toggleSave(hero); }}
                         className="absolute top-4 right-4 h-10 w-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-primary transition-colors press"
                         aria-label="Save article"
                       >
@@ -533,7 +533,7 @@ export default function Index() {
                             </div>
                         </Link>
                         <button
-                          onClick={() => toggleSave(art as any)}
+                          onClick={() => toggleSave(art)}
                           className={`h-9 w-9 rounded-md flex items-center justify-center transition-colors press
                             ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
                           aria-label="Save"

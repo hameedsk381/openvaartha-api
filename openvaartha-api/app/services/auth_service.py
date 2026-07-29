@@ -92,7 +92,9 @@ async def authenticate_google(db: AsyncIOMotorDatabase, google_credential: str) 
     if not settings.GOOGLE_CLIENT_ID:
         raise ValueError("Google sign-in is not configured")
 
-    claims = google_id_token.verify_oauth2_token(
+    import asyncio
+    claims = await asyncio.to_thread(
+        google_id_token.verify_oauth2_token,
         google_credential, _google_auth_request, settings.GOOGLE_CLIENT_ID
     )
 

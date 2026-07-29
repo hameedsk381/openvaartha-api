@@ -8,6 +8,7 @@ from app.core.sanitize import sanitize_text
 
 async def ensure_comment_indexes(db: AsyncIOMotorDatabase) -> None:
     await db["comments"].create_index([("article_id", 1), ("created_at", -1)])
+    await db["comments"].create_index([("article_id", 1), ("is_active", 1), ("created_at", -1)])
     await db["comments"].create_index([("user_id", 1)])
     await db["comments"].create_index([("parent_id", 1)])
 

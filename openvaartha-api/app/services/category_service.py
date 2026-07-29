@@ -110,13 +110,18 @@ async def delete_category(db: AsyncIOMotorDatabase, category_id: str) -> bool:
 
 async def get_category_stats(db: AsyncIOMotorDatabase) -> List[dict]:
     """Get stats for categories."""
+    pipeline = [
+        {"$group": {"_id": "$category_id", "article_count": {"$sum": 1}}}
+    ]
+    cursor = db["articles"].aggregate(pipeline)
+    article_counts = {item["_id"]: item["article_count"] for item in await cursor.to_list(length=None) if item["_id"]}
+
     categories = await get_categories(db)
     stats = []
     for category in categories:
-        count = await db["articles"].count_documents({"category_id": category["_id"]})
         stats.append({
             "category_name": category["name"],
             "category_id": category["_id"],
-            "article_count": count,
+            "article_count": article_counts.get(category["_id"], 0),
         })
     return stats

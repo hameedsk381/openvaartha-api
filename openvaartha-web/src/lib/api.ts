@@ -35,7 +35,7 @@ export function clearTokens(): void {
 }
 
 let isRefreshing = false;
-let pendingRequests: Array<(token: string | null) => void> = [];
+let pendingRequests: {resolve: (token: string | null) => void, reject: (err: any) => void}[] = [];
 
 async function doRefresh(): Promise<string | null> {
   const refreshToken = getRefreshToken();
@@ -50,27 +50,30 @@ async function doRefresh(): Promise<string | null> {
 
     if (!res.ok) {
       clearTokens();
-      toast.error("Your session expired — sign in again.");
-      // Full navigation would tear down the toast before it can paint —
-      // give it a moment to actually show before leaving the page.
-      setTimeout(() => { window.location.href = "/login"; }, 600);
+      window.dispatchEvent(new Event("auth:logout"));
       return null;
     }
 
     const data = await res.json();
     setTokens(data.access_token, data.refresh_token);
     return data.access_token;
-  } catch {
+  } catch (err) {
     clearTokens();
-    toast.error("Your session expired — sign in again.");
-    setTimeout(() => { window.location.href = "/login"; }, 600);
-    return null;
+    window.dispatchEvent(new Event("auth:logout"));
+    throw err;
   }
 }
 
 function resolvePending(token: string | null): void {
-  for (const resolve of pendingRequests) {
-    resolve(token);
+  for (const p of pendingRequests) {
+    p.resolve(token);
+  }
+  pendingRequests = [];
+}
+
+function rejectPending(err: any): void {
+  for (const p of pendingRequests) {
+    p.reject(err);
   }
   pendingRequests = [];
 }
@@ -98,20 +101,26 @@ export async function apiFetch<T>(
   if (res.status === 401 && getRefreshToken()) {
     if (!isRefreshing) {
       isRefreshing = true;
-      const newToken = await doRefresh();
-      resolvePending(newToken);
-      isRefreshing = false;
+      try {
+        const newToken = await doRefresh();
+        resolvePending(newToken);
+        isRefreshing = false;
 
-      if (newToken) {
-        headers["Authorization"] = `Bearer ${newToken}`;
-        res = await fetch(`${API_BASE}${path}`, {
-          ...options,
-          headers,
-        });
+        if (newToken) {
+          headers["Authorization"] = `Bearer ${newToken}`;
+          res = await fetch(`${API_BASE}${path}`, {
+            ...options,
+            headers,
+          });
+        }
+      } catch (err) {
+        rejectPending(err);
+        isRefreshing = false;
+        throw err;
       }
     } else {
-      const newToken = await new Promise<string | null>((resolve) => {
-        pendingRequests.push(resolve);
+      const newToken = await new Promise<string | null>((resolve, reject) => {
+        pendingRequests.push({ resolve, reject });
       });
       if (newToken) {
         headers["Authorization"] = `Bearer ${newToken}`;

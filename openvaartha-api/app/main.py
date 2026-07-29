@@ -6,13 +6,13 @@ from fastapi.middleware.gzip import GZipMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.api.v1 import admin, articles, categories, comments, dispatches, feeds, newsletter, pages, push, search, users, authors
+from app.api.v1 import admin, articles, authors, categories, comments, dispatches, feeds, newsletter, pages, polls, push, search, series, upload, users
 from app.config import settings
 from app.core.dependencies import get_current_active_admin
 from app.core.observability import init_sentry
 from app.core.rate_limit import limiter
 from app.core.security_headers import SecurityHeadersMiddleware
-from app.database import db
+from app.database import client, db
 from app.models.user import User as UserModel
 from app.services.article_service import ensure_article_indexes
 from app.services.category_service import ensure_category_indexes
@@ -25,6 +25,54 @@ settings.assert_safe_for_production()
 
 init_sentry()
 
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    import os
+    import base64
+    
+    # Easily ingest Google Service Account credentials from a base64 string
+    b64_creds = os.getenv("GOOGLE_CREDENTIALS_B64")
+    if b64_creds:
+        try:
+            creds_json = base64.b64decode(b64_creds).decode("utf-8")
+            creds_path = "/tmp/google-credentials.json"
+            with open(creds_path, "w") as f:
+                f.write(creds_json)
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path
+            print("Successfully decoded and set GOOGLE_APPLICATION_CREDENTIALS from GOOGLE_CREDENTIALS_B64")
+        except Exception as e:
+            print(f"Failed to decode GOOGLE_CREDENTIALS_B64: {e}")
+            import sentry_sdk
+            sentry_sdk.capture_exception(e)  # no-op if SENTRY_DSN unset
+
+    await ensure_article_indexes(db)
+    await ensure_category_indexes(db)
+    await ensure_dispatch_indexes(db)
+    await ensure_push_indexes(db)
+    
+    from app.services.poll_service import ensure_poll_indexes
+    await ensure_poll_indexes(db)
+    
+    from app.services.comment_service import ensure_comment_indexes
+    await ensure_comment_indexes(db)
+
+    await ensure_admin_user(db)
+    
+    if not settings.GROQ_API_KEY:
+        print("WARNING: GROQ_API_KEY is not set. AI article generation will be unavailable.")
+    else:
+        print(f"INFO: Groq AI enabled (model: {settings.GROQ_MODEL})")
+        
+    yield
+    
+    print("Shutting down database and cache connections...")
+    client.close()
+    
+    from app.services.article_service import close_redis
+    await close_redis()
+
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
@@ -33,6 +81,7 @@ app = FastAPI(
     docs_url=None if settings.is_production else "/docs",
     redoc_url=None if settings.is_production else "/redoc",
     openapi_url=None if settings.is_production else "/openapi.json",
+    lifespan=lifespan,
 )
 
 # Wire the SlowAPI limiter so per-route @limiter.limit decorators take effect.
@@ -52,7 +101,6 @@ app.add_middleware(
 
 # Security headers — CSP, X-Frame-Options, HSTS, etc.
 app.add_middleware(SecurityHeadersMiddleware)
-from app.api.v1 import articles, categories, users, feeds, search, newsletter, comments, pages, admin, upload, authors
 
 # Compress large text responses (JS/CSS bundles, HTML, JSON). Serves the SPA's
 # ~1.8MB JS bundle gzipped to mobile clients, which is the primary access pattern.
@@ -70,9 +118,7 @@ app.include_router(push.router, prefix="/api/v1/push", tags=["Push"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(upload.router, prefix="/api/v1/upload", tags=["Upload"])
 app.include_router(authors.router, prefix="/api/v1/authors", tags=["Authors"])
-from app.api.v1 import series
 app.include_router(series.router, prefix="/api/v1/series", tags=["Series"])
-from app.api.v1 import polls
 app.include_router(polls.router, prefix="/api/v1/polls", tags=["Polls"])
 
 # Root-level routes (sitemap, RSS feeds, server-rendered article HTML)
@@ -166,35 +212,7 @@ async def test_google_endpoint(current_user: UserModel = Depends(get_current_act
         return {"status": "error", "message": f"Failed to contact Google OAuth servers: {str(e)}"}
 
 
-@app.on_event("startup")
-async def startup_checks():
-    import os
-    import base64
-    
-    # Easily ingest Google Service Account credentials from a base64 string
-    b64_creds = os.getenv("GOOGLE_CREDENTIALS_B64")
-    if b64_creds:
-        try:
-            creds_json = base64.b64decode(b64_creds).decode("utf-8")
-            creds_path = "/tmp/google-credentials.json"
-            with open(creds_path, "w") as f:
-                f.write(creds_json)
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path
-            print("Successfully decoded and set GOOGLE_APPLICATION_CREDENTIALS from GOOGLE_CREDENTIALS_B64")
-        except Exception as e:
-            print(f"Failed to decode GOOGLE_CREDENTIALS_B64: {e}")
-            import sentry_sdk
-            sentry_sdk.capture_exception(e)  # no-op if SENTRY_DSN unset
-
-    await ensure_article_indexes(db)
-    await ensure_category_indexes(db)
-    await ensure_dispatch_indexes(db)
-    await ensure_push_indexes(db)
-    await ensure_admin_user(db)
-    if not settings.GROQ_API_KEY:
-        print("WARNING: GROQ_API_KEY is not set. AI article generation will be unavailable.")
-    else:
-        print(f"INFO: Groq AI enabled (model: {settings.GROQ_MODEL})")
+# Startup checks moved to lifespan
 
 
 @app.get("/")

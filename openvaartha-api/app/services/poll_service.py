@@ -3,6 +3,10 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.models.poll import Poll, PollOption, PollVote
 from app.schemas.poll import PollCreate, PollResponse, PollOptionResponse
 from typing import Optional, List
+import pymongo
+
+async def ensure_poll_indexes(db: AsyncIOMotorDatabase):
+    await db["poll_votes"].create_index([("poll_id", 1), ("user_id", 1)], unique=True)
 
 async def create_poll(db: AsyncIOMotorDatabase, poll_data: PollCreate) -> str:
     poll_id = str(uuid.uuid4())
@@ -57,14 +61,12 @@ async def vote_poll(db: AsyncIOMotorDatabase, poll_id: str, user_id: str, option
     if not any(opt["id"] == option_id for opt in poll_doc["options"]):
         raise ValueError("Invalid poll option")
 
-    # Check if user already voted
-    existing_vote = await db["poll_votes"].find_one({"poll_id": poll_id, "user_id": user_id})
-    if existing_vote:
-        raise ValueError("User has already voted on this poll")
-    
-    # Create vote
+    # Create vote, relying on unique index to prevent race conditions
     vote = PollVote(poll_id=poll_id, user_id=user_id, option_id=option_id)
-    await db["poll_votes"].insert_one(vote.dict(by_alias=True))
+    try:
+        await db["poll_votes"].insert_one(vote.dict(by_alias=True))
+    except pymongo.errors.DuplicateKeyError:
+        raise ValueError("User has already voted on this poll")
     
     # Increment total_votes and the specific option's votes in the polls collection
     await db["polls"].update_one(

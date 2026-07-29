@@ -17,6 +17,7 @@ from app.config import settings
 from app.core.sanitize import sanitize_html, sanitize_points, sanitize_text
 from app.models.article import ArticleStatus, PUBLIC_STATUS
 from app.services.comment_service import ensure_comment_indexes
+from app.services.gemini_service import generate_embedding
 
 import math
 _redis_client: Optional[redis_async.Redis] = None
@@ -35,8 +36,9 @@ def _json_default(value):
         return value.isoformat()
     raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
 
+import asyncio
 
-def _save_base64_thumbnail(thumbnail_url: str) -> str:
+def _save_base64_thumbnail_sync(thumbnail_url: str) -> str:
     """Decode a base64 data-URI thumbnail, compress it to WebP, and upload it to
     Google Cloud Storage, returning the public GCS URL.
 
@@ -114,8 +116,11 @@ def _save_base64_thumbnail(thumbnail_url: str) -> str:
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload image to storage: {e}",
+            detail=f"Failed to upload image: {e}",
         )
+
+async def _save_base64_thumbnail(thumbnail_url: str) -> str:
+    return await asyncio.to_thread(_save_base64_thumbnail_sync, thumbnail_url)
 
 
 def _cache_key(namespace: str, **parts: Any) -> str:
@@ -130,6 +135,12 @@ async def _get_redis() -> Optional[redis_async.Redis]:
     if _redis_client is None:
         _redis_client = redis_async.from_url(settings.REDIS_URL, decode_responses=True)
     return _redis_client
+
+async def close_redis():
+    global _redis_client
+    if _redis_client is not None:
+        await _redis_client.close()
+        _redis_client = None
 
 
 async def _get_cached_list(key: str) -> Optional[List[dict]]:
@@ -308,6 +319,9 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
     await db["articles"].create_index([("author_id", 1), ("status", 1), ("published_at", -1)])
     # /explainers feed: query the denormalized flag directly instead of scanning content.
     await db["articles"].create_index([("has_deep_content", 1), ("status", 1), ("published_at", -1)])
+    
+    # reading history index
+    await db["reading_history"].create_index([("user_id", 1), ("read_at", -1)])
 
     await _backfill_deep_content_flag(db)
 
@@ -323,7 +337,7 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
     try:
         async for art in db["articles"].find({"thumbnail_url": {"$regex": "^data:image/"}}):
             old_url = art.get("thumbnail_url")
-            new_url = _save_base64_thumbnail(old_url)
+            new_url = await _save_base64_thumbnail(old_url)
             if new_url != old_url:
                 await db["articles"].update_one({"_id": art["_id"]}, {"$set": {"thumbnail_url": new_url}})
                 print(f"Migrated base64 thumbnail to file for article {art.get('slug')}")
@@ -493,7 +507,7 @@ async def get_articles(
     if tag:
         query["tags"] = tag.lower()
 
-    cursor = db["articles"].find(query).sort("published_at", -1).skip(skip).limit(limit)
+    cursor = db["articles"].find(query, {"embedding": 0}).sort("published_at", -1).skip(skip).limit(limit)
     articles = await cursor.to_list(length=limit)
 
     populated = await _populate_articles_bulk(db, articles)
@@ -530,7 +544,7 @@ async def get_trending_articles(db: AsyncIOMotorDatabase, limit: int = 10):
     if cached is not None:
         return cached
 
-    cursor = db["articles"].find(_public_query({"is_trending": True})).sort("published_at", -1).limit(limit)
+    cursor = db["articles"].find(_public_query({"is_trending": True}), {"embedding": 0}).sort("published_at", -1).limit(limit)
     articles = await cursor.to_list(length=limit)
 
     populated = await _populate_articles_bulk(db, articles)
@@ -574,13 +588,13 @@ async def get_for_you_articles(db: AsyncIOMotorDatabase, user_id: Optional[str] 
             "category_id": {"$in": top_categories},
             "_id": {"$nin": read_article_ids},
         })
-        cursor = db["articles"].find(query).sort("published_at", -1).limit(limit)
+        cursor = db["articles"].find(query, {"embedding": 0}).sort("published_at", -1).limit(limit)
         articles = await cursor.to_list(length=limit)
         
         if len(articles) < limit:
             remaining = limit - len(articles)
             fetched_ids = [a["_id"] for a in articles] + read_article_ids
-            fallback_cursor = db["articles"].find(_public_query({"_id": {"$nin": fetched_ids}})).sort("published_at", -1).limit(remaining)
+            fallback_cursor = db["articles"].find(_public_query({"_id": {"$nin": fetched_ids}}), {"embedding": 0}).sort("published_at", -1).limit(remaining)
             articles.extend(await fallback_cursor.to_list(length=remaining))
             
         return await _populate_articles_bulk(db, articles)
@@ -627,7 +641,7 @@ async def get_breaking_articles(db: AsyncIOMotorDatabase, limit: int = 5):
     if cached is not None:
         return cached
 
-    cursor = db["articles"].find(_public_query({"is_breaking": True})).sort("published_at", -1).limit(limit)
+    cursor = db["articles"].find(_public_query({"is_breaking": True}), {"embedding": 0}).sort("published_at", -1).limit(limit)
     articles = await cursor.to_list(length=limit)
 
     populated = await _populate_articles_bulk(db, articles)
@@ -637,9 +651,16 @@ async def get_breaking_articles(db: AsyncIOMotorDatabase, limit: int = 5):
 
 async def get_editor_pick_articles(db: AsyncIOMotorDatabase, limit: int = 10):
     """Get editor-curated articles (published only)."""
-    cursor = db["articles"].find(_public_query({"is_editor_pick": True})).sort("published_at", -1).limit(limit)
+    key = _cache_key("editor_pick", limit=limit)
+    cached = await _get_cached_list(key)
+    if cached is not None:
+        return cached
+
+    cursor = db["articles"].find(_public_query({"is_editor_pick": True}), {"embedding": 0}).sort("published_at", -1).limit(limit)
     articles = await cursor.to_list(length=limit)
-    return await _populate_articles_bulk(db, articles)
+    populated = await _populate_articles_bulk(db, articles)
+    await _set_cached_list(key, populated)
+    return populated
 
 
 async def get_explainer_articles(db: AsyncIOMotorDatabase, skip: int = 0, limit: int = 20):
@@ -649,10 +670,17 @@ async def get_explainer_articles(db: AsyncIOMotorDatabase, skip: int = 0, limit:
     and backfilled at startup) so this is a single indexed, paginated query
     instead of loading the entire ``article_content`` collection into memory.
     """
+    key = _cache_key("explainers", skip=skip, limit=limit)
+    cached = await _get_cached_list(key)
+    if cached is not None:
+        return cached
+
     query = _public_query({"has_deep_content": True})
-    cursor = db["articles"].find(query).sort("published_at", -1).skip(skip).limit(limit)
+    cursor = db["articles"].find(query, {"embedding": 0}).sort("published_at", -1).skip(skip).limit(limit)
     articles = await cursor.to_list(length=limit)
-    return await _populate_articles_bulk(db, articles)
+    populated = await _populate_articles_bulk(db, articles)
+    await _set_cached_list(key, populated)
+    return populated
 
 
 async def get_article_by_slug(
@@ -751,7 +779,7 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
         "is_breaking": article_data.is_breaking,
         "is_editor_pick": article_data.is_editor_pick,
         "is_opinion": getattr(article_data, "is_opinion", False),
-        "thumbnail_url": _save_base64_thumbnail(article_data.thumbnail_url),
+        "thumbnail_url": await _save_base64_thumbnail(article_data.thumbnail_url),
         "instagram_url": article_data.instagram_url,
         "published_at": article_data.published_at,
         "last_updated": article_data.last_updated or datetime.now(timezone.utc),
@@ -774,8 +802,6 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
         }
         await db["article_content"].insert_one(content_doc)
 
-    from app.services.gemini_service import generate_embedding
-    
     # Generate vector embedding for personalization
     text_to_embed = f"{article_data.title}\n{article_data.summary}"
     tags = getattr(article_data, "tags", [])
@@ -811,8 +837,8 @@ async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data
     if "status" in update_dict and hasattr(update_dict["status"], "value"):
         update_dict["status"] = update_dict["status"].value
 
-    if "thumbnail_url" in update_dict and update_dict["thumbnail_url"]:
-        update_dict["thumbnail_url"] = _save_base64_thumbnail(update_dict["thumbnail_url"])
+    if "thumbnail_url" in update_dict:
+        update_dict["thumbnail_url"] = await _save_base64_thumbnail(update_dict["thumbnail_url"])
 
     for field in _PLAIN_TEXT_FIELDS:
         if field in update_dict and update_dict[field] is not None:
@@ -862,7 +888,6 @@ async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data
             )
 
     if "title" in update_dict or "summary" in update_dict or "tags" in update_dict:
-        from app.services.gemini_service import generate_embedding
         existing = await db["articles"].find_one({"_id": article_id}, {"title": 1, "summary": 1, "tags": 1})
         if existing:
             title = update_dict.get("title", existing.get("title", ""))
@@ -896,7 +921,6 @@ async def delete_article(db: AsyncIOMotorDatabase, article_id: str):
 
 async def search_articles(db: AsyncIOMotorDatabase, query: str, skip: int = 0, limit: int = 20, category: Optional[str] = None):
     """Search published articles by title and summary with optional category filter."""
-    await ensure_article_indexes(db)
 
     text_filter = {"$text": {"$search": query}}
     if category:
@@ -907,7 +931,7 @@ async def search_articles(db: AsyncIOMotorDatabase, query: str, skip: int = 0, l
     try:
         cursor = db["articles"].find(
             _public_query(text_filter),
-            {"score": {"$meta": "textScore"}},
+            {"score": {"$meta": "textScore"}, "embedding": 0},
         ).sort([("score", {"$meta": "textScore"}), ("published_at", -1)]).skip(skip).limit(limit)
         articles = await cursor.to_list(length=limit)
     except OperationFailure:
@@ -929,7 +953,8 @@ async def get_related_articles(
 
     category_id = article.get("category_id")
     same_category = await db["articles"].find(
-        _public_query({"_id": {"$ne": article_id}, "category_id": category_id})
+        _public_query({"_id": {"$ne": article_id}, "category_id": category_id}),
+        {"embedding": 0}
     ).sort("published_at", -1).limit(limit).to_list(length=limit)
 
     if len(same_category) >= limit:
@@ -938,7 +963,8 @@ async def get_related_articles(
     seen = {article_id, *(a["_id"] for a in same_category)}
     remaining = limit - len(same_category)
     recent = await db["articles"].find(
-        _public_query({"_id": {"$nin": list(seen)}})
+        _public_query({"_id": {"$nin": list(seen)}}),
+        {"embedding": 0}
     ).sort("published_at", -1).limit(remaining).to_list(length=remaining)
 
     combined = same_category + recent

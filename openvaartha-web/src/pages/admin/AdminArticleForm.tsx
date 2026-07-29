@@ -11,7 +11,7 @@ import { RotateCcw } from "@/components/animate-ui/icons/rotate-ccw";
 import { X } from "@/components/animate-ui/icons/x";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
-import { ARTICLE_STATUSES, type Article, type ArticleStatus, type Category } from "./types";
+import { ARTICLE_STATUSES, type Article, type ArticleStatus, type Category, type FactCheck } from "./types";
 import { cn } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
 import MDXBodyEditor from "@/components/LazyMDXBodyEditor";
@@ -53,7 +53,7 @@ type FormState = {
   timeline: TimelineEntry[];
   explainer: ExplainerEntry[];
   pollId: string;
-  factCheck: any; // We can use the proper type if imported, but any works for form state to avoid import clutter if not needed
+  factCheck: FactCheck | null;
 };
 
 // `datetime-local` inputs expect (and return) wall-clock LOCAL time with no
@@ -283,6 +283,8 @@ export default function AdminArticleForm() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "articles"] });
+      queryClient.invalidateQueries({ queryKey: ["articles"] });
+      queryClient.invalidateQueries({ queryKey: ["article"] });
       resetDirty();
       toast.success(isEditing ? "Article updated" : "Article created");
       navigate("/admin/articles");

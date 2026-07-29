@@ -1,15 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.database import get_db
 from app.core.dependencies import get_current_user, get_current_user_optional
 from app.schemas.poll import PollCreate, PollResponse, PollVoteCreate
 from app.models.user import User as UserModel
+from app.core.rate_limit import limiter
 from app.services import poll_service
 
 router = APIRouter()
 
 @router.post("/", response_model=str, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 async def create_poll(
+    request: Request,
     poll: PollCreate,
     db: AsyncIOMotorDatabase = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
@@ -32,7 +35,9 @@ async def get_poll(
     return poll
 
 @router.post("/{poll_id}/vote", response_model=PollResponse)
+@limiter.limit("5/minute")
 async def vote_on_poll(
+    request: Request,
     poll_id: str,
     vote: PollVoteCreate,
     db: AsyncIOMotorDatabase = Depends(get_db),
