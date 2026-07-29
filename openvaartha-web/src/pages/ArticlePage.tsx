@@ -568,12 +568,24 @@ const ArticlePage = () => {
             <div id="article-body" className={cn("article-body", textSize, "transition-[font-size]")}>
               {isHtml(article.content?.body || "") ? (
                 <div 
-                  className="prose prose-sm sm:prose-base md:prose-lg max-w-none dark:prose-invert font-serif leading-relaxed prose-headings:font-bold prose-a:text-primary prose-a:underline [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-6xl sm:[&>p:first-of-type]:first-letter:text-7xl [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:text-primary [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-1 [&>p:first-of-type]:first-letter:leading-[0.85]"
+                  className="prose prose-sm sm:prose-base md:prose-lg max-w-none prose-neutral dark:prose-invert prose-headings:font-display prose-p:font-serif prose-a:text-primary leading-relaxed [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-6xl sm:[&>p:first-of-type]:first-letter:text-7xl [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:text-primary [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-1 [&>p:first-of-type]:first-letter:leading-[0.85]"
                   dangerouslySetInnerHTML={{ __html: article.content?.body || "" }} 
                 />
               ) : (
-                <div className="prose prose-sm sm:prose-base md:prose-lg max-w-none dark:prose-invert font-serif leading-relaxed prose-headings:font-bold prose-a:text-primary prose-a:underline [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-6xl sm:[&>p:first-of-type]:first-letter:text-7xl [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:text-primary [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-1 [&>p:first-of-type]:first-letter:leading-[0.85]">
-                  <ReactMarkdown>{article.content?.body || ""}</ReactMarkdown>
+                <div className="prose prose-sm sm:prose-base md:prose-lg max-w-none prose-neutral dark:prose-invert prose-headings:font-display prose-p:font-serif prose-a:text-primary leading-relaxed [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-6xl sm:[&>p:first-of-type]:first-letter:text-7xl [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:text-primary [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-1 [&>p:first-of-type]:first-letter:leading-[0.85]">
+                  <ReactMarkdown
+                    components={{
+                      img({ node, ...props }) {
+                        return (
+                          <figure className="relative overflow-hidden rounded-xl bg-muted/60 aspect-video w-full my-8">
+                            <img {...props} className="absolute inset-0 w-full h-full object-cover" loading="lazy" onError={handleImageFallback} />
+                          </figure>
+                        );
+                      }
+                    }}
+                  >
+                    {article.content?.body || ""}
+                  </ReactMarkdown>
                 </div>
               )}
             </div>
@@ -734,6 +746,33 @@ const ArticlePage = () => {
         authorName={article?.author || ""}
         categoryName={article?.category || "News"}
       />
+      {/* Mobile Sticky Action Bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/85 backdrop-blur-xl border-t border-border px-4 py-3 pb-safe flex items-center justify-around shadow-[0_-4px_24px_rgba(0,0,0,0.05)]">
+        <button onClick={() => toggleSave(article)} className={cn("flex flex-col items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors press", isSaved(article.id) ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
+          {isSaved(article.id) ? <BookmarkCheck className="h-5 w-5 fill-current" /> : <Bookmark className="h-5 w-5" />}
+          {isSaved(article.id) ? "Saved" : "Save"}
+        </button>
+        <button onClick={() => {
+          const sel = window.getSelection()?.toString().trim();
+          setSelectedQuote(sel || article.summary || article.title);
+          setQuoteCardOpen(true);
+        }} className="flex flex-col items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors press">
+          <Quote className="h-5 w-5" /> Quote
+        </button>
+        <button onClick={() => cycleTextSize((textSizeIdx + 1) % TEXT_SIZES.length)} className="flex flex-col items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors press">
+          <Type className="h-5 w-5" /> {TEXT_SIZE_LABELS[(textSizeIdx + 1) % TEXT_SIZES.length]}
+        </button>
+        <button onClick={() => {
+          if (navigator.share) {
+            navigator.share({ title: article.title, url: window.location.href });
+          } else {
+            navigator.clipboard.writeText(window.location.href);
+            toast.success("Link copied");
+          }
+        }} className="flex flex-col items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors press">
+          <Share2 className="h-5 w-5" /> Share
+        </button>
+      </div>
     </div>
   );
 };

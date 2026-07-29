@@ -159,13 +159,13 @@ const SearchPage = () => {
               )}
             </div>
 
-            <div className="mt-5 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            <div className="mt-5 flex items-center gap-2 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-1">
               <span className="overline text-muted-foreground shrink-0 pr-1">Section</span>
               {(['All', ...categoryNames] as string[]).map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`shrink-0 h-9 px-4 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors border ${
+                  className={`shrink-0 h-9 px-4 snap-start rounded-full text-xs font-semibold uppercase tracking-wider transition-colors border ${
                     selectedCategory === cat
                       ? 'bg-primary text-white border-primary'
                       : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-primary'

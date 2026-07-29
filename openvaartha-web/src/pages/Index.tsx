@@ -68,12 +68,12 @@ function CategoryStrip({ category }: { category: Category }) {
       </div>
 
       {/* Mobile: horizontal scroll, Desktop: 4-col grid */}
-      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide no-scrollbar sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible sm:pb-0">
+      <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide no-scrollbar sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-visible sm:pb-0">
         {articles.map((art, idx) => (
           <BlurFade key={art.id} delay={0.1 * idx} inView>
             <Link
               to={`/article/${art.slug}`}
-              className="group flex-shrink-0 w-[260px] sm:w-auto h-full flex block"
+              className="group flex-shrink-0 w-[260px] sm:w-auto h-full flex block snap-start"
             >
               <MagicCard className="w-full flex flex-col p-0 border-none bg-transparent shadow-none" gradientColor="hsl(var(--primary) / 0.1)">
                 <div className="aspect-[16/10] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] mb-3">
