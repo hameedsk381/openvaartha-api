@@ -159,4 +159,3 @@ async def upload_video(
 
     url = await asyncio.to_thread(_upload_video_sync, file.file, file.content_type, extension)
     return {"url": url}
-        )
