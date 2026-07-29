@@ -43,8 +43,8 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
   if (!articles || articles.length === 0) return null;
 
   return (
-    <section className="relative w-full overflow-hidden border-b border-border py-4 sm:py-8 bg-black">
-      <div className="overflow-hidden [--slide-spacing:1rem] sm:[--slide-spacing:2rem] [--slide-size:85%] sm:[--slide-size:75%] lg:[--slide-size:65%]" ref={emblaRef}>
+    <section className="relative w-full overflow-hidden border-b border-border py-0 sm:py-8 bg-black">
+      <div className="overflow-hidden [--slide-spacing:0px] sm:[--slide-spacing:2rem] [--slide-size:100%] sm:[--slide-size:75%] lg:[--slide-size:65%]" ref={emblaRef}>
         <div className="flex touch-pan-y touch-pinch-zoom">
           {articles.map((article, index) => {
             const isActive = selectedIndex === index;
@@ -59,7 +59,7 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
               >
                 <MotionLink
                   to={`/article/${article?.slug ?? "#"}`}
-                  className="relative block w-full aspect-[4/5] sm:aspect-[21/9] overflow-hidden rounded-xl border border-white/10"
+                  className="relative block w-full aspect-[4/5] sm:aspect-[21/9] overflow-hidden sm:rounded-xl sm:border border-white/10"
                   initial="initial"
                   whileHover="hover"
                 >
