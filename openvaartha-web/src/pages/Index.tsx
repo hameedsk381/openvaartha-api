@@ -11,7 +11,7 @@ import FeedSkeleton from '../components/FeedSkeleton';
 import Footer from '@/components/Footer';
 import { handleImageFallback, getArticleImage } from '@/lib/utils';
 import { CategoryIcon } from '@/components/CategoryIcon';
-import { Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame } from 'lucide-react';
+import { Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame, Sparkles } from 'lucide-react';
 import { Clock } from '@/components/animate-ui/icons/clock';
 import { LoaderCircle } from '@/components/animate-ui/icons/loader-circle';
 import { ChevronRight } from '@/components/animate-ui/icons/chevron-right';
@@ -20,6 +20,7 @@ import { useReadingList } from '@/hooks/use-reading-list';
 import {
   useArticles,
   useTrendingArticles,
+  useForYouArticles,
   useEditorPicks,
   useCategories,
   useNewsletterSubscribe,
@@ -179,12 +180,14 @@ export default function Index() {
     setLimit(40);
   }, [selectedCat]);
 
+  const [feedTab, setFeedTab] = useState<'latest' | 'forYou'>('latest');
   const { data: articlesData = [], isFetching } = useArticles({
     category: selectedCategoryObj?.id,
     limit
   });
 
   const { data: trendingData = [] } = useTrendingArticles(8);
+  const { data: forYouData = [] } = useForYouArticles(25);
   const { data: editorPicks = [] } = useEditorPicks(6);
 
   const setCategory = (cat: string) => {
@@ -205,7 +208,7 @@ export default function Index() {
 
   const hero = filtered[0];
   const topRail = filtered.slice(1, 5);
-  const feed = filtered.slice(5);
+  const feed = feedTab === 'forYou' && !isFiltered ? forYouData : filtered.slice(5);
   const trending = useMemo(() => trendingData.slice(0, 8), [trendingData]);
   const picks = useMemo(() => editorPicks.slice(0, 6), [editorPicks]);
 
@@ -447,8 +450,33 @@ export default function Index() {
                     <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight mt-0.5">
                       {isFiltered ? `${displayCategoryName} stories` : 'The latest'}
                     </h3>
+                  <div className="flex items-center gap-2">
+                    {!isFiltered && (
+                      <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border border-border">
+                        <button
+                          type="button"
+                          onClick={() => setFeedTab('latest')}
+                          className={cn(
+                            "px-3 py-1 rounded-md text-xs font-semibold transition-colors",
+                            feedTab === 'latest' ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                          )}
+                        >
+                          Latest
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFeedTab('forYou')}
+                          className={cn(
+                            "px-3 py-1 rounded-md text-xs font-semibold transition-colors flex items-center gap-1",
+                            feedTab === 'forYou' ? "bg-primary text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                          )}
+                        >
+                          <Sparkles className="h-3 w-3" /> For You
+                        </button>
+                      </div>
+                    )}
+                    <span className="text-xs text-muted-foreground font-medium hidden sm:inline">{feed.length} stories</span>
                   </div>
-                  <span className="text-xs text-muted-foreground font-medium">{feed.length} stories</span>
                 </div>
               )}
 

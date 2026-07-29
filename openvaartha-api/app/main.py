@@ -70,6 +70,8 @@ app.include_router(push.router, prefix="/api/v1/push", tags=["Push"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(upload.router, prefix="/api/v1/upload", tags=["Upload"])
 app.include_router(authors.router, prefix="/api/v1/authors", tags=["Authors"])
+from app.api.v1 import series
+app.include_router(series.router, prefix="/api/v1/series", tags=["Series"])
 
 # Root-level routes (sitemap, RSS feeds, server-rendered article HTML)
 app.include_router(feeds.router)

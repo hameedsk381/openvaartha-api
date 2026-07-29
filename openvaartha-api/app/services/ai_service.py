@@ -212,3 +212,59 @@ Pick the single best-fit category for this text. Return ONLY JSON: {{"category_i
     except Exception as e:
         logger.error(f"Groq category classification failed: {e}", exc_info=True)
         return None
+
+
+async def ai_assist_editor(action: str, text: str, context: Optional[str] = None) -> Optional[dict]:
+    """AI assistant tools for existing editorial copy (headlines, improve, shorten, points)."""
+    if not settings.GROQ_API_KEY or not text.strip():
+        return None
+
+    if action == "headlines":
+        system = "You are a senior news editor. Generate 5 compelling, accurate, punchy alternative headlines for the provided text. Return ONLY JSON: {\"headlines\": [\"...\", \"...\", ...]}"
+        prompt = f"Article Topic/Summary:\n{text.strip()}\n\nFull Context:\n{context or ''}"
+    elif action == "improve":
+        system = "You are a senior news editor. Polish and rewrite the provided article copy for maximum clarity, journalistic tone, active voice, and flow while keeping all facts unchanged. Return ONLY JSON: {\"improved_text\": \"...\"}"
+        prompt = f"Original Copy:\n{text.strip()}"
+    elif action == "shorten":
+        system = "You are a senior news editor. Condense the provided text into a tight, scannable version (~50% shorter) without losing any key facts. Return ONLY JSON: {\"shortened_text\": \"...\"}"
+        prompt = f"Original Text:\n{text.strip()}"
+    elif action == "points":
+        system = "You are a news editor. Extract 3-5 sharp, high-impact bullet points summarizing the core facts of the text. Return ONLY JSON: {\"points\": [\"...\", \"...\", ...]}"
+        prompt = f"Article Content:\n{text.strip()}"
+    else:
+        return None
+
+    try:
+        headers = {
+            "Authorization": f"Bearer {settings.GROQ_API_KEY}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": settings.GROQ_MODEL,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": prompt},
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0.3,
+            "max_tokens": 1500,
+        }
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=settings.AI_TIMEOUT,
+            )
+            response.raise_for_status()
+            res_data = response.json()
+
+        content = res_data["choices"][0]["message"]["content"]
+        if not content:
+            return None
+
+        return json.loads(content.strip())
+    except Exception as e:
+        logger.error(f"AI assist failed for action '{action}': {e}", exc_info=True)
+        return None

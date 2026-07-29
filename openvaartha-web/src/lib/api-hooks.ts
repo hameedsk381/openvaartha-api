@@ -32,6 +32,13 @@ export function useTrendingArticles(limit = 10) {
   });
 }
 
+export function useForYouArticles(limit = 15) {
+  return useQuery<Article[]>({
+    queryKey: ["articles", "for-you", limit],
+    queryFn: () => apiFetch<Article[]>(`/articles/for-you?limit=${limit}`),
+  });
+}
+
 export function useBreakingArticles(limit = 5) {
   return useQuery<Article[]>({
     queryKey: ["articles", "breaking", limit],

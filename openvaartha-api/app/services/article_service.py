@@ -529,6 +529,53 @@ async def get_trending_articles(db: AsyncIOMotorDatabase, limit: int = 10):
     return populated
 
 
+async def get_for_you_articles(db: AsyncIOMotorDatabase, user_id: Optional[str] = None, limit: int = 15):
+    """Personalized 'For You' feed based on reader history category affinity.
+    Falls back to a blend of trending & latest for anonymous or new users."""
+    if not user_id:
+        return await get_trending_articles(db, limit=limit)
+
+    # Fetch user's recent reading history
+    history = await db["reading_history"].find({"user_id": user_id}).sort("read_at", -1).to_list(length=30)
+    if not history:
+        return await get_trending_articles(db, limit=limit)
+
+    read_article_ids = [h["article_id"] for h in history]
+
+    # Aggregate category counts from read articles
+    read_articles = await db["articles"].find({"_id": {"$in": read_article_ids}}, {"category_id": 1}).to_list(length=50)
+    cat_counts = {}
+    for a in read_articles:
+        cid = a.get("category_id")
+        if cid:
+            cat_counts[cid] = cat_counts.get(cid, 0) + 1
+
+    if not cat_counts:
+        return await get_trending_articles(db, limit=limit)
+
+    # Get top 3 categories by read count
+    top_categories = sorted(cat_counts.keys(), key=lambda c: cat_counts[c], reverse=True)[:3]
+
+    # Query published articles matching user's favorite categories, excluding already read articles
+    query = _public_query({
+        "category_id": {"$in": top_categories},
+        "_id": {"$nin": read_article_ids},
+    })
+
+    cursor = db["articles"].find(query).sort("published_at", -1).limit(limit)
+    articles = await cursor.to_list(length=limit)
+
+    # If not enough unread articles in top categories, fallback to general recent articles
+    if len(articles) < limit:
+        remaining_limit = limit - len(articles)
+        fetched_ids = [a["_id"] for a in articles] + read_article_ids
+        fallback_cursor = db["articles"].find(_public_query({"_id": {"$nin": fetched_ids}})).sort("published_at", -1).limit(remaining_limit)
+        fallback_articles = await fallback_cursor.to_list(length=remaining_limit)
+        articles.extend(fallback_articles)
+
+    return await _populate_articles_bulk(db, articles)
+
+
 async def get_breaking_articles(db: AsyncIOMotorDatabase, limit: int = 5):
     """Get breaking news articles (published only)."""
     key = _cache_key("breaking", limit=limit)

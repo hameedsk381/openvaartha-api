@@ -71,6 +71,17 @@ async def get_popular_tags(
     return await article_service.get_popular_tags(db, limit=limit)
 
 
+@router.get("/for-you", response_model=List[Article])
+async def get_for_you_articles(
+    limit: int = Query(15, ge=1, le=50),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Optional[UserModel] = Depends(get_current_user_optional),
+):
+    """Get personalized 'For You' articles feed based on user reading history."""
+    user_id = current_user.id if current_user else None
+    return await article_service.get_for_you_articles(db, user_id=user_id, limit=limit)
+
+
 @router.get("/trending", response_model=List[Article])
 async def get_trending_articles(
     limit: int = Query(10, ge=1, le=50),

@@ -310,6 +310,23 @@ async def ai_generate_article(request: Request, body: GenerateArticleRequest):
             status_code=503,
             detail="AI generation failed. Check the GROQ_API_KEY environment variable.",
         )
+class AIAssistRequest(BaseModel):
+    action: Literal["headlines", "improve", "shorten", "points"]
+    text: str
+    context: Optional[str] = None
+
+
+@router.post("/ai/assist")
+@limiter.limit("30/hour")
+async def ai_assist(request: Request, body: AIAssistRequest):
+    """AI assistant for headlines, polishing copy, condensing text, and extracting points."""
+    from app.services.ai_service import ai_assist_editor
+    result = await ai_assist_editor(action=body.action, text=body.text, context=body.context)
+    if not result:
+        raise HTTPException(
+            status_code=503,
+            detail="AI assistant service unavailable or failed.",
+        )
     return result
 
 

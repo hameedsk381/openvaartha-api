@@ -8,7 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import { ArticleSkeleton } from "@/components/PageSkeletons";
 import {
   Share2, Bookmark, BookmarkCheck,
-  History, Type, Flame, Facebook, Eye, Twitter, Tag
+  History, Type, Flame, Facebook, Eye, Twitter, Tag, Quote
 } from "lucide-react";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { ArrowLeft } from "@/components/animate-ui/icons/arrow-left";
@@ -21,6 +21,8 @@ import { BRAND, pageTitle, SITE_TITLE } from "@/lib/brand";
 import { apiFetch } from "@/lib/api";
 import CommentSection from "@/components/CommentSection";
 import ReactionBar from "@/components/ReactionBar";
+import QuoteCardModal from "@/components/QuoteCardModal";
+import SeriesBanner from "@/components/SeriesBanner";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { toast } from "sonner";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
@@ -152,6 +154,8 @@ function useSEOMeta(article: Article | undefined) {
 const ArticlePage = () => {
   const { slug } = useParams<{ slug: string }>();
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [quoteCardOpen, setQuoteCardOpen] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState("");
   const { toggleSave, isSaved } = useReadingList();
   const [textSizeIdx, setTextSizeIdx] = useState<number>(() => {
     const stored = localStorage.getItem("article-text-size");
@@ -299,6 +303,8 @@ const ArticlePage = () => {
               )}
             </div>
 
+            <SeriesBanner articleId={article.id} />
+
             <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] text-foreground">
               {article.title}
             </h1>
@@ -342,6 +348,20 @@ const ArticlePage = () => {
                     <Share2 className="h-4 w-4" />
                   </AnimatedIcon>
                   <span className="hidden sm:inline text-xs font-semibold uppercase tracking-wider">Share</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const sel = window.getSelection()?.toString().trim();
+                    setSelectedQuote(sel || article.summary || article.title);
+                    setQuoteCardOpen(true);
+                  }}
+                  className="h-10 w-10 sm:h-10 sm:w-auto sm:px-4 rounded-full border border-border flex items-center justify-center sm:gap-2 hover:bg-primary hover:text-white hover:border-primary transition-colors press"
+                  title="Create a shareable quote card"
+                >
+                  <AnimatedIcon animationType="scale">
+                    <Quote className="h-4 w-4" />
+                  </AnimatedIcon>
+                  <span className="hidden sm:inline text-xs font-semibold uppercase tracking-wider">Quote Card</span>
                 </button>
                 <button
                   onClick={() => toggleSave(article)}
@@ -702,6 +722,15 @@ const ArticlePage = () => {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 lg:pb-12">
         <CommentSection articleId={article?.id ?? ""} currentUserId={currentUserId} />
       </div>
+
+      <QuoteCardModal
+        open={quoteCardOpen}
+        onOpenChange={setQuoteCardOpen}
+        quoteText={selectedQuote}
+        articleTitle={article?.title || ""}
+        authorName={article?.author || ""}
+        categoryName={article?.category || "News"}
+      />
     </div>
   );
 };
