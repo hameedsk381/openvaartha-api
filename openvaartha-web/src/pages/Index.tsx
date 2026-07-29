@@ -9,7 +9,7 @@ import BreakingTicker from '../components/BreakingTicker';
 import HeroCarousel from '../components/HeroCarousel';
 import FeedSkeleton from '../components/FeedSkeleton';
 import Footer from '@/components/Footer';
-import { handleImageFallback, getArticleImage } from '@/lib/utils';
+import { cn, handleImageFallback, getArticleImage } from '@/lib/utils';
 import { CategoryIcon } from '@/components/CategoryIcon';
 import { Zap, Bookmark, BookmarkCheck, ArrowUpRight, Flame, Sparkles } from 'lucide-react';
 import { Clock } from '@/components/animate-ui/icons/clock';
