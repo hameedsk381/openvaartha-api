@@ -4,7 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useArticle, useRelatedArticles } from "@/lib/api-hooks";
 import type { Article } from "@/lib/types";
 import Navbar from "@/components/Navbar";
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import DOMPurify from "dompurify";
 import { ArticleSkeleton } from "@/components/PageSkeletons";
 import {
   Share2, Bookmark, BookmarkCheck,
@@ -32,7 +34,6 @@ import { Button } from "@/components/ui/button";
 import { useInView } from "react-intersection-observer";
 import { InteractivePoll } from "./InteractivePoll";
 import FactCheckOverlay from "./FactCheckOverlay";
-import DOMPurify from "dompurify";
 
 const timeAgo = (dateStr: string): string => {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -42,8 +43,6 @@ const timeAgo = (dateStr: string): string => {
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
 };
-
-const isHtml = (str: string): boolean => /<[a-z][\s\S]*>/i.test(str);
 
 const TEXT_SIZES = ["text-base", "text-lg", "text-xl"] as const;
 const TEXT_SIZE_LABELS = ["A−", "A", "A+"];
@@ -579,28 +578,22 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
             )}
 
             <div id="article-body" className={cn("article-body", textSize, "transition-[font-size]")}>
-              {isHtml(article.content?.body || "") ? (
-                <div 
-                  className="prose prose-sm sm:prose-base md:prose-lg max-w-none prose-neutral dark:prose-invert prose-headings:font-display prose-p:font-serif prose-a:text-primary leading-relaxed [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-6xl sm:[&>p:first-of-type]:first-letter:text-7xl [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:text-primary [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-1 [&>p:first-of-type]:first-letter:leading-[0.85]"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content?.body || "") }} 
-                />
-              ) : (
-                <div className="prose prose-sm sm:prose-base md:prose-lg max-w-none prose-neutral dark:prose-invert prose-headings:font-display prose-p:font-serif prose-a:text-primary leading-relaxed [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-6xl sm:[&>p:first-of-type]:first-letter:text-7xl [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:text-primary [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-1 [&>p:first-of-type]:first-letter:leading-[0.85]">
-                  <ReactMarkdown
-                    components={{
-                      img({ node, ...props }) {
-                        return (
-                          <figure className="relative overflow-hidden rounded-xl bg-muted/60 aspect-video w-full my-8">
-                            <img {...props} className="absolute inset-0 w-full h-full object-cover" loading="lazy" onError={handleImageFallback} />
-                          </figure>
-                        );
-                      }
-                    }}
-                  >
-                    {article.content?.body || ""}
-                  </ReactMarkdown>
-                </div>
-              )}
+              <div className="prose prose-sm sm:prose-base md:prose-lg max-w-none prose-neutral dark:prose-invert prose-headings:font-display prose-p:font-serif prose-a:text-primary leading-relaxed [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-6xl sm:[&>p:first-of-type]:first-letter:text-7xl [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:text-primary [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-1 [&>p:first-of-type]:first-letter:leading-[0.85]">
+                <ReactMarkdown
+                  rehypePlugins={[rehypeRaw]}
+                  components={{
+                    img({ node, ...props }) {
+                      return (
+                        <figure className="relative overflow-hidden rounded-xl bg-muted/60 aspect-video w-full my-8">
+                          <img {...props} className="absolute inset-0 w-full h-full object-cover" loading="lazy" onError={handleImageFallback} />
+                        </figure>
+                      );
+                    }
+                  }}
+                >
+                  {article.content?.body || ""}
+                </ReactMarkdown>
+              </div>
             </div>
 
             {article.content?.pollId && (
