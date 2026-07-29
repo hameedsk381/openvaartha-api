@@ -52,6 +52,7 @@ type FormState = {
   body: string;
   timeline: TimelineEntry[];
   explainer: ExplainerEntry[];
+  pollId: string;
 };
 
 // `datetime-local` inputs expect (and return) wall-clock LOCAL time with no
@@ -88,6 +89,7 @@ const emptyForm: FormState = {
   body: "",
   timeline: [],
   explainer: [],
+  pollId: "",
 };
 
 export default function AdminArticleForm() {
@@ -215,6 +217,7 @@ export default function AdminArticleForm() {
       body: article.content?.body || "",
       timeline: article.content?.timeline?.filter((t): t is TimelineEntry => !!t) || [],
       explainer: article.content?.explainer?.filter((e): e is ExplainerEntry => !!e) || [],
+      pollId: article.content?.pollId || "",
     });
     resetDirty();
   }, [articleQuery.data]);
@@ -256,6 +259,7 @@ export default function AdminArticleForm() {
       timeline: form.timeline.length > 0 ? form.timeline : null,
       explainer: form.explainer.length > 0 ? form.explainer : null,
       video_url: form.videoUrl || null,
+      poll_id: form.pollId || null,
     },
   }), [form]);
 
@@ -904,6 +908,20 @@ export default function AdminArticleForm() {
                   </div>
                 )}
               </div>
+            </Field>
+
+            <Field label="Interactive Poll ID">
+              <div className="flex gap-2">
+                <Input value={form.pollId} onChange={(e) => update("pollId", e.target.value)} placeholder="Enter Poll ID..." className="flex-1" />
+                {form.pollId && (
+                  <Button type="button" variant="outline" size="icon" onClick={() => update("pollId", "")} aria-label="Remove poll">
+                    <X className="h-4 w-4" animateOnHover />
+                  </Button>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                If provided, a poll will be automatically embedded at the end of the article.
+              </p>
             </Field>
           </CardSection>
           <CardSection title="Flags">

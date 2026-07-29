@@ -72,6 +72,8 @@ app.include_router(upload.router, prefix="/api/v1/upload", tags=["Upload"])
 app.include_router(authors.router, prefix="/api/v1/authors", tags=["Authors"])
 from app.api.v1 import series
 app.include_router(series.router, prefix="/api/v1/series", tags=["Series"])
+from app.api.v1 import polls
+app.include_router(polls.router, prefix="/api/v1/polls", tags=["Polls"])
 
 # Root-level routes (sitemap, RSS feeds, server-rendered article HTML)
 app.include_router(feeds.router)

@@ -13,6 +13,7 @@ class ArticleContentBase(BaseModel):
     timeline: Optional[List[dict]] = None
     explainer: Optional[List[dict]] = None
     video_url: Optional[str] = None
+    poll_id: Optional[str] = None
 
     class Config:
         alias_generator = to_camel
@@ -32,6 +33,7 @@ class ArticleContentUpdate(BaseModel):
     timeline: Optional[List[dict]] = None
     explainer: Optional[List[dict]] = None
     video_url: Optional[str] = None
+    poll_id: Optional[str] = None
 
     class Config:
         alias_generator = to_camel

@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { Button } from "@/components/ui/button";
 import { useInView } from "react-intersection-observer";
+import { InteractivePoll } from "./InteractivePoll";
 
 const timeAgo = (dateStr: string): string => {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -588,6 +589,10 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
                 </div>
               )}
             </div>
+
+            {article.content?.pollId && (
+              <InteractivePoll pollId={article.content.pollId} />
+            )}
 
             {article.content?.timeline && article.content.timeline.length > 0 && (
               <section id="timeline" className="mt-14 pt-10 border-t border-border">
