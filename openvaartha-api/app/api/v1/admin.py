@@ -318,6 +318,8 @@ async def ai_generate_article(request: Request, body: GenerateArticleRequest):
             status_code=503,
             detail="AI generation failed. Check the GROQ_API_KEY environment variable.",
         )
+    
+    return GenerateArticleResponse(**result)
 class AIAssistRequest(BaseModel):
     action: Literal["headlines", "improve", "shorten", "points"]
     text: str
