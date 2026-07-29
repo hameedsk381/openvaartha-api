@@ -1,6 +1,6 @@
-export type ArticleStatus = "draft" | "published" | "archived";
+export type ArticleStatus = "draft" | "pending" | "scheduled" | "published" | "archived";
 
-export const ARTICLE_STATUSES: ArticleStatus[] = ["draft", "published", "archived"];
+export const ARTICLE_STATUSES: ArticleStatus[] = ["draft", "pending", "scheduled", "published", "archived"];
 
 export interface ArticleContent {
   tldr: string;
@@ -21,6 +21,8 @@ export interface Article {
   readTime: string;
   language: string;
   status: ArticleStatus;
+  scheduledAt?: string | null;
+  tags?: string[];
   isTrending: boolean;
   isBreaking: boolean;
   isEditorPick: boolean;

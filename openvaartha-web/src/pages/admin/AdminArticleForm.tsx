@@ -41,6 +41,8 @@ type FormState = {
   thumbnailUrl: string;
   videoUrl: string;
   publishedAt: string;
+  scheduledAt: string;
+  tags: string;
   status: ArticleStatus;
   isTrending: boolean;
   isBreaking: boolean;
@@ -75,6 +77,8 @@ const emptyForm: FormState = {
   thumbnailUrl: "",
   videoUrl: "",
   publishedAt: toDateInput(),
+  scheduledAt: toDateInput(),
+  tags: "",
   status: "draft",
   isTrending: false,
   isBreaking: false,
@@ -200,6 +204,8 @@ export default function AdminArticleForm() {
       thumbnailUrl: article.thumbnailUrl || "",
       videoUrl: article.content?.videoUrl || "",
       publishedAt: toDateInput(article.publishedAt),
+      scheduledAt: toDateInput(article.scheduledAt || undefined),
+      tags: (article.tags || []).join(", "),
       status: (article.status ?? "draft") as ArticleStatus,
       isTrending: article.isTrending,
       isBreaking: article.isBreaking,
@@ -234,6 +240,8 @@ export default function AdminArticleForm() {
     read_time: form.readTime,
     language: form.language,
     status: form.status,
+    scheduled_at: form.status === "scheduled" ? safeDate(form.scheduledAt) : null,
+    tags: form.tags.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean),
     author: form.author,
     author_id: form.authorId || null,
     thumbnail_url: form.thumbnailUrl || null,
@@ -699,6 +707,30 @@ export default function AdminArticleForm() {
             </Field>
             <Field label="Published">
               <Input type="datetime-local" value={form.publishedAt} onChange={(e) => update("publishedAt", e.target.value)} required className="[&::-webkit-calendar-picker-indicator]:opacity-50" />
+            </Field>
+
+            {form.status === "scheduled" && (
+              <Field label="Scheduled Publishing Time">
+                <Input
+                  type="datetime-local"
+                  value={form.scheduledAt}
+                  onChange={(e) => update("scheduledAt", e.target.value)}
+                  required
+                  className="[&::-webkit-calendar-picker-indicator]:opacity-50 border-amber-500/50 bg-amber-500/5"
+                />
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                  Article will automatically go live when this time arrives.
+                </p>
+              </Field>
+            )}
+
+            <Field label="Tags">
+              <Input
+                value={form.tags}
+                onChange={(e) => update("tags", e.target.value)}
+                placeholder="e.g. AI, Technology, Policy (comma-separated)"
+              />
+              <p className="text-[11px] text-muted-foreground">Topics used to group related content.</p>
             </Field>
           </CardSection>
 

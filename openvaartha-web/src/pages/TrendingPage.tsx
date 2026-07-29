@@ -137,7 +137,6 @@ const TrendingPage = () => {
                               loading="lazy"
                               decoding="async"
                               onError={handleImageFallback}
-                              loading="lazy"
                             />
                           </div>
                         )}

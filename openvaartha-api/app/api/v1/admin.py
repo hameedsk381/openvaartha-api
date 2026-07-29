@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Literal
 from pydantic import BaseModel
 
 from app.core.dependencies import get_current_active_admin
+from app.core.rate_limit import limiter
 from app.database import get_db
 from app.models.user import User as UserModel
 from app.schemas.article import Article as ArticleSchema
@@ -294,7 +295,8 @@ class GenerateArticleResponse(BaseModel):
 
 
 @router.post("/ai/generate-article", response_model=GenerateArticleResponse)
-async def ai_generate_article(body: GenerateArticleRequest):
+@limiter.limit("20/hour")
+async def ai_generate_article(request: Request, body: GenerateArticleRequest):
     """Generate a complete article draft from a topic prompt using Groq."""
     result = await generate_article(
         topic=body.topic,

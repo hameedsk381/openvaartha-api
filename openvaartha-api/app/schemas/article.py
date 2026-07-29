@@ -54,6 +54,8 @@ class ArticleBase(BaseModel):
     read_time: str
     language: str = "en"
     status: ArticleStatus = ArticleStatus.DRAFT
+    scheduled_at: Optional[datetime] = None
+    tags: List[str] = Field(default_factory=list)
     is_trending: bool = False
     is_breaking: bool = False
     is_editor_pick: bool = False
@@ -99,6 +101,8 @@ class ArticleUpdate(BaseModel):
     read_time: Optional[str] = None
     language: Optional[str] = None
     status: Optional[ArticleStatus] = None
+    scheduled_at: Optional[datetime] = None
+    tags: Optional[List[str]] = None
     is_trending: Optional[bool] = None
     is_breaking: Optional[bool] = None
     is_editor_pick: Optional[bool] = None

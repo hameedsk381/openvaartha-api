@@ -8,6 +8,7 @@ from uuid import uuid4
 class ArticleStatus(str, Enum):
     DRAFT = "draft"
     PENDING = "pending"
+    SCHEDULED = "scheduled"
     PUBLISHED = "published"
     ARCHIVED = "archived"
 
@@ -45,6 +46,8 @@ class Article(BaseModel):
     read_time: str
     language: str = "en"
     status: ArticleStatus = ArticleStatus.DRAFT
+    scheduled_at: Optional[datetime] = None
+    tags: List[str] = Field(default_factory=list)
     is_trending: bool = False
     is_breaking: bool = False
     is_editor_pick: bool = False

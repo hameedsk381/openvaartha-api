@@ -305,6 +305,10 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
     await db["article_content"].create_index("article_id")
     await db["reading_history"].create_index([("user_id", 1), ("article_id", 1)], unique=True)
     await ensure_comment_indexes(db)
+    from app.services.reaction_service import ensure_reaction_indexes
+    await ensure_reaction_indexes(db)
+    await db["articles"].create_index("tags")
+    await db["articles"].create_index([("tags", 1), ("status", 1), ("published_at", -1)])
 
     # Auto-migration for existing base64 thumbnails in database
     try:
@@ -445,6 +449,7 @@ async def get_articles(
     include_unpublished: bool = False,
     is_opinion: Optional[bool] = None,
     author_id: Optional[str] = None,
+    tag: Optional[str] = None,
 ):
     """Get articles. Public callers see only published items;
     callers in admin contexts may opt in to all statuses."""
@@ -457,6 +462,7 @@ async def get_articles(
         search=search or "",
         is_opinion=str(is_opinion) if is_opinion is not None else "",
         author_id=author_id or "",
+        tag=tag or "",
         scope="all" if include_unpublished else "public",
     )
     if not include_unpublished:
@@ -475,6 +481,8 @@ async def get_articles(
         query["is_opinion"] = is_opinion
     if author_id is not None:
         query["author_id"] = author_id
+    if tag:
+        query["tags"] = tag.lower()
 
     cursor = db["articles"].find(query).sort("published_at", -1).skip(skip).limit(limit)
     articles = await cursor.to_list(length=limit)
@@ -483,6 +491,27 @@ async def get_articles(
     if not include_unpublished:
         await _set_cached_list(key, populated)
     return populated
+
+
+async def get_popular_tags(db: AsyncIOMotorDatabase, limit: int = 20) -> List[dict]:
+    """Get most frequent tags across published articles."""
+    key = _cache_key("popular_tags", limit=limit)
+    cached = await _get_cached_list(key)
+    if cached is not None:
+        return cached
+
+    pipeline = [
+        {"$match": _public_query({"tags": {"$exists": True, "$ne": []}})},
+        {"$unwind": "$tags"},
+        {"$group": {"_id": "$tags", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": limit},
+        {"$project": {"_id": 0, "name": "$_id", "count": "$count"}},
+    ]
+    cursor = db["articles"].aggregate(pipeline)
+    tags = await cursor.to_list(length=limit)
+    await _set_cached_list(key, tags)
+    return tags
 
 
 async def get_trending_articles(db: AsyncIOMotorDatabase, limit: int = 10):

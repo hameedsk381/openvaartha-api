@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from pydantic import BaseModel
 from typing import List, Optional, Union
 
 from app.database import get_db
@@ -23,6 +24,7 @@ async def list_articles(
     limit: int = Query(20, ge=1, le=100),
     category_id: Optional[str] = None,
     status: Optional[str] = None,
+    tag: Optional[str] = Query(None, description="Filter by tag"),
     search: Optional[str] = Query(None, description="Full-text search across title and summary"),
     include_unpublished: bool = Query(False, description="Admin-only: include drafts/archived."),
     include_total: bool = Query(False, description="Return {items, total} instead of plain array"),
@@ -41,6 +43,7 @@ async def list_articles(
         status=status,
         search=search,
         include_unpublished=include_unpublished,
+        tag=tag,
     )
 
     if not include_total:
@@ -51,10 +54,21 @@ async def list_articles(
         query["category_id"] = category_id
     if status:
         query["status"] = status
+    if tag:
+        query["tags"] = tag.lower()
     if search:
         query["$text"] = {"$search": search}
     total = await db["articles"].count_documents(query)
     return {"items": items, "total": total}
+
+
+@router.get("/tags/popular")
+async def get_popular_tags(
+    limit: int = Query(20, ge=1, le=50),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Get popular article tags."""
+    return await article_service.get_popular_tags(db, limit=limit)
 
 
 @router.get("/trending", response_model=List[Article])

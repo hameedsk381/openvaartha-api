@@ -8,7 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import { ArticleSkeleton } from "@/components/PageSkeletons";
 import {
   Share2, Bookmark, BookmarkCheck,
-  History, Type, Flame, Facebook, Eye, Twitter
+  History, Type, Flame, Facebook, Eye, Twitter, Tag
 } from "lucide-react";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { ArrowLeft } from "@/components/animate-ui/icons/arrow-left";
@@ -20,6 +20,7 @@ import { categoryColors } from "@/lib/types";
 import { BRAND, pageTitle, SITE_TITLE } from "@/lib/brand";
 import { apiFetch } from "@/lib/api";
 import CommentSection from "@/components/CommentSection";
+import ReactionBar from "@/components/ReactionBar";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { toast } from "sonner";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
@@ -589,7 +590,26 @@ const ArticlePage = () => {
               </section>
             )}
 
-            <footer className="mt-12 pt-8 border-t border-border flex items-center gap-3">
+            {article.tags && article.tags.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-border flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1 mr-1">
+                  <Tag className="h-3.5 w-3.5" /> Tags:
+                </span>
+                {article.tags.map((tag) => (
+                  <Link
+                    key={tag}
+                    to={`/topic/${encodeURIComponent(tag)}`}
+                    className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground hover:bg-primary hover:text-white transition-colors"
+                  >
+                    #{tag}
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            <ReactionBar articleId={article.id} />
+
+            <footer className="mt-8 pt-6 border-t border-border flex items-center gap-3">
               <span className="h-2 w-2 rounded-full bg-primary" />
               <span className="overline">End of article</span>
             </footer>
