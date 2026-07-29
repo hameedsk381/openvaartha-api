@@ -450,6 +450,8 @@ export default function Index() {
                     <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight mt-0.5">
                       {isFiltered ? `${displayCategoryName} stories` : 'The latest'}
                     </h3>
+                  </div>
+
                   <div className="flex items-center gap-2">
                     {!isFiltered && (
                       <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border border-border">
