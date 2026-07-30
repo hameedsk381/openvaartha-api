@@ -947,20 +947,21 @@ async def get_related_articles(
 ):
     """Get related articles (same category, exclude self, published only).
     Falls back to most recent if not enough in the same category."""
-    article = await db["articles"].find_one({"_id": article_id}, {"category_id": 1})
+    article = await db["articles"].find_one({"$or": [{"_id": article_id}, {"slug": article_id}]}, {"category_id": 1, "_id": 1})
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
 
+    actual_id = article["_id"]
     category_id = article.get("category_id")
     same_category = await db["articles"].find(
-        _public_query({"_id": {"$ne": article_id}, "category_id": category_id}),
+        _public_query({"_id": {"$ne": actual_id}, "category_id": category_id}),
         {"embedding": 0}
     ).sort("published_at", -1).limit(limit).to_list(length=limit)
 
     if len(same_category) >= limit:
         return await _populate_articles_bulk(db, same_category)
 
-    seen = {article_id, *(a["_id"] for a in same_category)}
+    seen = {actual_id, *(a["_id"] for a in same_category)}
     remaining = limit - len(same_category)
     recent = await db["articles"].find(
         _public_query({"_id": {"$nin": list(seen)}}),

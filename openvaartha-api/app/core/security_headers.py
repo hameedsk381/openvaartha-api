@@ -11,7 +11,7 @@ _CSP = (
     "font-src 'self' https://fonts.gstatic.com data:;"
     "img-src 'self' data: blob: https: https://www.googletagmanager.com;"
     "media-src 'self' https://storage.googleapis.com;"
-    "connect-src 'self' https://accounts.google.com https://www.google-analytics.com;"
+    "connect-src 'self' https://accounts.google.com https://www.google-analytics.com https://analytics.google.com https://www.google.com;"
     "frame-src https://accounts.google.com;"
     "base-uri 'self';"
     "form-action 'self';"
