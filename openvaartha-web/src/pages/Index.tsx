@@ -10,6 +10,7 @@ import CategoryStrip from '@/components/home/CategoryStrip';
 import EditorPicks from '@/components/home/EditorPicks';
 import MainFeed from '@/components/home/MainFeed';
 import TrendingSidebar from '@/components/home/TrendingSidebar';
+import { StoriesBar } from '@/components/StoriesBar';
 
 import {
   useArticles,
@@ -82,6 +83,9 @@ export default function Index() {
               </p>
             </div>
           )}
+
+          {/* Stories Bar */}
+          {!isFiltered && <StoriesBar />}
 
           {/* Classic Hero Section */}
           <HeroClassic articles={filtered.slice(0, 5)} />
