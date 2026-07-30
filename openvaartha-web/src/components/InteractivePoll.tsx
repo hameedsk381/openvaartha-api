@@ -27,6 +27,11 @@ export function InteractivePoll({ pollId }: { pollId: string }) {
   const { data: poll, isLoading, error } = useQuery<Poll>({
     queryKey: ["poll", pollId],
     queryFn: () => apiFetch(`/polls/${pollId}`),
+    retry: (failureCount, error: any) => {
+      // Don't retry if the poll was not found
+      if (error?.message?.includes("404") || error?.status === 404) return false;
+      return failureCount < 2;
+    }
   });
 
   const voteMutation = useMutation({
