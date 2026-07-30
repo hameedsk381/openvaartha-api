@@ -147,4 +147,6 @@ async def explain_article_eli5(article_text: str) -> Optional[str]:
         except Exception as e:
             logger.error(f"Groq explain fallback failed: {e}")
 
-    return None
+    # If both AI services fail or keys are missing, return a graceful fallback string 
+    # instead of None to prevent a 500 error on the frontend.
+    return "Our AI is currently taking a quick nap! 😴 Please check back later for the simplified summary."

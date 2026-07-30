@@ -1,8 +1,8 @@
 import { useParams } from "react-router-dom";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import useEmblaCarousel from "embla-carousel-react";
 import SingleArticle from "@/components/SingleArticle";
 import Navbar from "@/components/Navbar";
-import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { apiFetch } from "@/lib/api";
 
 export default function ArticlePage() {
@@ -11,6 +11,12 @@ export default function ArticlePage() {
   const [streamIds, setStreamIds] = useState<string[]>([]);
   const [isFetchingNext, setIsFetchingNext] = useState(false);
   const [hasReachedEnd, setHasReachedEnd] = useState(false);
+  
+  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+    align: "start",
+    skipSnaps: false,
+    dragFree: false,
+  });
 
   // When the primary slug changes (e.g. user clicked a link to a new article directly),
   // reset the stream.
@@ -18,24 +24,14 @@ export default function ArticlePage() {
     if (slug) {
       setStreamIds([slug]);
       setHasReachedEnd(false);
+      // If Embla is already initialized, scroll to start when slug changes from outside
+      if (emblaApi) emblaApi.scrollTo(0, true);
     }
-  }, [slug]);
+  }, [slug, emblaApi]);
 
-  // Handle URL swapping when an article scrolls into view
-  const handleInView = useCallback((articleSlug: string, articleTitle: string) => {
-    if (window.location.pathname !== `/article/${articleSlug}`) {
-      window.history.replaceState(null, "", `/article/${articleSlug}`);
-      document.title = `${articleTitle} | Open Vaartha`;
-    }
-
-    // Attempt to load the next article if we are viewing the last one in the stream
-    const isLastInStream = streamIds[streamIds.length - 1] === articleSlug;
-    if (isLastInStream && !isFetchingNext && !hasReachedEnd) {
-      loadNextArticle(articleSlug);
-    }
-  }, [streamIds, isFetchingNext, hasReachedEnd]);
-
-  const loadNextArticle = async (currentSlug: string) => {
+  const loadNextArticle = useCallback(async (currentSlug: string) => {
+    if (isFetchingNext || hasReachedEnd) return;
+    
     setIsFetchingNext(true);
     try {
       // Fetch related articles to find the next one
@@ -57,39 +53,69 @@ export default function ArticlePage() {
     } finally {
       setIsFetchingNext(false);
     }
-  };
+  }, [streamIds, isFetchingNext, hasReachedEnd]);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    
+    const currentIndex = emblaApi.selectedScrollSnap();
+    const currentSlug = streamIds[currentIndex];
+    
+    if (currentSlug) {
+      // Update URL silently
+      if (window.location.pathname !== `/article/${currentSlug}`) {
+        window.history.replaceState(null, "", `/article/${currentSlug}`);
+      }
+      
+      // If we are at the second-to-last or last slide, fetch more
+      if (currentIndex >= streamIds.length - 2) {
+        loadNextArticle(currentSlug);
+      }
+    }
+  }, [emblaApi, streamIds, loadNextArticle]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on("select", onSelect);
+    // Trigger once on init
+    onSelect();
+    return () => {
+      emblaApi.off("select", onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
+  const handleInView = useCallback((articleSlug: string, articleTitle: string) => {
+    // Only update title if it's the active article URL
+    if (window.location.pathname === `/article/${articleSlug}`) {
+      document.title = `${articleTitle} | Open Vaartha`;
+    }
+  }, []);
 
   return (
-    <div className="relative min-h-screen bg-background selection:bg-primary/15 selection:text-primary">
-      <ScrollProgress className="top-[60px] md:top-[72px]" />
-      <Navbar />
+    <div className="relative h-[100dvh] overflow-hidden bg-background selection:bg-primary/15 selection:text-primary flex flex-col">
+      <div className="shrink-0 z-50">
+        <Navbar />
+      </div>
 
-      <main className="flex flex-col">
-        {streamIds.map((id, index) => (
-          <div key={`${id}-${index}`} className="relative">
-            <SingleArticle articleId={id} onInView={handleInView} />
-            
-            {/* Visual separator between stream articles */}
-            {index < streamIds.length - 1 && (
-              <div className="flex items-center justify-center py-20 px-4 bg-background border-t-8 border-muted mt-10">
-                <div className="w-full max-w-2xl flex items-center gap-6">
-                  <div className="h-px bg-border flex-1" />
-                  <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">
-                    Keep Reading
-                  </span>
-                  <div className="h-px bg-border flex-1" />
+      <div className="flex-1 overflow-hidden" ref={emblaRef}>
+        <div className="flex h-full touch-pan-y">
+          {streamIds.map((id, index) => (
+            <div 
+              key={`${id}-${index}`} 
+              className="relative flex-[0_0_100%] min-w-0 h-full overflow-y-auto overflow-x-hidden pb-safe"
+            >
+              <SingleArticle articleId={id} onInView={handleInView} />
+              
+              {/* Show loading spinner at bottom of the last article if fetching next */}
+              {index === streamIds.length - 1 && isFetchingNext && (
+                <div className="py-24 flex justify-center items-center">
+                  <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                 </div>
-              </div>
-            )}
-          </div>
-        ))}
-
-        {isFetchingNext && (
-          <div className="py-24 flex justify-center items-center">
-            <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-          </div>
-        )}
-      </main>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
