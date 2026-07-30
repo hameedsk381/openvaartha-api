@@ -330,7 +330,7 @@ async def toggle_article_reaction(
     ip_address = request.client.host if request.client else "0.0.0.0"
     
     try:
-        return await toggle_reaction(db, article_id, reaction.reaction_type, user_id=user_id, ip_address=ip_address)
+        return await toggle_reaction(db, article_id, reaction.reaction_type, user_id=user_id, client_ip=ip_address)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
