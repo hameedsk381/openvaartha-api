@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useArticle, useRelatedArticles } from "@/lib/api-hooks";
 import type { Article } from "@/lib/types";
 import Navbar from "@/components/Navbar";
@@ -164,6 +164,44 @@ function useSEOMeta(article: Article | undefined) {
 
 const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: (slug: string, title: string) => void }) => {
   const { ref, inView } = useInView({ threshold: 0.1, triggerOnce: false });
+  const queryClient = useQueryClient();
+  const [showDoubleTapLike, setShowDoubleTapLike] = useState<{x: number, y: number} | null>(null);
+
+  const { data: article, isLoading } = useArticle(articleId || "");
+
+  const likeMutation = useMutation({
+    mutationFn: () =>
+      apiFetch(`/articles/${articleId}/reactions`, {
+        method: "POST",
+        body: JSON.stringify({ reaction_type: "fire" }),
+      }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["article", articleId, "reactions"] });
+    },
+  });
+
+  const triggerDoubleTap = (x: number, y: number) => {
+    setShowDoubleTapLike({ x, y });
+    likeMutation.mutate();
+    setTimeout(() => {
+      setShowDoubleTapLike(null);
+    }, 1000);
+  };
+
+  const handleDoubleTap = (e: React.MouseEvent) => {
+    triggerDoubleTap(e.clientX, e.clientY);
+  };
+
+  const [lastTap, setLastTap] = useState(0);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTap;
+    if (tapLength < 300 && tapLength > 0) {
+      triggerDoubleTap(e.touches[0].clientX, e.touches[0].clientY);
+    }
+    setLastTap(currentTime);
+  };
+
   const slug = articleId;
   const [scrollProgress, setScrollProgress] = useState(0);
   const [quoteCardOpen, setQuoteCardOpen] = useState(false);
@@ -280,7 +318,27 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
         </ol>
       </nav>
 
-      <article ref={ref} className="scroll-mt-20">
+      {/* Double Tap Floating Emoji */}
+      {showDoubleTapLike && (
+        <div 
+          className="fixed pointer-events-none z-50 flex items-center justify-center animate-in zoom-in duration-300 fade-in"
+          style={{
+            left: showDoubleTapLike.x - 50,
+            top: showDoubleTapLike.y - 50,
+            width: 100,
+            height: 100,
+          }}
+        >
+          <span className="text-8xl drop-shadow-2xl animate-bounce">🔥</span>
+        </div>
+      )}
+
+      <article 
+        ref={ref} 
+        className="scroll-mt-20 touch-manipulation relative"
+        onDoubleClick={handleDoubleTap}
+        onTouchStart={handleTouchStart}
+      >
         <header className="border-y border-border bg-[hsl(var(--surface))] mt-4 relative">
           <div
             aria-hidden="true"

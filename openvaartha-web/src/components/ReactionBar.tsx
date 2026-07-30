@@ -10,11 +10,11 @@ interface ReactionData {
 }
 
 const EMOJI_MAP: { type: string; label: string; emoji: string }[] = [
-  { type: "fire", label: "Hot", emoji: "🔥" },
-  { type: "applause", label: "Bravo", emoji: "👏" },
-  { type: "idea", label: "Insightful", emoji: "💡" },
-  { type: "sad", label: "Sad", emoji: "😢" },
-  { type: "mindblown", label: "Mindblown", emoji: "🤯" },
+  { type: "fire", label: "Fire", emoji: "🔥" },
+  { type: "dead", label: "I'm dead", emoji: "💀" },
+  { type: "spicy", label: "Spicy", emoji: "👀" },
+  { type: "slay", label: "Slay", emoji: "💅" },
+  { type: "cap", label: "Cap", emoji: "🧢" },
 ];
 
 interface Props {
