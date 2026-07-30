@@ -209,6 +209,16 @@ export default {
           from: { transform: "translateY(0)" },
           to: { transform: "translateY(calc(-100% - var(--gap)))" },
         },
+        "bounce-horizontal": {
+          "0%, 100%": {
+            transform: "translateX(-15%)",
+            animationTimingFunction: "cubic-bezier(0.8, 0, 1, 1)"
+          },
+          "50%": {
+            transform: "translateX(0)",
+            animationTimingFunction: "cubic-bezier(0, 0, 0.2, 1)"
+          }
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -218,6 +228,7 @@ export default {
         "ticker":         "ticker var(--ticker-duration, 30s) linear infinite",
         "marquee":        "marquee var(--duration, 40s) linear infinite",
         "marquee-vertical": "marquee-vertical var(--duration, 40s) linear infinite",
+        "bounce-horizontal": "bounce-horizontal 1s infinite",
       },
     },
   },

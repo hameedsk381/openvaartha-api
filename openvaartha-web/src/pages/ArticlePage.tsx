@@ -55,10 +55,21 @@ export default function ArticlePage() {
     }
   }, [streamIds, isFetchingNext, hasReachedEnd]);
 
+  const [hasSwipedHint, setHasSwipedHint] = useState(() => {
+    return localStorage.getItem("has-seen-swipe-hint") === "true";
+  });
+
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
     
     const currentIndex = emblaApi.selectedScrollSnap();
+    
+    // Hide hint if they swiped past the first slide
+    if (currentIndex > 0 && !hasSwipedHint) {
+      setHasSwipedHint(true);
+      localStorage.setItem("has-seen-swipe-hint", "true");
+    }
+
     const currentSlug = streamIds[currentIndex];
     
     if (currentSlug) {
@@ -72,7 +83,7 @@ export default function ArticlePage() {
         loadNextArticle(currentSlug);
       }
     }
-  }, [emblaApi, streamIds, loadNextArticle]);
+  }, [emblaApi, streamIds, loadNextArticle, hasSwipedHint]);
 
   useEffect(() => {
     if (!emblaApi) return;
@@ -97,7 +108,21 @@ export default function ArticlePage() {
         <Navbar isInsideStack={true} />
       </div>
 
-      <div className="flex-1 overflow-hidden" ref={emblaRef}>
+      <div className="flex-1 overflow-hidden relative" ref={emblaRef}>
+        {/* Swipe Hint Overlay */}
+        {!hasSwipedHint && (
+          <div className="absolute top-1/2 right-4 -translate-y-1/2 z-50 pointer-events-none animate-pulse flex flex-col items-center gap-2 drop-shadow-xl">
+            <div className="bg-background/90 backdrop-blur text-foreground text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border border-border shadow-lg">
+              Swipe
+            </div>
+            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center animate-bounce-horizontal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary translate-x-0.5">
+                <path d="m9 18 6-6-6-6"/>
+              </svg>
+            </div>
+          </div>
+        )}
+
         <div className="flex h-full touch-pan-y">
           {streamIds.map((id, index) => (
             <div 
