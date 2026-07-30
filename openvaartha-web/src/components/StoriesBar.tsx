@@ -11,6 +11,7 @@ const categoryIcons: Record<string, React.ElementType> = {
   cinema: Film,
   "local news": MapPin,
   sports: Trophy,
+  national: MapPin,
 };
 
 const categoryGradients: Record<string, string> = {
@@ -20,6 +21,27 @@ const categoryGradients: Record<string, string> = {
   cinema: "from-[#cb997e] to-orange-200",
   "local news": "from-[#bc6c25] to-amber-500",
   sports: "from-[#ddb892] to-yellow-100",
+  national: "from-[#550000] to-orange-300",
+};
+
+const categoryBackgrounds: Record<string, string> = {
+  politics: "bg-[#550000]/10 dark:bg-[#550000]/30",
+  tech: "bg-[#4a5568]/10 dark:bg-[#4a5568]/30",
+  business: "bg-[#6b705c]/10 dark:bg-[#6b705c]/30",
+  cinema: "bg-[#cb997e]/20 dark:bg-[#cb997e]/30",
+  "local news": "bg-[#bc6c25]/10 dark:bg-[#bc6c25]/30",
+  sports: "bg-[#ddb892]/20 dark:bg-[#ddb892]/30",
+  national: "bg-[#550000]/10 dark:bg-[#550000]/30",
+};
+
+const categoryTextColors: Record<string, string> = {
+  politics: "text-[#550000] dark:text-rose-400",
+  tech: "text-[#4a5568] dark:text-slate-300",
+  business: "text-[#6b705c] dark:text-stone-300",
+  cinema: "text-[#cb997e] dark:text-orange-200",
+  "local news": "text-[#bc6c25] dark:text-amber-400",
+  sports: "text-[#ddb892] dark:text-yellow-200",
+  national: "text-[#550000] dark:text-rose-400",
 };
 
 export function StoriesBar() {
@@ -36,6 +58,8 @@ export function StoriesBar() {
           const normalized = category.toLowerCase();
           const Icon = categoryIcons[normalized] || Flame;
           const gradientClass = categoryGradients[normalized] || "from-primary to-secondary";
+          const bgClass = categoryBackgrounds[normalized] || "bg-muted dark:bg-muted/30";
+          const textClass = categoryTextColors[normalized] || "text-muted-foreground";
           
           return (
             <button
@@ -51,11 +75,11 @@ export function StoriesBar() {
                 {/* Inner White Border */}
                 <div className="w-full h-full bg-background rounded-full p-[2.5px]">
                   {/* Content (Image or Solid Color) */}
-                  <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-muted">
+                  <div className={cn("w-full h-full rounded-full overflow-hidden flex items-center justify-center", !byte.imageUrl && bgClass)}>
                     {byte.imageUrl ? (
                       <img src={byte.imageUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <Icon className="w-6 h-6 text-muted-foreground opacity-80" />
+                      <Icon className={cn("w-6 h-6 opacity-80", textClass)} />
                     )}
                   </div>
                 </div>
