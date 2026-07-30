@@ -11,7 +11,9 @@ import { ChevronRight } from "@/components/animate-ui/icons/chevron-right";
 import { LogOut } from "@/components/animate-ui/icons/log-out";
 import { MessageSquare } from "@/components/animate-ui/icons/message-square";
 import { User } from "@/components/animate-ui/icons/user";
+import { Flame } from "lucide-react";
 import { useReadingList } from "@/hooks/use-reading-list";
+import { useStreak } from "@/hooks/use-streak";
 import { useSearch, useCategories, useBreakingArticles } from "@/lib/api-hooks";
 import SignOutButton from "@/components/SignOutButton";
 import { BRAND } from "@/lib/brand";
@@ -33,6 +35,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery]         = useState("");
   const { saved }                 = useReadingList();
+  const { streak }                = useStreak();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedCat = searchParams.get('category') || 'All';
@@ -145,12 +148,19 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
             <span className="hidden sm:inline text-xs text-muted-foreground/50 select-none">{isMac ? "⌘K" : "Ctrl+K"}</span>
           )}
 
+          {streak > 0 && (
+            <div className="hidden sm:flex items-center gap-1.5 px-3 h-10 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 font-bold text-sm">
+              <Flame className="w-4 h-4 fill-orange-500 animate-pulse" />
+              <span>{streak}</span>
+            </div>
+          )}
+          
           <button
             onClick={toggleDark}
-            className="group h-11 w-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors press"
+            className="group h-11 w-11 rounded-lg flex items-center justify-center bg-transparent hover:bg-muted transition-colors press"
             aria-label="Toggle theme"
-          >
-            {isDark ? <Sun className="h-5 w-5" animateOnTap /> : <Moon className="h-5 w-5" animateOnTap />}
+            title="Toggle theme"
+          >  {isDark ? <Sun className="h-5 w-5" animateOnTap /> : <Moon className="h-5 w-5" animateOnTap />}
           </button>
 
           <Link

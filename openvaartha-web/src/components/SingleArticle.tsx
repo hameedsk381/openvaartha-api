@@ -24,10 +24,12 @@ import { apiFetch } from "@/lib/api";
 import CommentSection from "@/components/CommentSection";
 import ReactionBar from "@/components/ReactionBar";
 import QuoteCardModal from "@/components/QuoteCardModal";
+import ExplainModal from "@/components/ExplainModal";
 import SeriesBanner from "@/components/SeriesBanner";
 import NewsletterCapture from "@/components/NewsletterCapture";
 import AudioPlayer from "@/components/AudioPlayer";
 import { useReadingList } from "@/hooks/use-reading-list";
+import { useStreak } from "@/hooks/use-streak";
 import { toast } from "sonner";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { Button } from "@/components/ui/button";
@@ -167,8 +169,6 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
   const queryClient = useQueryClient();
   const [showDoubleTapLike, setShowDoubleTapLike] = useState<{x: number, y: number} | null>(null);
 
-  const { data: article, isLoading } = useArticle(articleId || "");
-
   const likeMutation = useMutation({
     mutationFn: () =>
       apiFetch(`/articles/${articleId}/reactions`, {
@@ -205,8 +205,10 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
   const slug = articleId;
   const [scrollProgress, setScrollProgress] = useState(0);
   const [quoteCardOpen, setQuoteCardOpen] = useState(false);
+  const [explainModalOpen, setExplainModalOpen] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState("");
   const { toggleSave, isSaved } = useReadingList();
+  const { incrementStreak } = useStreak();
   const [textSizeIdx, setTextSizeIdx] = useState<number>(() => {
     const stored = localStorage.getItem("article-text-size");
     return stored ? parseInt(stored) : 1;
@@ -244,6 +246,7 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
   useEffect(() => {
     if (inView && onInView && article) {
       onInView(article.slug, article.title);
+      incrementStreak();
     }
   }, [inView, onInView, article]);
 
@@ -798,6 +801,9 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
         <button onClick={() => cycleTextSize((textSizeIdx + 1) % TEXT_SIZES.length)} className="flex flex-col items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors press">
           <Type className="h-5 w-5" /> {TEXT_SIZE_LABELS[(textSizeIdx + 1) % TEXT_SIZES.length]}
         </button>
+        <button onClick={() => setExplainModalOpen(true)} className="flex flex-col items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors press">
+          <Sparkles className="h-5 w-5 text-indigo-500 animate-pulse" /> Explain
+        </button>
         <button onClick={() => {
           if (navigator.share) {
             navigator.share({ title: article.title, url: window.location.href });
@@ -809,6 +815,12 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
           <Share2 className="h-5 w-5" /> Share
         </button>
       </div>
+      
+      <ExplainModal
+        open={explainModalOpen}
+        onOpenChange={setExplainModalOpen}
+        articleId={article?.id ?? ""}
+      />
     </>
   );
 };
