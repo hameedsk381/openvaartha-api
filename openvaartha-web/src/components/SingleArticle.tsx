@@ -786,7 +786,7 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
         categoryName={article?.category || "News"}
       />
 
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/85 backdrop-blur-xl border-t border-border px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center justify-around shadow-[0_-4px_24px_rgba(0,0,0,0.05)]">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/85 backdrop-blur-xl border-t border-border px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center justify-around shadow-[0_-4px_24px_rgba(0,0,0,0.05)]">
         <button onClick={() => toggleSave(article)} className={cn("flex flex-col items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors press", isSaved(article.id) ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
           {isSaved(article.id) ? <BookmarkCheck className="h-5 w-5 fill-current" /> : <Bookmark className="h-5 w-5" />}
           {isSaved(article.id) ? "Saved" : "Save"}

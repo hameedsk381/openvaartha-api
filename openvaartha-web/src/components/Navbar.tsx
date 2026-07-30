@@ -231,31 +231,33 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
         </div>
       </header>
 
-      <nav className="bottom-nav sm:hidden">
-        <div className="flex items-center justify-around h-16 px-1">
-          <BottomNavItem icon={<AnimatedIcon animationType="scale"><Home className="h-5 w-5" /></AnimatedIcon>} label="Feed" to="/" active={location.pathname === "/"} />
-          <BottomNavItem icon={<Search className="h-5 w-5" animateOnHover />} label="Search" onClick={() => setSearchOpen(true)} active={false} />
-          <BottomNavItem
-            icon={
-              <div className="relative">
-                <MessageSquare className="h-5 w-5" animateOnHover />
-                {hasBreaking && <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-red-500 rounded-full" />}
-              </div>
-            }
-            label="Bytes" to="/bytes" active={location.pathname === "/bytes"} />
-          <BottomNavItem
-            icon={
-              <div className="relative">
-                <AnimatedIcon animationType="scale">
-                  <Bookmark className="h-5 w-5" />
-                </AnimatedIcon>
-                {saved.length > 0 && <span className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-primary text-white text-[7px] font-semibold rounded-full flex items-center justify-center">{saved.length > 9 ? "9+" : saved.length}</span>}
-              </div>
-            }
-            label="Saved" to="/portal/saved" active={location.pathname === "/portal/saved"} />
-          <BottomNavItem icon={<User className="h-5 w-5" animateOnHover />} label="Portal" to="/portal/dashboard" active={location.pathname.startsWith("/portal")} />
-        </div>
-      </nav>
+      {!isInsideStack && (
+        <nav className="bottom-nav sm:hidden">
+          <div className="flex items-center justify-around h-16 px-1">
+            <BottomNavItem icon={<AnimatedIcon animationType="scale"><Home className="h-5 w-5" /></AnimatedIcon>} label="Feed" to="/" active={location.pathname === "/"} />
+            <BottomNavItem icon={<Search className="h-5 w-5" animateOnHover />} label="Search" onClick={() => setSearchOpen(true)} active={false} />
+            <BottomNavItem
+              icon={
+                <div className="relative">
+                  <MessageSquare className="h-5 w-5" animateOnHover />
+                  {hasBreaking && <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-red-500 rounded-full" />}
+                </div>
+              }
+              label="Bytes" to="/bytes" active={location.pathname === "/bytes"} />
+            <BottomNavItem
+              icon={
+                <div className="relative">
+                  <AnimatedIcon animationType="scale">
+                    <Bookmark className="h-5 w-5" />
+                  </AnimatedIcon>
+                  {saved.length > 0 && <span className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-primary text-white text-[7px] font-semibold rounded-full flex items-center justify-center">{saved.length > 9 ? "9+" : saved.length}</span>}
+                </div>
+              }
+              label="Saved" to="/portal/saved" active={location.pathname === "/portal/saved"} />
+            <BottomNavItem icon={<User className="h-5 w-5" animateOnHover />} label="Portal" to="/portal/dashboard" active={location.pathname.startsWith("/portal")} />
+          </div>
+        </nav>
+      )}
 
       {searchOpen && (
         <div ref={searchOverlayRef} className="fixed inset-0 z-[100] bg-background flex flex-col">

@@ -94,7 +94,7 @@ export default function ArticlePage() {
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-background selection:bg-primary/15 selection:text-primary flex flex-col">
       <div className="shrink-0 z-50">
-        <Navbar />
+        <Navbar isInsideStack={true} />
       </div>
 
       <div className="flex-1 overflow-hidden" ref={emblaRef}>
