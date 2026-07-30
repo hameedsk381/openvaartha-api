@@ -10,12 +10,14 @@ export default function ArticlePage() {
   // We maintain an array of article IDs that have been loaded into the stream.
   const [streamIds, setStreamIds] = useState<string[]>([]);
   const [isFetchingNext, setIsFetchingNext] = useState(false);
+  const [hasReachedEnd, setHasReachedEnd] = useState(false);
 
   // When the primary slug changes (e.g. user clicked a link to a new article directly),
   // reset the stream.
   useEffect(() => {
     if (slug) {
       setStreamIds([slug]);
+      setHasReachedEnd(false);
     }
   }, [slug]);
 
@@ -28,10 +30,10 @@ export default function ArticlePage() {
 
     // Attempt to load the next article if we are viewing the last one in the stream
     const isLastInStream = streamIds[streamIds.length - 1] === articleSlug;
-    if (isLastInStream && !isFetchingNext) {
+    if (isLastInStream && !isFetchingNext && !hasReachedEnd) {
       loadNextArticle(articleSlug);
     }
-  }, [streamIds, isFetchingNext]);
+  }, [streamIds, isFetchingNext, hasReachedEnd]);
 
   const loadNextArticle = async (currentSlug: string) => {
     setIsFetchingNext(true);
@@ -43,10 +45,15 @@ export default function ArticlePage() {
         const nextArticle = data.find(a => !streamIds.includes(a.slug));
         if (nextArticle) {
           setStreamIds(prev => [...prev, nextArticle.slug]);
+        } else {
+          setHasReachedEnd(true);
         }
+      } else {
+        setHasReachedEnd(true);
       }
     } catch (err) {
       console.error("Failed to fetch next article for stream", err);
+      setHasReachedEnd(true); // Stop trying if we hit an error
     } finally {
       setIsFetchingNext(false);
     }
