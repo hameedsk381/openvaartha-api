@@ -96,20 +96,55 @@ async def generate_embedding(text: str) -> Optional[list[float]]:
 
 async def explain_article_eli5(article_text: str) -> Optional[str]:
     """Generates a Gen-Z friendly 'Explain it like I'm 5' summary."""
-    if not _init_gemini():
-        return None
-    try:
-        model = genai.GenerativeModel(model_name=settings.GEMINI_MODEL)
-        prompt = f"""
-        Explain the following news article like I'm 5, but use a casual, relatable Gen-Z friendly tone.
-        Get straight to the point. No corporate jargon. Max 3-4 short sentences.
-        Make it punchy, engaging, and easy to digest. Use 1 or 2 relevant emojis.
+    prompt = f"""
+    You are explaining the news to a Gen-Z reader. They have a very short attention span.
+    Read the following article text and summarize the absolute core message in exactly 2 or 3 punchy, easy-to-understand sentences.
+    Use extremely casual language, zero jargon, and include 1 or 2 relevant emojis. 
+    Make it feel like a text from a smart friend.
+    
+    Article Text:
+    {article_text}
+    """
+    
+    # Try Gemini first
+    if _init_gemini():
+        try:
+            model = genai.GenerativeModel(
+                model_name=settings.GEMINI_MODEL,
+                generation_config={"temperature": 0.7}
+            )
+            response = await model.generate_content_async(prompt)
+            if response.text:
+                return response.text
+        except Exception as e:
+            logger.error(f"Gemini explain failed, falling back to Groq: {e}")
+    
+    # Fallback to Groq
+    if settings.GROQ_API_KEY:
+        try:
+            import httpx
+            async with httpx.AsyncClient() as client:
+                headers = {
+                    "Authorization": f"Bearer {settings.GROQ_API_KEY}",
+                    "Content-Type": "application/json",
+                }
+                payload = {
+                    "model": settings.GROQ_MODEL,
+                    "messages": [
+                        {"role": "user", "content": prompt}
+                    ],
+                    "temperature": 0.7,
+                }
+                res = await client.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers=headers,
+                    json=payload,
+                    timeout=settings.AI_TIMEOUT
+                )
+                res.raise_for_status()
+                data = res.json()
+                return data["choices"][0]["message"]["content"]
+        except Exception as e:
+            logger.error(f"Groq explain fallback failed: {e}")
 
-        Article Text:
-        {article_text}
-        """
-        response = await model.generate_content_async(prompt)
-        return response.text if response.text else None
-    except Exception as e:
-        logger.error(f"Gemini explain failed: {e}", exc_info=True)
-        return None
+    return None

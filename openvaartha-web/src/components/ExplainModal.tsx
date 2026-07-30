@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { Sparkles } from "@/components/animate-ui/icons/sparkles";
@@ -19,21 +19,24 @@ export default function ExplainModal({ open, onOpenChange, articleId }: ExplainM
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-500/20 backdrop-blur-xl rounded-3xl p-6 shadow-[0_8px_32px_rgba(99,102,241,0.15)]">
+      <DialogContent className="sm:max-w-md bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 backdrop-blur-xl rounded-3xl p-6 shadow-[0_8px_32px_rgba(85,0,0,0.15)]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-600">
-            <Sparkles className="w-5 h-5 text-indigo-500" />
+          <DialogTitle className="flex items-center gap-2 text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">
+            <Sparkles className="w-5 h-5 text-primary" />
             Explain it to me
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            A simplified summary of the news article.
+          </DialogDescription>
         </DialogHeader>
         <div className="mt-4 min-h-[100px] flex items-center justify-center text-center">
           {isLoading ? (
             <div className="flex flex-col items-center gap-3">
-              <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+              <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
               <p className="text-sm font-medium text-muted-foreground animate-pulse">AI is reading...</p>
             </div>
           ) : error ? (
-            <p className="text-sm text-red-500">Failed to load explanation. Try again later.</p>
+            <p className="text-sm text-destructive">Failed to load explanation. Try again later.</p>
           ) : (
             <p className="text-base md:text-lg font-medium leading-relaxed text-foreground text-left whitespace-pre-wrap">
               {data?.explanation}
