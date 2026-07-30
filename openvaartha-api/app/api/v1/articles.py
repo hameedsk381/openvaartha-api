@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import BaseModel
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict, Any
 
 from app.database import get_db
 from app.schemas.article import Article, ArticleCreate, ArticleUpdate, ContributionCreate
 from app.services import article_service
+from app.services.reaction_service import get_reaction_counts, toggle_reaction
 from app.services.article_service import _public_query
 from app.core.dependencies import get_current_active_admin, get_current_editor, get_current_user, get_current_user_optional
 from app.core.rate_limit import limiter, MUTATION_LIMIT
@@ -290,6 +291,48 @@ async def track_share(
         raise HTTPException(status_code=404, detail="Article not found or not published")
         
     return {"status": "success", "message": "Share count incremented"}
+
+
+class ReactionCreate(BaseModel):
+    reaction_type: str
+
+
+@router.get("/{article_id}/reactions")
+async def get_article_reactions(
+    article_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Optional[UserModel] = Depends(get_current_user_optional),
+) -> Dict[str, Any]:
+    """Get count per reaction type for an article, and which reactions the user selected."""
+    user_id = current_user.id if current_user else None
+    return await get_reaction_counts(db, article_id, user_id=user_id)
+
+
+@router.post("/{article_id}/reactions")
+@limiter.limit("30/minute")
+async def toggle_article_reaction(
+    request: Request,
+    article_id: str,
+    reaction: ReactionCreate,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Optional[UserModel] = Depends(get_current_user_optional),
+) -> Dict[str, Any]:
+    """Add or remove a reaction for an article."""
+    # We allow anonymous reactions if user_id is None, though typically you'd 
+    # want to track by IP or something else if current_user is None. 
+    # Our reaction_service handles user_id, it can be IP or None if designed that way.
+    # Actually, reaction_service uses request.client.host if user_id is None.
+    # Let's pass request to get IP.
+    
+    # Wait, the reaction_service signature: toggle_reaction(db, article_id, reaction_type, user_id, ip_address)
+    # Let's check reaction_service.py to be sure. It takes user_id and ip_address.
+    user_id = current_user.id if current_user else None
+    ip_address = request.client.host if request.client else "0.0.0.0"
+    
+    try:
+        return await toggle_reaction(db, article_id, reaction.reaction_type, user_id=user_id, ip_address=ip_address)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/{id_or_slug}/tts")
