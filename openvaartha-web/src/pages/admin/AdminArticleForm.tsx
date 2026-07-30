@@ -55,6 +55,8 @@ type FormState = {
   explainer: ExplainerEntry[];
   pollId: string;
   factCheck: FactCheck | null;
+  createByte: boolean;
+  byteText: string;
 };
 
 // `datetime-local` inputs expect (and return) wall-clock LOCAL time with no
@@ -93,6 +95,8 @@ const emptyForm: FormState = {
   explainer: [],
   pollId: "",
   factCheck: null,
+  createByte: false,
+  byteText: "",
 };
 
 export default function AdminArticleForm() {
@@ -222,6 +226,8 @@ export default function AdminArticleForm() {
       explainer: article.content?.explainer?.filter((e): e is ExplainerEntry => !!e) || [],
       pollId: article.content?.pollId || "",
       factCheck: article.content?.factCheck || null,
+      createByte: false,
+      byteText: "",
     });
     resetDirty();
   }, [articleQuery.data]);
@@ -269,7 +275,7 @@ export default function AdminArticleForm() {
   }), [form]);
 
   const mutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       saveRevision(form.title, form.body);
       if (isEditing) {
         return apiFetch<Article>(`/articles/${articleId}`, {
@@ -282,7 +288,23 @@ export default function AdminArticleForm() {
         body: JSON.stringify(payload),
       });
     },
-    onSuccess: () => {
+    onSuccess: async (article) => {
+      if (form.createByte && form.byteText.trim()) {
+        try {
+          await apiFetch("/dispatches/", {
+            method: "POST",
+            body: JSON.stringify({
+              text: form.byteText.slice(0, 280),
+              articleId: article.id,
+              imageUrl: form.thumbnailUrl || null,
+              categoryId: form.categoryId || null
+            })
+          });
+          toast.success("Byte created successfully!");
+        } catch (e: any) {
+          toast.error(`Byte creation failed: ${e.message}`);
+        }
+      }
       queryClient.invalidateQueries({ queryKey: ["admin", "articles"] });
       queryClient.invalidateQueries({ queryKey: ["articles"] });
       queryClient.invalidateQueries({ queryKey: ["article"] });
@@ -936,6 +958,35 @@ export default function AdminArticleForm() {
               <FlagRow label="Trending" checked={form.isTrending} onCheckedChange={(checked) => update("isTrending", checked)} />
               <FlagRow label="Breaking" checked={form.isBreaking} onCheckedChange={(checked) => update("isBreaking", checked)} />
               <FlagRow label="Editor pick" checked={form.isEditorPick} onCheckedChange={(checked) => update("isEditorPick", checked)} />
+            </div>
+          </CardSection>
+
+          <CardSection title="Create Byte">
+            <div className="space-y-3">
+              <FlagRow 
+                label="Also create a Byte" 
+                checked={form.createByte} 
+                onCheckedChange={(checked) => {
+                  update("createByte", checked);
+                  if (checked && !form.byteText) {
+                    update("byteText", form.summary.slice(0, 280));
+                  }
+                }} 
+              />
+              {form.createByte && (
+                <div className="space-y-2 mt-3 pt-3 border-t border-border">
+                  <Label>Byte Text (max 280 chars)</Label>
+                  <Textarea
+                    value={form.byteText}
+                    onChange={(e) => update("byteText", e.target.value.slice(0, 280))}
+                    placeholder="Short text for the byte..."
+                    rows={4}
+                  />
+                  <div className="text-[10px] text-right text-muted-foreground">
+                    {form.byteText.length} / 280
+                  </div>
+                </div>
+              )}
             </div>
           </CardSection>
 
