@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { useInView } from "react-intersection-observer";
 import { InteractivePoll } from "./InteractivePoll";
 import FactCheckOverlay from "./FactCheckOverlay";
+import CustomVideoPlayer from "./CustomVideoPlayer";
 
 const timeAgo = (dateStr: string): string => {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -535,15 +536,12 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
             </div>
 
             {article.content?.videoUrl && (
-              <section id="video" className="mb-10">
-                <video
-                  controls
-                  preload="metadata"
-                  className="w-full aspect-video rounded-lg bg-black"
+              <section id="video" className="mb-10 w-full max-w-4xl mx-auto">
+                <CustomVideoPlayer 
+                  src={article.content.videoUrl} 
                   poster={article.thumbnailUrl || undefined}
-                >
-                  <source src={article.content.videoUrl} />
-                </video>
+                  className="w-full aspect-video shadow-lg"
+                />
               </section>
             )}
 
