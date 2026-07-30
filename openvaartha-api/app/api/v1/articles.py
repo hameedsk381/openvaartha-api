@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import BaseModel
 from typing import List, Optional, Union
@@ -289,6 +290,44 @@ async def track_share(
         raise HTTPException(status_code=404, detail="Article not found or not published")
         
     return {"status": "success", "message": "Share count incremented"}
+
+
+@router.get("/{id_or_slug}/tts")
+async def get_article_tts(
+    id_or_slug: str,
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
+    """Generate and stream TTS audio for an article using Groq."""
+    article = await article_service.get_article_by_slug(db, slug=id_or_slug, include_unpublished=True)
+    if not article:
+        article = await article_service.get_article_by_id(db, article_id=id_or_slug, include_unpublished=True)
+    
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+        
+    text_content = article.get("title", "") + ".\n"
+    if article.get("summary"):
+        text_content += article.get("summary") + ".\n"
+        
+    body = article.get("content", {}).get("body", "")
+    if body:
+        # Very basic markdown strip for TTS (could be improved)
+        clean_body = body.replace("#", "").replace("*", "").replace(">", "")
+        text_content += clean_body
+        
+    if not text_content.strip():
+        raise HTTPException(status_code=400, detail="Article has no content")
+        
+    from app.services.groq_tts_service import GroqTTSService
+    tts_service = GroqTTSService()
+    
+    response = await tts_service.generate_speech(text_content)
+    
+    return StreamingResponse(
+        response.aiter_bytes(),
+        media_type="audio/mpeg"
+    )
+
 
 
 

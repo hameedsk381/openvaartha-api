@@ -1,116 +1,86 @@
-import { useState, useEffect, useRef } from "react";
-import { Play, Pause, Square, Volume2, Sparkles } from "lucide-react";
+import { useState, useRef } from "react";
+import { Play, Pause, Square, Volume2, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface Props {
   title: string;
   bodyText: string;
+  articleId?: string;
 }
 
 const SPEED_OPTIONS = [1.0, 1.25, 1.5, 2.0];
 
-export default function AudioPlayer({ title, bodyText }: Props) {
+export default function AudioPlayer({ title, articleId }: Props) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [speedIndex, setSpeedIndex] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [supported, setSupported] = useState(true);
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-
-  useEffect(() => {
-    if (!("speechSynthesis" in window)) {
-      setSupported(false);
-      return;
-    }
-
-    const loadVoices = () => {
-      setVoices(window.speechSynthesis.getVoices());
-    };
-
-    loadVoices();
-    window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
-
-    return () => {
-      window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
-    };
-  }, []);
-
-  const cleanText = (raw: string) => {
-    return raw.replace(/<[^>]*>?/gm, "").trim();
-  };
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handlePlay = () => {
-    if (!supported) return;
+    if (!articleId) return;
 
-    if (isPaused) {
-      window.speechSynthesis.resume();
+    if (isPaused && audioRef.current) {
+      audioRef.current.play();
       setIsPlaying(true);
       setIsPaused(false);
       return;
     }
 
-    window.speechSynthesis.cancel();
-
-    const fullText = `${title}. ${cleanText(bodyText)}`;
-    const utterance = new SpeechSynthesisUtterance(fullText);
-    utterance.rate = SPEED_OPTIONS[speedIndex];
-    utterance.pitch = 1.0;
-
-    // Try to find an Indian English voice, fallback to UK English, then default
-    let currentVoices = voices;
-    if (currentVoices.length === 0) {
-      currentVoices = window.speechSynthesis.getVoices();
-    }
-    
-    let selectedVoice = currentVoices.find(v => v.lang === 'en-IN' || v.lang === 'en_IN' || v.name.includes("India"));
-    if (!selectedVoice) {
-      selectedVoice = currentVoices.find(v => v.lang.startsWith('en-GB') || v.lang.startsWith('en-UK'));
-    }
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
+    if (audioRef.current) {
+      audioRef.current.pause();
     }
 
-    utterance.onend = () => {
+    setIsLoading(true);
+    const audioUrl = `http://127.0.0.1:8000/api/v1/articles/${articleId}/tts`;
+    const audio = new Audio(audioUrl);
+    audioRef.current = audio;
+
+    audio.playbackRate = SPEED_OPTIONS[speedIndex];
+
+    audio.oncanplay = () => {
+      setIsLoading(false);
+      audio.play();
+      setIsPlaying(true);
+      setIsPaused(false);
+    };
+
+    audio.onended = () => {
       setIsPlaying(false);
       setIsPaused(false);
       setProgress(100);
     };
 
-    utterance.onerror = () => {
+    audio.onerror = () => {
+      setIsLoading(false);
       setIsPlaying(false);
       setIsPaused(false);
     };
 
-    utterance.onboundary = (event) => {
-      if (fullText.length > 0) {
-        const percent = Math.min(100, Math.round((event.charIndex / fullText.length) * 100));
-        setProgress(percent);
+    audio.ontimeupdate = () => {
+      if (audio.duration) {
+        setProgress((audio.currentTime / audio.duration) * 100);
       }
     };
-
-    utteranceRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
-    setIsPlaying(true);
-    setIsPaused(false);
-    setProgress(0);
+    
+    audio.load();
   };
 
   const handlePause = () => {
-    if (isPlaying) {
-      window.speechSynthesis.pause();
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause();
       setIsPlaying(false);
       setIsPaused(true);
     }
   };
 
   const handleStop = () => {
-    window.speechSynthesis.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
     setIsPlaying(false);
     setIsPaused(false);
     setProgress(0);
@@ -119,13 +89,10 @@ export default function AudioPlayer({ title, bodyText }: Props) {
   const cycleSpeed = () => {
     const nextIdx = (speedIndex + 1) % SPEED_OPTIONS.length;
     setSpeedIndex(nextIdx);
-    if (isPlaying && utteranceRef.current) {
-      window.speechSynthesis.cancel();
-      setTimeout(handlePlay, 100);
+    if (audioRef.current) {
+      audioRef.current.playbackRate = SPEED_OPTIONS[nextIdx];
     }
   };
-
-  if (!supported) return null;
 
   return (
     <div className="my-6 rounded-xl border border-primary/20 bg-card/60 p-4 backdrop-blur shadow-xs">
@@ -138,10 +105,10 @@ export default function AudioPlayer({ title, bodyText }: Props) {
             <div className="flex items-center gap-2">
               <h4 className="text-sm font-bold text-foreground font-sans">Listen to Story</h4>
               <span className="text-[10px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full flex items-center gap-1">
-                <Sparkles className="h-2.5 w-2.5" /> AI Voice
+                <Sparkles className="h-2.5 w-2.5" /> Groq TTS
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">Audio narration powered by Web Speech</p>
+            <p className="text-xs text-muted-foreground">High-quality AI audio narration</p>
           </div>
         </div>
 
@@ -151,9 +118,14 @@ export default function AudioPlayer({ title, bodyText }: Props) {
               type="button"
               size="sm"
               onClick={handlePlay}
-              className="gap-2 font-semibold text-xs"
+              disabled={isLoading}
+              className="gap-2 font-semibold text-xs min-w-[120px]"
             >
-              <Play className="h-3.5 w-3.5 fill-current" /> {isPaused ? "Resume" : "Play Narration"}
+              {isLoading ? (
+                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading...</>
+              ) : (
+                <><Play className="h-3.5 w-3.5 fill-current" /> {isPaused ? "Resume" : "Play Narration"}</>
+              )}
             </Button>
           ) : (
             <Button

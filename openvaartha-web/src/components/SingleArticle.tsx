@@ -323,7 +323,7 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
               {article.summary}
             </p>
 
-            <AudioPlayer title={article.title} bodyText={(article.summary || "") + " " + (article.content?.body || "")} />
+            <AudioPlayer title={article.title} articleId={article.slug || article.id} bodyText={(article.summary || "") + " " + (article.content?.body || "")} />
 
             {article.content?.factCheck && (
               <FactCheckOverlay factCheck={article.content.factCheck} />
