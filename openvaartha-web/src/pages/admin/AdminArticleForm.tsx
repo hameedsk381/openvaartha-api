@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
 import MDXBodyEditor from "@/components/LazyMDXBodyEditor";
 import AIGenerateDialog from "@/components/AIGenerateDialog";
+import { marked } from "marked";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -417,7 +418,7 @@ export default function AdminArticleForm() {
           <AIGenerateDialog onApply={(data) => {
             update("title", data.title);
             update("summary", data.summary);
-            update("body", data.body);
+            update("body", marked.parse(data.body) as string);
             update("tldr", data.tldr);
             update("points", data.points.join("\n"));
             if (data.category_id) update("categoryId", data.category_id);
