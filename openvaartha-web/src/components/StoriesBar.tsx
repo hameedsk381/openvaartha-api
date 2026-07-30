@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useDispatches } from "@/lib/api-hooks";
 import { StoryViewerModal } from "./StoryViewerModal";
 import { cn } from "@/lib/utils";
@@ -45,16 +45,31 @@ const categoryTextColors: Record<string, string> = {
 };
 
 export function StoriesBar() {
-  const { data: bytes = [], isLoading } = useDispatches(15, { todayOnly: true });
-  const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null);
+  const { data: rawBytes = [], isLoading } = useDispatches(15, { todayOnly: true });
+  const [activeGroupIndex, setActiveGroupIndex] = useState<number | null>(null);
 
-  if (isLoading || bytes.length === 0) return null;
+  const categoryGroups = useMemo(() => {
+    const map = new Map<string, typeof rawBytes>();
+    rawBytes.forEach(b => {
+      const cat = b.category || "News";
+      if (!map.has(cat)) map.set(cat, []);
+      map.get(cat)!.push(b);
+    });
+    
+    return Array.from(map.entries()).map(([name, items]) => ({
+      name,
+      items,
+      coverImage: items.find(i => i.imageUrl)?.imageUrl || null
+    }));
+  }, [rawBytes]);
+
+  if (isLoading || rawBytes.length === 0) return null;
 
   return (
     <div className="w-full bg-background border-b border-border py-4 px-4 sm:px-6">
       <div className="flex items-center gap-4 overflow-x-auto no-scrollbar pb-2">
-        {bytes.map((byte, index) => {
-          const category = byte.category || "News";
+        {categoryGroups.map((group, index) => {
+          const category = group.name;
           const normalized = category.toLowerCase();
           const Icon = categoryIcons[normalized] || Flame;
           const gradientClass = categoryGradients[normalized] || "from-primary to-secondary";
@@ -63,8 +78,8 @@ export function StoriesBar() {
           
           return (
             <button
-              key={byte.id}
-              onClick={() => setActiveStoryIndex(index)}
+              key={category}
+              onClick={() => setActiveGroupIndex(index)}
               className="flex flex-col items-center gap-2 shrink-0 group focus:outline-none"
             >
               {/* Outer Ring */}
@@ -75,9 +90,9 @@ export function StoriesBar() {
                 {/* Inner White Border */}
                 <div className="w-full h-full bg-background rounded-full p-[2.5px]">
                   {/* Content (Image or Solid Color) */}
-                  <div className={cn("w-full h-full rounded-full overflow-hidden flex items-center justify-center", !byte.imageUrl && bgClass)}>
-                    {byte.imageUrl ? (
-                      <img src={byte.imageUrl} alt="" className="w-full h-full object-cover" />
+                  <div className={cn("w-full h-full rounded-full overflow-hidden flex items-center justify-center", !group.coverImage && bgClass)}>
+                    {group.coverImage ? (
+                      <img src={group.coverImage} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <Icon className={cn("w-6 h-6 opacity-80", textClass)} />
                     )}
@@ -92,11 +107,11 @@ export function StoriesBar() {
         })}
       </div>
 
-      {activeStoryIndex !== null && (
+      {activeGroupIndex !== null && (
         <StoryViewerModal
-          bytes={bytes}
-          initialIndex={activeStoryIndex}
-          onClose={() => setActiveStoryIndex(null)}
+          bytes={categoryGroups[activeGroupIndex].items}
+          initialIndex={0}
+          onClose={() => setActiveGroupIndex(null)}
         />
       )}
     </div>
