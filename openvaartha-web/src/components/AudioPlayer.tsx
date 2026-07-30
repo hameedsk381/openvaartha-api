@@ -16,15 +16,25 @@ export default function AudioPlayer({ title, bodyText }: Props) {
   const [speedIndex, setSpeedIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [supported, setSupported] = useState(true);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
     if (!("speechSynthesis" in window)) {
       setSupported(false);
+      return;
     }
 
+    const loadVoices = () => {
+      setVoices(window.speechSynthesis.getVoices());
+    };
+
+    loadVoices();
+    window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
+
     return () => {
+      window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
@@ -51,6 +61,20 @@ export default function AudioPlayer({ title, bodyText }: Props) {
     const utterance = new SpeechSynthesisUtterance(fullText);
     utterance.rate = SPEED_OPTIONS[speedIndex];
     utterance.pitch = 1.0;
+
+    // Try to find an Indian English voice, fallback to UK English, then default
+    let currentVoices = voices;
+    if (currentVoices.length === 0) {
+      currentVoices = window.speechSynthesis.getVoices();
+    }
+    
+    let selectedVoice = currentVoices.find(v => v.lang === 'en-IN' || v.lang === 'en_IN' || v.name.includes("India"));
+    if (!selectedVoice) {
+      selectedVoice = currentVoices.find(v => v.lang.startsWith('en-GB') || v.lang.startsWith('en-UK'));
+    }
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+    }
 
     utterance.onend = () => {
       setIsPlaying(false);
