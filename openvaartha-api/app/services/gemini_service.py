@@ -93,3 +93,23 @@ async def generate_embedding(text: str) -> Optional[list[float]]:
     except Exception as e:
         logger.error(f"Gemini embedding failed: {e}", exc_info=True)
         return None
+
+async def explain_article_eli5(article_text: str) -> Optional[str]:
+    """Generates a Gen-Z friendly 'Explain it like I'm 5' summary."""
+    if not _init_gemini():
+        return None
+    try:
+        model = genai.GenerativeModel(model_name=settings.GEMINI_MODEL)
+        prompt = f"""
+        Explain the following news article like I'm 5, but use a casual, relatable Gen-Z friendly tone.
+        Get straight to the point. No corporate jargon. Max 3-4 short sentences.
+        Make it punchy, engaging, and easy to digest. Use 1 or 2 relevant emojis.
+
+        Article Text:
+        {article_text}
+        """
+        response = await model.generate_content_async(prompt)
+        return response.text if response.text else None
+    except Exception as e:
+        logger.error(f"Gemini explain failed: {e}", exc_info=True)
+        return None
