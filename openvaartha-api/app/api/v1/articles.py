@@ -445,11 +445,11 @@ async def explain_article(
     """
     Returns a Gen-Z friendly 'Explain it like I'm 5' summary of the article.
     """
-    article = await article_service.get_article(db, article_id)
+    article = await article_service.get_article_by_id(db, article_id)
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
         
-    text_to_explain = f"Title: {article.title}\n\n{article.content.get('body', '')}"
+    text_to_explain = f"Title: {article.get('title', '')}\n\n{article.get('content', {}).get('body', '')}"
     
     from app.services.gemini_service import explain_article_eli5
     result = await explain_article_eli5(text_to_explain)
