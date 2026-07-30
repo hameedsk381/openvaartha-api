@@ -5,21 +5,21 @@ import { cn } from "@/lib/utils";
 import { Landmark, Cpu, Briefcase, Film, MapPin, Trophy, Flame } from "lucide-react";
 
 const categoryIcons: Record<string, React.ElementType> = {
-  Politics: Landmark,
-  Tech: Cpu,
-  Business: Briefcase,
-  Cinema: Film,
-  "Local News": MapPin,
-  Sports: Trophy,
+  politics: Landmark,
+  tech: Cpu,
+  business: Briefcase,
+  cinema: Film,
+  "local news": MapPin,
+  sports: Trophy,
 };
 
 const categoryGradients: Record<string, string> = {
-  Politics: "from-[#550000] to-rose-700",
-  Tech: "from-[#4a5568] to-slate-400",
-  Business: "from-[#6b705c] to-stone-400",
-  Cinema: "from-[#cb997e] to-orange-200",
-  "Local News": "from-[#bc6c25] to-amber-500",
-  Sports: "from-[#ddb892] to-yellow-100",
+  politics: "from-[#550000] to-rose-700",
+  tech: "from-[#4a5568] to-slate-400",
+  business: "from-[#6b705c] to-stone-400",
+  cinema: "from-[#cb997e] to-orange-200",
+  "local news": "from-[#bc6c25] to-amber-500",
+  sports: "from-[#ddb892] to-yellow-100",
 };
 
 export function StoriesBar() {
@@ -33,8 +33,9 @@ export function StoriesBar() {
       <div className="flex items-center gap-4 overflow-x-auto no-scrollbar pb-2">
         {bytes.map((byte, index) => {
           const category = byte.category || "News";
-          const Icon = categoryIcons[category] || Flame;
-          const gradientClass = categoryGradients[category] || "from-primary to-secondary";
+          const normalized = category.toLowerCase();
+          const Icon = categoryIcons[normalized] || Flame;
+          const gradientClass = categoryGradients[normalized] || "from-primary to-secondary";
           
           return (
             <button

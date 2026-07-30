@@ -104,7 +104,7 @@ export function StoryViewerModal({ bytes, initialIndex, onClose }: StoryViewerMo
           style={{ backgroundImage: `url(${currentByte.imageUrl})` }}
         />
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-black" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/70 to-black" />
       )}
       
       {/* Container */}
