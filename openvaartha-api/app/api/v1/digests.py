@@ -10,7 +10,6 @@ from app.services.digest_service import (
 )
 from app.services.article_service import get_article_by_id
 from app.core.dependencies import get_current_user
-from app.models.user import UserRole
 
 router = APIRouter()
 
@@ -45,7 +44,7 @@ async def fetch_digest_by_date(date: str):
 
 @router.post("/generate", response_model=DigestResponse)
 async def trigger_digest_generation(current_user: dict = Depends(get_current_user)):
-    if current_user.get("role") not in [UserRole.ADMIN.value, UserRole.EDITOR.value]:
+    if current_user.get("role") not in ["admin", "editor"]:
         raise HTTPException(status_code=403, detail="Not authorized")
         
     digest = await generate_daily_digest()
