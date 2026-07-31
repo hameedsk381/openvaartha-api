@@ -18,7 +18,10 @@ import { useSearch, useCategories, useBreakingArticles } from "@/lib/api-hooks";
 import SignOutButton from "@/components/SignOutButton";
 import { BRAND } from "@/lib/brand";
 
-interface NavbarProps { isInsideStack?: boolean; }
+interface NavbarProps { 
+  isInsideStack?: boolean;
+  hideBottomNav?: boolean;
+}
 
 const isTouchDevice = () =>
   typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
@@ -30,7 +33,7 @@ const initDark = (): boolean => {
   return false;
 };
 
-const Navbar = ({ isInsideStack }: NavbarProps) => {
+const Navbar = ({ isInsideStack, hideBottomNav }: NavbarProps) => {
   const [isDark, setIsDark]       = useState(initDark);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery]         = useState("");
@@ -231,7 +234,7 @@ const Navbar = ({ isInsideStack }: NavbarProps) => {
         </div>
       </header>
 
-      {!isInsideStack && (
+      {!hideBottomNav && (
         <nav className="bottom-nav sm:hidden">
           <div className="flex items-center justify-around h-16 px-1">
             <BottomNavItem icon={<AnimatedIcon animationType="scale"><Home className="h-5 w-5" /></AnimatedIcon>} label="Feed" to="/" active={location.pathname === "/"} />
