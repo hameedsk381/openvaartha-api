@@ -571,6 +571,7 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
                       rel="noopener noreferrer"
                       className="flex-1 h-9 rounded-md border border-border flex items-center justify-center gap-1.5 text-muted-foreground hover:bg-[#25D366] hover:text-white hover:border-[#25D366] transition-colors press"
                       aria-label="Share on WhatsApp"
+                    >
                       <AnimatedIcon animationType="bounce">
                         <MessageCircle className="h-3.5 w-3.5" />
                       </AnimatedIcon>
