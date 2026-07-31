@@ -3,7 +3,7 @@ from typing import Optional, List
 from datetime import datetime
 
 from app.models.digest import DigestStatus, DailyDigest
-from app.schemas.article import ArticleResponse
+from app.schemas.article import Article
 
 
 class DigestCreate(BaseModel):
@@ -28,4 +28,4 @@ class DigestResponse(DailyDigest):
 
 
 class DigestWithArticlesResponse(DailyDigest):
-    articles: List[ArticleResponse] = []
+    articles: List[Article] = []
