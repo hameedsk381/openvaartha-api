@@ -127,7 +127,7 @@ export default function CustomVideoPlayer({ src, poster, className }: CustomVide
           onClick={togglePlay}
         >
           <div className="bg-primary/90 text-primary-foreground rounded-full p-4 backdrop-blur-sm shadow-lg hover:scale-110 transition-transform">
-            <Play className="h-8 w-8 ml-1" fill="currentColor" />
+            <Play className="h-8 w-8 ml-1" />
           </div>
         </div>
       )}
@@ -158,7 +158,7 @@ export default function CustomVideoPlayer({ src, poster, className }: CustomVide
         <div className="flex items-center justify-between text-white">
           <div className="flex items-center gap-4">
             <button onClick={togglePlay} className="hover:text-primary transition-colors focus:outline-none">
-              {isPlaying ? <Pause className="h-5 w-5" fill="currentColor" /> : <Play className="h-5 w-5" fill="currentColor" />}
+              {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
             </button>
             <button onClick={toggleMute} className="hover:text-primary transition-colors focus:outline-none">
               {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
