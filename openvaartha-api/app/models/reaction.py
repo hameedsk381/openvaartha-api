@@ -11,6 +11,10 @@ class ReactionType(str, Enum):
     IDEA = "idea"
     SAD = "sad"
     MINDBLOWN = "mindblown"
+    DEAD = "dead"
+    SPICY = "spicy"
+    SLAY = "slay"
+    CAP = "cap"
 
 
 class Reaction(BaseModel):
