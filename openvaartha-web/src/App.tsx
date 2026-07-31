@@ -45,6 +45,7 @@ const SeriesPage = lazy(() => import("./pages/SeriesPage.tsx"));
 const ExplainersPage = lazy(() => import("./pages/ExplainersPage.tsx"));
 const BytesPage = lazy(() => import("./pages/BytesPage.tsx"));
 const BytePage = lazy(() => import("./pages/BytePage.tsx"));
+const DigestPage = lazy(() => import("./pages/DigestPage.tsx"));
 const AboutPage = lazy(() => import("./pages/AboutPage.tsx"));
 const ContactPage = lazy(() => import("./pages/ContactPage.tsx"));
 const EditorialStandardsPage = lazy(() => import("./pages/EditorialStandardsPage.tsx"));
@@ -212,6 +213,8 @@ const AuthListener = () => {
                 <Route path="/trending" element={<TrendingPage />} />
                 <Route path="/topic/:tag" element={<TopicPage />} />
                 <Route path="/series/:slug" element={<SeriesPage />} />
+                <Route path="/digest/:date" element={<DigestPage />} />
+                <Route path="/digest" element={<DigestPage />} />
                 <Route path="/explainers" element={<ExplainersPage />} />
                 <Route path="/bytes" element={<BytesPage />} />
                 <Route path="/bytes/:byteId" element={<BytePage />} />

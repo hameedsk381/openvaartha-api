@@ -99,6 +99,21 @@ export default function AdminDashboard() {
           <p className="text-sm text-muted-foreground mt-1">Overview of your content and audience.</p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="hidden sm:flex border-orange-500/30 text-orange-500 hover:bg-orange-500/10 hover:text-orange-600"
+            onClick={async () => {
+              try {
+                await apiFetch("/digests/generate", { method: "POST" });
+                alert("Digest generated & sent to subscribers!");
+              } catch (e: any) {
+                alert("Failed to generate digest: " + e.message);
+              }
+            }}
+          >
+            <Flame className="h-4 w-4 mr-1.5" /> Generate Digest
+          </Button>
           <Link to="/admin/articles/new">
             <Button size="sm"><Plus className="h-4 w-4" animateOnHover /> New article</Button>
           </Link>

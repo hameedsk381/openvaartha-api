@@ -122,6 +122,14 @@ const Navbar = ({ isInsideStack, hideBottomNav }: NavbarProps) => {
 
           {/* Desktop category pills in the center */}
           <nav className="hidden md:flex items-center gap-2 mx-4 overflow-x-auto no-scrollbar max-w-2xl">
+            <Link
+              to="/digest"
+              className="shrink-0 h-9 px-4 rounded-full font-display text-xs font-bold uppercase tracking-wide transition-colors press whitespace-nowrap border-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 text-foreground border-orange-500/30 hover:border-orange-500 flex items-center justify-center gap-1.5"
+            >
+              <Flame className="w-4 h-4 fill-orange-500" />
+              Digest
+            </Link>
+
             {(["All", ...categoryNames] as string[]).map(cat => (
               <button
                 key={cat}
@@ -215,6 +223,14 @@ const Navbar = ({ isInsideStack, hideBottomNav }: NavbarProps) => {
         <div className="md:hidden relative border-t border-border/50 bg-background">
           <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
           <div className="py-2 px-6 flex gap-2 overflow-x-auto no-scrollbar relative z-0">
+            <Link
+              to="/digest"
+              className="shrink-0 h-8 px-4 rounded-full text-xs font-bold transition-colors press whitespace-nowrap bg-gradient-to-r from-orange-500/20 to-red-500/20 text-foreground border border-orange-500/30 flex items-center justify-center gap-1"
+            >
+              <Flame className="w-3.5 h-3.5 fill-orange-500" />
+              Digest
+            </Link>
+            
             {(["All", ...categoryNames] as string[]).map(cat => (
               <button
                 key={cat}

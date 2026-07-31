@@ -6,7 +6,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.api.v1 import admin, articles, authors, categories, comments, dispatches, feeds, newsletter, pages, polls, push, search, series, upload, users
+from app.api.v1 import admin, articles, authors, categories, comments, digests, dispatches, feeds, newsletter, pages, polls, push, search, series, upload, users
 from app.config import settings
 from app.core.dependencies import get_current_active_admin
 from app.core.observability import init_sentry
@@ -109,6 +109,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1024)
 # Include routers
 app.include_router(articles.router, prefix="/api/v1/articles", tags=["Articles"])
 app.include_router(categories.router, prefix="/api/v1/categories", tags=["Categories"])
+app.include_router(digests.router, prefix="/api/v1/digests", tags=["Digests"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(search.router, prefix="/api/v1/search", tags=["Search"])
 app.include_router(newsletter.router, prefix="/api/v1/newsletter", tags=["Newsletter"])

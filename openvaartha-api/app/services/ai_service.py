@@ -281,3 +281,63 @@ async def ai_assist_editor(action: str, text: str, context: Optional[str] = None
     except Exception as e:
         logger.error(f"AI assist failed for action '{action}': {e}", exc_info=True)
         return None
+
+
+async def generate_digest_overview(articles_data: List[dict]) -> Optional[dict]:
+    """Generate a cohesive daily digest overview from a list of articles."""
+    if not settings.GROQ_API_KEY or not articles_data:
+        return None
+
+    articles_text = "\n\n".join([
+        f"Article {i+1}: {a['title']}\nSummary: {a['summary']}" 
+        for i, a in enumerate(articles_data)
+    ])
+
+    prompt = f"""Based on the following top news articles of the day, generate a compelling, Gen-Z friendly Daily Digest overview.
+The overview should read like a morning briefing from a smart, witty editor.
+Group related themes if possible, and give a cohesive narrative of what's happening today.
+
+Articles:
+{articles_text}
+
+Return ONLY valid JSON in this exact format:
+{{"title": "A catchy title for today's digest", "overview": "The generated overview text (can use markdown)"}}"""
+
+    try:
+        headers = {
+            "Authorization": f"Bearer {settings.GROQ_API_KEY}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": settings.GROQ_MODEL,
+            "messages": [
+                {"role": "system", "content": "You are the editor-in-chief of Open Vaartha, a Gen-Z news platform. Write engaging, crisp, and insightful daily briefings."},
+                {"role": "user", "content": prompt},
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0.7,
+            "max_tokens": 1000,
+        }
+
+        response = await _http_client.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=settings.AI_TIMEOUT,
+        )
+        response.raise_for_status()
+        res_data = response.json()
+
+        content = res_data["choices"][0]["message"]["content"]
+        if not content:
+            return None
+
+        data = json.loads(content.strip())
+        return {
+            "title": sanitize_text(data.get("title", "")),
+            "overview": sanitize_html(data.get("overview", "")),
+        }
+    except Exception as e:
+        logger.error(f"Groq digest generation failed: {e}", exc_info=True)
+        return None
+
