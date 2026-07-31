@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { FileText, Users, MessageSquare, Mail, TrendingUp, Zap, FolderTree, AlertCircle, ArrowUpRight } from "lucide-react";
+import { FileText, Users, MessageSquare, Mail, TrendingUp, Zap, FolderTree, AlertCircle, ArrowUpRight, Flame } from "lucide-react";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { Plus } from "@/components/animate-ui/icons/plus";
 import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
