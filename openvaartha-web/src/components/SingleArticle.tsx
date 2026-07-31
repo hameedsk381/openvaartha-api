@@ -642,9 +642,8 @@ const SingleArticle = ({ articleId, onInView }: { articleId: string; onInView?: 
 
             <div id="article-body" className="article-body transition-[font-size]">
               <div className={cn(
-                "prose max-w-none prose-neutral dark:prose-invert prose-headings:font-display prose-p:font-serif prose-a:text-primary leading-relaxed [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-6xl sm:[&>p:first-of-type]:first-letter:text-7xl [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:text-primary [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-1 [&>p:first-of-type]:first-letter:leading-[0.85]",
-                textSize
-              )}>
+                "prose max-w-none prose-neutral dark:prose-invert prose-headings:font-display prose-p:font-serif prose-a:text-primary leading-relaxed [&>p:first-of-type]:first-letter:font-serif [&>p:first-of-type]:first-letter:text-6xl sm:[&>p:first-of-type]:first-letter:text-7xl [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:text-primary [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-1 [&>p:first-of-type]:first-letter:leading-[0.85]"
+              ) + " " + textSize}>
                 <ReactMarkdown
                   rehypePlugins={[rehypeRaw]}
                   components={{
