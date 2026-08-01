@@ -11,7 +11,7 @@ from app.models.digest import DailyDigest
 from app.models.newsletter import NewsletterSubscriber
 from app.models.poll import Poll, PollVote
 from app.models.reaction import Reaction
-from app.models.reading_list import ReadingList
+from app.models.reading_list import ReadingList, ReadingHistory
 from app.models.series import Series
 from app.models.user import User, PasswordResetToken
 
@@ -24,7 +24,7 @@ async def init_db():
     await init_beanie(database=db, document_models=[
         Article, Source, Author, Category, Comment, DailyDigest,
         NewsletterSubscriber, Poll, PollVote,
-        Reaction, ReadingList, Series, User, PasswordResetToken
+        Reaction, ReadingList, ReadingHistory, Series, User, PasswordResetToken
     ])
 
 # Dependency

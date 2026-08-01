@@ -1,7 +1,7 @@
 from app.models.user import User
 from app.models.article import Article
-from app.models.user import ReadingList
-from app.models.user import ReadingHistory
+from app.models.reading_list import ReadingList
+from app.models.reading_list import ReadingHistory
 from app.models.user import PasswordResetToken
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Optional

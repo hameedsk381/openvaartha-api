@@ -12,3 +12,11 @@ class ReadingList(Document):
 
     class Settings:
         name = "reading_lists"
+
+class ReadingHistory(Document):
+    user_id: str
+    article_id: str
+    read_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    class Settings:
+        name = "reading_history"
