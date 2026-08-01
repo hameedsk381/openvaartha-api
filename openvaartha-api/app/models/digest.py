@@ -12,12 +12,15 @@ class DigestStatus(str, Enum):
     PUBLISHED = "published"
 
 
-class DailyDigest(BaseModel):
+class DailyDigest(Document):
     id: str = Field(default_factory=lambda: str(uuid4()))
     date: str  # YYYY-MM-DD format
     title: str
     overview: str  # AI-generated summary
     article_ids: List[str] = Field(default_factory=list)
+
+    class Settings:
+        name = "digests"
     status: DigestStatus = DigestStatus.DRAFT
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = None
