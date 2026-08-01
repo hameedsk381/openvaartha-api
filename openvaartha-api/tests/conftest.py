@@ -27,18 +27,43 @@ async def mongo_client(test_settings):
 
 @pytest.fixture(scope="function")
 async def db(mongo_client, test_settings):
-    """Create test database and clean up after each test."""
+    """Create test database and clean up after each test.
+
+    Beanie document models are (re)initialized here, in the same event loop
+    as the test, so ``Model.get_motor_collection()`` calls used by service
+    functions resolve to the local test database instead of the app's
+    configured DB (e.g. the ``mongo`` hostname from .env).
+    """
+    from beanie import init_beanie
+    from app.models.article import Article, Source
+    from app.models.author import Author
+    from app.models.category import Category
+    from app.models.comment import Comment
+    from app.models.digest import DailyDigest
+    from app.models.dispatch import Dispatch
+    from app.models.newsletter import NewsletterSubscriber
+    from app.models.poll import Poll, PollVote
+    from app.models.reaction import Reaction
+    from app.models.reading_list import ReadingList, ReadingHistory
+    from app.models.series import Series
+    from app.models.user import User, PasswordResetToken
+
     db = mongo_client[test_settings.DATABASE_NAME]
-    
+    await init_beanie(database=db, document_models=[
+        Article, Source, Author, Category, Comment, DailyDigest,
+        Dispatch, NewsletterSubscriber, Poll, PollVote,
+        Reaction, ReadingList, ReadingHistory, Series, User, PasswordResetToken
+    ])
+
     collections = [
         "users", "articles", "categories", "newsletter_subscribers",
         "reading_lists", "reading_history", "sources", "article_content", "article_sources"
     ]
     for collection in collections:
         await db[collection].delete_many({})
-    
+
     yield db
-    
+
     for collection in collections:
         await db[collection].delete_many({})
 

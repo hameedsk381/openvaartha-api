@@ -67,10 +67,12 @@ class TestSearch:
         response = await client.get("/api/v1/search/suggestions?q=Test")
         assert response.status_code == 200
         data = response.json()
-        assert "suggestions" in data
-        assert isinstance(data["suggestions"], list)
-        assert len(data["suggestions"]) >= 1
-        assert any(test_article["title"] in sug for sug in data["suggestions"])
+        assert "titles" in data
+        assert "tags" in data
+        assert "categories" in data
+        assert isinstance(data["titles"], list)
+        assert len(data["titles"]) >= 1
+        assert any(test_article["title"] in sug["title"] for sug in data["titles"])
     
     @pytest.mark.asyncio
     async def test_search_empty_query(self, client: AsyncClient):

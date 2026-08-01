@@ -3,6 +3,7 @@ from typing import Optional
 from uuid import uuid4
 from datetime import datetime, timezone
 from app.schemas.newsletter import NewsletterSubscribe
+from app.models.newsletter import NewsletterSubscriber
 
 async def subscribe(db: AsyncIOMotorDatabase, email: str) -> dict:
     """Subscribe to the newsletter."""
@@ -26,7 +27,7 @@ async def subscribe(db: AsyncIOMotorDatabase, email: str) -> dict:
         "is_active": True,
         "subscribed_at": datetime.now(timezone.utc)
     }
-    await Newsletter_subscribers(**new_subscriber).insert()
+    await NewsletterSubscriber(**new_subscriber).insert()
     return {"success": True, "detail": "Successfully subscribed", "re_subscribed": False}
 
 async def unsubscribe(db: AsyncIOMotorDatabase, email: str) -> bool:

@@ -5,8 +5,9 @@ from typing import List
 from app.core.dependencies import get_current_editor
 from app.core.rate_limit import limiter, MUTATION_LIMIT
 from app.database import get_db
+from app.models.article import Article as ArticleModel
 from app.models.user import User as UserModel
-from app.schemas.article import Article
+from app.schemas.article import Article as ArticleSchema
 from app.schemas.category import Category as CategorySchema, CategoryCreate, CategoryUpdate
 from app.services import category_service
 

@@ -48,8 +48,8 @@ async def add_to_reading_list(db: AsyncIOMotorDatabase, user_id: str, article_id
     await ReadingList(**{
         "user_id": user_id,
         "article_id": article_id,
-        "saved_at": datetime.now(timezone.utc).insert()
-    })
+        "saved_at": datetime.now(timezone.utc)
+    }).insert()
     return {"success": True, "status": "added"}
 
 async def remove_from_reading_list(db: AsyncIOMotorDatabase, user_id: str, article_id: str) -> bool:
