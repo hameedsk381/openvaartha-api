@@ -1,13 +1,28 @@
 import asyncio
 import json
 import logging
-import redis.asyncio as redis
+from datetime import datetime, date
 from typing import List, Dict, Any
+import redis.asyncio as redis
 from fastapi import WebSocket, WebSocketDisconnect
 
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _json_default(value: Any) -> Any:
+    """Serialize types the JSON encoder cannot handle natively.
+
+    Comment/article payloads broadcast over the WebSocket channel contain
+    datetime fields (``created_at`` etc.); without this, ``json.dumps`` raises
+    ``TypeError`` and turns a successful comment post into a 500 after the row
+    has already been persisted.
+    """
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    return str(value)
+
 
 class WebSocketManager:
     def __init__(self):
@@ -70,11 +85,14 @@ class WebSocketManager:
         """Publish an event to Redis so all workers receive it and broadcast locally."""
         if not self.redis:
             return
-            
+
         message = json.dumps({
             "type": event_type,
             "data": payload
-        })
-        await self.redis.publish(self.channel_name, message)
+        }, default=_json_default)
+        try:
+            await self.redis.publish(self.channel_name, message)
+        except Exception as e:
+            logger.warning(f"Redis publish failed for {event_type}: {e}")
 
 manager = WebSocketManager()

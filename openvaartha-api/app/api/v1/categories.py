@@ -10,6 +10,7 @@ from app.models.user import User as UserModel
 from app.schemas.article import Article as ArticleSchema
 from app.schemas.category import Category as CategorySchema, CategoryCreate, CategoryUpdate
 from app.services import category_service
+from app.services import article_service
 
 router = APIRouter()
 
@@ -51,7 +52,8 @@ async def get_category_articles(
         "category_id": category["_id"],
         "$or": [{"status": "published"}, {"status": {"$exists": False}}],
     }).sort("published_at", -1).skip(skip).limit(limit)
-    return await cursor.to_list(length=limit)
+    articles = await cursor.to_list(length=limit)
+    return await article_service._populate_articles_bulk(db, articles)
 
 
 @router.post("/", response_model=CategorySchema)

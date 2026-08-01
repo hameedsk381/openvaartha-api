@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from datetime import datetime, timezone
 from app.database import get_db
 from app.core.dependencies import get_current_user, get_current_user_optional
 from app.schemas.poll import PollCreate, PollResponse, PollVoteCreate
@@ -38,7 +39,8 @@ async def get_poll(
                 {"id": "opt3", "text": "Not at all", "votes": 44, "percentage": 21.0}
             ],
             "totalVotes": 210,
-            "userVotedOptionId": None
+            "userVotedOptionId": None,
+            "createdAt": datetime.now(timezone.utc)
         }
         
     user_id = current_user.id if current_user else None
@@ -67,7 +69,8 @@ async def vote_poll(
                 {"id": "opt3", "text": "Not at all", "votes": 45 if vote.optionId == "opt3" else 44, "percentage": 21.0}
             ],
             "totalVotes": 211,
-            "userVotedOptionId": vote.optionId
+            "userVotedOptionId": vote.optionId,
+            "createdAt": datetime.now(timezone.utc)
         }
         
     user_id = current_user.id if current_user else None
