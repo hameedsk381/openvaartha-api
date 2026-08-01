@@ -63,25 +63,6 @@ const AboutPage = () => {
               </div>
             </div>
 
-            <div className="mt-10 tldr-block">
-              <span className="chip-primary mb-3">Supported by</span>
-              <h2 className="font-display text-xl sm:text-2xl font-bold leading-snug">
-                FOSS Andhra Foundation
-              </h2>
-              <p className="text-sm sm:text-base text-muted-foreground mt-2 leading-relaxed">
-                {BRAND.name} is supported by the FOSS Andhra Foundation, a community
-                dedicated to free and open-source software.
-              </p>
-              <a
-                href="https://fossap.in"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary hover:underline underline-offset-4"
-              >
-                fossap.in <AnimatedIcon animationType="arrowUpRight"><ArrowUpRight className="h-3.5 w-3.5" /></AnimatedIcon>
-              </a>
-            </div>
-
             <div className="mt-10 pt-8 border-t border-border">
               <span className="overline text-primary">FAQ</span>
               <h2 className="font-display text-2xl font-bold mt-2 mb-6">Frequently Asked Questions</h2>
@@ -100,7 +81,7 @@ const AboutPage = () => {
                     Who runs the platform?
                   </AccordionButton>
                   <AccordionPanel className="text-muted-foreground px-4 pb-4">
-                    We are a youth-led (Gen Z) independent news initiative. Our platform is supported by the FOSS Andhra Foundation, focusing on building sustainable open-source software and open media platforms.
+                    We are a youth-led (Gen Z) independent news initiative focused on building sustainable open-source software and open media platforms.
                   </AccordionPanel>
                 </AccordionItem>
 

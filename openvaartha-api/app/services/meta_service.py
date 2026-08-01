@@ -116,7 +116,7 @@ _STATIC_ROUTE_META: Dict[str, Dict[str, Optional[str]]] = {
     },
     "about": {
         "title": f"About — {SITE_NAME}",
-        "description": "Open Vaartha is an independent, youth-led news initiative operated by Gen Z, supported by FOSS Andhra Foundation.",
+        "description": "Open Vaartha is an independent, youth-led news initiative operated by Gen Z.",
         "robots": None,
     },
     "contact": {

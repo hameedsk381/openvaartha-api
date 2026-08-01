@@ -115,14 +115,6 @@ const Footer = () => {
             <Link to="/contact" className="hover:text-primary transition-colors font-medium">Contact</Link>
             <Link to="/privacy" className="hover:text-primary transition-colors font-medium">Privacy</Link>
             <Link to="/terms" className="hover:text-primary transition-colors font-medium">Terms</Link>
-            <a
-              href="https://fossap.in"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-primary transition-colors font-medium"
-            >
-              FOSS Andhra
-            </a>
           </div>
         </div>
       </div>

@@ -12,7 +12,7 @@ const PrivacyPage = () => (
   >
     <h2>Who this applies to</h2>
     <p>
-      This policy covers {BRAND.name} ({BRAND.url}), operated by the FOSS Andhra Foundation.
+      This policy covers {BRAND.name} ({BRAND.url}).
       It applies to anyone who reads, subscribes to, comments on, or creates an account with
       {" "}{BRAND.name}.
     </p>

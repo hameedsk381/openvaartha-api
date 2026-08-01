@@ -12,8 +12,8 @@ const EditorialStandardsPage = () => (
   >
     <h2>Independence</h2>
     <p>
-      {BRAND.name} is an independent, youth-led news initiative operated by Gen Z and
-      supported by the FOSS Andhra Foundation. Our editorial decisions answer to readers,
+      {BRAND.name} is an independent, youth-led news initiative operated by Gen Z. Our
+      editorial decisions answer to readers,
       not to advertisers or funders. We do not sell coverage, and sponsorship — where it
       ever exists — is disclosed clearly and never influences reporting.
     </p>

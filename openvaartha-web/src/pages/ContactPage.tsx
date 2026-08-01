@@ -1,6 +1,6 @@
 import Navbar from '../components/Navbar';
 import Footer from '@/components/Footer';
-import { ArrowUpRight, Instagram, Facebook, Github, Globe } from 'lucide-react';
+import { ArrowUpRight, Instagram, Facebook, Github } from 'lucide-react';
 import { AnimatedIcon } from '@/components/ui/animated-icon';
 import { BRAND } from '@/lib/brand';
 
@@ -25,13 +25,6 @@ const CHANNELS = [
     handle: 'hameedsk381/openvaartha-api',
     description: 'The platform is open source — file issues and contribute.',
     href: 'https://github.com/hameedsk381/openvaartha-api',
-  },
-  {
-    icon: Globe,
-    name: 'FOSS Andhra Foundation',
-    handle: 'fossap.in',
-    description: 'The community that supports this initiative.',
-    href: 'https://fossap.in',
   },
 ];
 

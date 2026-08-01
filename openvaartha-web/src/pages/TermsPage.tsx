@@ -55,9 +55,8 @@ const TermsPage = () => (
 
     <h2>Limitation of liability</h2>
     <p>
-      To the fullest extent permitted by law, {BRAND.name} and the FOSS Andhra Foundation are
-      not liable for any indirect, incidental, or consequential damages arising from your use
-      of the site.
+      To the fullest extent permitted by law, {BRAND.name} is not liable for any indirect,
+      incidental, or consequential damages arising from your use of the site.
     </p>
 
     <h2>Changes to these terms</h2>

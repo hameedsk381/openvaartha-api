@@ -53,7 +53,7 @@ async def llms_txt(db: AsyncIOMotorDatabase = Depends(get_db)):
 
 > {SITE_DESCRIPTION}
 
-{SITE_NAME} is an independent, youth-led news initiative operated by Gen Z — an open news platform built for the liberation of digital spaces, run by FOSS Andhra Foundation.
+{SITE_NAME} is an independent, youth-led news initiative operated by Gen Z — an open news platform built for the liberation of digital spaces.
 
 ## Content categories
 
