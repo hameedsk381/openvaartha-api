@@ -34,7 +34,7 @@ export function clearTokens(): void {
 }
 
 let isRefreshing = false;
-let pendingRequests: {resolve: (token: string | null) => void, reject: (err: any) => void}[] = [];
+let pendingRequests: {resolve: (token: string | null) => void, reject: (err: unknown) => void}[] = [];
 
 async function doRefresh(): Promise<string | null> {
   try {
@@ -68,7 +68,7 @@ function resolvePending(token: string | null): void {
   pendingRequests = [];
 }
 
-function rejectPending(err: any): void {
+function rejectPending(err: unknown): void {
   for (const p of pendingRequests) {
     p.reject(err);
   }

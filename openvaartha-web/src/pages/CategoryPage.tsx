@@ -232,7 +232,7 @@ const CategoryPage = () => {
                           <span className="truncate">{art.author}</span>
                         </div>
                         <button
-                          onClick={() => toggleSave(art as any)}
+                          onClick={() => toggleSave(art)}
                           className={`h-9 w-9 rounded-md flex items-center justify-center transition-colors press
                             ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
                           aria-label="Save"

@@ -20,8 +20,8 @@ export default function ForgotPassword() {
         body: JSON.stringify({ email }),
       });
       setSent(true);
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "An error occurred");
     } finally {
       setLoading(false);
     }

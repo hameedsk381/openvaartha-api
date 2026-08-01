@@ -25,12 +25,18 @@ def _hash_password(password: str) -> str:
 NOW = datetime.now(timezone.utc)
 
 CATEGORIES = [
-    {"name": "Politics",    "color_code": "#550000", "emoji": "purple"},
-    {"name": "Tech",        "color_code": "#4a5568", "emoji": "blue"},
-    {"name": "Business",    "color_code": "#6b705c", "emoji": "green"},
-    {"name": "Cinema",      "color_code": "#cb997e", "emoji": "orange"},
-    {"name": "Local News",  "color_code": "#bc6c25", "emoji": "red"},
-    {"name": "Sports",      "color_code": "#ddb892", "emoji": "yellow"},
+    {"name": "Politics",      "color_code": "#550000", "emoji": "purple"},
+    {"name": "Tech",          "color_code": "#4a5568", "emoji": "blue"},
+    {"name": "Business",      "color_code": "#6b705c", "emoji": "green"},
+    {"name": "Cinema",        "color_code": "#cb997e", "emoji": "orange"},
+    {"name": "Local News",    "color_code": "#bc6c25", "emoji": "red"},
+    {"name": "Sports",        "color_code": "#ddb892", "emoji": "yellow"},
+    {"name": "World",         "color_code": "#2b6cb0", "emoji": "globe"},
+    {"name": "Health",        "color_code": "#319795", "emoji": "heart"},
+    {"name": "Science",       "color_code": "#805ad5", "emoji": "atom"},
+    {"name": "Entertainment", "color_code": "#d69e2e", "emoji": "star"},
+    {"name": "Education",     "color_code": "#3182ce", "emoji": "book"},
+    {"name": "Lifestyle",     "color_code": "#e53e3e", "emoji": "sparkles"},
 ]
 
 ARTICLES = [

@@ -161,7 +161,7 @@ export default function QuoteCardModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-gradient-to-br from-[#2a0505] via-[#150303] to-[#0a0101] border-red-900/40 text-foreground backdrop-blur-xl rounded-3xl p-6 shadow-[0_12px_40px_rgba(85,0,0,0.3)]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />

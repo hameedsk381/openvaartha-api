@@ -35,7 +35,7 @@ export default function ArticlePage() {
     setIsFetchingNext(true);
     try {
       // Fetch related articles to find the next one
-      const data = await apiFetch<any[]>(`/articles/${currentSlug}/related`);
+      const data = await apiFetch<Article[]>(`/articles/${currentSlug}/related`);
       if (data && data.length > 0) {
         // Find the first related article that isn't already in our stream
         const nextArticle = data.find(a => !streamIds.includes(a.slug));
