@@ -34,7 +34,7 @@ def _ist_day_bounds_utc() -> tuple[datetime, datetime]:
 
 
 async def ensure_dispatch_indexes(db: AsyncIOMotorDatabase) -> None:
-    await Dispatch.create_index([("created_at", -1)])
+    await Dispatch.get_motor_collection().create_index([("created_at", -1)])
 
 
 async def _category_names_for(db: AsyncIOMotorDatabase, category_ids: set) -> dict:

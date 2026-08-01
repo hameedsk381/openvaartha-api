@@ -8,10 +8,10 @@ from app.core.sanitize import sanitize_text
 
 
 async def ensure_comment_indexes(db: AsyncIOMotorDatabase) -> None:
-    await Comment.create_index([("article_id", 1), ("created_at", -1)])
-    await Comment.create_index([("article_id", 1), ("is_active", 1), ("created_at", -1)])
-    await Comment.create_index([("user_id", 1)])
-    await Comment.create_index([("parent_id", 1)])
+    await Comment.get_motor_collection().create_index([("article_id", 1), ("created_at", -1)])
+    await Comment.get_motor_collection().create_index([("article_id", 1), ("is_active", 1), ("created_at", -1)])
+    await Comment.get_motor_collection().create_index([("user_id", 1)])
+    await Comment.get_motor_collection().create_index([("parent_id", 1)])
 
 
 async def get_comments(

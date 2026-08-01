@@ -205,7 +205,7 @@ async def _backfill_deep_content_flag(db: AsyncIOMotorDatabase) -> None:
         return
     missing_ids = [a["_id"] for a in missing]
 
-    deep = await Article_content.find(
+    deep = await db["article_content"].find(
         {
             "article_id": {"$in": missing_ids},
             "$or": [
@@ -241,43 +241,43 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
         "language_override": "text_search_lang",
     }
     try:
-        await Article.create_index(
+        await Article.get_motor_collection().create_index(
             [("title", "text"), ("summary", "text")], **_text_index_opts
         )
     except OperationFailure:
         # An older index with the same name but default language options exists
         # (pre-fix deployments) — rebuild it with the corrected options.
-        await Article.drop_index("articles_text_search")
-        await Article.create_index(
+        await Article.get_motor_collection().drop_index("articles_text_search")
+        await Article.get_motor_collection().create_index(
             [("title", "text"), ("summary", "text")], **_text_index_opts
         )
-    await Article.create_index("slug", unique=True)
-    await Article.create_index("status")
+    await Article.get_motor_collection().create_index("slug", unique=True)
+    await Article.get_motor_collection().create_index("status")
     
     # Compound indexes for fast, sorted lookups without memory sorts
-    await Article.create_index([("status", 1), ("published_at", -1)])
-    await Article.create_index([("category_id", 1), ("status", 1), ("published_at", -1)])
-    await Article.create_index([("is_breaking", 1), ("status", 1), ("published_at", -1)])
-    await Article.create_index([("is_opinion", 1), ("status", 1), ("published_at", -1)])
-    await Article.create_index([("is_trending", 1), ("status", 1)])
-    await Article.create_index([("is_editor_pick", 1), ("status", 1)])
+    await Article.get_motor_collection().create_index([("status", 1), ("published_at", -1)])
+    await Article.get_motor_collection().create_index([("category_id", 1), ("status", 1), ("published_at", -1)])
+    await Article.get_motor_collection().create_index([("is_breaking", 1), ("status", 1), ("published_at", -1)])
+    await Article.get_motor_collection().create_index([("is_opinion", 1), ("status", 1), ("published_at", -1)])
+    await Article.get_motor_collection().create_index([("is_trending", 1), ("status", 1)])
+    await Article.get_motor_collection().create_index([("is_editor_pick", 1), ("status", 1)])
     # Contributor dashboard ("my posts") filters by author_id.
-    await Article.create_index([("author_id", 1), ("status", 1), ("published_at", -1)])
+    await Article.get_motor_collection().create_index([("author_id", 1), ("status", 1), ("published_at", -1)])
     # /explainers feed: query the denormalized flag directly instead of scanning content.
-    await Article.create_index([("has_deep_content", 1), ("status", 1), ("published_at", -1)])
+    await Article.get_motor_collection().create_index([("has_deep_content", 1), ("status", 1), ("published_at", -1)])
     
     # reading history index
-    await ReadingHistory.create_index([("user_id", 1), ("read_at", -1)])
+    await ReadingHistory.get_motor_collection().create_index([("user_id", 1), ("read_at", -1)])
 
     await _backfill_deep_content_flag(db)
 
-    await Article_content.create_index("article_id")
-    await ReadingHistory.create_index([("user_id", 1), ("article_id", 1)], unique=True)
+    await db["article_content"].create_index("article_id")
+    await ReadingHistory.get_motor_collection().create_index([("user_id", 1), ("article_id", 1)], unique=True)
     await ensure_comment_indexes(db)
     from app.services.reaction_service import ensure_reaction_indexes
     await ensure_reaction_indexes(db)
-    await Article.create_index("tags")
-    await Article.create_index([("tags", 1), ("status", 1), ("published_at", -1)])
+    await Article.get_motor_collection().create_index("tags")
+    await Article.get_motor_collection().create_index([("tags", 1), ("status", 1), ("published_at", -1)])
 
     # Auto-migration for existing base64 thumbnails in database
     try:
@@ -336,7 +336,7 @@ async def _populate_article_extras(db: AsyncIOMotorDatabase, article: dict) -> d
         else:
             article["category"] = "General"
 
-    content = await Article_content.find_one({"article_id": article.get("id")})
+    content = await db["article_content"].find_one({"article_id": article.get("id")})
     if content:
         if "_id" in content:
             content["id"] = str(content.pop("_id"))
@@ -374,7 +374,7 @@ async def _populate_articles_bulk(db: AsyncIOMotorDatabase, articles: list[dict]
     # 3. Batch query article contents using $in (exclude large body field for list endpoints)
     content_map = {}
     if article_ids:
-        contents = await Article_content.find(
+        contents = await db["article_content"].find(
             {"article_id": {"$in": article_ids}},
             {"body": 0}
         ).to_list(length=len(article_ids))
@@ -722,7 +722,7 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
             "explainer": article_data.content.explainer,
             "video_url": article_data.content.video_url,
         }
-        await Article_content(**content_doc).insert()
+        await db[\"article_content\"].insert_one(content_doc)
 
     # Generate vector embedding for personalization
     text_to_embed = f"{article_data.title}\n{article_data.summary}"
@@ -791,7 +791,7 @@ async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data
             else:
                 sanitized_content[key] = value
         if sanitized_content:
-            await Article_content.update_one(
+            await db["article_content"].update_one(
                 {"article_id": article_id},
                 {"$set": sanitized_content, "$setOnInsert": {"article_id": article_id}},
                 upsert=True,
@@ -801,7 +801,7 @@ async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data
         # deep-content fields are touched. Reads back the merged content since
         # updates are partial and either field alone can flip the flag.
         if "timeline" in content_data or "explainer" in content_data:
-            merged = await Article_content.find_one(
+            merged = await db["article_content"].find_one(
                 {"article_id": article_id}, {"timeline": 1, "explainer": 1}
             )
             await Article.update_one(
@@ -835,7 +835,7 @@ async def delete_article(db: AsyncIOMotorDatabase, article_id: str):
     """Delete an article."""
     result = await Article.delete_one({"_id": article_id})
     if result.deleted_count > 0:
-        await Article_content.delete_many({"article_id": article_id})
+        await db["article_content"].delete_many({"article_id": article_id})
         await invalidate_article_caches()
         return True
     return False

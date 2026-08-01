@@ -14,7 +14,7 @@ from app.schemas.category import CategoryCreate, CategoryUpdate
 async def ensure_category_indexes(db: AsyncIOMotorDatabase) -> None:
     """Case-insensitive unique index on category name so renames are safe and
     duplicates are caught at the database layer, not just the application."""
-    await Category.create_index(
+    await Category.get_motor_collection().create_index(
         "name",
         unique=True,
         collation={"locale": "en", "strength": 2},

@@ -6,7 +6,7 @@ from typing import Optional, List
 import pymongo
 
 async def ensure_poll_indexes(db: AsyncIOMotorDatabase):
-    await Poll_votes.create_index([("poll_id", 1), ("user_id", 1)], unique=True)
+    await db["poll_votes"].create_index([("poll_id", 1), ("user_id", 1)], unique=True)
 
 async def create_poll(db: AsyncIOMotorDatabase, poll_data: PollCreate) -> str:
     poll_id = str(uuid.uuid4())
@@ -29,7 +29,7 @@ async def get_poll_with_results(
     # Check if the user voted
     user_voted_option_id = None
     if current_user_id:
-        vote_doc = await Poll_votes.find_one({"poll_id": poll_id, "user_id": current_user_id})
+        vote_doc = await db["poll_votes"].find_one({"poll_id": poll_id, "user_id": current_user_id})
         if vote_doc:
             user_voted_option_id = vote_doc["option_id"]
 
@@ -64,7 +64,7 @@ async def vote_poll(db: AsyncIOMotorDatabase, poll_id: str, user_id: str, option
     # Create vote, relying on unique index to prevent race conditions
     vote = PollVote(poll_id=poll_id, user_id=user_id, option_id=option_id)
     try:
-        await Poll_votes(**vote.dict(by_alias=True).insert())
+        await db[\"poll_votes\"].insert_one(vote.dict(by_alias=True))
     except pymongo.errors.DuplicateKeyError:
         raise ValueError("User has already voted on this poll")
     

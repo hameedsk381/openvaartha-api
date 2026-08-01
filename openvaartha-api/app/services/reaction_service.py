@@ -11,10 +11,10 @@ logger = logging.getLogger(__name__)
 async def ensure_reaction_indexes(db: AsyncIOMotorDatabase):
     """Ensure indexes on reactions collection."""
     try:
-        await Article_reactions.create_index(
+        await db["article_reactions"].create_index(
             [("article_id", 1), ("reaction_type", 1)]
         )
-        await Article_reactions.create_index(
+        await db["article_reactions"].create_index(
             [("article_id", 1), ("user_id", 1), ("reaction_type", 1)],
             unique=True,
             partialFilterExpression={"user_id": {"$type": "string"}},
@@ -30,7 +30,7 @@ async def get_reaction_counts(db: AsyncIOMotorDatabase, article_id: str, user_id
         {"$group": {"_id": "$reaction_type", "count": {"$sum": 1}}},
     ]
 
-    cursor = Article_reactions.aggregate(pipeline)
+    cursor = db["article_reactions"].aggregate(pipeline)
     counts = {r.value: 0 for r in ReactionType}
 
     async for doc in cursor:
@@ -40,7 +40,7 @@ async def get_reaction_counts(db: AsyncIOMotorDatabase, article_id: str, user_id
 
     user_reactions = []
     if user_id:
-        user_docs = await Article_reactions.find(
+        user_docs = await db["article_reactions"].find(
             {"article_id": article_id, "user_id": user_id}
         ).to_list(length=20)
         user_reactions = [d["reaction_type"] for d in user_docs]
@@ -78,11 +78,11 @@ async def toggle_reaction(
         # Fallback for anonymous with no IP
         query["client_ip"] = "anonymous"
 
-    existing = await Article_reactions.find_one(query)
+    existing = await db["article_reactions"].find_one(query)
 
     if existing:
         # User already reacted -> toggle off (remove)
-        await Article_reactions.delete_one({"_id": existing["_id"]})
+        await db["article_reactions"].delete_one({"_id": existing["_id"]})
         added = False
     else:
         # Insert new reaction
@@ -93,7 +93,7 @@ async def toggle_reaction(
             "client_ip": client_ip,
             "created_at": datetime.now(timezone.utc),
         }
-        await Article_reactions(**reaction_doc).insert()
+        await db[\"article_reactions\"].insert_one(reaction_doc)
         added = True
 
     updated_data = await get_reaction_counts(db, article_id, user_id=user_id)
