@@ -93,7 +93,7 @@ async def toggle_reaction(
             "client_ip": client_ip,
             "created_at": datetime.now(timezone.utc),
         }
-        await db[\"article_reactions\"].insert_one(reaction_doc)
+        await db["article_reactions"].insert_one(reaction_doc)
         added = True
 
     updated_data = await get_reaction_counts(db, article_id, user_id=user_id)

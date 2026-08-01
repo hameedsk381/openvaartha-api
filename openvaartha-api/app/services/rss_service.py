@@ -208,7 +208,7 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
             "timeline": result.get("timeline", None),
             "explainer": result.get("explainer", None),
         }
-        await db[\"article_content\"].insert_one(content_doc)
+        await db["article_content"].insert_one(content_doc)
         
         from app.services.article_service import invalidate_article_caches
         await invalidate_article_caches()

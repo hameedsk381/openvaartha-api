@@ -722,7 +722,7 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
             "explainer": article_data.content.explainer,
             "video_url": article_data.content.video_url,
         }
-        await db[\"article_content\"].insert_one(content_doc)
+        await db["article_content"].insert_one(content_doc)
 
     # Generate vector embedding for personalization
     text_to_embed = f"{article_data.title}\n{article_data.summary}"

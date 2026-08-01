@@ -64,7 +64,7 @@ async def vote_poll(db: AsyncIOMotorDatabase, poll_id: str, user_id: str, option
     # Create vote, relying on unique index to prevent race conditions
     vote = PollVote(poll_id=poll_id, user_id=user_id, option_id=option_id)
     try:
-        await db[\"poll_votes\"].insert_one(vote.dict(by_alias=True))
+        await db["poll_votes"].insert_one(vote.dict(by_alias=True))
     except pymongo.errors.DuplicateKeyError:
         raise ValueError("User has already voted on this poll")
     
