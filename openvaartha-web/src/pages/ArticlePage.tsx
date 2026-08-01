@@ -11,6 +11,7 @@ export default function ArticlePage() {
   const [streamIds, setStreamIds] = useState<string[]>([]);
   const [isFetchingNext, setIsFetchingNext] = useState(false);
   const [hasReachedEnd, setHasReachedEnd] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     align: "start",
@@ -63,6 +64,7 @@ export default function ArticlePage() {
     if (!emblaApi) return;
     
     const currentIndex = emblaApi.selectedScrollSnap();
+    setActiveIndex(currentIndex);
     
     // Hide hint if they swiped past the first slide
     if (currentIndex > 0 && !hasSwipedHint) {
@@ -129,7 +131,7 @@ export default function ArticlePage() {
               key={`${id}-${index}`} 
               className="relative flex-[0_0_100%] min-w-0 h-full overflow-y-auto overflow-x-hidden pb-safe"
             >
-              <SingleArticle articleId={id} onInView={handleInView} />
+              <SingleArticle articleId={id} onInView={handleInView} isActive={index === activeIndex} />
               
               {/* Show loading spinner at bottom of the last article if fetching next */}
               {index === streamIds.length - 1 && isFetchingNext && (

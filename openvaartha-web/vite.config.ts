@@ -19,6 +19,12 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
+  preview: {
+    proxy: {
+      "/api": { target: "https://openvaartha.com", changeOrigin: true, secure: true },
+      "/sitemap.xml": { target: "https://openvaartha.com", changeOrigin: true, secure: true },
+    },
+  },
   build: {
     chunkSizeWarningLimit: 1000,
     rollupOptions: {

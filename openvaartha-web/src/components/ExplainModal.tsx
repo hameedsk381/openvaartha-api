@@ -19,7 +19,7 @@ export default function ExplainModal({ open, onOpenChange, articleId }: ExplainM
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-gradient-to-br from-[#2a0505] via-[#150303] to-[#0a0101] border-red-900/40 text-foreground backdrop-blur-xl rounded-3xl p-6 shadow-[0_12px_40px_rgba(85,0,0,0.3)]">
+      <DialogContent className="sm:max-w-md bg-gradient-to-br from-primary/15 via-primary/10 to-background border-primary/20 text-foreground backdrop-blur-xl rounded-3xl p-6 shadow-[0_12px_40px_rgba(0,0,0,0.25)] dark:from-[#2a0505] dark:via-[#150303] dark:to-[#0a0101] dark:border-red-900/40 dark:shadow-[0_12px_40px_rgba(85,0,0,0.3)]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">
             <Sparkles className="w-5 h-5 text-primary" />
