@@ -46,7 +46,7 @@ async def get_category_articles(
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
 
-    cursor = Article.find({
+    cursor = Article.get_motor_collection().find({
         "category_id": category["_id"],
         "$or": [{"status": "published"}, {"status": {"$exists": False}}],
     }).sort("published_at", -1).skip(skip).limit(limit)

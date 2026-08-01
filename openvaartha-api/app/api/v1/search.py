@@ -35,13 +35,13 @@ async def search_suggestions(
     """Get rich search suggestions including titles, tags, and categories."""
     regex = {"$regex": f"{re.escape(q)}", "$options": "i"}
 
-    articles = await Article.find(
+    articles = await Article.get_motor_collection().find(
         _public_query({"title": regex}),
         {"title": 1, "slug": 1}
     ).limit(limit).to_list(length=limit)
 
-    tags = await Article.distinct("tags", _public_query({"tags": regex}))
-    categories = await Category.find({"name": regex}, {"name": 1}).to_list(length=3)
+    tags = await Article.get_motor_collection().distinct("tags", _public_query({"tags": regex}))
+    categories = await Category.get_motor_collection().find({"name": regex}, {"name": 1}).to_list(length=3)
 
     return {
         "titles": [{"title": a["title"], "slug": a.get("slug", "")} for a in articles],

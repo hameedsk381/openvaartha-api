@@ -60,7 +60,7 @@ async def list_articles(
         query["tags"] = tag.lower()
     if search:
         query["$text"] = {"$search": search}
-    total = await Article.count_documents(query)
+    total = await Article.get_motor_collection().count_documents(query)
     return {"items": items, "total": total}
 
 
@@ -276,13 +276,13 @@ async def track_share(
 ):
     """Increment the share count for an article."""
     # Try updating by slug first
-    result = await Article.update_one(
+    result = await Article.get_motor_collection().update_one(
         {"slug": id_or_slug, "status": "published"}, 
         {"$inc": {"share_count": 1}}
     )
     if result.modified_count == 0:
         # Fallback to ID
-        result = await Article.update_one(
+        result = await Article.get_motor_collection().update_one(
             {"_id": id_or_slug, "status": "published"}, 
             {"$inc": {"share_count": 1}}
         )
@@ -430,7 +430,7 @@ async def generate_fact_check(
     content = existing.get("content", {})
     content["fact_check"] = fact_check_data
     
-    await Article.update_one(
+    await Article.get_motor_collection().update_one(
         {"_id": article_id},
         {"$set": {"content": content}}
     )

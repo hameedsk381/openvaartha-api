@@ -29,15 +29,15 @@ async def dashboard_stats(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Get dashboard statistics (admin only)."""
-    total_articles = await Article.count_documents({})
-    published = await Article.count_documents({"status": "published"})
-    drafts = await Article.count_documents({"status": "draft"})
-    archived = await Article.count_documents({"status": "archived"})
-    total_users = await User.count_documents({})
-    total_comments = await Comment.count_documents({"is_active": True})
-    total_subscribers = await Newsletter_subscribers.count_documents({"is_active": True})
-    breaking = await Article.count_documents({"is_breaking": True, "status": "published"})
-    trending = await Article.count_documents({"is_trending": True, "status": "published"})
+    total_articles = await Article.get_motor_collection().count_documents({})
+    published = await Article.get_motor_collection().count_documents({"status": "published"})
+    drafts = await Article.get_motor_collection().count_documents({"status": "draft"})
+    archived = await Article.get_motor_collection().count_documents({"status": "archived"})
+    total_users = await User.get_motor_collection().count_documents({})
+    total_comments = await Comment.get_motor_collection().count_documents({"is_active": True})
+    total_subscribers = await db["newsletter_subscribers"].count_documents({"is_active": True})
+    breaking = await Article.get_motor_collection().count_documents({"is_breaking": True, "status": "published"})
+    trending = await Article.get_motor_collection().count_documents({"is_trending": True, "status": "published"})
 
     # Sparkline: last 7 days published counts
     today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
@@ -45,41 +45,41 @@ async def dashboard_stats(
     for i in range(6, -1, -1):
         day_start = today - timedelta(days=i)
         day_end = day_start + timedelta(days=1)
-        count = await Article.count_documents({
+        count = await Article.get_motor_collection().count_documents({
             "status": "published",
             "published_at": {"$gte": day_start, "$lt": day_end}
         })
         sparkline_data.append(count)
 
-    cursor = Article.find().sort("published_at", -1).limit(5)
+    cursor = Article.get_motor_collection().find().sort("published_at", -1).limit(5)
     recent_docs = await cursor.to_list(length=5)
     recent_articles = []
     for doc in recent_docs:
         doc["id"] = str(doc["_id"])
-        category = await Category.find_one({"_id": doc.get("category_id", "")})
+        category = await Category.get_motor_collection().find_one({"_id": doc.get("category_id", "")})
         doc["category"] = category["name"] if category else "General"
         recent_articles.append(doc)
 
     # Fetch top articles by view count
-    top_cursor = Article.find({"status": "published"}).sort("view_count", -1).limit(5)
+    top_cursor = Article.get_motor_collection().find({"status": "published"}).sort("view_count", -1).limit(5)
     top_docs = await top_cursor.to_list(length=5)
     top_articles = []
     for doc in top_docs:
         doc["id"] = str(doc["_id"])
-        category = await Category.find_one({"_id": doc.get("category_id", "")})
+        category = await Category.get_motor_collection().find_one({"_id": doc.get("category_id", "")})
         doc["category"] = category["name"] if category else "General"
         top_articles.append(doc)
         
     # Calculate total views
     pipeline = [{"$group": {"_id": None, "total_views": {"$sum": "$view_count"}}}]
-    views_result = await Article.aggregate(pipeline).to_list(length=1)
+    views_result = await Article.get_motor_collection().aggregate(pipeline).to_list(length=1)
     total_views = views_result[0].get("total_views", 0) if views_result else 0
 
     # Reaction analytics breakdown
     reaction_pipeline = [
         {"$group": {"_id": "$reaction_type", "count": {"$sum": 1}}}
     ]
-    reactions_docs = await Article_reactions.aggregate(reaction_pipeline).to_list(length=10)
+    reactions_docs = await db["article_reactions"].aggregate(reaction_pipeline).to_list(length=10)
     reaction_stats = {r["_id"]: r["count"] for r in reactions_docs}
 
     return {
@@ -128,8 +128,8 @@ async def list_users(
 
     total = 0
     if include_total:
-        total = await User.count_documents(query)
-    cursor = User.find(query).sort("created_at", -1).skip(skip).limit(limit)
+        total = await User.get_motor_collection().count_documents(query)
+    cursor = User.get_motor_collection().find(query).sort("created_at", -1).skip(skip).limit(limit)
     docs = await cursor.to_list(length=limit)
     result = []
     for d in docs:
@@ -178,7 +178,7 @@ async def delete_user(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Delete a user (admin only)."""
-    result = await User.delete_one({"_id": user_id})
+    result = await User.get_motor_collection().delete_one({"_id": user_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted"}
@@ -198,15 +198,15 @@ async def list_all_comments(
         query["article_id"] = article_id
     total = 0
     if include_total:
-        total = await Comment.count_documents(query)
-    cursor = Comment.find(query).sort("created_at", -1).skip(skip).limit(limit)
+        total = await Comment.get_motor_collection().count_documents(query)
+    cursor = Comment.get_motor_collection().find(query).sort("created_at", -1).skip(skip).limit(limit)
     docs = await cursor.to_list(length=limit)
     result = []
     for d in docs:
         if "_id" in d and "id" not in d:
             d["id"] = str(d["_id"])
         # Fetch article info
-        article = await Article.find_one({"id": d.get("article_id", "")})
+        article = await Article.get_motor_collection().find_one({"_id": d.get("article_id", "")})
         if article:
             d["article_title"] = article.get("title", "Unknown Article")
             d["article_slug"] = article.get("slug", "")
@@ -231,12 +231,12 @@ async def bulk_moderate_comments(
 ):
     """Approve or delete multiple comments in bulk (admin only)."""
     if body.action == "approve":
-        await Comment.update_many(
+        await Comment.get_motor_collection().update_many(
             {"_id": {"$in": body.comment_ids}},
             {"$set": {"is_active": True, "updated_at": datetime.now(timezone.utc)}}
         )
     elif body.action == "delete":
-        await Comment.update_many(
+        await Comment.get_motor_collection().update_many(
             {"_id": {"$in": body.comment_ids}},
             {"$set": {"is_active": False, "updated_at": datetime.now(timezone.utc)}}
         )
@@ -251,7 +251,7 @@ async def approve_comment(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Approve/re-activate a comment (admin only)."""
-    res = await Comment.update_one(
+    res = await Comment.get_motor_collection().update_one(
         {"_id": comment_id},
         {"$set": {"is_active": True, "updated_at": datetime.now(timezone.utc)}}
     )
@@ -271,8 +271,8 @@ async def list_subscribers(
     query = {"is_active": True}
     total = 0
     if include_total:
-        total = await Newsletter_subscribers.count_documents(query)
-    cursor = Newsletter_subscribers.find(query).sort("subscribed_at", -1).skip(skip).limit(limit)
+        total = await db["newsletter_subscribers"].count_documents(query)
+    cursor = db["newsletter_subscribers"].find(query).sort("subscribed_at", -1).skip(skip).limit(limit)
     docs = await cursor.to_list(length=limit)
     items = [
         {
@@ -447,7 +447,7 @@ async def list_contributor_requests(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """List all contributor requests (admin only)."""
-    cursor = User.find({"contributor_status": "requested"})
+    cursor = User.get_motor_collection().find({"contributor_status": "requested"})
     users = await cursor.to_list(length=100)
     return [UserModel(**u) for u in users]
 
@@ -463,7 +463,7 @@ async def review_contributor_request(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Approve or reject a contributor request (admin only)."""
-    user_doc = await User.find_one({"_id": user_id})
+    user_doc = await User.get_motor_collection().find_one({"_id": user_id})
     if not user_doc:
         raise HTTPException(status_code=404, detail="User not found")
         
