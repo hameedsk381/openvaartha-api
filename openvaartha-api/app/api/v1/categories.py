@@ -34,7 +34,7 @@ async def get_category(category_id: str, db: AsyncIOMotorDatabase = Depends(get_
     return category
 
 
-@router.get("/{category_name}/articles", response_model=List[Article])
+@router.get("/{category_name}/articles", response_model=List[ArticleSchema])
 async def get_category_articles(
     category_name: str,
     skip: int = 0,
@@ -46,7 +46,7 @@ async def get_category_articles(
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
 
-    cursor = Article.get_motor_collection().find({
+    cursor = ArticleModel.get_motor_collection().find({
         "category_id": category["_id"],
         "$or": [{"status": "published"}, {"status": {"$exists": False}}],
     }).sort("published_at", -1).skip(skip).limit(limit)

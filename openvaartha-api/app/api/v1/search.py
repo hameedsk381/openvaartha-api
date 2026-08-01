@@ -1,15 +1,17 @@
-from app.models.category import Category
+from app.models.category import Category as CategoryModel
+from app.models.article import Article as ArticleModel
 from fastapi import APIRouter, Depends, Query
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Optional
 from app.database import get_db
-from app.schemas.article import Article
+from app.schemas.article import Article as ArticleSchema
 from app.services import article_service
+from app.services.article_service import _public_query
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[Article])
+@router.get("/", response_model=List[ArticleSchema])
 async def search_articles(
     q: str = Query(..., min_length=1, description="Search query"),
     category: Optional[str] = Query(None, description="Filter by category name"),
@@ -23,8 +25,6 @@ async def search_articles(
 
 
 import re
-from app.services.article_service import _public_query
-
 
 @router.get("/suggestions")
 async def search_suggestions(
@@ -35,13 +35,13 @@ async def search_suggestions(
     """Get rich search suggestions including titles, tags, and categories."""
     regex = {"$regex": f"{re.escape(q)}", "$options": "i"}
 
-    articles = await Article.get_motor_collection().find(
+    articles = await ArticleModel.get_motor_collection().find(
         _public_query({"title": regex}),
         {"title": 1, "slug": 1}
     ).limit(limit).to_list(length=limit)
 
-    tags = await Article.get_motor_collection().distinct("tags", _public_query({"tags": regex}))
-    categories = await Category.get_motor_collection().find({"name": regex}, {"name": 1}).to_list(length=3)
+    tags = await ArticleModel.get_motor_collection().distinct("tags", _public_query({"tags": regex}))
+    categories = await CategoryModel.get_motor_collection().find({"name": regex}, {"name": 1}).to_list(length=3)
 
     return {
         "titles": [{"title": a["title"], "slug": a.get("slug", "")} for a in articles],

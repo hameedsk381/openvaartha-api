@@ -12,6 +12,7 @@ from app.services.article_service import _public_query
 from app.core.dependencies import get_current_active_admin, get_current_editor, get_current_user, get_current_user_optional
 from app.core.rate_limit import limiter, MUTATION_LIMIT
 from app.models.user import User as UserModel
+from app.models.article import Article as ArticleModel
 
 router = APIRouter()
 
@@ -60,7 +61,7 @@ async def list_articles(
         query["tags"] = tag.lower()
     if search:
         query["$text"] = {"$search": search}
-    total = await Article.get_motor_collection().count_documents(query)
+    total = await ArticleModel.get_motor_collection().count_documents(query)
     return {"items": items, "total": total}
 
 
@@ -276,13 +277,13 @@ async def track_share(
 ):
     """Increment the share count for an article."""
     # Try updating by slug first
-    result = await Article.get_motor_collection().update_one(
+    result = await ArticleModel.get_motor_collection().update_one(
         {"slug": id_or_slug, "status": "published"}, 
         {"$inc": {"share_count": 1}}
     )
     if result.modified_count == 0:
         # Fallback to ID
-        result = await Article.get_motor_collection().update_one(
+        result = await ArticleModel.get_motor_collection().update_one(
             {"_id": id_or_slug, "status": "published"}, 
             {"$inc": {"share_count": 1}}
         )
@@ -430,7 +431,7 @@ async def generate_fact_check(
     content = existing.get("content", {})
     content["fact_check"] = fact_check_data
     
-    await Article.get_motor_collection().update_one(
+    await ArticleModel.get_motor_collection().update_one(
         {"_id": article_id},
         {"$set": {"content": content}}
     )

@@ -1,4 +1,4 @@
-from app.models.category import Category
+from app.models.category import Category as CategoryModel
 import json
 
 from fastapi import APIRouter, Depends
@@ -23,16 +23,18 @@ async def robots():
     # Served dynamically (instead of the static public/robots.txt) so the
     # Sitemap directive can point at the deployed domain via SITE_URL.
     base = settings.SITE_URL.rstrip("/")
-    ai_rules = "\n".join(f"User-agent: {ua}\nAllow: /\n" for ua in _AI_CRAWLERS)
-    content = (
-        "User-agent: *\n"
-        "Allow: /\n"
-        "Disallow: /admin\n"
-        "Disallow: /portal\n"
-        "\n"
-        f"{ai_rules}\n"
-        f"Sitemap: {base}/sitemap.xml\n"
-    )
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin/",
+        "Disallow: /api/",
+        "",
+        "# Explicit welcome for AI research & answer-engine crawlers",
+    ] + [f"User-agent: {bot}\nAllow: /" for bot in _AI_CRAWLERS] + [
+        "",
+        f"Sitemap: {base}/sitemap.xml",
+    ]
+    content = "\n".join(lines)
     return Response(content=content, media_type="text/plain")
 
 
@@ -41,7 +43,7 @@ async def llms_txt(db: AsyncIOMotorDatabase = Depends(get_db)):
     # https://llmstxt.org — a machine-readable summary for AI assistants,
     # separate from robots.txt (which only controls crawling, not context).
     base = settings.SITE_URL.rstrip("/")
-    categories = await Category.get_motor_collection().find({}).to_list(length=None)
+    categories = await CategoryModel.get_motor_collection().find({}).to_list(length=None)
     category_lines = "\n".join(
         f"- [{c.get('name', '').title()}]({base}/category/{_slugify(c.get('name', ''))})"
         for c in categories
