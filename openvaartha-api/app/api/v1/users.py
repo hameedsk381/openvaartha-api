@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+import fastapi
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List
 
 from pydantic import BaseModel, EmailStr
 
+from app.config import settings
 from app.core.dependencies import get_current_user
 from app.core.rate_limit import limiter, LOGIN_LIMIT, REFRESH_LIMIT, REGISTER_LIMIT
 from app.core.security import decode_token
@@ -27,7 +29,6 @@ router = APIRouter()
 @router.get("/auth-config")
 async def get_auth_config():
     """Get public authentication configuration like Google Client ID."""
-    from app.config import settings
     return {"google_client_id": settings.GOOGLE_CLIENT_ID or None}
 
 
@@ -51,6 +52,7 @@ async def register_user(
 @limiter.limit(LOGIN_LIMIT)
 async def login(
     request: Request,
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
@@ -63,13 +65,23 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    return auth_service.create_tokens(user)
+    tokens = auth_service.create_tokens(user)
+    response.set_cookie(
+        key="refresh_token",
+        value=tokens["refresh_token"],
+        httponly=True,
+        secure=True, # Note: Ensure HTTPS in production
+        samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+    )
+    return tokens
 
 
 @router.post("/google", response_model=Token)
 @limiter.limit(LOGIN_LIMIT)
 async def google_login(
     request: Request,
+    response: Response,
     body: GoogleLoginRequest,
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
@@ -93,18 +105,39 @@ async def google_login(
             detail="This account has been disabled",
         )
 
-    return auth_service.create_tokens(user)
+    tokens = auth_service.create_tokens(user)
+    response.set_cookie(
+        key="refresh_token",
+        value=tokens["refresh_token"],
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+    )
+    return tokens
 
 
 @router.post("/refresh", response_model=Token)
 @limiter.limit(REFRESH_LIMIT)
 async def refresh_access_token(
     request: Request,
-    token_data: RefreshTokenRequest,
+    response: Response,
+    refresh_token: str | None = fastapi.Cookie(None),
+    token_data: RefreshTokenRequest | None = None,
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Exchange a valid refresh token for a fresh token pair."""
-    payload = decode_token(token_data.refresh_token)
+    token = refresh_token
+    if not token and token_data:
+        token = token_data.refresh_token
+        
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing refresh token",
+        )
+
+    payload = decode_token(token)
     if not payload or payload.get("typ") != "refresh":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -125,7 +158,16 @@ async def refresh_access_token(
             detail="Invalid refresh token",
         )
 
-    return auth_service.create_tokens(user)
+    tokens = auth_service.create_tokens(user)
+    response.set_cookie(
+        key="refresh_token",
+        value=tokens["refresh_token"],
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+    )
+    return tokens
 
 
 @router.get("/me", response_model=UserSchema)

@@ -1,3 +1,4 @@
+from app.models.article import Article
 import hashlib
 import logging
 import re
@@ -149,7 +150,7 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
             continue
 
         guid = entry["guid"]
-        existing = await db["article_sources"].find_one({"guid": guid, "source_id": source["_id"]})
+        existing = await Article_sources.find_one({"guid": guid, "source_id": source["_id"]})
         if existing:
             continue
 
@@ -197,7 +198,7 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
             "has_deep_content": False,
         }
 
-        await db["articles"].insert_one(article_doc)
+        await Article(**article_doc).insert()
 
         content_doc = {
             "article_id": article_id,
@@ -207,16 +208,16 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
             "timeline": result.get("timeline", None),
             "explainer": result.get("explainer", None),
         }
-        await db["article_content"].insert_one(content_doc)
+        await Article_content(**content_doc).insert()
         
         from app.services.article_service import invalidate_article_caches
         await invalidate_article_caches()
 
-        await db["article_sources"].insert_one({
+        await Article_sources(**{
             "article_id": article_id,
             "source_id": source["_id"],
             "guid": guid,
-            "url": entry.get("link", ""),
+            "url": entry.get("link", "").insert(),
         })
 
         new_count += 1

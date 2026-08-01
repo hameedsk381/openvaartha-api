@@ -1,3 +1,5 @@
+from app.models.article import Article
+from app.models.category import Category
 from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import uuid4
@@ -12,7 +14,7 @@ from app.schemas.category import CategoryCreate, CategoryUpdate
 async def ensure_category_indexes(db: AsyncIOMotorDatabase) -> None:
     """Case-insensitive unique index on category name so renames are safe and
     duplicates are caught at the database layer, not just the application."""
-    await db["categories"].create_index(
+    await Category.create_index(
         "name",
         unique=True,
         collation={"locale": "en", "strength": 2},
@@ -22,17 +24,17 @@ async def ensure_category_indexes(db: AsyncIOMotorDatabase) -> None:
 
 async def get_categories(db: AsyncIOMotorDatabase) -> List[dict]:
     """Get all categories."""
-    return await db["categories"].find({}).to_list(length=None)
+    return await Category.find({}).to_list(length=None)
 
 
 async def get_category_by_id(db: AsyncIOMotorDatabase, category_id: str) -> Optional[dict]:
     """Get category by ID."""
-    return await db["categories"].find_one({"_id": category_id})
+    return await Category.find_one({"_id": category_id})
 
 
 async def get_category_by_name(db: AsyncIOMotorDatabase, name: str) -> Optional[dict]:
     """Get category by name (case-insensitive)."""
-    return await db["categories"].find_one({
+    return await Category.find_one({
         "name": {"$regex": f"^{name.replace('-', ' ')}$", "$options": "i"}
     })
 
@@ -41,7 +43,7 @@ async def _name_is_taken(db: AsyncIOMotorDatabase, name: str, ignore_id: Optiona
     query: dict = {"name": {"$regex": f"^{name}$", "$options": "i"}}
     if ignore_id:
         query["_id"] = {"$ne": ignore_id}
-    return await db["categories"].find_one(query, {"_id": 1}) is not None
+    return await Category.find_one(query, {"_id": 1}) is not None
 
 
 async def create_category(db: AsyncIOMotorDatabase, category_data: CategoryCreate) -> dict:
@@ -56,7 +58,7 @@ async def create_category(db: AsyncIOMotorDatabase, category_data: CategoryCreat
         "created_at": datetime.now(timezone.utc),
     }
     try:
-        await db["categories"].insert_one(category_doc)
+        await Category(**category_doc).insert()
     except DuplicateKeyError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -85,7 +87,7 @@ async def update_category(
 
     update_dict["updated_at"] = datetime.now(timezone.utc)
     try:
-        result = await db["categories"].update_one({"_id": category_id}, {"$set": update_dict})
+        result = await Category.update_one({"_id": category_id}, {"$set": update_dict})
     except DuplicateKeyError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -98,13 +100,13 @@ async def update_category(
 
 async def delete_category(db: AsyncIOMotorDatabase, category_id: str) -> bool:
     """Delete a category. Refuses to delete if any article still references it."""
-    article_count = await db["articles"].count_documents({"category_id": category_id})
+    article_count = await Article.count_documents({"category_id": category_id})
     if article_count > 0:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Category has {article_count} article(s); reassign them before deleting.",
         )
-    result = await db["categories"].delete_one({"_id": category_id})
+    result = await Category.delete_one({"_id": category_id})
     return result.deleted_count > 0
 
 
@@ -113,7 +115,7 @@ async def get_category_stats(db: AsyncIOMotorDatabase) -> List[dict]:
     pipeline = [
         {"$group": {"_id": "$category_id", "article_count": {"$sum": 1}}}
     ]
-    cursor = db["articles"].aggregate(pipeline)
+    cursor = Article.aggregate(pipeline)
     article_counts = {item["_id"]: item["article_count"] for item in await cursor.to_list(length=None) if item["_id"]}
 
     categories = await get_categories(db)

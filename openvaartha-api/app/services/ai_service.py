@@ -14,6 +14,26 @@ logger = logging.getLogger(__name__)
 # Shared HTTP client for all Groq API calls to prevent connection thrashing
 _http_client = httpx.AsyncClient()
 
+def safe_json_parse(text: str) -> Optional[dict]:
+    """Safely parse JSON, stripping markdown fences and catching decode errors."""
+    if not text:
+        return None
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        # Strip the first line (e.g. ```json)
+        lines = cleaned.split("\n")
+        if lines:
+            lines = lines[1:]
+        # Strip the last line if it's just backticks
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        cleaned = "\n".join(lines).strip()
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse JSON from AI: {e}\nRaw text: {text}")
+        return None
+
 _BASE_SYSTEM_PROMPT = """You are a senior news editor at Open Vaartha, an independent, youth-led news initiative
 operated by Gen Z — an open news platform built for the liberation of digital spaces.
 You have decades of experience crafting compelling, well-structured news articles.
@@ -29,7 +49,7 @@ Rules for article structure:
 - tldr: a sharp one-line takeaway
 - points: 3-5 bullet-point key facts (as a list of strings)
 - timeline: an array of chronological events extracted from the content (e.g., [{{"date": "YYYY-MM-DD", "event": "..."}}]). Leave empty if not applicable.
-- explainer: an array of 2-3 FAQ-style questions and answers (e.g., [{{"question": "...", "answer": "..."}}]). Provide deep context.
+- explainer: an array of 2-3 FAQ-style questions and answers (e.g., [{{"question": "...", "answer": "..."}}]). ONLY use facts present in the provided source material. Do NOT hallucinate outside context.
 - tags: an array of 3-5 relevant SEO keywords/tags (e.g., ["politics", "election"]).
 - read_time: estimated reading time in minutes as a string (e.g., "4 min").
 
@@ -133,7 +153,9 @@ Generate a complete news article with this exact JSON structure:
         if not content:
             return None
 
-        data = json.loads(content.strip())
+        data = safe_json_parse(content)
+        if not data:
+            return None
 
         if not all(k in data for k in ("title", "summary", "body", "tldr", "points")):
             logger.warning(f"AI response missing keys, got: {list(data.keys())}")
@@ -218,7 +240,9 @@ Pick the single best-fit category for this text. Return ONLY JSON: {{"category_i
         if not content:
             return None
 
-        data = json.loads(content.strip())
+        data = safe_json_parse(content)
+        if not data:
+            return None
         category_id = data.get("category_id")
         valid_ids = {c["_id"] for c in categories}
         return category_id if category_id in valid_ids else None
@@ -277,7 +301,7 @@ async def ai_assist_editor(action: str, text: str, context: Optional[str] = None
         if not content:
             return None
 
-        return json.loads(content.strip())
+        return safe_json_parse(content)
     except Exception as e:
         logger.error(f"AI assist failed for action '{action}': {e}", exc_info=True)
         return None
@@ -332,7 +356,9 @@ Return ONLY valid JSON in this exact format:
         if not content:
             return None
 
-        data = json.loads(content.strip())
+        data = safe_json_parse(content)
+        if not data:
+            return None
         return {
             "title": sanitize_text(data.get("title", "")),
             "overview": sanitize_html(data.get("overview", "")),

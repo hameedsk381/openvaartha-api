@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 interface ReactionData {
   counts: Record<string, number>;
@@ -29,6 +30,23 @@ export default function ReactionBar({ articleId }: Props) {
     queryKey,
     queryFn: () => apiFetch<ReactionData>(`/articles/${articleId}/reactions`),
     staleTime: 30000,
+  });
+
+  useWebSocket("NEW_REACTION", (eventData: any) => {
+    if (eventData.article_id === articleId) {
+      queryClient.setQueryData<ReactionData>(queryKey, (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          counts: eventData.counts,
+          total: eventData.total,
+        };
+      });
+    }
+  });
+
+  useWebSocket("RECONNECTED", () => {
+    queryClient.invalidateQueries({ queryKey });
   });
 
   const mutation = useMutation({

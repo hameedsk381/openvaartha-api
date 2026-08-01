@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel
+from beanie import Document, Field, model_validator
 from typing import Optional, List
 from datetime import datetime, timezone
 from enum import Enum

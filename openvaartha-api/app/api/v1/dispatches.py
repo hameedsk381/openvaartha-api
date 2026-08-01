@@ -8,6 +8,7 @@ from app.database import get_db
 from app.models.user import User as UserModel
 from app.schemas.dispatch import Dispatch as DispatchSchema, DispatchCreate, DispatchUpdate
 from app.services import dispatch_service, push_service
+from app.worker import send_push_notification_task
 
 router = APIRouter()
 
@@ -28,7 +29,6 @@ async def list_dispatches(
 async def create_dispatch(
     request: Request,
     body: DispatchCreate,
-    background_tasks: BackgroundTasks,
     db: AsyncIOMotorDatabase = Depends(get_db),
     current_user: UserModel = Depends(get_current_editor),
 ):
@@ -43,9 +43,7 @@ async def create_dispatch(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    background_tasks.add_task(
-        push_service.send_to_segment,
-        db,
+    send_push_notification_task.delay(
         "breaking",
         {
             "title": "Breaking — Open Vaartha",

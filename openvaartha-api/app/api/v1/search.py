@@ -1,3 +1,4 @@
+from app.models.category import Category
 from fastapi import APIRouter, Depends, Query
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Optional
@@ -34,13 +35,13 @@ async def search_suggestions(
     """Get rich search suggestions including titles, tags, and categories."""
     regex = {"$regex": f"{re.escape(q)}", "$options": "i"}
 
-    articles = await db["articles"].find(
+    articles = await Article.find(
         _public_query({"title": regex}),
         {"title": 1, "slug": 1}
     ).limit(limit).to_list(length=limit)
 
-    tags = await db["articles"].distinct("tags", _public_query({"tags": regex}))
-    categories = await db["categories"].find({"name": regex}, {"name": 1}).to_list(length=3)
+    tags = await Article.distinct("tags", _public_query({"tags": regex}))
+    categories = await Category.find({"name": regex}, {"name": 1}).to_list(length=3)
 
     return {
         "titles": [{"title": a["title"], "slug": a.get("slug", "")} for a in articles],

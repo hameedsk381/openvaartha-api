@@ -4,6 +4,7 @@ from typing import Optional
 import google.generativeai as genai
 
 from app.config import settings
+from app.services.ai_service import safe_json_parse
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,8 @@ async def analyze_article_facts(article_text: str) -> Optional[dict]:
     Analyzes an article's text using Gemini to extract claims, assess bias,
     and output a structured fact-check JSON.
     """
+    article_text = article_text[:15000]
+    
     if not _init_gemini():
         return None
 
@@ -40,7 +43,7 @@ async def analyze_article_facts(article_text: str) -> Optional[dict]:
 
         Extract exactly 3 to 5 distinct, major factual claims made in the text.
         For each claim, provide a brief assessment (e.g. "Supported by general consensus", "Disputed", "Needs more context", "True"). 
-        Provide a hypothetical or real source URL if one exists, otherwise null.
+        You must ONLY assess the claims based on your verifiable internal knowledge. If you cannot verify a claim, assess it as 'Needs more context'. Do NOT hallucinate source URLs; only provide them if they are genuine and highly authoritative, otherwise return null.
 
         Also assess the overall bias rating of the text (e.g., "Neutral", "Left-leaning", "Right-leaning", "Sensationalist", "Pro-establishment").
         Assign a confidence score (0-100) reflecting how confident you are in your overall assessment.
@@ -66,7 +69,10 @@ async def analyze_article_facts(article_text: str) -> Optional[dict]:
         if not response.text:
             return None
             
-        data = json.loads(response.text)
+        data = safe_json_parse(response.text)
+        
+        if not data:
+            return None
         
         # Ensure it has the right keys
         if "claims" not in data or "bias_rating" not in data or "summary" not in data:
@@ -102,8 +108,11 @@ async def explain_article_eli5(article_text: str) -> Optional[str]:
     Use extremely casual language, zero jargon, and include 1 or 2 relevant emojis. 
     Make it feel like a text from a smart friend.
     
+    CRITICAL INSTRUCTION: ONLY use information explicitly present in the provided article text. Do NOT hallucinate outside details, figures, or facts.
+    CRITICAL INSTRUCTION 2: If the article covers a tragic, sensitive, or solemn topic (e.g., natural disasters, deaths, severe accidents, mass casualties), maintain a respectful and straightforward tone and OMIT all emojis, overriding the casual requirement.
+    
     Article Text:
-    {article_text}
+    {article_text[:15000]}
     """
     
     # Try Gemini first

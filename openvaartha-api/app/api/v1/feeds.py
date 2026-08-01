@@ -1,3 +1,4 @@
+from app.models.category import Category
 import json
 
 from fastapi import APIRouter, Depends
@@ -40,7 +41,7 @@ async def llms_txt(db: AsyncIOMotorDatabase = Depends(get_db)):
     # https://llmstxt.org — a machine-readable summary for AI assistants,
     # separate from robots.txt (which only controls crawling, not context).
     base = settings.SITE_URL.rstrip("/")
-    categories = await db["categories"].find({}).to_list(length=None)
+    categories = await Category.find({}).to_list(length=None)
     category_lines = "\n".join(
         f"- [{c.get('name', '').title()}]({base}/category/{_slugify(c.get('name', ''))})"
         for c in categories

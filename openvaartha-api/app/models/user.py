@@ -1,10 +1,11 @@
-from pydantic import BaseModel, EmailStr, Field, model_validator
+from pydantic import BaseModel
+from beanie import Document, EmailStr, Field, model_validator
 from typing import Optional
 from datetime import datetime, timezone
 from uuid import uuid4
 
 
-class User(BaseModel):
+class User(Document):
     id: str = Field(default_factory=lambda: str(uuid4()))
     email: EmailStr
     # None for OAuth-only accounts (e.g. Google sign-in) that never set a
@@ -24,10 +25,17 @@ class User(BaseModel):
     theme: Optional[str] = None
     font_size: Optional[str] = None
 
-    @model_validator(mode="before")
-    @classmethod
-    def map_mongo_id(cls, data):
-        if isinstance(data, dict) and "_id" in data and "id" not in data:
-            data = data.copy()
-            data["id"] = data["_id"]
-        return data
+
+    class Settings:
+        name = "users"
+
+class PasswordResetToken(Document):
+    token: str
+    user_id: str
+    email: str
+    expires_at: datetime
+    used: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    class Settings:
+        name = "password_reset_tokens"

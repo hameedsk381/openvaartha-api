@@ -1,3 +1,4 @@
+from app.models.newsletter import NewsletterSubscriber
 from typing import List, Optional
 from datetime import datetime, timezone
 import logging
@@ -12,22 +13,36 @@ from app.services.email_service import send_email
 
 logger = logging.getLogger(__name__)
 
+from app.core.cache import fetch_with_cache_and_lock
+from app.config import settings
+
 async def get_latest_digest() -> Optional[DailyDigest]:
-    doc = await db.digests.find_one({"status": DigestStatus.PUBLISHED.value}, sort=[("date", -1)])
-    if not doc:
-        return None
-    return DailyDigest(**doc)
+    async def _fetch():
+        doc = await DailyDigest.find_one({"status": DigestStatus.PUBLISHED.value}, sort=[("date", -1)])
+        if not doc:
+            return None
+        # Return dict to be cached properly and then converted to DailyDigest at caller or we can cache dict and return DailyDigest
+        return doc.model_dump() if hasattr(doc, "model_dump") else (doc.dict() if hasattr(doc, "dict") else doc)
+
+    key = "openvaartha:digest:latest"
+    cached_doc = await fetch_with_cache_and_lock(key, settings.CACHE_TTL_SECONDS, _fetch)
+    return DailyDigest(**cached_doc) if cached_doc else None
 
 async def get_digest_by_date(date_str: str) -> Optional[DailyDigest]:
-    doc = await db.digests.find_one({"date": date_str})
-    if not doc:
-        return None
-    return DailyDigest(**doc)
+    async def _fetch():
+        doc = await DailyDigest.find_one({"date": date_str})
+        if not doc:
+            return None
+        return doc.model_dump() if hasattr(doc, "model_dump") else (doc.dict() if hasattr(doc, "dict") else doc)
+
+    key = f"openvaartha:digest:date={date_str}"
+    cached_doc = await fetch_with_cache_and_lock(key, settings.CACHE_TTL_SECONDS, _fetch)
+    return DailyDigest(**cached_doc) if cached_doc else None
 
 async def create_digest(digest_data: DailyDigest) -> DailyDigest:
     doc = digest_data.model_dump()
     doc["_id"] = doc.pop("id")
-    await db.digests.insert_one(doc)
+    await DailyDigest(**doc).insert()
     return digest_data
 
 async def generate_daily_digest() -> Optional[DailyDigest]:
@@ -70,7 +85,7 @@ async def generate_daily_digest() -> Optional[DailyDigest]:
 
 async def broadcast_digest_newsletter(digest: DailyDigest):
     """Sends the digest to all active newsletter subscribers."""
-    cursor = db.newsletter_subscribers.find({"is_active": True})
+    cursor = NewsletterSubscriber.find({"is_active": True})
     subscribers = await cursor.to_list(length=None)
     
     if not subscribers:

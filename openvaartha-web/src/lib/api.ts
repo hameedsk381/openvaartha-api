@@ -21,14 +21,13 @@ function getRefreshToken(): string | null {
   return localStorage.getItem("refresh_token");
 }
 
-function setTokens(access: string, refresh: string): void {
+function setTokens(access: string, _refresh?: string): void {
   localStorage.setItem("token", access);
-  localStorage.setItem("refresh_token", refresh);
+  // refresh_token is now handled via HttpOnly cookie by the backend
 }
 
 export function clearTokens(): void {
   localStorage.removeItem("token");
-  localStorage.removeItem("refresh_token");
   localStorage.removeItem("user_email");
   localStorage.removeItem("user_role");
   localStorage.removeItem("user_contributor_status");
@@ -38,14 +37,12 @@ let isRefreshing = false;
 let pendingRequests: {resolve: (token: string | null) => void, reject: (err: any) => void}[] = [];
 
 async function doRefresh(): Promise<string | null> {
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) return null;
-
   try {
     const res = await fetch(`${API_BASE}/users/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: refreshToken }),
+      body: JSON.stringify({}), // The cookie is sent automatically
+      credentials: "include", // Send HttpOnly cookie
     });
 
     if (!res.ok) {
@@ -55,7 +52,7 @@ async function doRefresh(): Promise<string | null> {
     }
 
     const data = await res.json();
-    setTokens(data.access_token, data.refresh_token);
+    setTokens(data.access_token);
     return data.access_token;
   } catch (err) {
     clearTokens();

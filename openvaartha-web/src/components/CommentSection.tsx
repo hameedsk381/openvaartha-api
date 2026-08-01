@@ -11,6 +11,8 @@ import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import ConfirmDialog from "./ConfirmDialog";
+import { useQueryClient } from "@tanstack/react-query";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 const timeAgo = (dateStr: string): string => {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -231,6 +233,20 @@ export default function CommentSection({
   const { data: comments = [], isLoading } = useComments(articleId);
   const { data: countData } = useCommentCount(articleId);
   const createComment = useCreateComment();
+  
+  const queryClient = useQueryClient();
+  useWebSocket("NEW_COMMENT", (eventData: any) => {
+    if (eventData.article_id === articleId) {
+      // Invalidate so we get the fresh comments including the new one
+      queryClient.invalidateQueries({ queryKey: ["article", articleId, "comments"] });
+      queryClient.invalidateQueries({ queryKey: ["article", articleId, "comments", "count"] });
+    }
+  });
+
+  useWebSocket("RECONNECTED", () => {
+    queryClient.invalidateQueries({ queryKey: ["article", articleId, "comments"] });
+    queryClient.invalidateQueries({ queryKey: ["article", articleId, "comments", "count"] });
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

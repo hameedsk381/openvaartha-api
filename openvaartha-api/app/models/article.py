@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel
+from beanie import Document, Field, model_validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
 from enum import Enum
@@ -30,14 +31,18 @@ class ArticleSource(BaseModel):
     source_id: str
 
 
-class Source(BaseModel):
+class Source(Document):
     id: str = Field(default_factory=lambda: str(uuid4()))
     name: str
     url: Optional[str] = None
     type: str = "manual"  # rss, api, manual
 
 
-class Article(BaseModel):
+    class Settings:
+        name = "sources"
+
+
+class Article(Document):
     id: str = Field(default_factory=lambda: str(uuid4()))
     slug: str
     title: str
@@ -65,10 +70,6 @@ class Article(BaseModel):
     view_count: int = 0
     share_count: int = 0
 
-    @model_validator(mode="before")
-    @classmethod
-    def map_mongo_id(cls, data):
-        if isinstance(data, dict) and "_id" in data and "id" not in data:
-            data = data.copy()
-            data["id"] = data["_id"]
-        return data
+
+    class Settings:
+        name = "articles"

@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from beanie import Document, Field
 from typing import List, Optional
 from datetime import datetime
 
@@ -7,7 +8,7 @@ class PollOption(BaseModel):
     text: str
     votes: int = 0
 
-class Poll(BaseModel):
+class Poll(Document):
     id: str = Field(alias="_id")
     question: str
     options: List[PollOption]
@@ -15,9 +16,17 @@ class Poll(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     is_active: bool = True
 
-class PollVote(BaseModel):
+    class Settings:
+        name = "polls"
+
+
+class PollVote(Document):
     id: Optional[str] = Field(alias="_id", default=None)
     poll_id: str
     user_id: str
     option_id: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+    class Settings:
+        name = "poll_votes"

@@ -6,7 +6,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.api.v1 import admin, articles, authors, categories, comments, digests, dispatches, feeds, newsletter, pages, polls, push, search, series, upload, users
+from app.api.v1 import admin, articles, authors, categories, comments, digests, dispatches, feeds, newsletter, pages, polls, push, search, series, upload, users, ws
 from app.config import settings
 from app.core.dependencies import get_current_active_admin
 from app.core.observability import init_sentry
@@ -47,6 +47,9 @@ async def lifespan(app: FastAPI):
             import sentry_sdk
             sentry_sdk.capture_exception(e)  # no-op if SENTRY_DSN unset
 
+    from app.database import init_db
+    await init_db()
+
     await ensure_article_indexes(db)
     await ensure_category_indexes(db)
     await ensure_dispatch_indexes(db)
@@ -65,12 +68,16 @@ async def lifespan(app: FastAPI):
     else:
         print(f"INFO: Groq AI enabled (model: {settings.GROQ_MODEL})")
         
+    from app.core.ws_manager import manager
+    await manager.connect_redis()
+        
     yield
     
     print("Shutting down database and cache connections...")
+    await manager.disconnect_redis()
     client.close()
     
-    from app.services.article_service import close_redis
+    from app.core.cache import close_redis
     await close_redis()
 
 app = FastAPI(
@@ -121,7 +128,7 @@ app.include_router(upload.router, prefix="/api/v1/upload", tags=["Upload"])
 app.include_router(authors.router, prefix="/api/v1/authors", tags=["Authors"])
 app.include_router(series.router, prefix="/api/v1/series", tags=["Series"])
 app.include_router(polls.router, prefix="/api/v1/polls", tags=["Polls"])
-
+app.include_router(ws.router, prefix="/api/v1/ws", tags=["WebSockets"])
 # Root-level routes (sitemap, RSS feeds, server-rendered article HTML)
 app.include_router(feeds.router)
 app.include_router(pages.router)

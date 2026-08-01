@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 async def ensure_push_indexes(db: AsyncIOMotorDatabase) -> None:
-    await db["push_subscriptions"].create_index("endpoint", unique=True)
-    await db["push_subscriptions"].create_index("user_id")
+    await Push_subscriptions.create_index("endpoint", unique=True)
+    await Push_subscriptions.create_index("user_id")
 
 
 async def upsert_subscription(
@@ -31,7 +31,7 @@ async def upsert_subscription(
     breaking: bool,
     morning: bool,
 ) -> None:
-    await db["push_subscriptions"].update_one(
+    await Push_subscriptions.update_one(
         {"endpoint": endpoint},
         {
             "$set": {
@@ -61,14 +61,14 @@ async def update_preferences(
         return True
     # Scoped to the caller's own subscription — a signed-in user can't repoint
     # someone else's push endpoint even if they somehow obtained the URL.
-    result = await db["push_subscriptions"].update_one(
+    result = await Push_subscriptions.update_one(
         {"endpoint": endpoint, "user_id": user_id}, {"$set": update}
     )
     return result.matched_count > 0
 
 
 async def remove_subscription(db: AsyncIOMotorDatabase, user_id: str, endpoint: str) -> bool:
-    result = await db["push_subscriptions"].delete_one({"endpoint": endpoint, "user_id": user_id})
+    result = await Push_subscriptions.delete_one({"endpoint": endpoint, "user_id": user_id})
     return result.deleted_count > 0
 
 
@@ -89,7 +89,7 @@ async def _send_one(db: AsyncIOMotorDatabase, sub: dict, payload: dict) -> None:
         if status_code in (404, 410):
             # Browser revoked or the subscription expired — self-clean rather
             # than retry a dead endpoint forever.
-            await db["push_subscriptions"].delete_one({"endpoint": sub["endpoint"]})
+            await Push_subscriptions.delete_one({"endpoint": sub["endpoint"]})
         else:
             logger.error("Push send failed for %s: %s", sub.get("endpoint"), e)
 
@@ -101,7 +101,7 @@ async def send_to_segment(db: AsyncIOMotorDatabase, segment: str, payload: dict)
     if not settings.VAPID_PRIVATE_KEY or not settings.VAPID_PUBLIC_KEY:
         return 0
 
-    subs = await db["push_subscriptions"].find({segment: True}).to_list(length=None)
+    subs = await Push_subscriptions.find({segment: True}).to_list(length=None)
     if subs:
         await asyncio.gather(*(_send_one(db, sub, payload) for sub in subs))
     return len(subs)

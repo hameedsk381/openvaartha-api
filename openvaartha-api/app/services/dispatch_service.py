@@ -1,3 +1,6 @@
+from app.models.article import Article
+from app.models.category import Category
+from app.models.dispatch import Dispatch
 """Dispatches: short, headline-only breaking-news blurbs — deliberately not
 full articles. They power both the homepage "JUST IN" scrolling ticker and the
 Bytes page (/bytes), so editors have one lightweight form for "something just
@@ -31,13 +34,13 @@ def _ist_day_bounds_utc() -> tuple[datetime, datetime]:
 
 
 async def ensure_dispatch_indexes(db: AsyncIOMotorDatabase) -> None:
-    await db["dispatches"].create_index([("created_at", -1)])
+    await Dispatch.create_index([("created_at", -1)])
 
 
 async def _category_names_for(db: AsyncIOMotorDatabase, category_ids: set) -> dict:
     if not category_ids:
         return {}
-    categories = await db["categories"].find(
+    categories = await Category.find(
         {"_id": {"$in": list(category_ids)}}, {"name": 1}
     ).to_list(length=len(category_ids))
     return {c["_id"]: c["name"] for c in categories}
@@ -51,7 +54,7 @@ async def _populate_dispatch_extras(db: AsyncIOMotorDatabase, dispatches: List[d
     AI classification, or backfilled) takes priority over the linked
     article's, since an editor's explicit choice should win."""
     article_ids = [d["article_id"] for d in dispatches if d.get("article_id")]
-    articles = await db["articles"].find(
+    articles = await Article.find(
         {"_id": {"$in": article_ids}}, {"slug": 1, "title": 1, "category_id": 1}
     ).to_list(length=len(article_ids)) if article_ids else []
     articles_by_id = {a["_id"]: a for a in articles}
@@ -76,7 +79,7 @@ async def list_dispatches(db: AsyncIOMotorDatabase, limit: int = 50, today_only:
     if today_only:
         start, end = _ist_day_bounds_utc()
         query["created_at"] = {"$gte": start, "$lte": end}
-    cursor = db["dispatches"].find(query).sort("created_at", -1).limit(limit)
+    cursor = Dispatch.find(query).sort("created_at", -1).limit(limit)
     dispatches = [{**d, "id": d.pop("_id")} for d in await cursor.to_list(length=limit)]
     return await _populate_dispatch_extras(db, dispatches)
 
@@ -85,7 +88,7 @@ async def get_dispatch(db: AsyncIOMotorDatabase, dispatch_id: str) -> Optional[d
     """Fetch a single dispatch by id, regardless of what day it was posted —
     shared links (see /bytes/:id) must keep working even after a byte has
     rolled out of the same-day feed."""
-    doc = await db["dispatches"].find_one({"_id": dispatch_id})
+    doc = await Dispatch.find_one({"_id": dispatch_id})
     if not doc:
         return None
     dispatch = {**doc, "id": doc.pop("_id")}
@@ -94,9 +97,9 @@ async def get_dispatch(db: AsyncIOMotorDatabase, dispatch_id: str) -> Optional[d
 
 
 async def _assert_valid_refs(db: AsyncIOMotorDatabase, article_id: Optional[str], category_id: Optional[str]) -> None:
-    if article_id and not await db["articles"].find_one({"_id": article_id}, {"_id": 1}):
+    if article_id and not await Article.find_one({"_id": article_id}, {"_id": 1}):
         raise ValueError(f"Unknown article_id: {article_id}")
-    if category_id and not await db["categories"].find_one({"_id": category_id}, {"_id": 1}):
+    if category_id and not await Category.find_one({"_id": category_id}, {"_id": 1}):
         raise ValueError(f"Unknown category_id: {category_id}")
 
 
@@ -120,7 +123,7 @@ async def create_dispatch(
         "created_at": datetime.now(timezone.utc),
         "created_by": created_by,
     }
-    await db["dispatches"].insert_one(doc)
+    await Dispatch(**doc).insert()
 
     result = {**doc, "id": dispatch_id}
     del result["_id"]
@@ -138,7 +141,7 @@ async def update_dispatch(
 ) -> Optional[dict]:
     await _assert_valid_refs(db, article_id, category_id)
 
-    result = await db["dispatches"].update_one(
+    result = await Dispatch.update_one(
         {"_id": dispatch_id},
         {"$set": {
             "text": sanitize_text(text),
@@ -153,7 +156,7 @@ async def update_dispatch(
 
 
 async def delete_dispatch(db: AsyncIOMotorDatabase, dispatch_id: str) -> bool:
-    result = await db["dispatches"].delete_one({"_id": dispatch_id})
+    result = await Dispatch.delete_one({"_id": dispatch_id})
     return result.deleted_count > 0
 
 
@@ -162,11 +165,11 @@ async def backfill_categories(db: AsyncIOMotorDatabase) -> int:
     standalone dispatch (no article_id) that doesn't have one yet. Safe to
     call repeatedly — already-categorized or article-linked dispatches are
     skipped."""
-    categories = await db["categories"].find({}, {"name": 1}).to_list(length=100)
+    categories = await Category.find({}, {"name": 1}).to_list(length=100)
     if not categories:
         return 0
 
-    cursor = db["dispatches"].find(
+    cursor = Dispatch.find(
         {"article_id": None, "category_id": None},
         {"text": 1},
     )
@@ -177,7 +180,7 @@ async def backfill_categories(db: AsyncIOMotorDatabase) -> int:
         category_id = await ai_service.classify_category(d["text"], categories)
         if not category_id:
             continue
-        await db["dispatches"].update_one({"_id": d["_id"]}, {"$set": {"category_id": category_id}})
+        await Dispatch.update_one({"_id": d["_id"]}, {"$set": {"category_id": category_id}})
         updated += 1
 
     logger.info(f"Dispatch category backfill: classified {updated}/{len(uncategorized)} standalone dispatches")

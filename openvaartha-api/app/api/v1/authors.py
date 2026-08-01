@@ -1,3 +1,4 @@
+from app.models.author import Author
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Optional
@@ -16,7 +17,7 @@ router = APIRouter()
 @router.get("/", response_model=List[AuthorSchema])
 async def list_authors(db: AsyncIOMotorDatabase = Depends(get_db)):
     """Get all authors."""
-    cursor = db["authors"].find({}).sort("name", 1)
+    cursor = Author.find({}).sort("name", 1)
     docs = await cursor.to_list(length=None)
     result = []
     for d in docs:
@@ -28,7 +29,7 @@ async def list_authors(db: AsyncIOMotorDatabase = Depends(get_db)):
 @router.get("/{author_id}", response_model=AuthorSchema)
 async def get_author(author_id: str, db: AsyncIOMotorDatabase = Depends(get_db)):
     """Get a single author by ID."""
-    doc = await db["authors"].find_one({"_id": author_id})
+    doc = await Author.find_one({"_id": author_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Author not found")
     if "_id" in doc and "id" not in doc:
@@ -49,7 +50,7 @@ async def create_author(
     author_dict["_id"] = author_id
     author_dict["created_at"] = datetime.now(timezone.utc)
     
-    await db["authors"].insert_one(author_dict)
+    await Author(**author_dict).insert()
     
     author_dict["id"] = author_id
     return AuthorModel(**author_dict)
@@ -64,15 +65,15 @@ async def update_author(
     current_user: UserModel = Depends(get_current_editor),
 ):
     """Update an author's profile (editor/admin only)."""
-    existing = await db["authors"].find_one({"_id": author_id})
+    existing = await Author.find_one({"_id": author_id})
     if not existing:
         raise HTTPException(status_code=404, detail="Author not found")
         
     update_data = author_data.model_dump(exclude_unset=True)
     if update_data:
-        await db["authors"].update_one({"_id": author_id}, {"$set": update_data})
+        await Author.update_one({"_id": author_id}, {"$set": update_data})
         
-    updated = await db["authors"].find_one({"_id": author_id})
+    updated = await Author.find_one({"_id": author_id})
     if "_id" in updated and "id" not in updated:
         updated["id"] = str(updated["_id"])
     return AuthorModel(**updated)
@@ -86,9 +87,9 @@ async def delete_author(
     current_user: UserModel = Depends(get_current_editor),
 ):
     """Delete an author (editor/admin only)."""
-    existing = await db["authors"].find_one({"_id": author_id})
+    existing = await Author.find_one({"_id": author_id})
     if not existing:
         raise HTTPException(status_code=404, detail="Author not found")
         
-    await db["authors"].delete_one({"_id": author_id})
+    await Author.delete_one({"_id": author_id})
     return {"message": "Author deleted successfully"}

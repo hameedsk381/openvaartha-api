@@ -1,3 +1,4 @@
+from app.models.comment import Comment
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Optional
 from uuid import uuid4
@@ -7,10 +8,10 @@ from app.core.sanitize import sanitize_text
 
 
 async def ensure_comment_indexes(db: AsyncIOMotorDatabase) -> None:
-    await db["comments"].create_index([("article_id", 1), ("created_at", -1)])
-    await db["comments"].create_index([("article_id", 1), ("is_active", 1), ("created_at", -1)])
-    await db["comments"].create_index([("user_id", 1)])
-    await db["comments"].create_index([("parent_id", 1)])
+    await Comment.create_index([("article_id", 1), ("created_at", -1)])
+    await Comment.create_index([("article_id", 1), ("is_active", 1), ("created_at", -1)])
+    await Comment.create_index([("user_id", 1)])
+    await Comment.create_index([("parent_id", 1)])
 
 
 async def get_comments(
@@ -45,7 +46,7 @@ async def get_comments(
         },
         {"$project": {"replies": 0}},
     ]
-    cursor = db["comments"].aggregate(pipeline)
+    cursor = Comment.aggregate(pipeline)
     return await cursor.to_list(length=limit)
 
 
@@ -56,7 +57,7 @@ async def get_replies(
     limit: int = 20,
 ) -> List[dict]:
     cursor = (
-        db["comments"]
+        Comment
         .find({"parent_id": parent_id, "is_active": True})
         .sort("created_at", 1)
         .skip(skip)
@@ -77,7 +78,7 @@ async def create_comment(
     comment_id = str(uuid4())
 
     if parent_id:
-        parent = await db["comments"].find_one({"_id": parent_id, "is_active": True})
+        parent = await Comment.find_one({"_id": parent_id, "is_active": True})
         if not parent:
             raise ValueError("Parent comment not found")
 
@@ -96,8 +97,16 @@ async def create_comment(
         "created_at": datetime.now(timezone.utc),
         "updated_at": None,
     }
-    await db["comments"].insert_one(doc)
-    return {**doc, "id": comment_id, "reply_count": 0}
+    await Comment(**doc).insert()
+    result = {**doc, "id": comment_id, "reply_count": 0}
+    
+    from app.core.ws_manager import manager
+    await manager.broadcast("NEW_COMMENT", {
+        "article_id": article_id,
+        "comment": result
+    })
+    
+    return result
 
 
 async def update_comment(
@@ -106,17 +115,17 @@ async def update_comment(
     user_id: str,
     body: str,
 ) -> Optional[dict]:
-    comment = await db["comments"].find_one({"_id": comment_id})
+    comment = await Comment.find_one({"_id": comment_id})
     if not comment:
         return None
     if comment["user_id"] != user_id:
         raise PermissionError("Cannot edit another user's comment")
 
-    await db["comments"].update_one(
+    await Comment.update_one(
         {"_id": comment_id},
         {"$set": {"body": sanitize_text(body), "is_edited": True, "updated_at": datetime.now(timezone.utc)}},
     )
-    return await db["comments"].find_one({"_id": comment_id})
+    return await Comment.find_one({"_id": comment_id})
 
 
 async def delete_comment(
@@ -125,13 +134,13 @@ async def delete_comment(
     user_id: str,
     is_admin: bool = False,
 ) -> bool:
-    comment = await db["comments"].find_one({"_id": comment_id})
+    comment = await Comment.find_one({"_id": comment_id})
     if not comment:
         return False
     if comment["user_id"] != user_id and not is_admin:
         raise PermissionError("Cannot delete another user's comment")
 
-    await db["comments"].update_one(
+    await Comment.update_one(
         {"_id": comment_id},
         {"$set": {"is_active": False, "updated_at": datetime.now(timezone.utc)}},
     )
@@ -139,18 +148,18 @@ async def delete_comment(
 
 
 async def toggle_like(db: AsyncIOMotorDatabase, comment_id: str, user_id: str) -> dict:
-    comment = await db["comments"].find_one({"_id": comment_id, "is_active": True})
+    comment = await Comment.find_one({"_id": comment_id, "is_active": True})
     if not comment:
         raise ValueError("Comment not found")
 
     if user_id in comment.get("likes", []):
-        await db["comments"].update_one(
+        await Comment.update_one(
             {"_id": comment_id},
             {"$pull": {"likes": user_id}},
         )
         return {"liked": False}
     else:
-        await db["comments"].update_one(
+        await Comment.update_one(
             {"_id": comment_id},
             {"$addToSet": {"likes": user_id}},
         )
@@ -158,6 +167,6 @@ async def toggle_like(db: AsyncIOMotorDatabase, comment_id: str, user_id: str) -
 
 
 async def get_comment_count(db: AsyncIOMotorDatabase, article_id: str) -> int:
-    return await db["comments"].count_documents(
+    return await Comment.count_documents(
         {"article_id": article_id, "is_active": True}
     )

@@ -1,3 +1,5 @@
+from app.models.article import Article
+from app.models.category import Category
 from datetime import datetime, timezone
 from typing import List, Optional
 from xml.etree.ElementTree import Element, SubElement, tostring
@@ -49,7 +51,7 @@ async def build_sitemap(db: AsyncIOMotorDatabase) -> str:
         SubElement(url, "changefreq").text = freq
         SubElement(url, "priority").text = prio
 
-    categories = await db["categories"].find({}).to_list(length=None)
+    categories = await Category.find({}).to_list(length=None)
     for cat in categories:
         slug = _slugify(cat.get("name", ""))
         if not slug:
@@ -59,7 +61,7 @@ async def build_sitemap(db: AsyncIOMotorDatabase) -> str:
         SubElement(url, "changefreq").text = "daily"
         SubElement(url, "priority").text = "0.8"
 
-    articles = await db["articles"].find(
+    articles = await Article.find(
         {"status": "published"},
         {"slug": 1, "last_updated": 1, "updated_at": 1, "published_at": 1},
     ).sort("published_at", -1).to_list(length=None)
@@ -90,14 +92,14 @@ async def build_rss(
     if category_id:
         query["category_id"] = category_id
 
-    articles = await db["articles"].find(query).sort("published_at", -1).limit(max_items).to_list(length=None)
+    articles = await Article.find(query).sort("published_at", -1).limit(max_items).to_list(length=None)
 
     channel_title = settings.APP_NAME
     channel_desc = f"{settings.APP_NAME} — News Without Noise"
     channel_link = base
 
     if category_id:
-        cat = await db["categories"].find_one({"_id": category_id})
+        cat = await Category.find_one({"_id": category_id})
         if cat:
             channel_title = f"{settings.APP_NAME} — {cat['name']}"
             channel_desc = f"{channel_desc} — {cat['name']}"

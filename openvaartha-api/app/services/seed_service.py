@@ -1,3 +1,4 @@
+from app.models.user import User
 import bcrypt as _bcrypt
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -20,17 +21,17 @@ async def ensure_admin_user(db: AsyncIOMotorDatabase) -> None:
         ("user@openvaartha.com",  "Test Reader",       "user123",  True, False, "user"),
     ]
     for email, name, pw, active, is_admin, role in defaults:
-        existing = await db["users"].find_one({"email": email})
+        existing = await User.find_one({"email": email})
         if existing:
             continue
 
         uid = str(uuid4())
-        await db["users"].insert_one({
+        await User(**{
             "_id": uid,
             "id": uid,
             "email": email,
             "full_name": name,
-            "hashed_password": _hash_password(pw),
+            "hashed_password": _hash_password(pw).insert(),
             "is_active": active,
             "is_admin": is_admin,
             "role": role,

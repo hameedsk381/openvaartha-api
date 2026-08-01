@@ -1,3 +1,5 @@
+from app.models.article import Article
+from app.models.series import Series
 import logging
 from typing import List, Optional
 from datetime import datetime, timezone
@@ -9,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def list_series(db: AsyncIOMotorDatabase, limit: int = 20) -> List[dict]:
-    cursor = db["series"].find().sort("created_at", -1).limit(limit)
+    cursor = Series.find().sort("created_at", -1).limit(limit)
     series_list = await cursor.to_list(length=limit)
     for s in series_list:
         if "_id" in s:
@@ -18,7 +20,7 @@ async def list_series(db: AsyncIOMotorDatabase, limit: int = 20) -> List[dict]:
 
 
 async def get_series_by_slug(db: AsyncIOMotorDatabase, slug: str) -> Optional[dict]:
-    series = await db["series"].find_one({"slug": slug})
+    series = await Series.find_one({"slug": slug})
     if not series:
         return None
 
@@ -28,7 +30,7 @@ async def get_series_by_slug(db: AsyncIOMotorDatabase, slug: str) -> Optional[di
     # Fetch and populate all articles in this series in order
     article_ids = series.get("article_ids", [])
     if article_ids:
-        cursor = db["articles"].find(_public_query({"_id": {"$in": article_ids}}))
+        cursor = Article.find(_public_query({"_id": {"$in": article_ids}}))
         raw_articles = await cursor.to_list(length=len(article_ids))
         populated = await _populate_articles_bulk(db, raw_articles)
 
@@ -42,7 +44,7 @@ async def get_series_by_slug(db: AsyncIOMotorDatabase, slug: str) -> Optional[di
 
 
 async def get_series_for_article(db: AsyncIOMotorDatabase, article_id: str) -> Optional[dict]:
-    series = await db["series"].find_one({"article_ids": article_id})
+    series = await Series.find_one({"article_ids": article_id})
     if not series:
         return None
 
@@ -76,7 +78,7 @@ async def create_series(db: AsyncIOMotorDatabase, data: dict) -> dict:
         "updated_at": datetime.now(timezone.utc),
     }
 
-    await db["series"].insert_one(doc)
+    await Series(**doc).insert()
     doc["id"] = series_id
     doc.pop("_id", None)
     return doc

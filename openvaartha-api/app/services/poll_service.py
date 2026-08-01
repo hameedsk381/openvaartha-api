@@ -6,7 +6,7 @@ from typing import Optional, List
 import pymongo
 
 async def ensure_poll_indexes(db: AsyncIOMotorDatabase):
-    await db["poll_votes"].create_index([("poll_id", 1), ("user_id", 1)], unique=True)
+    await Poll_votes.create_index([("poll_id", 1), ("user_id", 1)], unique=True)
 
 async def create_poll(db: AsyncIOMotorDatabase, poll_data: PollCreate) -> str:
     poll_id = str(uuid.uuid4())
@@ -14,13 +14,13 @@ async def create_poll(db: AsyncIOMotorDatabase, poll_data: PollCreate) -> str:
         PollOption(id=opt.id, text=opt.text, votes=0) for opt in poll_data.options
     ]
     poll = Poll(_id=poll_id, question=poll_data.question, options=poll_options)
-    await db["polls"].insert_one(poll.dict(by_alias=True))
+    await Poll(**poll.dict(by_alias=True).insert())
     return poll_id
 
 async def get_poll_with_results(
     db: AsyncIOMotorDatabase, poll_id: str, current_user_id: Optional[str] = None
 ) -> Optional[PollResponse]:
-    poll_doc = await db["polls"].find_one({"_id": poll_id})
+    poll_doc = await Poll.find_one({"_id": poll_id})
     if not poll_doc:
         return None
 
@@ -29,7 +29,7 @@ async def get_poll_with_results(
     # Check if the user voted
     user_voted_option_id = None
     if current_user_id:
-        vote_doc = await db["poll_votes"].find_one({"poll_id": poll_id, "user_id": current_user_id})
+        vote_doc = await Poll_votes.find_one({"poll_id": poll_id, "user_id": current_user_id})
         if vote_doc:
             user_voted_option_id = vote_doc["option_id"]
 
@@ -53,7 +53,7 @@ async def get_poll_with_results(
 
 async def vote_poll(db: AsyncIOMotorDatabase, poll_id: str, user_id: str, option_id: str) -> bool:
     # Check if poll exists
-    poll_doc = await db["polls"].find_one({"_id": poll_id, "is_active": True})
+    poll_doc = await Poll.find_one({"_id": poll_id, "is_active": True})
     if not poll_doc:
         raise ValueError("Poll not found or inactive")
     
@@ -64,12 +64,12 @@ async def vote_poll(db: AsyncIOMotorDatabase, poll_id: str, user_id: str, option
     # Create vote, relying on unique index to prevent race conditions
     vote = PollVote(poll_id=poll_id, user_id=user_id, option_id=option_id)
     try:
-        await db["poll_votes"].insert_one(vote.dict(by_alias=True))
+        await Poll_votes(**vote.dict(by_alias=True).insert())
     except pymongo.errors.DuplicateKeyError:
         raise ValueError("User has already voted on this poll")
     
     # Increment total_votes and the specific option's votes in the polls collection
-    await db["polls"].update_one(
+    await Poll.update_one(
         {"_id": poll_id, "options.id": option_id},
         {
             "$inc": {
