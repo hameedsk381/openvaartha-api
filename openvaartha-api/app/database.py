@@ -8,6 +8,7 @@ from app.models.author import Author
 from app.models.category import Category
 from app.models.comment import Comment
 from app.models.digest import DailyDigest
+from app.models.dispatch import Dispatch
 from app.models.newsletter import NewsletterSubscriber
 from app.models.poll import Poll, PollVote
 from app.models.reaction import Reaction
@@ -23,7 +24,7 @@ db = client[settings.DATABASE_NAME]
 async def init_db():
     await init_beanie(database=db, document_models=[
         Article, Source, Author, Category, Comment, DailyDigest,
-        NewsletterSubscriber, Poll, PollVote,
+        Dispatch, NewsletterSubscriber, Poll, PollVote,
         Reaction, ReadingList, ReadingHistory, Series, User, PasswordResetToken
     ])
 
