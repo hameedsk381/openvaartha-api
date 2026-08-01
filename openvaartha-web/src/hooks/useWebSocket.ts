@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { API_BASE_URL } from '@/lib/api';
+import { API_BASE } from '@/lib/api';
 
-type WSEventCallback = (data: any) => void;
+type WSEventCallback = (data: unknown) => void;
 
 class WebSocketService {
   private ws: WebSocket | null = null;
@@ -102,7 +102,7 @@ class WebSocketService {
 }
 
 // Global instance to share connection across components
-const wsUrl = API_BASE_URL.replace(/^http/, 'ws') + '/ws';
+const wsUrl = API_BASE.replace(/^http/, 'ws') + '/ws';
 const wsService = new WebSocketService(wsUrl);
 // Immediately try to connect on import (app load)
 wsService.connect();
@@ -115,7 +115,7 @@ export function useWebSocket(eventType: string, callback: WSEventCallback) {
   }, [callback]);
 
   useEffect(() => {
-    const handler = (data: any) => savedCallback.current(data);
+    const handler = (data: unknown) => savedCallback.current(data);
     const unsubscribe = wsService.subscribe(eventType, handler);
     
     return () => {
