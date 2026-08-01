@@ -18,7 +18,7 @@ from app.config import settings
 
 async def get_latest_digest() -> Optional[DailyDigest]:
     async def _fetch():
-        doc = await DailyDigest.find_one({"status": DigestStatus.PUBLISHED.value}, sort=[("date", -1)])
+        doc = await DailyDigest.get_motor_collection().find_one({"status": DigestStatus.PUBLISHED.value}, sort=[("date", -1)])
         if not doc:
             return None
         # Return dict to be cached properly and then converted to DailyDigest at caller or we can cache dict and return DailyDigest
@@ -30,7 +30,7 @@ async def get_latest_digest() -> Optional[DailyDigest]:
 
 async def get_digest_by_date(date_str: str) -> Optional[DailyDigest]:
     async def _fetch():
-        doc = await DailyDigest.find_one({"date": date_str})
+        doc = await DailyDigest.get_motor_collection().find_one({"date": date_str})
         if not doc:
             return None
         return doc.model_dump() if hasattr(doc, "model_dump") else (doc.dict() if hasattr(doc, "dict") else doc)
@@ -85,7 +85,7 @@ async def generate_daily_digest() -> Optional[DailyDigest]:
 
 async def broadcast_digest_newsletter(digest: DailyDigest):
     """Sends the digest to all active newsletter subscribers."""
-    cursor = NewsletterSubscriber.find({"is_active": True})
+    cursor = NewsletterSubscriber.get_motor_collection().find({"is_active": True})
     subscribers = await cursor.to_list(length=None)
     
     if not subscribers:

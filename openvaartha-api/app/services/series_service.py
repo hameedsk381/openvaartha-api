@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def list_series(db: AsyncIOMotorDatabase, limit: int = 20) -> List[dict]:
-    cursor = Series.find().sort("created_at", -1).limit(limit)
+    cursor = Series.get_motor_collection().find().sort("created_at", -1).limit(limit)
     series_list = await cursor.to_list(length=limit)
     for s in series_list:
         if "_id" in s:
@@ -20,7 +20,7 @@ async def list_series(db: AsyncIOMotorDatabase, limit: int = 20) -> List[dict]:
 
 
 async def get_series_by_slug(db: AsyncIOMotorDatabase, slug: str) -> Optional[dict]:
-    series = await Series.find_one({"slug": slug})
+    series = await Series.get_motor_collection().find_one({"slug": slug})
     if not series:
         return None
 
@@ -30,7 +30,7 @@ async def get_series_by_slug(db: AsyncIOMotorDatabase, slug: str) -> Optional[di
     # Fetch and populate all articles in this series in order
     article_ids = series.get("article_ids", [])
     if article_ids:
-        cursor = Article.find(_public_query({"_id": {"$in": article_ids}}))
+        cursor = Article.get_motor_collection().find(_public_query({"_id": {"$in": article_ids}}))
         raw_articles = await cursor.to_list(length=len(article_ids))
         populated = await _populate_articles_bulk(db, raw_articles)
 
@@ -44,7 +44,7 @@ async def get_series_by_slug(db: AsyncIOMotorDatabase, slug: str) -> Optional[di
 
 
 async def get_series_for_article(db: AsyncIOMotorDatabase, article_id: str) -> Optional[dict]:
-    series = await Series.find_one({"article_ids": article_id})
+    series = await Series.get_motor_collection().find_one({"article_ids": article_id})
     if not series:
         return None
 

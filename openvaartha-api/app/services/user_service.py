@@ -17,16 +17,16 @@ from app.config import settings
 async def update_user(db: AsyncIOMotorDatabase, user_id: str, user_data: dict) -> Optional[dict]:
     """Update user information."""
     if not user_data:
-        return await User.find_one({"_id": user_id})
+        return await User.get_motor_collection().find_one({"_id": user_id})
         
-    await User.update_one({"_id": user_id}, {"$set": user_data})
-    return await User.find_one({"_id": user_id})
+    await User.get_motor_collection().update_one({"_id": user_id}, {"$set": user_data})
+    return await User.get_motor_collection().find_one({"_id": user_id})
 
 async def get_reading_list(db: AsyncIOMotorDatabase, user_id: str) -> List[dict]:
     """Get articles in user's reading list."""
-    reading_list = await ReadingList.find({"user_id": user_id}).sort("saved_at", -1).to_list(length=None)
+    reading_list = await ReadingList.get_motor_collection().find({"user_id": user_id}).sort("saved_at", -1).to_list(length=None)
     article_ids = [rl["article_id"] for rl in reading_list]
-    articles = await Article.find({"_id": {"$in": article_ids}}).to_list(length=None)
+    articles = await Article.get_motor_collection().find({"_id": {"$in": article_ids}}).to_list(length=None)
     order = {article_id: index for index, article_id in enumerate(article_ids)}
     articles.sort(key=lambda article: order.get(article["_id"], len(order)))
     return [await article_service._populate_article_extras(db, article) for article in articles]
@@ -34,11 +34,11 @@ async def get_reading_list(db: AsyncIOMotorDatabase, user_id: str) -> List[dict]
 async def add_to_reading_list(db: AsyncIOMotorDatabase, user_id: str, article_id: str) -> dict:
     """Add an article to the user's reading list.
     Returns {"success": True, "status": "added|already_exists"} or {"success": False, "status": "not_found"}."""
-    article = await Article.find_one({"_id": article_id})
+    article = await Article.get_motor_collection().find_one({"_id": article_id})
     if not article:
         return {"success": False, "status": "not_found"}
 
-    existing = await ReadingList.find_one({
+    existing = await ReadingList.get_motor_collection().find_one({
         "user_id": user_id,
         "article_id": article_id
     })
@@ -54,7 +54,7 @@ async def add_to_reading_list(db: AsyncIOMotorDatabase, user_id: str, article_id
 
 async def remove_from_reading_list(db: AsyncIOMotorDatabase, user_id: str, article_id: str) -> bool:
     """Remove an article from the user's reading list."""
-    result = await ReadingList.delete_one({
+    result = await ReadingList.get_motor_collection().delete_one({
         "user_id": user_id,
         "article_id": article_id
     })
@@ -63,9 +63,9 @@ async def remove_from_reading_list(db: AsyncIOMotorDatabase, user_id: str, artic
 
 async def get_reading_history(db: AsyncIOMotorDatabase, user_id: str) -> List[dict]:
     """Get articles the user has read, newest first."""
-    history = await ReadingHistory.find({"user_id": user_id}).sort("read_at", -1).to_list(length=None)
+    history = await ReadingHistory.get_motor_collection().find({"user_id": user_id}).sort("read_at", -1).to_list(length=None)
     article_ids = [item["article_id"] for item in history]
-    articles = await Article.find({"_id": {"$in": article_ids}}).to_list(length=None)
+    articles = await Article.get_motor_collection().find({"_id": {"$in": article_ids}}).to_list(length=None)
     order = {article_id: index for index, article_id in enumerate(article_ids)}
     articles.sort(key=lambda article: order.get(article["_id"], len(order)))
     return [await article_service._populate_article_extras(db, article) for article in articles]
@@ -73,11 +73,11 @@ async def get_reading_history(db: AsyncIOMotorDatabase, user_id: str) -> List[di
 
 async def add_to_reading_history(db: AsyncIOMotorDatabase, user_id: str, article_id: str) -> bool:
     """Record an article read for a user."""
-    article = await Article.find_one({"_id": article_id})
+    article = await Article.get_motor_collection().find_one({"_id": article_id})
     if not article:
         return False
 
-    await ReadingHistory.update_one(
+    await ReadingHistory.get_motor_collection().update_one(
         {"user_id": user_id, "article_id": article_id},
         {"$set": {"read_at": datetime.now(timezone.utc)}},
         upsert=True
@@ -87,7 +87,7 @@ async def add_to_reading_history(db: AsyncIOMotorDatabase, user_id: str, article
 
 async def create_password_reset_token(db: AsyncIOMotorDatabase, email: str) -> Optional[str]:
     """Create a password reset token and send email. Returns None if email not found."""
-    user = await User.find_one({"email": email})
+    user = await User.get_motor_collection().find_one({"email": email})
     if not user:
         return None
 
@@ -112,7 +112,7 @@ async def create_password_reset_token(db: AsyncIOMotorDatabase, email: str) -> O
 
 async def verify_reset_token(db: AsyncIOMotorDatabase, token: str) -> Optional[dict]:
     """Verify a reset token is valid and not expired. Returns the token doc or None."""
-    doc = await PasswordResetToken.find_one({"token": token, "used": False})
+    doc = await PasswordResetToken.get_motor_collection().find_one({"token": token, "used": False})
     if not doc:
         return None
     if doc["expires_at"].replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
@@ -127,6 +127,6 @@ async def reset_password(db: AsyncIOMotorDatabase, token: str, new_password: str
         return False
 
     hashed = get_password_hash(new_password)
-    await User.update_one({"_id": doc["user_id"]}, {"$set": {"hashed_password": hashed}})
-    await PasswordResetToken.update_one({"token": token}, {"$set": {"used": True}})
+    await User.get_motor_collection().update_one({"_id": doc["user_id"]}, {"$set": {"hashed_password": hashed}})
+    await PasswordResetToken.get_motor_collection().update_one({"token": token}, {"$set": {"used": True}})
     return True

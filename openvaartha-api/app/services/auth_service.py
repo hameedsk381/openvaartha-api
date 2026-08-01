@@ -27,7 +27,7 @@ _SELF_SERVICE_ROLES = {"user"}
 
 async def get_user_by_email(db: AsyncIOMotorDatabase, email: str):
     """Get user by email."""
-    user_doc = await User.find_one({"email": email})
+    user_doc = await User.get_motor_collection().find_one({"email": email})
     if user_doc:
         return User(**user_doc)
     return None
@@ -35,7 +35,7 @@ async def get_user_by_email(db: AsyncIOMotorDatabase, email: str):
 
 async def get_user_by_id(db: AsyncIOMotorDatabase, user_id: str):
     """Get user by ID."""
-    user_doc = await User.find_one({"_id": user_id})
+    user_doc = await User.get_motor_collection().find_one({"_id": user_id})
     if user_doc:
         return User(**user_doc)
     return None
@@ -65,7 +65,7 @@ async def create_user(db: AsyncIOMotorDatabase, user_data: UserCreate):
     }
 
     await User(**user_doc).insert()
-    user_doc = await User.find_one({"_id": user_id})
+    user_doc = await User.get_motor_collection().find_one({"_id": user_id})
     return User(**user_doc)
 
 
@@ -106,16 +106,16 @@ async def authenticate_google(db: AsyncIOMotorDatabase, google_credential: str) 
     full_name = claims.get("name") or email.split("@")[0]
     avatar_url = claims.get("picture")
 
-    user_doc = await User.find_one({"google_sub": google_sub})
+    user_doc = await User.get_motor_collection().find_one({"google_sub": google_sub})
     if user_doc:
         return User(**user_doc)
 
     # No account linked to this Google subject yet — check for a pre-existing
     # local account with the same (verified) email and link it, rather than
     # creating a duplicate account under the same address.
-    user_doc = await User.find_one({"email": email})
+    user_doc = await User.get_motor_collection().find_one({"email": email})
     if user_doc:
-        await User.update_one(
+        await User.get_motor_collection().update_one(
             {"_id": user_doc["_id"]},
             {"$set": {"google_sub": google_sub, "updated_at": datetime.now(timezone.utc)}},
         )

@@ -21,7 +21,7 @@ async def ensure_admin_user(db: AsyncIOMotorDatabase) -> None:
         ("user@openvaartha.com",  "Test Reader",       "user123",  True, False, "user"),
     ]
     for email, name, pw, active, is_admin, role in defaults:
-        existing = await User.find_one({"email": email})
+        existing = await User.get_motor_collection().find_one({"email": email})
         if existing:
             continue
 

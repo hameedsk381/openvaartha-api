@@ -152,7 +152,7 @@ def _fire_and_forget(coro) -> None:
 
 async def _increment_view_count(db: AsyncIOMotorDatabase, slug: str) -> None:
     try:
-        await Article.update_one(
+        await Article.get_motor_collection().update_one(
             _public_query({"slug": slug}), {"$inc": {"view_count": 1}}
         )
     except Exception:
@@ -186,7 +186,7 @@ async def generate_unique_slug(db: AsyncIOMotorDatabase, title: str) -> str:
     base_slug = generate_slug(title)
     slug = base_slug
     suffix = 2
-    while await Article.find_one({"slug": slug}, {"_id": 1}):
+    while await Article.get_motor_collection().find_one({"slug": slug}, {"_id": 1}):
         slug = f"{base_slug}-{suffix}"
         suffix += 1
     return slug
@@ -198,7 +198,7 @@ async def _backfill_deep_content_flag(db: AsyncIOMotorDatabase) -> None:
     no-op on every boot after the first. (Also corrects a latent bug in the old
     ``/explainers`` query, which used the array operator ``$size`` on the
     dict-typed ``explainer`` field and so never matched explainer-only articles.)"""
-    missing = await Article.find(
+    missing = await Article.get_motor_collection().find(
         {"has_deep_content": {"$exists": False}}, {"_id": 1}
     ).to_list(length=None)
     if not missing:
@@ -218,12 +218,12 @@ async def _backfill_deep_content_flag(db: AsyncIOMotorDatabase) -> None:
     deep_ids = {c["article_id"] for c in deep}
 
     if deep_ids:
-        await Article.update_many(
+        await Article.get_motor_collection().update_many(
             {"_id": {"$in": list(deep_ids)}}, {"$set": {"has_deep_content": True}}
         )
     remaining = [i for i in missing_ids if i not in deep_ids]
     if remaining:
-        await Article.update_many(
+        await Article.get_motor_collection().update_many(
             {"_id": {"$in": remaining}}, {"$set": {"has_deep_content": False}}
         )
 
@@ -281,11 +281,11 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
 
     # Auto-migration for existing base64 thumbnails in database
     try:
-        async for art in Article.find({"thumbnail_url": {"$regex": "^data:image/"}}):
+        async for art in Article.get_motor_collection().find({"thumbnail_url": {"$regex": "^data:image/"}}):
             old_url = art.get("thumbnail_url")
             new_url = await _save_base64_thumbnail(old_url)
             if new_url != old_url:
-                await Article.update_one({"_id": art["_id"]}, {"$set": {"thumbnail_url": new_url}})
+                await Article.get_motor_collection().update_one({"_id": art["_id"]}, {"$set": {"thumbnail_url": new_url}})
                 print(f"Migrated base64 thumbnail to file for article {art.get('slug')}")
     except Exception as e:
         print(f"Failed to migrate base64 thumbnails: {e}")
@@ -295,7 +295,7 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
     # Backfill: documents created before the status field defaulted to draft
     # would be invisible to the public list. Treat un-tagged docs as published
     # so existing inventories migrate cleanly.
-    await Article.update_many(
+    await Article.get_motor_collection().update_many(
         {"status": {"$exists": False}},
         {"$set": {"status": PUBLIC_STATUS}},
     )
@@ -330,7 +330,7 @@ async def _populate_article_extras(db: AsyncIOMotorDatabase, article: dict) -> d
     if "category_id" in article:
         if isinstance(article["category_id"], ObjectId):
             article["category_id"] = str(article["category_id"])
-        category = await Category.find_one({"_id": article["category_id"]})
+        category = await Category.get_motor_collection().find_one({"_id": article["category_id"]})
         if category:
             article["category"] = category["name"]
         else:
@@ -351,7 +351,7 @@ async def _populate_articles_bulk(db: AsyncIOMotorDatabase, articles: list[dict]
         return articles
 
     # 1. Bulk load all categories (small collection, usually < 10 docs)
-    categories = await Category.find().to_list(length=100)
+    categories = await Category.get_motor_collection().find().to_list(length=100)
     cat_map = {}
     for cat in categories:
         cid = str(cat.get("_id") or cat.get("id") or "")
@@ -449,7 +449,7 @@ async def get_articles(
         if tag:
             query["tags"] = tag.lower()
 
-        cursor = Article.find(query, {"embedding": 0}).sort("published_at", -1).skip(skip).limit(limit)
+        cursor = Article.get_motor_collection().find(query, {"embedding": 0}).sort("published_at", -1).skip(skip).limit(limit)
         articles = await cursor.to_list(length=limit)
         return await _populate_articles_bulk(db, articles)
 
@@ -470,7 +470,7 @@ async def get_popular_tags(db: AsyncIOMotorDatabase, limit: int = 20) -> List[di
             {"$limit": limit},
             {"$project": {"_id": 0, "name": "$_id", "count": "$count"}},
         ]
-        cursor = Article.aggregate(pipeline)
+        cursor = Article.get_motor_collection().aggregate(pipeline)
         return await cursor.to_list(length=limit)
 
     return await fetch_with_cache_and_lock(key, settings.CACHE_TTL_SECONDS, _fetch)
@@ -480,7 +480,7 @@ async def get_trending_articles(db: AsyncIOMotorDatabase, limit: int = 10):
     """Get trending articles (published only)."""
     key = _cache_key("trending", limit=limit)
     async def _fetch():
-        cursor = Article.find(_public_query({"is_trending": True}), {"embedding": 0}).sort("published_at", -1).limit(limit)
+        cursor = Article.get_motor_collection().find(_public_query({"is_trending": True}), {"embedding": 0}).sort("published_at", -1).limit(limit)
         articles = await cursor.to_list(length=limit)
         return await _populate_articles_bulk(db, articles)
 
@@ -494,21 +494,21 @@ async def get_for_you_articles(db: AsyncIOMotorDatabase, user_id: Optional[str] 
         return await get_trending_articles(db, limit=limit)
 
     # Fetch user's recent reading history
-    history = await ReadingHistory.find({"user_id": user_id}).sort("read_at", -1).to_list(length=20)
+    history = await ReadingHistory.get_motor_collection().find({"user_id": user_id}).sort("read_at", -1).to_list(length=20)
     if not history:
         return await get_trending_articles(db, limit=limit)
 
     read_article_ids = [h["article_id"] for h in history]
 
     # Retrieve embeddings for read articles
-    read_articles = await Article.find(
+    read_articles = await Article.get_motor_collection().find(
         {"_id": {"$in": read_article_ids}, "embedding": {"$exists": True, "$ne": None}}, 
         {"embedding": 1, "category_id": 1}
     ).to_list(length=20)
 
     # If no embeddings found in history, fallback to category logic
     if not read_articles:
-        read_articles_fallback = await Article.find({"_id": {"$in": read_article_ids}}, {"category_id": 1}).to_list(length=50)
+        read_articles_fallback = await Article.get_motor_collection().find({"_id": {"$in": read_article_ids}}, {"category_id": 1}).to_list(length=50)
         cat_counts = {}
         for a in read_articles_fallback:
             cid = a.get("category_id")
@@ -523,13 +523,13 @@ async def get_for_you_articles(db: AsyncIOMotorDatabase, user_id: Optional[str] 
             "category_id": {"$in": top_categories},
             "_id": {"$nin": read_article_ids},
         })
-        cursor = Article.find(query, {"embedding": 0}).sort("published_at", -1).limit(limit)
+        cursor = Article.get_motor_collection().find(query, {"embedding": 0}).sort("published_at", -1).limit(limit)
         articles = await cursor.to_list(length=limit)
         
         if len(articles) < limit:
             remaining = limit - len(articles)
             fetched_ids = [a["_id"] for a in articles] + read_article_ids
-            fallback_cursor = Article.find(_public_query({"_id": {"$nin": fetched_ids}}), {"embedding": 0}).sort("published_at", -1).limit(remaining)
+            fallback_cursor = Article.get_motor_collection().find(_public_query({"_id": {"$nin": fetched_ids}}), {"embedding": 0}).sort("published_at", -1).limit(remaining)
             articles.extend(await fallback_cursor.to_list(length=remaining))
             
         return await _populate_articles_bulk(db, articles)
@@ -543,7 +543,7 @@ async def get_for_you_articles(db: AsyncIOMotorDatabase, user_id: Optional[str] 
     profile_vector = [sum(e[i] for e in embeddings) / len(embeddings) for i in range(embedding_length)]
 
     # Fetch pool of recent unread articles to rank
-    pool_cursor = Article.find(
+    pool_cursor = Article.get_motor_collection().find(
         _public_query({"_id": {"$nin": read_article_ids}, "embedding": {"$exists": True, "$ne": None}}),
         {"title": 1, "summary": 1, "category_id": 1, "published_at": 1, "thumbnail_url": 1, "author": 1, "slug": 1, "status": 1, "read_time": 1, "embedding": 1}
     ).sort("published_at", -1).limit(200) # Get a decent pool of recent articles
@@ -573,7 +573,7 @@ async def get_breaking_articles(db: AsyncIOMotorDatabase, limit: int = 5):
     """Get breaking news articles (published only)."""
     key = _cache_key("breaking", limit=limit)
     async def _fetch():
-        cursor = Article.find(_public_query({"is_breaking": True}), {"embedding": 0}).sort("published_at", -1).limit(limit)
+        cursor = Article.get_motor_collection().find(_public_query({"is_breaking": True}), {"embedding": 0}).sort("published_at", -1).limit(limit)
         articles = await cursor.to_list(length=limit)
         return await _populate_articles_bulk(db, articles)
 
@@ -584,7 +584,7 @@ async def get_editor_pick_articles(db: AsyncIOMotorDatabase, limit: int = 10):
     """Get editor-curated articles (published only)."""
     key = _cache_key("editor_pick", limit=limit)
     async def _fetch():
-        cursor = Article.find(_public_query({"is_editor_pick": True}), {"embedding": 0}).sort("published_at", -1).limit(limit)
+        cursor = Article.get_motor_collection().find(_public_query({"is_editor_pick": True}), {"embedding": 0}).sort("published_at", -1).limit(limit)
         articles = await cursor.to_list(length=limit)
         return await _populate_articles_bulk(db, articles)
 
@@ -601,7 +601,7 @@ async def get_explainer_articles(db: AsyncIOMotorDatabase, skip: int = 0, limit:
     key = _cache_key("explainers", skip=skip, limit=limit)
     async def _fetch():
         query = _public_query({"has_deep_content": True})
-        cursor = Article.find(query, {"embedding": 0}).sort("published_at", -1).skip(skip).limit(limit)
+        cursor = Article.get_motor_collection().find(query, {"embedding": 0}).sort("published_at", -1).skip(skip).limit(limit)
         articles = await cursor.to_list(length=limit)
         return await _populate_articles_bulk(db, articles)
 
@@ -622,7 +622,7 @@ async def get_article_by_slug(
     """
     if include_unpublished:
         # Admin reads bypass the cache so drafts/edits are always seen fresh.
-        article = await Article.find_one({"slug": slug})
+        article = await Article.get_motor_collection().find_one({"slug": slug})
         return await _populate_article_extras(db, article)
 
     # Count the view off the request's critical path (fire-and-forget) so it
@@ -632,7 +632,7 @@ async def get_article_by_slug(
         _fire_and_forget(_increment_view_count(db, slug))
 
     async def _fetch():
-        article = await Article.find_one(_public_query({"slug": slug}))
+        article = await Article.get_motor_collection().find_one(_public_query({"slug": slug}))
         return await _populate_article_extras(db, article)
 
     key = _article_detail_key(slug)
@@ -646,14 +646,14 @@ async def get_article_by_id(
 ):
     """Get a single article by ID. Drafts/archived are hidden unless caller is admin."""
     if include_unpublished:
-        article = await Article.find_one({"_id": article_id})
+        article = await Article.get_motor_collection().find_one({"_id": article_id})
     else:
-        article = await Article.find_one(_public_query({"_id": article_id}))
+        article = await Article.get_motor_collection().find_one(_public_query({"_id": article_id}))
     return await _populate_article_extras(db, article)
 
 
 async def _assert_category_exists(db: AsyncIOMotorDatabase, category_id: str) -> None:
-    if not await Category.find_one({"_id": str(category_id)}, {"_id": 1}):
+    if not await Category.get_motor_collection().find_one({"_id": str(category_id)}, {"_id": 1}):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unknown category_id: {category_id}",
@@ -732,7 +732,7 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
     
     embedding = await generate_embedding(text_to_embed)
     if embedding:
-        await Article.update_one(
+        await Article.get_motor_collection().update_one(
             {"_id": article_id}, 
             {"$set": {"embedding": embedding}}
         )
@@ -769,13 +769,13 @@ async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data
     if update_dict:
         # If the article is being published, ensure it has a published_at date
         if update_dict.get("status") == PUBLIC_STATUS:
-            existing = await Article.find_one({"_id": article_id}, {"published_at": 1})
+            existing = await Article.get_motor_collection().find_one({"_id": article_id}, {"published_at": 1})
             if not existing or not existing.get("published_at"):
                 update_dict["published_at"] = datetime.now(timezone.utc)
                 
         update_dict["last_updated"] = datetime.now(timezone.utc)
         update_dict["updated_at"] = datetime.now(timezone.utc)
-        await Article.update_one({"_id": article_id}, {"$set": update_dict})
+        await Article.get_motor_collection().update_one({"_id": article_id}, {"$set": update_dict})
 
     if content_data:
         sanitized_content: dict[str, Any] = {}
@@ -804,13 +804,13 @@ async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data
             merged = await db["article_content"].find_one(
                 {"article_id": article_id}, {"timeline": 1, "explainer": 1}
             )
-            await Article.update_one(
+            await Article.get_motor_collection().update_one(
                 {"_id": article_id},
                 {"$set": {"has_deep_content": _has_deep_content(merged)}},
             )
 
     if "title" in update_dict or "summary" in update_dict or "tags" in update_dict:
-        existing = await Article.find_one({"_id": article_id}, {"title": 1, "summary": 1, "tags": 1})
+        existing = await Article.get_motor_collection().find_one({"_id": article_id}, {"title": 1, "summary": 1, "tags": 1})
         if existing:
             title = update_dict.get("title", existing.get("title", ""))
             summary = update_dict.get("summary", existing.get("summary", ""))
@@ -822,7 +822,7 @@ async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data
                 
             embedding = await generate_embedding(text_to_embed)
             if embedding:
-                await Article.update_one(
+                await Article.get_motor_collection().update_one(
                     {"_id": article_id}, 
                     {"$set": {"embedding": embedding}}
                 )
@@ -833,7 +833,7 @@ async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data
 
 async def delete_article(db: AsyncIOMotorDatabase, article_id: str):
     """Delete an article."""
-    result = await Article.delete_one({"_id": article_id})
+    result = await Article.get_motor_collection().delete_one({"_id": article_id})
     if result.deleted_count > 0:
         await db["article_content"].delete_many({"article_id": article_id})
         await invalidate_article_caches()
@@ -846,12 +846,12 @@ async def search_articles(db: AsyncIOMotorDatabase, query: str, skip: int = 0, l
 
     text_filter = {"$text": {"$search": query}}
     if category:
-        category_doc = await Category.find_one({"name": {"$regex": f"^{re.escape(category)}$", "$options": "i"}})
+        category_doc = await Category.get_motor_collection().find_one({"name": {"$regex": f"^{re.escape(category)}$", "$options": "i"}})
         if category_doc:
             text_filter["category_id"] = category_doc["_id"]
 
     try:
-        cursor = Article.find(
+        cursor = Article.get_motor_collection().find(
             _public_query(text_filter),
             {"score": {"$meta": "textScore"}, "embedding": 0},
         ).sort([("score", {"$meta": "textScore"}), ("published_at", -1)]).skip(skip).limit(limit)
@@ -869,13 +869,13 @@ async def get_related_articles(
 ):
     """Get related articles (same category, exclude self, published only).
     Falls back to most recent if not enough in the same category."""
-    article = await Article.find_one({"$or": [{"_id": article_id}, {"slug": article_id}]}, {"category_id": 1, "_id": 1})
+    article = await Article.get_motor_collection().find_one({"$or": [{"_id": article_id}, {"slug": article_id}]}, {"category_id": 1, "_id": 1})
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
 
     actual_id = article["_id"]
     category_id = article.get("category_id")
-    same_category = await Article.find(
+    same_category = await Article.get_motor_collection().find(
         _public_query({"_id": {"$ne": actual_id}, "category_id": category_id}),
         {"embedding": 0}
     ).sort("published_at", -1).limit(limit).to_list(length=limit)
@@ -885,7 +885,7 @@ async def get_related_articles(
 
     seen = {actual_id, *(a["_id"] for a in same_category)}
     remaining = limit - len(same_category)
-    recent = await Article.find(
+    recent = await Article.get_motor_collection().find(
         _public_query({"_id": {"$nin": list(seen)}}),
         {"embedding": 0}
     ).sort("published_at", -1).limit(remaining).to_list(length=remaining)

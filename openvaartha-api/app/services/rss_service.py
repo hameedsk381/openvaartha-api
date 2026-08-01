@@ -150,7 +150,7 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
             continue
 
         guid = entry["guid"]
-        existing = await Article_sources.find_one({"guid": guid, "source_id": source["_id"]})
+        existing = await db["article_sources"].find_one({"guid": guid, "source_id": source["_id"]})
         if existing:
             continue
 

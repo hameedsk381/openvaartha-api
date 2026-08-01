@@ -20,7 +20,7 @@ async def create_poll(db: AsyncIOMotorDatabase, poll_data: PollCreate) -> str:
 async def get_poll_with_results(
     db: AsyncIOMotorDatabase, poll_id: str, current_user_id: Optional[str] = None
 ) -> Optional[PollResponse]:
-    poll_doc = await Poll.find_one({"_id": poll_id})
+    poll_doc = await Poll.get_motor_collection().find_one({"_id": poll_id})
     if not poll_doc:
         return None
 
@@ -53,7 +53,7 @@ async def get_poll_with_results(
 
 async def vote_poll(db: AsyncIOMotorDatabase, poll_id: str, user_id: str, option_id: str) -> bool:
     # Check if poll exists
-    poll_doc = await Poll.find_one({"_id": poll_id, "is_active": True})
+    poll_doc = await Poll.get_motor_collection().find_one({"_id": poll_id, "is_active": True})
     if not poll_doc:
         raise ValueError("Poll not found or inactive")
     
@@ -69,7 +69,7 @@ async def vote_poll(db: AsyncIOMotorDatabase, poll_id: str, user_id: str, option
         raise ValueError("User has already voted on this poll")
     
     # Increment total_votes and the specific option's votes in the polls collection
-    await Poll.update_one(
+    await Poll.get_motor_collection().update_one(
         {"_id": poll_id, "options.id": option_id},
         {
             "$inc": {

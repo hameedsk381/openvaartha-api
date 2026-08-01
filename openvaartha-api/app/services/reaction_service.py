@@ -65,7 +65,7 @@ async def toggle_reaction(
         raise ValueError(f"Invalid reaction type: {reaction_type}")
 
     # Ensure article exists
-    article = await Article.find_one({"_id": article_id})
+    article = await Article.get_motor_collection().find_one({"_id": article_id})
     if not article:
         return {"error": "Article not found"}
 

@@ -6,13 +6,13 @@ from app.schemas.newsletter import NewsletterSubscribe
 
 async def subscribe(db: AsyncIOMotorDatabase, email: str) -> dict:
     """Subscribe to the newsletter."""
-    existing = await Newsletter_subscribers.find_one({"email": email})
+    existing = await db["newsletter_subscribers"].find_one({"email": email})
     
     if existing:
         if existing.get("is_active", True):
             return {"success": False, "detail": "Email already subscribed", "re_subscribed": False}
         else:
-            await Newsletter_subscribers.update_one(
+            await db["newsletter_subscribers"].update_one(
                 {"email": email},
                 {"$set": {"is_active": True, "updated_at": datetime.now(timezone.utc)}}
             )
@@ -31,11 +31,11 @@ async def subscribe(db: AsyncIOMotorDatabase, email: str) -> dict:
 
 async def unsubscribe(db: AsyncIOMotorDatabase, email: str) -> bool:
     """Unsubscribe from the newsletter."""
-    subscriber = await Newsletter_subscribers.find_one({"email": email})
+    subscriber = await db["newsletter_subscribers"].find_one({"email": email})
     if not subscriber:
         return False
     
-    await Newsletter_subscribers.update_one(
+    await db["newsletter_subscribers"].update_one(
         {"email": email},
         {"$set": {"is_active": False, "updated_at": datetime.now(timezone.utc)}}
     )

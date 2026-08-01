@@ -46,7 +46,7 @@ async def get_comments(
         },
         {"$project": {"replies": 0}},
     ]
-    cursor = Comment.aggregate(pipeline)
+    cursor = Comment.get_motor_collection().aggregate(pipeline)
     return await cursor.to_list(length=limit)
 
 
@@ -78,7 +78,7 @@ async def create_comment(
     comment_id = str(uuid4())
 
     if parent_id:
-        parent = await Comment.find_one({"_id": parent_id, "is_active": True})
+        parent = await Comment.get_motor_collection().find_one({"_id": parent_id, "is_active": True})
         if not parent:
             raise ValueError("Parent comment not found")
 
@@ -115,17 +115,17 @@ async def update_comment(
     user_id: str,
     body: str,
 ) -> Optional[dict]:
-    comment = await Comment.find_one({"_id": comment_id})
+    comment = await Comment.get_motor_collection().find_one({"_id": comment_id})
     if not comment:
         return None
     if comment["user_id"] != user_id:
         raise PermissionError("Cannot edit another user's comment")
 
-    await Comment.update_one(
+    await Comment.get_motor_collection().update_one(
         {"_id": comment_id},
         {"$set": {"body": sanitize_text(body), "is_edited": True, "updated_at": datetime.now(timezone.utc)}},
     )
-    return await Comment.find_one({"_id": comment_id})
+    return await Comment.get_motor_collection().find_one({"_id": comment_id})
 
 
 async def delete_comment(
@@ -134,13 +134,13 @@ async def delete_comment(
     user_id: str,
     is_admin: bool = False,
 ) -> bool:
-    comment = await Comment.find_one({"_id": comment_id})
+    comment = await Comment.get_motor_collection().find_one({"_id": comment_id})
     if not comment:
         return False
     if comment["user_id"] != user_id and not is_admin:
         raise PermissionError("Cannot delete another user's comment")
 
-    await Comment.update_one(
+    await Comment.get_motor_collection().update_one(
         {"_id": comment_id},
         {"$set": {"is_active": False, "updated_at": datetime.now(timezone.utc)}},
     )
@@ -148,18 +148,18 @@ async def delete_comment(
 
 
 async def toggle_like(db: AsyncIOMotorDatabase, comment_id: str, user_id: str) -> dict:
-    comment = await Comment.find_one({"_id": comment_id, "is_active": True})
+    comment = await Comment.get_motor_collection().find_one({"_id": comment_id, "is_active": True})
     if not comment:
         raise ValueError("Comment not found")
 
     if user_id in comment.get("likes", []):
-        await Comment.update_one(
+        await Comment.get_motor_collection().update_one(
             {"_id": comment_id},
             {"$pull": {"likes": user_id}},
         )
         return {"liked": False}
     else:
-        await Comment.update_one(
+        await Comment.get_motor_collection().update_one(
             {"_id": comment_id},
             {"$addToSet": {"likes": user_id}},
         )
@@ -167,6 +167,6 @@ async def toggle_like(db: AsyncIOMotorDatabase, comment_id: str, user_id: str) -
 
 
 async def get_comment_count(db: AsyncIOMotorDatabase, article_id: str) -> int:
-    return await Comment.count_documents(
+    return await Comment.get_motor_collection().count_documents(
         {"article_id": article_id, "is_active": True}
     )
