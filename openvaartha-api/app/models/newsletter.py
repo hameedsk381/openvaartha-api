@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from beanie import Document, EmailStr, Field
+from beanie import Document
+from pydantic import EmailStr, Field
 from typing import Optional
 from datetime import datetime, timezone
 from uuid import uuid4
