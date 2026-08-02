@@ -8,19 +8,50 @@ import uuid
 import base64
 import json
 import asyncio
+import shutil
+import subprocess
 
 router = APIRouter()
 
-# Backend-enforced ceiling for direct video uploads (no recompression happens,
-# unlike images, so this bounds storage/bandwidth directly). Keep comfortably
-# under nginx's `client_max_body_size` for /api/v1/upload/video so a
-# too-large file gets this JSON error instead of nginx's plain-text 413 page.
-_MAX_VIDEO_BYTES = 200 * 1024 * 1024  # 200MB
+# Backend-enforced limits for direct video uploads (no recompression happens,
+# unlike images, so these bound storage/bandwidth directly). Bytes are short
+# Reels-style clips: at most 3 minutes long, and size-capped so a multi-GB
+# source file can't be parked in GCS. Keep the byte cap comfortably under
+# nginx's `client_max_body_size` for /api/v1/upload/video so a too-large file
+# gets this JSON error instead of nginx's plain-text 413 page.
+_MAX_VIDEO_BYTES = 100 * 1024 * 1024  # 100MB
+_MAX_VIDEO_SECONDS = 180  # 3 minutes
 _VIDEO_EXTENSIONS = {
     "video/mp4": "mp4",
     "video/webm": "webm",
     "video/quicktime": "mov",
 }
+
+# Path to ffprobe (ships with ffmpeg, installed in the API Dockerfile). When
+# ffprobe is unavailable (e.g. a bare local dev env), duration validation is
+# skipped rather than failing every upload — size is still always enforced.
+_FFPROBE = shutil.which("ffprobe")
+
+
+def _probe_video_duration_seconds(data: bytes) -> float | None:
+    """Probe container/format duration via ffprobe, or None if it can't be
+    determined (missing binary, probe failure, unparseable output)."""
+    if not _FFPROBE:
+        return None
+    try:
+        proc = subprocess.run(
+            [_FFPROBE, "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", "-i", "pipe:0"],
+            input=data, capture_output=True, timeout=45,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    if proc.returncode != 0:
+        return None
+    try:
+        return float(proc.stdout.decode("utf-8", errors="ignore").strip())
+    except ValueError:
+        return None
 
 
 def _gcs_bucket():
@@ -129,7 +160,8 @@ async def upload_video(
     """
     Upload a video file directly to Google Cloud Storage, unmodified (no
     recompression — Pillow can't process video, and transcoding is out of
-    scope). Returns the public GCS URL.
+    scope). Videos are capped at 3 minutes and 100MB — Bytes are short
+    Reels-style clips. Returns the public GCS URL.
     """
     if not settings.GCS_BUCKET_NAME:
         raise HTTPException(
@@ -144,12 +176,13 @@ async def upload_video(
             detail="Only MP4, WebM, or MOV video files are allowed.",
         )
 
-    # UploadFile buffers to a spooled temp file as it's read, so seeking to the
-    # end here to check size (rather than loading the whole thing into memory
-    # via .read()) works whether the file spilled to disk or stayed in memory.
-    file.file.seek(0, 2)
-    size = file.file.tell()
-    file.file.seek(0)
+    # Read the whole upload once so ffprobe can measure the real duration.
+    # UploadFile buffers to a spooled temp file as it's read, but feeding a
+    # probe needs a seekable stream or the raw bytes, so read into memory
+    # here (size-capped below, so worst case is ~100MB) and reset the spooled
+    # file before streaming it to GCS.
+    data = await file.read()
+    size = len(data)
     if size > _MAX_VIDEO_BYTES:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
@@ -157,5 +190,14 @@ async def upload_video(
                    f"{_MAX_VIDEO_BYTES / 1024 / 1024:.0f}MB.",
         )
 
+    duration = _probe_video_duration_seconds(data)
+    if duration is not None and duration > _MAX_VIDEO_SECONDS:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"Video is too long ({duration:.1f}s). Max is "
+                   f"{_MAX_VIDEO_SECONDS // 60} minutes.",
+        )
+
+    file.file.seek(0)
     url = await asyncio.to_thread(_upload_video_sync, file.file, file.content_type, extension)
     return {"url": url}

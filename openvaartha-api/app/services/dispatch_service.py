@@ -109,6 +109,7 @@ async def create_dispatch(
     article_id: Optional[str],
     created_by: Optional[str],
     image_url: Optional[str] = None,
+    video_url: Optional[str] = None,
     category_id: Optional[str] = None,
 ) -> dict:
     await _assert_valid_refs(db, article_id, category_id)
@@ -119,6 +120,7 @@ async def create_dispatch(
         "text": sanitize_text(text),
         "article_id": article_id,
         "image_url": image_url or None,
+        "video_url": video_url or None,
         "category_id": category_id,
         "created_at": datetime.now(timezone.utc),
         "created_by": created_by,
@@ -137,6 +139,7 @@ async def update_dispatch(
     text: str,
     article_id: Optional[str],
     image_url: Optional[str] = None,
+    video_url: Optional[str] = None,
     category_id: Optional[str] = None,
 ) -> Optional[dict]:
     await _assert_valid_refs(db, article_id, category_id)
@@ -147,6 +150,7 @@ async def update_dispatch(
             "text": sanitize_text(text),
             "article_id": article_id,
             "image_url": image_url or None,
+            "video_url": video_url or None,
             "category_id": category_id,
         }},
     )

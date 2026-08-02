@@ -44,13 +44,30 @@ interface ByteCardProps {
  * right carries Share + the brand mark.
  */
 export default function ByteCard({ byte, toneIndex = 0, shareUrl, onReadStory }: ByteCardProps) {
-  const hasImage = !!byte.imageUrl;
+  const hasVideo = !!byte.videoUrl;
+  const hasImage = !!byte.imageUrl && !hasVideo;
   const tone = TONES[toneIndex % TONES.length];
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-black text-white select-none">
-      {/* Full-bleed media */}
-      {hasImage ? (
+      {/* Full-bleed media — a video (muted, looping, tap to play/pause) or
+          photo takes the frame; otherwise a brand gradient. */}
+      {hasVideo ? (
+        <video
+          src={byte.videoUrl!}
+          className="absolute inset-0 h-full w-full object-cover"
+          muted
+          loop
+          autoPlay
+          playsInline
+          aria-label="Byte video"
+          onClick={(e) => {
+            e.stopPropagation();
+            const v = e.currentTarget;
+            if (v.paused) { v.play().catch(() => {}); } else { v.pause(); }
+          }}
+        />
+      ) : hasImage ? (
         <img src={byte.imageUrl!} alt="" className="absolute inset-0 h-full w-full object-cover" />
       ) : (
         <div className={`absolute inset-0 ${tone.bg}`} />

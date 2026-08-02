@@ -38,7 +38,7 @@ async def create_dispatch(
     try:
         dispatch = await dispatch_service.create_dispatch(
             db, text=body.text, article_id=body.article_id, created_by=current_user.id,
-            image_url=body.image_url, category_id=body.category_id,
+            image_url=body.image_url, video_url=body.video_url, category_id=body.category_id,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -95,7 +95,7 @@ async def update_dispatch(
     try:
         dispatch = await dispatch_service.update_dispatch(
             db, dispatch_id, text=body.text, article_id=body.article_id,
-            image_url=body.image_url, category_id=body.category_id,
+            image_url=body.image_url, video_url=body.video_url, category_id=body.category_id,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

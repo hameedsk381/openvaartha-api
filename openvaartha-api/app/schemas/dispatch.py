@@ -10,6 +10,10 @@ class DispatchCreate(BaseModel):
     # Optional cover image — bytes are built for sharing (WhatsApp/Instagram/
     # X), and a photo makes a far stronger share card than plain text.
     image_url: Optional[str] = None
+    # Optional short video (≤3 min, size-capped at upload — see
+    # /api/v1/upload/video). A byte can carry either a video or an image,
+    # rendered full-screen Reels-style on the Bytes page.
+    video_url: Optional[str] = None
     # Manually chosen by the editor — a standalone dispatch (no article_id)
     # has no other source for a category. See dispatch_service.backfill_categories
     # for AI-classifying older dispatches that predate this field.
@@ -24,6 +28,7 @@ class DispatchUpdate(BaseModel):
     text: str = Field(..., min_length=1, max_length=280)
     article_id: Optional[str] = None
     image_url: Optional[str] = None
+    video_url: Optional[str] = None
     category_id: Optional[str] = None
 
     class Config:
@@ -36,6 +41,7 @@ class Dispatch(BaseModel):
     text: str
     article_id: Optional[str] = None
     image_url: Optional[str] = None
+    video_url: Optional[str] = None
     # The dispatch's own explicit category choice (None if it instead
     # inherits one from a linked article — see `category` below). Exposed
     # mainly so the admin edit form can prefill the category picker.

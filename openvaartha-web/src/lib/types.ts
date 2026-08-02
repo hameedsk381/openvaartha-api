@@ -80,6 +80,7 @@ export interface Dispatch {
   articleSlug?: string | null;
   articleTitle?: string | null;
   imageUrl?: string | null;
+  videoUrl?: string | null;
   categoryId?: string | null;
   category?: string | null;
   createdAt: string;

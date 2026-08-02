@@ -9,6 +9,7 @@ class Dispatch(Document):
     text: str
     article_id: Optional[str] = None
     image_url: Optional[str] = None
+    video_url: Optional[str] = None
     category_id: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: Optional[str] = None

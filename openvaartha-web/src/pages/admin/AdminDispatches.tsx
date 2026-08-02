@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Pencil } from "lucide-react";
+import { ImagePlus, Pencil, Video } from "lucide-react";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { Radio } from "@/components/animate-ui/icons/radio";
 import { Check } from "@/components/animate-ui/icons/check";
@@ -25,9 +25,10 @@ type DraftDispatch = {
   articleId: string;
   categoryId: string;
   imageUrl: string | null;
+  videoUrl: string | null;
 };
 
-const emptyDraft: DraftDispatch = { text: "", articleId: NONE, categoryId: NONE, imageUrl: null };
+const emptyDraft: DraftDispatch = { text: "", articleId: NONE, categoryId: NONE, imageUrl: null, videoUrl: null };
 
 function ImagePicker({
   imageUrl,
@@ -76,6 +77,57 @@ function ImagePicker({
         <AnimatedIcon animationType="scale"><ImagePlus className="h-4 w-4" /></AnimatedIcon>
       )}
       Upload image
+    </Button>
+  );
+}
+
+function VideoPicker({
+  videoUrl,
+  onChange,
+}: {
+  videoUrl: string | null;
+  onChange: (url: string | null) => void;
+}) {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const pickVideo = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "video/mp4,video/webm,video/quicktime";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+      apiFetch<{ url: string }>("/upload/video", { method: "POST", body: formData })
+        .then((res) => onChange(res.url))
+        .catch((err) => toast.error(err?.message || "Failed to upload video"))
+        .finally(() => setIsUploading(false));
+    };
+    input.click();
+  };
+
+  return videoUrl ? (
+    <div className="relative rounded-lg overflow-hidden border border-border w-52 h-40 bg-black">
+      <video src={videoUrl} className="w-full h-full object-cover" muted loop playsInline controls />
+      <button
+        type="button"
+        onClick={() => onChange(null)}
+        className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center press"
+        aria-label="Remove video"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  ) : (
+    <Button type="button" variant="outline" size="sm" onClick={pickVideo} disabled={isUploading}>
+      {isUploading ? (
+        <LoaderCircle className="h-4 w-4" animate />
+      ) : (
+        <AnimatedIcon animationType="scale"><Video className="h-4 w-4" /></AnimatedIcon>
+      )}
+      Upload video
     </Button>
   );
 }
@@ -142,6 +194,13 @@ function DispatchFields({
         </p>
         <ImagePicker imageUrl={draft.imageUrl} onChange={(url) => onChange({ ...draft, imageUrl: url })} />
       </div>
+      <div className="space-y-2">
+        <Label>Video (optional)</Label>
+        <p className="text-xs text-muted-foreground">
+          Played full-screen Reels-style on the Bytes page. Max 3 minutes and 100MB — MP4, WebM, or MOV. A video takes precedence over the cover image.
+        </p>
+        <VideoPicker videoUrl={draft.videoUrl} onChange={(url) => onChange({ ...draft, videoUrl: url })} />
+      </div>
     </div>
   );
 }
@@ -178,6 +237,7 @@ export default function AdminDispatches() {
           articleId: draft.articleId === NONE ? null : draft.articleId,
           categoryId: draft.categoryId === NONE ? null : draft.categoryId,
           imageUrl: draft.imageUrl || null,
+          videoUrl: draft.videoUrl || null,
         }),
       }),
     onSuccess: () => {
@@ -198,6 +258,7 @@ export default function AdminDispatches() {
           articleId: edit.articleId === NONE ? null : edit.articleId,
           categoryId: edit.categoryId === NONE ? null : edit.categoryId,
           imageUrl: edit.imageUrl || null,
+          videoUrl: edit.videoUrl || null,
         }),
       }),
     onSuccess: () => {
@@ -242,6 +303,7 @@ export default function AdminDispatches() {
       articleId: d.articleId || NONE,
       categoryId: d.categoryId || NONE,
       imageUrl: d.imageUrl || null,
+      videoUrl: d.videoUrl || null,
     });
   };
 
@@ -318,9 +380,13 @@ export default function AdminDispatches() {
 
               return (
                 <div key={d.id} className="flex items-start justify-between gap-4 p-4">
-                  {d.imageUrl && (
+                  {d.videoUrl ? (
+                    <span className="h-12 w-16 rounded-md shrink-0 border border-border bg-black flex items-center justify-center text-muted-foreground">
+                      <Video className="h-4 w-4" />
+                    </span>
+                  ) : d.imageUrl ? (
                     <img src={d.imageUrl} alt="" className="h-12 w-16 rounded-md object-cover shrink-0 border border-border" />
-                  )}
+                  ) : null}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium leading-snug">{d.text}</p>
                     <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
