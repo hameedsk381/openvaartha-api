@@ -46,8 +46,12 @@ const BytePage = () => {
         </button>
       </header>
 
-      <main className="flex-1 min-h-0">
-        <ByteCard byte={byte} shareUrl={window.location.href} />
+      <main className="flex-1 min-h-0 bg-black">
+        <ByteCard
+          byte={byte}
+          shareUrl={window.location.href}
+          onReadStory={byte.articleSlug ? () => navigate(`/article/${byte.articleSlug}`) : undefined}
+        />
       </main>
 
       {/* Reserves room for Navbar's fixed mobile bottom-nav (.bottom-nav,

@@ -6,17 +6,19 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatches } from '@/lib/api-hooks';
 import ByteCard from '@/components/ByteCard';
 import { BytesPageSkeleton } from '@/components/PageSkeletons';
+import { cn } from '@/lib/utils';
 
 const TRANSITION_MS = 420;
 
 /**
- * Bytes: a full-screen, swipe-through stack of TODAY's dispatches — Reels
- * style, built to be shared (see ByteCard's Share button + /bytes/:id
- * permalinks). Every swipe, wheel notch, or arrow press advances exactly one
- * card with a quick, decisive transition — never a partial native scroll —
- * and input is locked for the duration of that transition so a fast flick
- * can't skip two cards at once. Scoped to the current day server-side (see
- * useDispatches(todayOnly)) — yesterday's bytes don't carry over.
+ * Bytes: a full-screen, Instagram-Reels-style stack of TODAY's dispatches —
+ * each byte fills the frame with its photo (or a brand gradient) and a dark
+ * scrim under the caption, an action rail on the right for Share, and a
+ * segmented progress bar up top. Every swipe, wheel notch, or arrow press
+ * advances exactly one card with a quick, decisive transition — never a
+ * partial native scroll — and input is locked for the duration of that
+ * transition so a fast flick can't skip two cards at once. Scoped to the
+ * current day server-side (see useDispatches(todayOnly)).
  */
 const BytesPage = () => {
   const { data: bytes = [], isLoading } = useDispatches(100, { todayOnly: true });
@@ -98,48 +100,72 @@ const BytesPage = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-background text-foreground">
+    <div className="h-screen flex flex-col overflow-hidden bg-black text-white">
       <Navbar />
 
-      <header className="shrink-0 h-14 px-4 border-b border-border bg-background flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="relative inline-flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-60 animate-ping" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-          </span>
-          <h1 className="font-display text-lg font-bold tracking-tight">Bytes</h1>
-          <span className="tag">Today · {today}</span>
-        </div>
+      <main ref={viewportRef} className="flex-1 min-h-0 relative overflow-hidden touch-none bg-black">
+        {filteredBytes.length > 0 && (
+          <>
+            {/* Segmented progress bars */}
+            <div className="absolute top-2 inset-x-0 z-30 px-2 sm:px-3 flex gap-1 pointer-events-none">
+              {filteredBytes.map((byte, index) => (
+                <div
+                  key={byte.id}
+                  className={cn(
+                    'h-[3px] flex-1 rounded-full overflow-hidden bg-white/25',
+                    index < activeIndex && 'bg-white/60',
+                    index === activeIndex && 'bg-white'
+                  )}
+                >
+                  <div className="h-full w-full" />
+                </div>
+              ))}
+            </div>
 
-        {categories.length > 0 && (
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-            {(['All', ...categories]).map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 h-7 px-3 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors border press ${
-                  activeCategory === cat
-                    ? 'bg-primary text-white border-primary'
-                    : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-primary'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+            {/* Title + category chips */}
+            <div className="absolute top-3 inset-x-0 z-30 px-2 sm:px-3 flex justify-center">
+              <div className="flex items-center gap-2 max-w-full overflow-x-auto no-scrollbar px-2 py-1 rounded-full bg-black/45 backdrop-blur border border-white/15 shadow-lg">
+                <span className="shrink-0 flex items-center gap-1.5 pl-1 pr-2 text-[11px] font-black uppercase tracking-widest">
+                  <span className="relative inline-flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-70 animate-ping" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                  </span>
+                  Bytes · {today}
+                </span>
+
+                {categories.length > 0 && (
+                  <>
+                    <span className="shrink-0 h-4 w-px bg-white/20" />
+                    {['All', ...categories].map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setActiveCategory(cat)}
+                        className={cn(
+                          'shrink-0 h-6 px-3 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors press border',
+                          activeCategory === cat
+                            ? 'bg-white text-black border-white'
+                            : 'text-white/80 border-white/20 hover:bg-white/10 hover:text-white'
+                        )}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </>
+                )}
+              </div>
+            </div>
+          </>
         )}
-      </header>
 
-      {filteredBytes.length === 0 ? (
-        <main className="flex-1 min-h-0 flex items-center justify-center text-center px-4">
-          <p className="font-serif italic text-muted-foreground">
-            {bytes.length === 0
-              ? "No bytes filed today yet. Check back soon — a fresh set starts every morning."
-              : 'No bytes in this section today.'}
-          </p>
-        </main>
-      ) : (
-        <main ref={viewportRef} className="flex-1 min-h-0 relative overflow-hidden touch-none">
+        {filteredBytes.length === 0 ? (
+          <div className="h-full flex items-center justify-center text-center px-4">
+            <p className="font-serif italic text-white/70">
+              {bytes.length === 0
+                ? "No bytes filed today yet. Check back soon — a fresh set starts every morning."
+                : 'No bytes in this section today.'}
+            </p>
+          </div>
+        ) : (
           <div
             className="flex flex-col h-full w-full"
             style={{
@@ -147,37 +173,22 @@ const BytesPage = () => {
               transition: `transform ${TRANSITION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
             }}
           >
-            {filteredBytes.map((byte, index) => {
-              const card = (
+            {filteredBytes.map((byte, index) => (
+              <div key={byte.id} className="h-full w-full shrink-0">
                 <ByteCard
                   byte={byte}
                   toneIndex={index}
                   shareUrl={`${window.location.origin}/bytes/${byte.id}`}
+                  onReadStory={byte.articleSlug ? () => navigate(`/article/${byte.articleSlug}`) : undefined}
                 />
-              );
-
-              return (
-                <div key={byte.id} className="h-full w-full shrink-0">
-                  {byte.articleSlug ? (
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => navigate(`/article/${byte.articleSlug}`)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/article/${byte.articleSlug}`); }}
-                      className="h-full cursor-pointer"
-                    >
-                      {card}
-                    </div>
-                  ) : card}
-                </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
-        </main>
-      )}
+        )}
+      </main>
 
       {/* Reserves room for Navbar's fixed mobile bottom-nav (.bottom-nav,
-          sm:hidden) so it never covers the last card's footer/Share button. */}
+          sm:hidden) so it never covers the card's action rail. */}
       <div className="sm:hidden shrink-0 h-[calc(4rem+env(safe-area-inset-bottom))]" />
 
       {filteredBytes.length > 1 && (
@@ -186,7 +197,7 @@ const BytesPage = () => {
             onClick={() => goBy(-1)}
             disabled={activeIndex === 0}
             aria-label="Previous byte"
-            className="h-10 w-10 rounded-full bg-background/80 backdrop-blur border border-border flex items-center justify-center text-foreground disabled:opacity-30 press shadow-md"
+            className="h-10 w-10 rounded-full bg-black/45 backdrop-blur border border-white/20 flex items-center justify-center text-white disabled:opacity-30 press shadow-lg"
           >
             <ChevronUp className="h-4 w-4" animateOnHover />
           </button>
@@ -194,7 +205,7 @@ const BytesPage = () => {
             onClick={() => goBy(1)}
             disabled={activeIndex === filteredBytes.length - 1}
             aria-label="Next byte"
-            className="h-10 w-10 rounded-full bg-background/80 backdrop-blur border border-border flex items-center justify-center text-foreground disabled:opacity-30 press shadow-md"
+            className="h-10 w-10 rounded-full bg-black/45 backdrop-blur border border-white/20 flex items-center justify-center text-white disabled:opacity-30 press shadow-lg"
           >
             <ChevronDown className="h-4 w-4" animateOnHover />
           </button>

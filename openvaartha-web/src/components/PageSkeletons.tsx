@@ -220,26 +220,42 @@ export const ExplainersPageSkeleton = () => (
 /* ─── BytesPage Skeleton ─────────────────────────────── */
 
 export const BytesPageSkeleton = () => (
-  <div className="min-h-screen bg-background animate-fade-in">
-    <div className="max-w-2xl mx-auto pt-24 pb-16">
-      {/* Sticky header */}
-      <div className="px-4 py-4 border-b border-border flex items-center justify-between">
-        <Skeleton className="h-6 w-20" />
-        <Skeleton className="h-3.5 w-16" />
-      </div>
-      <div className="px-4 pt-4 pb-2">
-        <Skeleton className="h-4 w-72" />
-      </div>
-
-      {/* Byte rows */}
-      <div className="divide-y divide-border">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="px-4 py-4 space-y-2">
-            <Skeleton className="h-3 w-16" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-2/3" />
+  <div className="min-h-screen bg-black animate-fade-in">
+    <div className="relative h-screen overflow-hidden">
+      {/* Progress bars */}
+      <div className="absolute top-2 inset-x-0 z-10 px-2 flex gap-1">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-[3px] flex-1 rounded-full bg-white/25 overflow-hidden">
+            <div className="h-full w-full animate-pulse" />
           </div>
         ))}
+      </div>
+
+      {/* Chips */}
+      <div className="absolute top-3 inset-x-0 z-10 px-2 flex justify-center">
+        <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-black/45 border border-white/15">
+          <Skeleton className="h-3.5 w-20" />
+          <span className="h-4 w-px bg-white/20" />
+          <Skeleton className="h-3.5 w-14" />
+          <Skeleton className="h-3.5 w-14" />
+        </div>
+      </div>
+
+      {/* Media */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/40" />
+
+      {/* Caption */}
+      <div className="absolute inset-x-0 bottom-8 px-4 pr-20 space-y-3">
+        <Skeleton className="h-3 w-32" />
+        <Skeleton className="h-6 w-full max-w-md" />
+        <Skeleton className="h-6 w-3/4 max-w-sm" />
+        <Skeleton className="h-6 w-2/3 max-w-xs" />
+      </div>
+
+      {/* Rail */}
+      <div className="absolute right-3 bottom-28 flex flex-col items-center gap-5">
+        <Skeleton className="h-11 w-11 rounded-full" />
+        <Skeleton className="h-11 w-11 rounded-full" />
       </div>
     </div>
   </div>

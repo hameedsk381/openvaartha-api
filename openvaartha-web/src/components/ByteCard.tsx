@@ -4,10 +4,8 @@ import { BRAND } from '@/lib/brand';
 import type { Dispatch } from '@/lib/types';
 import { toast } from 'sonner';
 
-// Each tone is only used for the visual header (image letterbox / no-image
-// watermark banner) — the content region below always uses the theme's
-// normal card/foreground colors, so headline text stays legible regardless
-// of brand color and theme.
+// Each tone is only used for the full-bleed backdrop when a byte has no
+// photo — a Reels-style maroon/beige gradient instead of the old letterbox.
 export const TONES = [
   { bg: 'gradient-maroon', logo: 'white' as const },
   { bg: 'gradient-beige', logo: 'maroon' as const },
@@ -36,71 +34,93 @@ interface ByteCardProps {
   byte: Dispatch;
   toneIndex?: number;
   shareUrl: string;
+  onReadStory?: () => void;
 }
 
 /**
- * A single byte card: image (or brand watermark, if no photo) on top as its
- * own region, all text below it on a plain readable surface — never text
- * laid over a photo. Long headlines scroll within the content region
- * instead of growing into the page's fixed header above or the visual
- * region's fixed height.
+ * A single byte rendered as a full-screen Reels-style card: the photo (or a
+ * brand gradient, if none) fills the frame edge-to-edge, a dark scrim keeps
+ * the overlaid caption legible, and an Instagram-style action rail on the
+ * right carries Share + the brand mark.
  */
-export default function ByteCard({ byte, toneIndex = 0, shareUrl }: ByteCardProps) {
+export default function ByteCard({ byte, toneIndex = 0, shareUrl, onReadStory }: ByteCardProps) {
   const hasImage = !!byte.imageUrl;
   const tone = TONES[toneIndex % TONES.length];
 
   return (
-    <div className="relative h-full w-full flex flex-col bg-card overflow-hidden">
-      <button
-        onClick={(e) => { e.stopPropagation(); shareByte(byte, shareUrl); }}
-        aria-label="Share this byte"
-        className="absolute top-4 right-4 z-10 h-10 w-10 rounded-full bg-background/90 backdrop-blur border border-border flex items-center justify-center text-foreground shadow-md press"
-      >
-        <AnimatedIcon animationType="scale">
-          <Share2 className="h-4 w-4" />
-        </AnimatedIcon>
-      </button>
+    <div className="relative h-full w-full overflow-hidden bg-black text-white select-none">
+      {/* Full-bleed media */}
+      {hasImage ? (
+        <img src={byte.imageUrl!} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        <div className={`absolute inset-0 ${tone.bg}`} />
+      )}
 
-      {/* Visual region */}
-      <div
-        className={`relative w-full shrink-0 overflow-hidden flex items-center justify-center ${hasImage ? 'h-[38%] sm:h-[42%] bg-black' : `h-24 sm:h-28 ${tone.bg}`}`}
-      >
-        {hasImage ? (
-          <img src={byte.imageUrl!} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <img
-            src={tone.logo === 'white' ? BRAND.iconWhitePath : BRAND.iconMaroonPath}
-            alt=""
-            className="h-10 w-10 sm:h-12 sm:w-12 object-contain opacity-90"
-          />
-        )}
+      {/* Legibility scrim — keeps the overlaid text readable over any frame */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/35" />
+
+      {/* Right action rail */}
+      <div className="absolute right-2 sm:right-3 bottom-28 sm:bottom-32 z-20 flex flex-col items-center gap-5">
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="h-11 w-11 rounded-full bg-white/10 border-2 border-white/40 backdrop-blur flex items-center justify-center overflow-hidden shadow-lg">
+            <img src={BRAND.iconWhitePath} alt={BRAND.shortName} className="h-6 w-6 object-contain" />
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-widest text-white/70">
+            {byte.category || 'OV'}
+          </span>
+        </div>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); shareByte(byte, shareUrl); }}
+          aria-label="Share this byte"
+          className="flex flex-col items-center gap-1 text-white press"
+        >
+          <span className="h-11 w-11 rounded-full bg-white/10 border border-white/25 backdrop-blur flex items-center justify-center shadow-lg">
+            <AnimatedIcon animationType="scale">
+              <Share2 className="h-5 w-5" />
+            </AnimatedIcon>
+          </span>
+          <span className="text-[10px] font-semibold text-white/70">Share</span>
+        </button>
       </div>
 
-      {/* Content region — always plain, always readable */}
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col justify-center px-6 sm:px-10 py-6">
-        <div className="max-w-2xl mx-auto w-full">
-          <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <span className="relative inline-flex h-2 w-2 text-primary">
+      {/* Bottom caption */}
+      <div className="absolute inset-x-0 bottom-0 z-20 p-4 sm:p-6 pb-6 pr-20 sm:pr-24">
+        <div className="max-w-2xl">
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <span className="relative inline-flex h-2 w-2 text-white">
               <span className="absolute inline-flex h-full w-full rounded-full bg-current opacity-60 animate-ping" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-current" />
             </span>
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/80">
               {relativeTime(byte.createdAt)}
             </span>
-            {byte.category && <span className="tag">{byte.category}</span>}
+            {byte.category && (
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/15 border border-white/25 backdrop-blur">
+                {byte.category}
+              </span>
+            )}
           </div>
 
-          <p className="font-serif text-xl sm:text-3xl font-bold leading-snug tracking-tight text-foreground">
+          <p className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold leading-snug tracking-tight text-white drop-shadow-xl">
             {byte.text}
           </p>
 
           {byte.articleSlug && (
-            <span className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.18em] text-primary">
-              Read full story
-              <AnimatedIcon animationType="arrowUpRight">
+            onReadStory ? (
+              <button
+                onClick={(e) => { e.stopPropagation(); onReadStory(); }}
+                className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.18em] text-white bg-white/10 border border-white/25 backdrop-blur rounded-full px-4 py-2 press"
+              >
+                Read full story
                 <ArrowUpRight className="h-3.5 w-3.5" />
-              </AnimatedIcon>
-            </span>
+              </button>
+            ) : (
+              <span className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.18em] text-white bg-white/10 border border-white/25 backdrop-blur rounded-full px-4 py-2">
+                Read full story
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </span>
+            )
           )}
         </div>
       </div>
