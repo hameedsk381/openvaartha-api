@@ -169,6 +169,8 @@ async def update_user(
     updated_doc = await user_service.update_user(db, user_id, update_data)
     if not updated_doc:
         raise HTTPException(status_code=404, detail="User not found")
+    if "_id" in updated_doc and "id" not in updated_doc:
+        updated_doc["id"] = str(updated_doc["_id"])
     return UserSchema(**updated_doc)
 
 
