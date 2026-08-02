@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, model_validator
 from pydantic.alias_generators import to_camel
 from typing import Optional
 from datetime import datetime
@@ -45,6 +45,17 @@ class User(UserBase):
     updated_at: Optional[datetime] = None
     theme: Optional[str] = None
     font_size: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def map_mongo_id(cls, data):
+        # Raw motor docs store the id under `_id`; fastapi feeds those into
+        # this schema when a handler forgets to normalize. Map it so a plain
+        # `**doc` / model_validate can never 500 on a missing `id`.
+        if isinstance(data, dict) and "_id" in data and "id" not in data:
+            data = data.copy()
+            data["id"] = str(data["_id"])
+        return data
 
     class Config:
         alias_generator = to_camel
