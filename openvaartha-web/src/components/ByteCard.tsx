@@ -1,3 +1,4 @@
+import { useEffect, useState, type SyntheticEvent, type MouseEvent } from 'react';
 import { Share2, ArrowUpRight } from 'lucide-react';
 import { AnimatedIcon } from '@/components/ui/animated-icon';
 import { BRAND } from '@/lib/brand';
@@ -20,13 +21,25 @@ const relativeTime = (iso: string) => {
   return `${Math.round(hours / 24)}d ago`;
 };
 
-export const shareByte = (byte: Dispatch, shareUrl: string) => {
+export const shareByte = async (byte: Dispatch, shareUrl: string) => {
   const shareData = { title: `${BRAND.name} · Bytes`, text: byte.text, url: shareUrl };
-  if (navigator.share) {
-    navigator.share(shareData).catch(() => {});
-  } else {
-    navigator.clipboard.writeText(shareUrl);
-    toast.success('Link copied to clipboard');
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+      return;
+    }
+    throw new Error('Web Share API unavailable');
+  } catch (err: unknown) {
+    // User cancelling the share sheet isn't a failure — don't fall through
+    // to the clipboard toast. Any other failure (desktop, denied, etc.)
+    // degrades gracefully to copying the link.
+    if (err && typeof err === 'object' && 'name' in err && err.name === 'AbortError') return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success('Link copied to clipboard');
+    } catch {
+      toast.error('Could not share this byte');
+    }
   }
 };
 
@@ -48,27 +61,85 @@ export default function ByteCard({ byte, toneIndex = 0, shareUrl, onReadStory }:
   const hasImage = !!byte.imageUrl && !hasVideo;
   const tone = TONES[toneIndex % TONES.length];
 
+  // Detect landscape media so it never gets zoom-cropped inside the portrait
+  // frame — landscape images/videos get the Reels treatment instead: a blurred
+  // full-bleed backdrop with the media centered (object-contain).
+  const [isLandscape, setIsLandscape] = useState(false);
+  const [isLandscapeVideo, setIsLandscapeVideo] = useState(false);
+  useEffect(() => {
+    setIsLandscape(false);
+    setIsLandscapeVideo(false);
+  }, [byte.imageUrl, byte.videoUrl]);
+
+  const handleImageLoad = (e: SyntheticEvent<HTMLImageElement>) => {
+    setIsLandscape(e.currentTarget.naturalWidth > e.currentTarget.naturalHeight);
+  };
+  const handleVideoMeta = (e: SyntheticEvent<HTMLVideoElement>) => {
+    setIsLandscapeVideo(e.currentTarget.videoWidth > e.currentTarget.videoHeight);
+  };
+  const togglePlay = (e: MouseEvent<HTMLVideoElement>) => {
+    e.stopPropagation();
+    const v = e.currentTarget;
+    if (v.paused) { v.play().catch(() => {}); } else { v.pause(); }
+  };
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-black text-white select-none">
       {/* Full-bleed media — a video (muted, looping, tap to play/pause) or
-          photo takes the frame; otherwise a brand gradient. */}
+          photo takes the frame; otherwise a brand gradient. Landscape media
+          gets a blurred fill behind a centered, fully-visible frame. */}
       {hasVideo ? (
-        <video
-          src={byte.videoUrl!}
-          className="absolute inset-0 h-full w-full object-cover"
-          muted
-          loop
-          autoPlay
-          playsInline
-          aria-label="Byte video"
-          onClick={(e) => {
-            e.stopPropagation();
-            const v = e.currentTarget;
-            if (v.paused) { v.play().catch(() => {}); } else { v.pause(); }
-          }}
-        />
+        isLandscapeVideo ? (
+          <>
+            <video
+              src={byte.videoUrl!}
+              className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-70"
+              muted loop autoPlay playsInline
+              aria-hidden
+            />
+            <video
+              src={byte.videoUrl!}
+              className="absolute inset-0 h-full w-full object-contain"
+              muted loop autoPlay playsInline
+              onClick={togglePlay}
+              onLoadedMetadata={handleVideoMeta}
+              aria-label="Byte video"
+            />
+          </>
+        ) : (
+          <video
+            src={byte.videoUrl!}
+            className="absolute inset-0 h-full w-full object-cover"
+            muted loop autoPlay playsInline
+            onClick={togglePlay}
+            onLoadedMetadata={handleVideoMeta}
+            aria-label="Byte video"
+          />
+        )
       ) : hasImage ? (
-        <img src={byte.imageUrl!} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        isLandscape ? (
+          <>
+            <img
+              src={byte.imageUrl!}
+              alt=""
+              aria-hidden
+              className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-70"
+            />
+            <img
+              src={byte.imageUrl!}
+              alt=""
+              className="absolute inset-0 h-full w-full object-contain"
+              onLoad={handleImageLoad}
+            />
+          </>
+        ) : (
+          <img
+            src={byte.imageUrl!}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+            onLoad={handleImageLoad}
+          />
+        )
       ) : (
         <div className={`absolute inset-0 ${tone.bg}`} />
       )}
@@ -101,8 +172,10 @@ export default function ByteCard({ byte, toneIndex = 0, shareUrl, onReadStory }:
         </button>
       </div>
 
-      {/* Bottom caption */}
-      <div className="absolute inset-x-0 bottom-0 z-20 p-4 sm:p-6 pb-6 pr-20 sm:pr-24">
+      {/* Bottom caption — pointer-events-none so the full-width overlay never
+          swallows taps aimed at the action rail; only the Read-full-story
+          button re-enables clicks. */}
+      <div className="absolute inset-x-0 bottom-0 z-20 p-4 sm:p-6 pb-6 pr-20 sm:pr-24 pointer-events-none">
         <div className="max-w-2xl">
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <span className="relative inline-flex h-2 w-2 text-white">
@@ -127,7 +200,7 @@ export default function ByteCard({ byte, toneIndex = 0, shareUrl, onReadStory }:
             onReadStory ? (
               <button
                 onClick={(e) => { e.stopPropagation(); onReadStory(); }}
-                className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.18em] text-white bg-white/10 border border-white/25 backdrop-blur rounded-full px-4 py-2 press"
+                className="mt-5 pointer-events-auto inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.18em] text-white bg-white/10 border border-white/25 backdrop-blur rounded-full px-4 py-2 press"
               >
                 Read full story
                 <ArrowUpRight className="h-3.5 w-3.5" />
