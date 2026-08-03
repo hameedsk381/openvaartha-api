@@ -47,6 +47,11 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      // Registered explicitly in main.tsx via `virtual:pwa-register`
+      // (registerSW), which wires up the auto-update reload — the plugin's
+      // default injected registerSW.js is only a bare register() with no
+      // reload-on-new-build logic.
+      injectRegister: false,
       // injectManifest (a custom src/sw.ts, precompiled by Vite) instead of
       // generateSW's fully auto-generated worker — needed for the push /
       // notificationclick handlers generateSW has no hook for.

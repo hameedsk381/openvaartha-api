@@ -9,6 +9,7 @@ import { registerRoute, NavigationRoute } from "workbox-routing";
 import { NetworkFirst, CacheFirst, NetworkOnly } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 import { BackgroundSyncPlugin } from "workbox-background-sync";
+import { clientsClaim } from "workbox-core";
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -125,4 +126,9 @@ self.addEventListener("notificationclick", (event: NotificationEvent) => {
   );
 });
 
+// skipWaiting + clientsClaim together mean a freshly deployed build's service
+// worker activates AND takes control of every already-open PWA tab the moment
+// it installs — so the main.tsx auto-update reload lands on the new bundle
+// instead of the old precached one.
 self.skipWaiting();
+clientsClaim();
