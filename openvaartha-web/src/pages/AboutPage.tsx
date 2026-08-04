@@ -34,8 +34,8 @@ const AboutPage = () => {
               <p>
                 We believe the generation that grew up online should have a real say in how
                 the internet's stories get told. So we report, curate, and publish in the
-                open: our platform is open source, our articles are free to read, and our
-                editorial choices answer to readers — not advertisers.
+                open: our articles are free to read, and our editorial choices answer to
+                readers — not advertisers.
               </p>
             </div>
 
@@ -81,7 +81,7 @@ const AboutPage = () => {
                     Who runs the platform?
                   </AccordionButton>
                   <AccordionPanel className="text-muted-foreground px-4 pb-4">
-                    We are a youth-led (Gen Z) independent news initiative focused on building sustainable open-source software and open media platforms.
+                    We are a youth-led (Gen Z) independent news initiative focused on building sustainable independent media platforms.
                   </AccordionPanel>
                 </AccordionItem>
 
@@ -90,7 +90,7 @@ const AboutPage = () => {
                     Can I contribute or write articles?
                   </AccordionButton>
                   <AccordionPanel className="text-muted-foreground px-4 pb-4">
-                    Absolutely! We are an open platform. If you want to pitch an article, request a correction, or contribute to the open-source codebase, head over to our Contact page to get in touch.
+                    Absolutely! We are an open platform. If you want to pitch an article, request a correction, or get involved with the platform, head over to our Contact page to get in touch.
                   </AccordionPanel>
                 </AccordionItem>
               </Accordion>

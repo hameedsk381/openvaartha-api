@@ -46,9 +46,9 @@ const EditorialStandardsPage = () => (
 
     <h2>Open by default</h2>
     <p>
-      We publish in the open: our journalism is free to read, without paywalls, and the
-      platform itself is open source. We believe transparency about how the news is made is
-      part of earning trust.
+      We publish in the open: our journalism is free to read, without paywalls, and we
+      answer to readers, not advertisers. We believe transparency about how the news is
+      made is part of earning trust.
     </p>
 
     <h2>Contact</h2>
