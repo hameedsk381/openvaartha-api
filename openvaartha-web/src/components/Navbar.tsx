@@ -17,6 +17,7 @@ import { useStreak } from "@/hooks/use-streak";
 import { useSearch, useCategories, useBreakingArticles } from "@/lib/api-hooks";
 import SignOutButton from "@/components/SignOutButton";
 import { BRAND } from "@/lib/brand";
+import { Heart } from "lucide-react";
 
 interface NavbarProps { 
   isInsideStack?: boolean;
@@ -165,6 +166,16 @@ const Navbar = ({ isInsideStack, hideBottomNav }: NavbarProps) => {
               <span>{streak}</span>
             </div>
           )}
+
+          <Link
+            to="/support"
+            className="hidden sm:flex items-center gap-1.5 h-10 px-3 rounded-full bg-primary/10 border border-primary/20 text-primary hover:bg-primary/15 transition-colors press text-sm font-semibold"
+            aria-label="Support independent journalism"
+            title="Support us"
+          >
+            <Heart className="w-4 h-4 fill-current" />
+            Support
+          </Link>
           
           <button
             onClick={toggleDark}

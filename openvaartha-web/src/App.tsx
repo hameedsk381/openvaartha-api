@@ -48,6 +48,7 @@ const BytePage = lazy(() => import("./pages/BytePage.tsx"));
 const DigestPage = lazy(() => import("./pages/DigestPage.tsx"));
 const AboutPage = lazy(() => import("./pages/AboutPage.tsx"));
 const ContactPage = lazy(() => import("./pages/ContactPage.tsx"));
+const SupportPage = lazy(() => import("./pages/SupportPage.tsx"));
 const EditorialStandardsPage = lazy(() => import("./pages/EditorialStandardsPage.tsx"));
 const CorrectionsPage = lazy(() => import("./pages/CorrectionsPage.tsx"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage.tsx"));
@@ -222,6 +223,7 @@ const AuthListener = () => {
                 <Route path="/live" element={<Navigate to="/bytes" replace />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/contact" element={<ContactPage />} />
+                <Route path="/support" element={<SupportPage />} />
                 <Route path="/editorial" element={<EditorialStandardsPage />} />
                 <Route path="/corrections" element={<CorrectionsPage />} />
                 <Route path="/privacy" element={<PrivacyPage />} />

@@ -11,6 +11,7 @@ import EditorPicks from '@/components/home/EditorPicks';
 import MainFeed from '@/components/home/MainFeed';
 import TrendingSidebar from '@/components/home/TrendingSidebar';
 import { StoriesBar } from '@/components/StoriesBar';
+import SupportBanner from '@/components/SupportBanner';
 
 import {
   useArticles,
@@ -86,6 +87,9 @@ export default function Index() {
 
           {/* Stories Bar */}
           {!isFiltered && <StoriesBar />}
+
+          {/* One-time dismissible support banner */}
+          <SupportBanner className={isFiltered ? "hidden" : undefined} />
 
           {/* Classic Hero Section */}
           <HeroClassic articles={filtered.slice(0, 5)} />

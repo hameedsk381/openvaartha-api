@@ -4,6 +4,7 @@ import { BRAND } from "@/lib/brand";
 import { Instagram, Facebook, Youtube } from "lucide-react";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import NewsletterCapture from "@/components/NewsletterCapture";
+import SupportCta from "@/components/SupportCta";
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -101,8 +102,9 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div className="md:col-span-3">
+          <div className="md:col-span-3 flex flex-col gap-6">
             <NewsletterCapture variant="footer" className="p-0 border-0" />
+            <SupportCta variant="footer" />
           </div>
         </div>
 
@@ -113,6 +115,7 @@ const Footer = () => {
           <div className="flex gap-5">
             <Link to="/about" className="hover:text-primary transition-colors font-medium">About</Link>
             <Link to="/contact" className="hover:text-primary transition-colors font-medium">Contact</Link>
+            <Link to="/support" className="hover:text-primary transition-colors font-medium">Support</Link>
             <Link to="/privacy" className="hover:text-primary transition-colors font-medium">Privacy</Link>
             <Link to="/terms" className="hover:text-primary transition-colors font-medium">Terms</Link>
           </div>

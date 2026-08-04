@@ -27,6 +27,7 @@ import QuoteCardModal from "@/components/QuoteCardModal";
 import ExplainModal from "@/components/ExplainModal";
 import SeriesBanner from "@/components/SeriesBanner";
 import NewsletterCapture from "@/components/NewsletterCapture";
+import SupportCta from "@/components/SupportCta";
 import AudioPlayer from "@/components/AudioPlayer";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { useStreak } from "@/hooks/use-streak";
@@ -762,6 +763,10 @@ const SingleArticle = ({ articleId, onInView, isActive = true }: { articleId: st
 
             <div className="mt-14">
               <NewsletterCapture />
+            </div>
+
+            <div className="mt-6">
+              <SupportCta />
             </div>
           </div>
 
