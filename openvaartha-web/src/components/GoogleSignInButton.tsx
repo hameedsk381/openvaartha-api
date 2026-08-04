@@ -18,6 +18,8 @@ declare global {
 
 const GSI_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
 
+const initializedClientIds = new Set<string>();
+
 function loadGsiScript(): Promise<void> {
   if (window.google?.accounts?.id) return Promise.resolve();
   const existing = document.querySelector<HTMLScriptElement>(`script[src="${GSI_SCRIPT_SRC}"]`);
@@ -81,6 +83,9 @@ export default function GoogleSignInButton({ onSuccess, onError }: GoogleSignInB
     };
   }, []);
 
+  const callbackRef = useRef({ onSuccess, onError, queryClient });
+  callbackRef.current = { onSuccess, onError, queryClient };
+
   useEffect(() => {
     if (loading || !clientId) return;
 
@@ -90,32 +95,36 @@ export default function GoogleSignInButton({ onSuccess, onError }: GoogleSignInB
       .then(() => {
         if (cancelled || !containerRef.current || !window.google) return;
 
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: async (response: { credential: string }) => {
-            try {
-              const tokens = await apiFetch<GoogleTokenResponse>("/users/google", {
-                method: "POST",
-                body: JSON.stringify({ idToken: response.credential }),
-              });
-              localStorage.setItem("token", tokens.access_token);
-              localStorage.setItem("refresh_token", tokens.refresh_token);
+        if (!initializedClientIds.has(clientId)) {
+          window.google.accounts.id.initialize({
+            client_id: clientId,
+            callback: async (response: { credential: string }) => {
+              const { onSuccess, onError, queryClient } = callbackRef.current;
               try {
-                const me = await apiFetch<{ email: string; role: string; contributorStatus?: string }>("/users/me");
-                localStorage.setItem("user_email", me.email);
-                localStorage.setItem("user_role", me.role);
-                if (me.contributorStatus) localStorage.setItem("user_contributor_status", me.contributorStatus);
+                const tokens = await apiFetch<GoogleTokenResponse>("/users/google", {
+                  method: "POST",
+                  body: JSON.stringify({ idToken: response.credential }),
+                });
+                localStorage.setItem("token", tokens.access_token);
+                localStorage.setItem("refresh_token", tokens.refresh_token);
+                try {
+                  const me = await apiFetch<{ email: string; role: string; contributorStatus?: string }>("/users/me");
+                  localStorage.setItem("user_email", me.email);
+                  localStorage.setItem("user_role", me.role);
+                  if (me.contributorStatus) localStorage.setItem("user_contributor_status", me.contributorStatus);
+                } catch {
+                  // Non-fatal — the tokens are already stored and valid.
+                }
+                await migrateGuestReadingList().catch(() => {});
+                queryClient.invalidateQueries({ queryKey: READING_LIST_KEY });
+                onSuccess();
               } catch {
-                // Non-fatal — the tokens are already stored and valid.
+                onError("Couldn't sign in with Google. Please try again.");
               }
-              await migrateGuestReadingList().catch(() => {});
-              queryClient.invalidateQueries({ queryKey: READING_LIST_KEY });
-              onSuccess();
-            } catch {
-              onError("Couldn't sign in with Google. Please try again.");
-            }
-          },
-        });
+            },
+          });
+          initializedClientIds.add(clientId);
+        }
 
         window.google.accounts.id.renderButton(containerRef.current, {
           type: "standard",
@@ -133,7 +142,7 @@ export default function GoogleSignInButton({ onSuccess, onError }: GoogleSignInB
     return () => {
       cancelled = true;
     };
-  }, [loading, clientId, onSuccess, onError, queryClient]);
+  }, [loading, clientId]);
 
   if (loading || !clientId) return null;
 

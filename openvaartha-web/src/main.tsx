@@ -22,3 +22,35 @@ if (sentryDsn) {
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+// Recovery from stale-build chunk errors. After a deploy the new assets dist/
+// cleans up old chunk files (their hashed filenames change). A tab that was
+// already open — or a service-worker-preloaded page — can still reference a now
+// deleted chunk and throw "error loading dynamically imported module". The PWA
+// auto-update handles the next load, but this catches the in-session failure and
+// does a single hard reload to grab the freshly deployed index+chunks.
+(function installChunkReloadGuard() {
+  let reloaded = false;
+  const isChunkLoadFailure = (msg: string) =>
+    /Failed to fetch dynamically imported module|error loading dynamically imported module/i.test(msg);
+
+  const recover = () => {
+    if (reloaded) return;
+    reloaded = true;
+    // Best effort: clear the stale precache so the reload picks up new assets.
+    try {
+      navigator.serviceWorker?.getRegistrations().then((regs) =>
+        regs.forEach((r) => r.update())
+      );
+    } catch { /* ignore */ }
+    window.location.reload();
+  };
+
+  window.addEventListener("error", (e) => {
+    if (e.message && isChunkLoadFailure(e.message)) recover();
+  });
+  window.addEventListener("unhandledrejection", (e) => {
+    const msg = e.reason && (e.reason.message || String(e.reason));
+    if (typeof msg === "string" && isChunkLoadFailure(msg)) recover();
+  });
+})();
