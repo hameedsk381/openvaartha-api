@@ -99,7 +99,7 @@ async def create_password_reset_token(db: AsyncIOMotorDatabase, email: str) -> O
         "expires_at": datetime.now(timezone.utc) + timedelta(hours=settings.RESET_TOKEN_EXPIRE_HOURS),
         "used": False,
         "created_at": datetime.now(timezone.utc),
-    })
+    }).insert()
 
     reset_url = f"{settings.SITE_URL.rstrip('/')}/reset-password?token={token}"
     await send_email(

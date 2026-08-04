@@ -218,7 +218,7 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
             "source_id": source["_id"],
             "guid": guid,
             "url": entry.get("link", ""),
-        })
+        }).insert()
 
         new_count += 1
 

@@ -37,4 +37,4 @@ async def ensure_admin_user(db: AsyncIOMotorDatabase) -> None:
             "role": role,
             "avatar_url": None,
             "created_at": datetime.now(timezone.utc),
-        })
+        }).insert()
