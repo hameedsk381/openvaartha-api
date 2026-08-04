@@ -16,10 +16,9 @@ export const BRAND = {
   youtubeUrl: "https://youtube.com/@openvaartha",
   copyright: "FOSS Andhra Foundation",
   contactEmail: "office@openvaartha.com",
-  // Reader-support funding. Paste your Razorpay/UPI/QR payment link here and it
-  // flows into every "Support us" CTA across the app (footer, navbar, articles,
-  // /support page). Leave empty to fall back to the internal /support page.
-  supportUrl: "",
+  // Reader-support funding. Razorpay payment link — flows into every "Support
+  // us" CTA across the app (footer, navbar, articles, /support page).
+  supportUrl: "https://razorpay.me/@fossandhrafoundation",
   // Optional UPI ID (e.g. "openvaartha@upi") shown on the /support page and
   // copied on tap. Shown only when actually configured.
   supportUpiId: "",
