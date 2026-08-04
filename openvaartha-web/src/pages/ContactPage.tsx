@@ -1,6 +1,6 @@
 import Navbar from '../components/Navbar';
 import Footer from '@/components/Footer';
-import { ArrowUpRight, Instagram, Facebook, Github } from 'lucide-react';
+import { ArrowUpRight, Instagram, Facebook, Mail } from 'lucide-react';
 import { AnimatedIcon } from '@/components/ui/animated-icon';
 import { BRAND } from '@/lib/brand';
 
@@ -20,11 +20,11 @@ const CHANNELS = [
     href: BRAND.facebookUrl,
   },
   {
-    icon: Github,
-    name: 'GitHub',
-    handle: 'hameedsk381/openvaartha-api',
-    description: 'The platform is open source — file issues and contribute.',
-    href: 'https://github.com/hameedsk381/openvaartha-api',
+    icon: Mail,
+    name: 'Email',
+    handle: BRAND.contactEmail,
+    description: 'Story tips, corrections, feedback, or building with us.',
+    href: `mailto:${BRAND.contactEmail}`,
   },
 ];
 

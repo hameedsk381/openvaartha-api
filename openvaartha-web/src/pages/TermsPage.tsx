@@ -41,7 +41,7 @@ const TermsPage = () => (
     <p>
       Unless otherwise noted, articles and original content published by {BRAND.name} are
       free to read and share with attribution. The {BRAND.name} platform (the software itself)
-      is open source — see our <Link to="/contact">Contact</Link> page for the repository.
+      is open source — reach us via the <Link to="/contact">Contact</Link> page for details.
       Third-party content we aggregate or cite remains the property of its original source and
       is attributed accordingly.
     </p>
