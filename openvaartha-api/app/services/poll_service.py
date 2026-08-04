@@ -14,7 +14,7 @@ async def create_poll(db: AsyncIOMotorDatabase, poll_data: PollCreate) -> str:
         PollOption(id=opt.id, text=opt.text, votes=0) for opt in poll_data.options
     ]
     poll = Poll(_id=poll_id, question=poll_data.question, options=poll_options)
-    await Poll(**poll.dict(by_alias=True).insert())
+    await Poll(**poll.dict(by_alias=True)).insert()
     return poll_id
 
 async def get_poll_with_results(

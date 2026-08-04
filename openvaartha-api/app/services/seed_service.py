@@ -31,7 +31,7 @@ async def ensure_admin_user(db: AsyncIOMotorDatabase) -> None:
             "id": uid,
             "email": email,
             "full_name": name,
-            "hashed_password": _hash_password(pw).insert(),
+            "hashed_password": _hash_password(pw),
             "is_active": active,
             "is_admin": is_admin,
             "role": role,
