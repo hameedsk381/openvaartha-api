@@ -60,9 +60,9 @@ class Article(Document):
     is_opinion: bool = False
     thumbnail_url: Optional[str] = None
     instagram_url: Optional[str] = None
-    published_at: datetime
+    published_at: Optional[datetime] = None
     last_updated: Optional[datetime] = None
-    author: str
+    author: Optional[str] = None
     author_id: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = None
