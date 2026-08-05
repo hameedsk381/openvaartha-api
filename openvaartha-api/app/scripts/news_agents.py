@@ -15,8 +15,10 @@ logger = logging.getLogger(__name__)
 async def fetch_newsapi(query: str, limit: int = 5) -> list[dict]:
     if not settings.NEWS_API_KEY:
         return []
-    
-    url = f"https://newsapi.org/v2/everything?q={query}&pageSize={limit}&apiKey={settings.NEWS_API_KEY}&language=en"
+    # India-focused: prefix the category with "India" and use the top-headlines
+    # endpoint pinned to country=in instead of the global everything endpoint.
+    query = f"India {query}"
+    url = f"https://newsapi.org/v2/top-headlines?q={query}&country=in&pageSize={limit}&apiKey={settings.NEWS_API_KEY}&language=en"
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.get(url, timeout=10.0)
@@ -41,8 +43,10 @@ async def fetch_newsapi(query: str, limit: int = 5) -> list[dict]:
 async def fetch_mediastack(query: str, limit: int = 5) -> list[dict]:
     if not settings.MEDIASTACK_API_KEY:
         return []
-        
-    url = f"http://api.mediastack.com/v1/news?access_key={settings.MEDIASTACK_API_KEY}&keywords={query}&limit={limit}&languages=en"
+    # MediaStack supports a countries=IN filter — pin to India so results are
+    # domestic rather than a jumble of global (mostly US) coverage.
+    url = (f"http://api.mediastack.com/v1/news?access_key={settings.MEDIASTACK_API_KEY}"
+           f"&keywords=India%20{query}&limit={limit}&languages=en&countries=IN&sort=published_desc")
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.get(url, timeout=10.0)

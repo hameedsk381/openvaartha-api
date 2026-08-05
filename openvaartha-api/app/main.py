@@ -62,7 +62,11 @@ async def lifespan(app: FastAPI):
     await ensure_comment_indexes(db)
 
     await ensure_admin_user(db)
-    
+
+    from app.services.source_seed import seed_categories_and_sources
+    seed_result = await seed_categories_and_sources(db)
+    print(f"INFO: Source seed result: {seed_result}")
+
     if not settings.GROQ_API_KEY:
         print("WARNING: GROQ_API_KEY is not set. AI article generation will be unavailable.")
     else:
