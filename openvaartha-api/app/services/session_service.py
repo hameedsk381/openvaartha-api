@@ -14,6 +14,7 @@ This gives us:
   * reuse detection (old token replayed => revoke family)
 """
 from datetime import datetime, timezone, timedelta
+from typing import Optional
 from uuid import uuid4
 
 from motor.motor_asyncio import AsyncIOMotorDatabase

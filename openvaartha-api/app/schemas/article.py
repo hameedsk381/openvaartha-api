@@ -31,6 +31,8 @@ class FactCheck(BaseModel):
     class Config:
         alias_generator = to_camel
         populate_by_name = True
+        # "model_version" collides with pydantic's protected "model_" namespace.
+        protected_namespaces = ()
 
 class ArticleContentBase(BaseModel):
     tldr: Optional[str] = ""
