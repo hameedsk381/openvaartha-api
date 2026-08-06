@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { API_BASE } from '@/lib/api';
+import { API_BASE, getStoredToken } from '@/lib/api';
 
 type WSEventCallback = (data: unknown) => void;
 
@@ -20,7 +20,9 @@ class WebSocketService {
       return;
     }
 
-    this.ws = new WebSocket(this.url);
+    const token = getStoredToken();
+    const url = token ? `${this.url}?token=${encodeURIComponent(token)}` : this.url;
+    this.ws = new WebSocket(url);
 
     this.ws.onopen = () => {
       console.log('WebSocket connected');

@@ -4,9 +4,6 @@ from app.models.user import User as UserModel
 from app.config import settings
 from PIL import Image
 import io
-import uuid
-import base64
-import json
 import asyncio
 import shutil
 import subprocess
@@ -57,28 +54,8 @@ def _probe_video_duration_seconds(data: bytes) -> float | None:
 def _gcs_bucket():
     """Shared GCS client/bucket setup for both the image and video upload
     endpoints. Raises HTTPException if storage isn't configured."""
-    if not settings.GCS_BUCKET_NAME:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Image storage is not configured (GCS_BUCKET_NAME is unset)."
-        )
-
-    from google.cloud import storage
-    if settings.GCS_CREDENTIALS_BASE64:
-        from google.oauth2 import service_account
-
-        # Safely handle missing base64 padding and whitespace
-        b64_str = settings.GCS_CREDENTIALS_BASE64.strip()
-        # Adding "===" ensures Python's b64decode never fails due to missing padding
-        decoded_json = base64.b64decode(b64_str + "===").decode('utf-8')
-
-        credentials_info = json.loads(decoded_json)
-        credentials = service_account.Credentials.from_service_account_info(credentials_info)
-        client = storage.Client(credentials=credentials, project=credentials_info.get("project_id"))
-    else:
-        client = storage.Client()
-
-    return client.bucket(settings.GCS_BUCKET_NAME)
+    from app.services.storage_service import get_bucket
+    return get_bucket()
 
 
 def _upload_image_sync(contents: bytes) -> str:
@@ -95,19 +72,8 @@ def _upload_image_sync(contents: bytes) -> str:
             detail=f"Invalid image data: {e}"
         )
 
-    filename = f"{uuid.uuid4().hex}.webp"
-    try:
-        bucket = _gcs_bucket()
-        blob = bucket.blob(filename)
-        blob.upload_from_string(compressed_bytes, content_type="image/webp")
-        return f"https://storage.googleapis.com/{settings.GCS_BUCKET_NAME}/{filename}"
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload image to storage: {e}"
-        )
+    from app.services.storage_service import upload_image_bytes
+    return upload_image_bytes(compressed_bytes, content_type="image/webp")
 
 
 @router.post("/")
@@ -137,19 +103,8 @@ async def upload_image(
 
 
 def _upload_video_sync(spooled_file, content_type: str, extension: str) -> str:
-    filename = f"{uuid.uuid4().hex}.{extension}"
-    try:
-        bucket = _gcs_bucket()
-        blob = bucket.blob(filename)
-        blob.upload_from_file(spooled_file, content_type=content_type)
-        return f"https://storage.googleapis.com/{settings.GCS_BUCKET_NAME}/{filename}"
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload video to storage: {e}",
-        )
+    from app.services.storage_service import upload_stream
+    return upload_stream(spooled_file, content_type=content_type, extension=extension)
 
 
 @router.post("/video")

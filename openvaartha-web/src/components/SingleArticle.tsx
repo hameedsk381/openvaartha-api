@@ -37,6 +37,8 @@ import { Button } from "@/components/ui/button";
 import { useInView } from "react-intersection-observer";
 import { InteractivePoll } from "./InteractivePoll";
 import FactCheckOverlay from "./FactCheckOverlay";
+import { ArticleCitations } from "./ArticleCitations";
+import { ArticleCorrections } from "./ArticleCorrections";
 import CustomVideoPlayer from "./CustomVideoPlayer";
 
 const timeAgo = (dateStr: string): string => {
@@ -394,6 +396,9 @@ const SingleArticle = ({ articleId, onInView, isActive = true }: { articleId: st
             {article.content?.factCheck && (
               <FactCheckOverlay factCheck={article.content.factCheck} />
             )}
+
+            <ArticleCitations citations={article.citations || []} />
+            <ArticleCorrections corrections={article.corrections || []} />
 
             <div className="flex flex-wrap items-center justify-between gap-4 mt-8 sm:mt-10 pt-6 border-t border-border">
               <address className="flex items-center gap-3 not-italic">

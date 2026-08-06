@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional, Union, Dict, Any
+from datetime import datetime, timezone
 
 from app.database import get_db
-from app.schemas.article import Article, ArticleCreate, ArticleUpdate, ContributionCreate
+from app.schemas.article import Article, ArticleCreate, ArticleUpdate, ContributionCreate, CorrectionCreate, CorrectionIndexItem
 from app.services import article_service
 from app.services.reaction_service import get_reaction_counts, toggle_reaction
 from app.services.article_service import _public_query
@@ -221,7 +222,9 @@ async def update_contributor_post(
         )
     )
     
-    return await article_service.update_article(db, article_id, article_update)
+    return await article_service.update_article(
+        db, article_id, article_update, editor_id=current_user.id
+    )
 
 
 @router.delete("/contributions/{article_id}")
@@ -245,6 +248,45 @@ async def delete_contributor_post(
         
     await article_service.delete_article(db, article_id)
     return {"message": "Contribution withdrawn successfully"}
+
+
+@router.get("/corrections", response_model=List[CorrectionIndexItem])
+async def public_corrections_index(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Public index of all published corrections and retractions."""
+    pipeline = [
+        {"$match": {"severity": {"$in": ["correction", "retraction"]}}},
+        {"$sort": {"corrected_at": -1}},
+        {"$skip": skip},
+        {"$limit": limit},
+        {"$lookup": {
+            "from": "articles",
+            "localField": "article_id",
+            "foreignField": "_id",
+            "as": "_article",
+        }},
+        {"$unwind": {"path": "$_article", "preserveNullAndEmptyArrays": True}},
+        {"$match": {
+            "$or": [
+                {"_article.status": "published"},
+                {"_article": None},
+            ]
+        }},
+        {"$project": {
+            "id": 1,
+            "article_id": 1,
+            "article_slug": "$_article.slug",
+            "article_title": "$_article.title",
+            "summary": 1,
+            "severity": 1,
+            "corrected_at": 1,
+        }},
+    ]
+    items = await db["article_corrections"].aggregate(pipeline).to_list(length=limit)
+    return items
 
 
 @router.get("/{id_or_slug}", response_model=Article)
@@ -401,7 +443,9 @@ async def update_article(
     existing = await article_service.get_article_by_id(db, article_id, include_unpublished=True)
     if not existing:
         raise HTTPException(status_code=404, detail="Article not found")
-    return await article_service.update_article(db, article_id, article_data)
+    return await article_service.update_article(
+        db, article_id, article_data, editor_id=current_user.id
+    )
 
 
 @router.post("/{article_id}/fact-check")
@@ -412,7 +456,11 @@ async def generate_fact_check(
     db: AsyncIOMotorDatabase = Depends(get_db),
     current_user: UserModel = Depends(get_current_editor),
 ):
-    """Generate and save a Gemini fact check for an article."""
+    """Generate an automated claim review for an article.
+
+    The result is intentionally stored as unverified; it must not be presented
+    as a human editorial fact check until a reviewer confirms it.
+    """
     existing = await article_service.get_article_by_id(db, article_id, include_unpublished=True)
     if not existing:
         raise HTTPException(status_code=404, detail="Article not found")
@@ -427,16 +475,229 @@ async def generate_fact_check(
     if not fact_check_data:
         raise HTTPException(status_code=500, detail="Failed to generate fact check with Gemini")
 
-    # Update article content
-    content = existing.get("content", {})
-    content["fact_check"] = fact_check_data
-    
-    await ArticleModel.get_motor_collection().update_one(
-        {"_id": article_id},
-        {"$set": {"content": content}}
+    fact_check_data["review_status"] = "automated_unverified"
+    await db["article_content"].update_one(
+        {"article_id": article_id},
+        {"$set": {"fact_check": fact_check_data}},
+        upsert=True,
     )
 
-    return {"message": "Fact check generated successfully", "fact_check": fact_check_data}
+    return {"message": "Automated claim review generated", "fact_check": fact_check_data}
+
+
+class FactCheckConfirmRequest(BaseModel):
+    evidence: List[str] = Field(default_factory=list)
+    notes: Optional[str] = None
+
+
+@router.post("/{article_id}/fact-check/confirm")
+@limiter.limit(MUTATION_LIMIT)
+async def confirm_fact_check(
+    request: Request,
+    article_id: str,
+    payload: FactCheckConfirmRequest,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_editor),
+):
+    """Promote an automated claim review to an editor-confirmed review.
+
+    Records the reviewing editor, the confirmation timestamp, and the evidence
+    URLs relied upon so automated output is never presented as human-verified
+    without a named reviewer signing off.
+    """
+    existing = await article_service.get_article_by_id(db, article_id, include_unpublished=True)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    content = await db["article_content"].find_one({"article_id": article_id})
+    if not content or not content.get("fact_check"):
+        raise HTTPException(status_code=400, detail="No automated fact check to confirm")
+
+    from datetime import datetime, timezone
+
+    confirmed = dict(content["fact_check"])
+    confirmed["review_status"] = "editor_confirmed"
+    confirmed["reviewer_id"] = current_user.id
+    confirmed["reviewer_name"] = current_user.full_name
+    confirmed["confirmation_date"] = datetime.now(timezone.utc)
+    if payload.evidence:
+        confirmed["evidence"] = payload.evidence
+    if payload.notes:
+        confirmed["reviewer_notes"] = payload.notes
+
+    await db["article_content"].update_one(
+        {"article_id": article_id},
+        {"$set": {"fact_check": confirmed}},
+    )
+    await article_service.invalidate_article_caches()
+    return {"message": "Fact check confirmed by reviewer", "fact_check": confirmed}
+
+
+@router.post("/{article_id}/corrections")
+@limiter.limit(MUTATION_LIMIT)
+async def record_correction(
+    request: Request,
+    article_id: str,
+    correction: CorrectionCreate,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_editor),
+):
+    """Record a public, immutable correction entry for an article.
+
+    Retractions are recorded through the same endpoint (severity="retraction").
+    A retraction keeps the article publicly visible so the explanation is
+    retained, and also persists an immutable record in article_revisions.
+    """
+    existing = await article_service.get_article_by_id(db, article_id, include_unpublished=True)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    from datetime import datetime, timezone
+    from uuid import uuid4
+
+    before = {
+        "fields": ["title", "summary", "body"],
+        "excerpt": (existing.get("title") or "")[:200],
+    }
+    correction_doc = {
+        "id": str(uuid4()),
+        "article_id": article_id,
+        "summary": correction.summary,
+        "details": correction.details,
+        "reason": correction.reason,
+        "severity": correction.severity,
+        "corrected_at": datetime.now(timezone.utc),
+        "editor_id": current_user.id,
+        "editor_name": current_user.full_name,
+        "before": before,
+        "after": None,
+    }
+    await db["article_corrections"].insert_one(correction_doc)
+
+    # Retractions are immutable public records: snapshot the pre-retraction
+    # state into the revision log so the explanation is forever auditable even
+    # if the article is later edited further.
+    if correction.severity == "retraction":
+        prev_article = await ArticleModel.get_motor_collection().find_one(
+            {"_id": article_id}, {"embedding": 0}
+        )
+        prev_content = await db["article_content"].find_one(
+            {"article_id": article_id}, {"_id": 0}
+        )
+        rev_num = await db["article_revisions"].count_documents({"article_id": article_id}) + 1
+        await db["article_revisions"].insert_one({
+            "article_id": article_id,
+            "revision": rev_num,
+            "editor_id": current_user.id,
+            "created_at": correction_doc["corrected_at"],
+            "article": prev_article,
+            "content": prev_content,
+            "correction_id": correction_doc["id"],
+        })
+
+    await ArticleModel.get_motor_collection().update_one(
+        {"_id": article_id},
+        {"$set": {"last_updated": correction_doc["corrected_at"]}},
+    )
+    await article_service.invalidate_article_caches()
+    return correction_doc
+
+
+@router.get("/{article_id}/revisions")
+async def list_article_revisions(
+    article_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_editor),
+):
+    """Return revision metadata. Editor-only — snapshots and full history are
+    internal editorial tooling, not a public endpoint."""
+    revisions = await db["article_revisions"].find(
+        {"article_id": article_id},
+        {"_id": 0, "revision": 1, "editor_id": 1, "created_at": 1, "correction_id": 1},
+    ).sort("revision", -1).to_list(length=500)
+    return {"article_id": article_id, "revisions": revisions}
+
+
+@router.get("/{article_id}/revisions/{revision}")
+async def get_article_revision_snapshot(
+    article_id: str,
+    revision: int,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_editor),
+):
+    """Return a full revision snapshot (article + content) for restore/diff."""
+    rev = await db["article_revisions"].find_one(
+        {"article_id": article_id, "revision": revision}, {"_id": 0}
+    )
+    if not rev:
+        raise HTTPException(status_code=404, detail="Revision not found")
+    rev.pop("_id", None)
+    return rev
+
+
+class RevisionRestoreRequest(BaseModel):
+    revision: int
+
+
+@router.post("/{article_id}/revisions/{revision}/restore")
+@limiter.limit(MUTATION_LIMIT)
+async def restore_revision(
+    request: Request,
+    article_id: str,
+    revision: int,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_editor),
+):
+    """Restore an article to a prior revision. The current state is first
+    snapshotted as a new revision so the restore itself is reversible."""
+    snapshot = await db["article_revisions"].find_one(
+        {"article_id": article_id, "revision": revision}
+    )
+    if not snapshot:
+        raise HTTPException(status_code=404, detail="Revision not found")
+
+    now = datetime.now(timezone.utc)
+
+    # Snapshot current state as the latest revision before mutating.
+    prev_article = await ArticleModel.get_motor_collection().find_one(
+        {"_id": article_id}, {"embedding": 0}
+    )
+    prev_content = await db["article_content"].find_one({"article_id": article_id}, {"_id": 0})
+    if prev_article or prev_content:
+        rev_num = await db["article_revisions"].count_documents({"article_id": article_id}) + 1
+        await db["article_revisions"].insert_one({
+            "article_id": article_id,
+            "revision": rev_num,
+            "editor_id": current_user.id,
+            "created_at": now,
+            "article": prev_article,
+            "content": prev_content,
+        })
+
+    restored_article = snapshot.get("article") or {}
+    restored_content = snapshot.get("content") or {}
+
+    article_fields = {
+        k: v for k, v in restored_article.items()
+        if k not in ("_id", "embedding") and v is not None
+    }
+    article_fields["last_updated"] = now
+    article_fields["updated_at"] = now
+    if article_fields:
+        await ArticleModel.get_motor_collection().update_one(
+            {"_id": article_id}, {"$set": article_fields}
+        )
+
+    content_fields = {k: v for k, v in restored_content.items() if k != "_id"}
+    if content_fields:
+        await db["article_content"].update_one(
+            {"article_id": article_id},
+            {"$set": content_fields, "$setOnInsert": {"article_id": article_id}},
+            upsert=True,
+        )
+
+    await article_service.invalidate_article_caches()
+    return {"message": f"Article restored to revision {revision}"}
 
 @router.get("/{article_id}/explain")
 async def explain_article(

@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+from uuid import uuid4
 from jose import JWTError, jwt
 import bcrypt as _bcrypt
 
@@ -27,7 +28,12 @@ def get_password_hash(password: str) -> str:
 
 def _encode(data: dict, expires_at: datetime, token_type: str) -> str:
     payload = data.copy()
-    payload.update({"exp": expires_at, "typ": token_type})
+    payload.update({
+        "exp": expires_at,
+        "typ": token_type,
+        "jti": str(uuid4()),
+        "iat": datetime.now(timezone.utc),
+    })
     return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
@@ -42,7 +48,8 @@ def create_refresh_token(data: dict) -> str:
 
     The ``typ`` claim lets ``get_current_user`` reject a refresh token that
     is presented as an access token, and lets ``/refresh`` reject anything
-    other than a real refresh token.
+    other than a real refresh token. Each token carries a unique ``jti`` so
+    sessions can be individually tracked and revoked server-side.
     """
     delta = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     return _encode(data, datetime.now(timezone.utc) + delta, "refresh")

@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime, date
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import redis.asyncio as redis
 from fastapi import WebSocket, WebSocketDisconnect
 
@@ -31,6 +31,7 @@ class WebSocketManager:
         self.pubsub = None
         self.channel_name = "openvaartha:events"
         self.listen_task = None
+        self.heartbeat_task = None
 
     async def connect_redis(self):
         self.redis = redis.from_url(settings.REDIS_URL, decode_responses=True)
@@ -38,8 +39,11 @@ class WebSocketManager:
         await self.pubsub.subscribe(self.channel_name)
         logger.info(f"Subscribed to Redis channel: {self.channel_name}")
         self.listen_task = asyncio.create_task(self._listen_to_redis())
+        self.heartbeat_task = asyncio.create_task(self._heartbeat_loop())
 
     async def disconnect_redis(self):
+        if self.heartbeat_task:
+            self.heartbeat_task.cancel()
         if self.listen_task:
             self.listen_task.cancel()
         if self.pubsub:
@@ -47,6 +51,13 @@ class WebSocketManager:
             await self.pubsub.close()
         if self.redis:
             await self.redis.close()
+
+    @property
+    def connection_count(self) -> int:
+        return len(self.active_connections)
+
+    def at_capacity(self) -> bool:
+        return len(self.active_connections) >= settings.WS_MAX_CONNECTIONS
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
@@ -57,6 +68,24 @@ class WebSocketManager:
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
         logger.info(f"WebSocket disconnected. Total connections: {len(self.active_connections)}")
+
+    async def _heartbeat_loop(self):
+        """Periodically ping dead connections so stale sockets don't accumulate."""
+        try:
+            while True:
+                await asyncio.sleep(settings.WS_PING_INTERVAL_SECONDS)
+                dead = []
+                for connection in list(self.active_connections):
+                    try:
+                        await connection.send_text(json.dumps({"type": "PING"}))
+                    except Exception:
+                        dead.append(connection)
+                for connection in dead:
+                    self.disconnect(connection)
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            logger.error(f"WebSocket heartbeat error: {e}")
 
     async def _listen_to_redis(self):
         try:

@@ -13,6 +13,7 @@ export interface FactCheck {
   biasRating: string;
   confidenceScore: number;
   summary: string;
+  reviewStatus?: "automated_unverified" | "editor_confirmed";
 }
 
 export interface ArticleContent {
@@ -51,6 +52,37 @@ export interface Article {
   shareCount: number;
   createdAt: string;
   content?: ArticleContent | null;
+  citations?: ArticleCitation[];
+  corrections?: ArticleCorrection[];
+}
+
+export interface ArticleCitation {
+  publisher: string;
+  url: string;
+  publishedAt?: string | null;
+}
+
+export interface ArticleCorrection {
+  id: string;
+  summary: string;
+  details?: string | null;
+  reason?: string | null;
+  severity: "clarification" | "correction" | "retraction";
+  correctedAt: string;
+  editorId?: string | null;
+  editorName?: string | null;
+  before?: { fields: string[]; excerpt?: string | null } | null;
+  after?: { fields: string[]; excerpt?: string | null } | null;
+}
+
+export interface CorrectionIndexItem {
+  id: string;
+  articleId: string;
+  articleSlug: string;
+  articleTitle: string;
+  summary: string;
+  severity: "clarification" | "correction" | "retraction";
+  correctedAt: string;
 }
 
 export interface Category {

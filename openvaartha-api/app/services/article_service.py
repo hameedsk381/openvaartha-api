@@ -93,29 +93,8 @@ def _save_base64_thumbnail_sync(thumbnail_url: str) -> str:
 
     filename = f"{uuid.uuid4().hex}.webp"
     try:
-        from google.cloud import storage
-        
-        if settings.GCS_CREDENTIALS_BASE64:
-            import json
-            from google.oauth2 import service_account
-            
-            # Decode the base64 string back into JSON
-            decoded_json = base64.b64decode(settings.GCS_CREDENTIALS_BASE64).decode('utf-8')
-            credentials_info = json.loads(decoded_json)
-            
-            credentials = service_account.Credentials.from_service_account_info(credentials_info)
-            client = storage.Client(credentials=credentials, project=credentials_info.get("project_id"))
-        else:
-            client = storage.Client()
-            
-        bucket = client.bucket(settings.GCS_BUCKET_NAME)
-        blob = bucket.blob(filename)
-
-        # Upload the WebP image bytes
-        blob.upload_from_string(compressed_bytes, content_type="image/webp")
-
-        # Return the public GCS URL (bucket must grant public read access)
-        return f"https://storage.googleapis.com/{settings.GCS_BUCKET_NAME}/{filename}"
+        from app.services.storage_service import upload_image_bytes
+        return upload_image_bytes(compressed_bytes, content_type="image/webp")
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -272,6 +251,11 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
     await _backfill_deep_content_flag(db)
 
     await db["article_content"].create_index("article_id")
+    await db["article_sources"].create_index(
+        [("source_id", 1), ("guid", 1)], unique=True
+    )
+    await db["article_corrections"].create_index([("article_id", 1), ("corrected_at", -1)])
+    await db["article_revisions"].create_index([("article_id", 1), ("revision", -1)], unique=True)
     await ReadingHistory.get_motor_collection().create_index([("user_id", 1), ("article_id", 1)], unique=True)
     await ensure_comment_indexes(db)
     from app.services.reaction_service import ensure_reaction_indexes
@@ -341,6 +325,19 @@ async def _populate_article_extras(db: AsyncIOMotorDatabase, article: dict) -> d
         if "_id" in content:
             content["id"] = str(content.pop("_id"))
         article["content"] = content
+
+    citations = await db["article_sources"].find(
+        {"article_id": article.get("id")},
+        {"_id": 0, "publisher": 1, "url": 1, "published_at": 1},
+    ).to_list(length=50)
+    article["citations"] = citations
+
+    corrections = await db["article_corrections"].find(
+        {"article_id": article.get("id")},
+        {"_id": 0, "id": 1, "summary": 1, "details": 1, "reason": 1, "severity": 1,
+         "corrected_at": 1, "editor_id": 1, "editor_name": 1, "before": 1, "after": 1},
+    ).sort("corrected_at", -1).to_list(length=50)
+    article["corrections"] = corrections
 
     return article
 
@@ -697,6 +694,8 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
         "read_time": article_data.read_time,
         "language": article_data.language,
         "status": article_status,
+        "scheduled_at": getattr(article_data, "scheduled_at", None),
+        "tags": [tag.strip().lower() for tag in getattr(article_data, "tags", []) if tag.strip()],
         "is_trending": article_data.is_trending,
         "is_breaking": article_data.is_breaking,
         "is_editor_pick": article_data.is_editor_pick,
@@ -706,6 +705,7 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
         "published_at": article_data.published_at,
         "last_updated": article_data.last_updated or datetime.now(timezone.utc),
         "author": sanitize_text(article_data.author),
+        "author_id": getattr(article_data, "author_id", None),
         "created_at": datetime.now(timezone.utc),
         "has_deep_content": _has_deep_content(getattr(article_data, "content", None)),
     }
@@ -721,6 +721,12 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
             "timeline": article_data.content.timeline,
             "explainer": article_data.content.explainer,
             "video_url": article_data.content.video_url,
+            "poll_id": article_data.content.poll_id,
+            "fact_check": (
+                article_data.content.fact_check.model_dump()
+                if article_data.content.fact_check
+                else None
+            ),
         }
         await db["article_content"].insert_one(content_doc)
 
@@ -744,7 +750,12 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
 _PLAIN_TEXT_FIELDS = {"title", "summary", "author"}
 
 
-async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data: Any):
+async def update_article(
+    db: AsyncIOMotorDatabase,
+    article_id: str,
+    article_data: Any,
+    editor_id: Optional[str] = None,
+):
     """Update an existing article. Only fields the caller actually sent are touched.
 
     Partial nested-content updates are merged with ``$set`` on dotted paths so
@@ -752,6 +763,28 @@ async def update_article(db: AsyncIOMotorDatabase, article_id: str, article_data
     """
     update_dict = article_data.model_dump(exclude_unset=True)
     content_data = update_dict.pop("content", None)
+
+    # Save the exact pre-edit state before mutating it. Revisions are append
+    # only; they provide an auditable record rather than a browser-local undo.
+    if update_dict or content_data:
+        previous_article = await Article.get_motor_collection().find_one(
+            {"_id": article_id}, {"embedding": 0}
+        )
+        if previous_article:
+            previous_content = await db["article_content"].find_one(
+                {"article_id": article_id}, {"_id": 0}
+            )
+            revision_number = await db["article_revisions"].count_documents(
+                {"article_id": article_id}
+            ) + 1
+            await db["article_revisions"].insert_one({
+                "article_id": article_id,
+                "revision": revision_number,
+                "editor_id": editor_id,
+                "created_at": datetime.now(timezone.utc),
+                "article": previous_article,
+                "content": previous_content,
+            })
 
     if "category_id" in update_dict:
         await _assert_category_exists(db, update_dict["category_id"])

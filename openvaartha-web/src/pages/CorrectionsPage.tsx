@@ -1,6 +1,47 @@
 import { Link } from "react-router-dom";
 import PolicyLayout from "@/components/PolicyLayout";
 import { BRAND } from "@/lib/brand";
+import { useCorrectionsIndex } from "@/lib/api-hooks";
+
+function CorrectionsIndex() {
+  const { data, isLoading, isError } = useCorrectionsIndex({ limit: 50 });
+
+  return (
+    <section className="mt-10 rounded-xl border border-amber-300/60 bg-amber-50/40 p-5 dark:bg-amber-950/10">
+      <h2 className="text-xl font-bold">Public corrections index</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Every substantive correction and retraction we have published, in reverse chronological order.
+      </p>
+
+      {isLoading && <p className="mt-4 text-sm text-muted-foreground">Loading corrections…</p>}
+      {isError && <p className="mt-4 text-sm text-muted-foreground">Could not load the corrections index. Please try again later.</p>}
+      {data && data.length === 0 && !isLoading && (
+        <p className="mt-4 text-sm text-muted-foreground">No corrections recorded yet.</p>
+      )}
+
+      {data && data.length > 0 && (
+        <ul className="mt-4 space-y-3">
+          {data.map((item) => (
+            <li key={item.id} className="border-b border-amber-300/40 pb-3 last:border-0">
+              <Link
+                to={`/article/${item.articleSlug}`}
+                className="font-medium text-foreground hover:underline"
+              >
+                {item.articleTitle}
+              </Link>
+              <p className={`text-sm ${item.severity === "retraction" ? "font-semibold text-red-600" : "text-muted-foreground"}`}>
+                <span className="capitalize">{item.severity}</span> — {item.summary}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {new Date(item.correctedAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
 
 const CorrectionsPage = () => (
   <PolicyLayout
@@ -55,6 +96,8 @@ const CorrectionsPage = () => (
       inaccurate, unlawful, or infringes your rights, contact us at{" "}
       <a href={`mailto:${BRAND.contactEmail}`}>{BRAND.contactEmail}</a> and we will review it.
     </p>
+
+    <CorrectionsIndex />
   </PolicyLayout>
 );
 

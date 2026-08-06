@@ -21,6 +21,10 @@ function getRefreshToken(): string | null {
   return localStorage.getItem("refresh_token");
 }
 
+export function getStoredToken(): string | null {
+  return localStorage.getItem("token");
+}
+
 function setTokens(access: string, _refresh?: string): void {
   localStorage.setItem("token", access);
   // refresh_token is now handled via HttpOnly cookie by the backend

@@ -9,7 +9,6 @@ from pydantic import BaseModel, EmailStr
 from app.config import settings
 from app.core.dependencies import get_current_user
 from app.core.rate_limit import limiter, LOGIN_LIMIT, REFRESH_LIMIT, REGISTER_LIMIT
-from app.core.security import decode_token
 from app.database import get_db
 from app.models.user import User as UserModel
 from app.schemas.article import Article as ArticleSchema
@@ -66,6 +65,8 @@ async def login(
         )
 
     tokens = auth_service.create_tokens(user)
+    from app.services import session_service
+    await session_service.start_session(db, user.id, tokens["refresh_token"], request)
     response.set_cookie(
         key="refresh_token",
         value=tokens["refresh_token"],
@@ -106,6 +107,8 @@ async def google_login(
         )
 
     tokens = auth_service.create_tokens(user)
+    from app.services import session_service
+    await session_service.start_session(db, user.id, tokens["refresh_token"], request)
     response.set_cookie(
         key="refresh_token",
         value=tokens["refresh_token"],
@@ -126,30 +129,40 @@ async def refresh_access_token(
     token_data: RefreshTokenRequest | None = None,
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
-    """Exchange a valid refresh token for a fresh token pair."""
+    """Exchange a valid refresh token for a fresh token pair.
+
+    Rotates the refresh token (one-time use) and records session metadata.
+    Reuse of an already-rotated token triggers revocation of the whole session
+    family (theft signal).
+    """
     token = refresh_token
     if not token and token_data:
         token = token_data.refresh_token
-        
+
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing refresh token",
         )
 
-    payload = decode_token(token)
-    if not payload or payload.get("typ") != "refresh":
+    from app.services import session_service
+    try:
+        result = await session_service.validate_and_rotate(db, token, request)
+    except session_service.ReuseDetected as reuse:
+        # Replayed rotated token: revoke the entire family and all sessions.
+        await session_service.revoke_family(db, reuse.session.get("user_id"), reuse.session.get("family_id"))
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token reuse detected; all sessions revoked. Please sign in again.",
+        )
+
+    if not result:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token",
         )
 
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token",
-        )
+    user_id, new_refresh_token, session = result
 
     user = await auth_service.get_user_by_id(db, user_id)
     if not user or not user.is_active:
@@ -158,7 +171,20 @@ async def refresh_access_token(
             detail="Invalid refresh token",
         )
 
-    tokens = auth_service.create_tokens(user)
+    # Build the response pair. The refresh token MUST be the exact one
+    # persisted by validate_and_rotate so the session rotation chain stays
+    # consistent (the access token is fresh and stateless).
+    from app.core.security import create_access_token
+    from datetime import timedelta
+    access_token = create_access_token(
+        data={"sub": user.id, "email": user.email},
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+    )
+    tokens = {
+        "access_token": access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer",
+    }
     response.set_cookie(
         key="refresh_token",
         value=tokens["refresh_token"],
@@ -168,6 +194,51 @@ async def refresh_access_token(
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
     )
     return tokens
+
+
+@router.post("/logout")
+@limiter.limit(REFRESH_LIMIT)
+async def logout(
+    request: Request,
+    response: Response,
+    refresh_token: str | None = fastapi.Cookie(None),
+    token_data: RefreshTokenRequest | None = None,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Revoke the current refresh token server-side and clear the cookie."""
+    from app.services import session_service
+    token = refresh_token
+    if not token and token_data:
+        token = token_data.refresh_token
+    if token:
+        await session_service.revoke_session_by_token(db, token)
+
+    response.delete_cookie("refresh_token")
+    return {"message": "Logged out"}
+
+
+@router.get("/me/sessions")
+async def list_sessions(
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """List the current user's active refresh-token sessions."""
+    from app.services import session_service
+    return await session_service.list_user_sessions(db, current_user.id)
+
+
+@router.delete("/me/sessions/{jti}")
+async def revoke_session(
+    jti: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """Revoke a specific session (e.g. a lost device)."""
+    from app.services import session_service
+    ok = await session_service.revoke_session(db, current_user.id, jti)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return {"message": "Session revoked"}
 
 
 @router.get("/me", response_model=UserSchema)
@@ -208,6 +279,13 @@ async def update_user_profile(
     update_data.pop("current_password", None)
 
     updated_user_doc = await user_service.update_user(db, current_user.id, update_data)
+
+    # A password change invalidates every other session (defense against a
+    # token captured before the change).
+    if "hashed_password" in update_data:
+        from app.services import session_service
+        await session_service.revoke_all_user_sessions(db, current_user.id)
+
     return UserModel(**updated_user_doc)
 
 

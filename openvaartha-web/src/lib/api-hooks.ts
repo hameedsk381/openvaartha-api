@@ -1,6 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Article, Category, Comment, Dispatch } from "./types";
+import type { Article, Category, Comment, CorrectionIndexItem, Dispatch } from "./types";
 import { apiFetch } from "./api";
+
+export function useCorrectionsIndex(params?: { skip?: number; limit?: number }) {
+  const { skip = 0, limit = 50 } = params || {};
+  return useQuery<CorrectionIndexItem[]>({
+    queryKey: ["corrections-index", skip, limit],
+    queryFn: () => apiFetch<CorrectionIndexItem[]>(`/articles/corrections?skip=${skip}&limit=${limit}`),
+  });
+}
 
 export function useArticles(params?: {
   category?: string;

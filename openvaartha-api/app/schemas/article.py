@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
-from typing import Optional, List
+from typing import Literal, Optional, List
 from datetime import datetime
 
 from app.models.article import ArticleStatus
@@ -16,6 +16,17 @@ class FactCheck(BaseModel):
     bias_rating: str = "Neutral"
     confidence_score: int = 0
     summary: str = ""
+    # AI output is never treated as a completed editorial fact check until a
+    # named newsroom reviewer confirms it. Origin metadata records which model
+    # produced the automated review so readers can audit reproducibility.
+    model: str = ""
+    model_version: str = ""
+    review_status: Literal["automated_unverified", "editor_confirmed"] = "automated_unverified"
+    reviewer_id: Optional[str] = None
+    reviewer_name: Optional[str] = None
+    confirmation_date: Optional[datetime] = None
+    # Ordered list of evidence URLs a human reviewer relied on when confirming.
+    evidence: List[str] = Field(default_factory=list)
 
     class Config:
         alias_generator = to_camel
@@ -64,6 +75,48 @@ class ArticleContent(ArticleContentBase):
         alias_generator = to_camel
         populate_by_name = True
         from_attributes = True
+
+
+class ArticleCitation(BaseModel):
+    publisher: str = ""
+    url: str
+    published_at: Optional[datetime] = None
+
+
+class CorrectionCreate(BaseModel):
+    summary: str = Field(min_length=1, max_length=280)
+    details: Optional[str] = Field(default=None, max_length=4000)
+    severity: Literal["clarification", "correction", "retraction"] = "correction"
+    reason: Optional[str] = Field(default=None, max_length=1000)
+
+
+class ArticleCorrectionSnapshot(BaseModel):
+    """A shallow snapshot of what changed, surfaced in correction panels."""
+    fields: List[str] = Field(default_factory=list)
+    excerpt: Optional[str] = None
+
+
+class ArticleCorrection(CorrectionCreate):
+    id: str
+    corrected_at: datetime
+    editor_id: Optional[str] = None
+    editor_name: Optional[str] = None
+    before: Optional[ArticleCorrectionSnapshot] = None
+    after: Optional[ArticleCorrectionSnapshot] = None
+
+
+class CorrectionIndexItem(BaseModel):
+    id: str
+    article_id: str
+    article_slug: str
+    article_title: str
+    summary: str
+    severity: Literal["clarification", "correction", "retraction"] = "correction"
+    corrected_at: datetime
+
+    class Config:
+        alias_generator = to_camel
+        populate_by_name = True
 
 
 class ArticleBase(BaseModel):
@@ -146,6 +199,8 @@ class Article(ArticleBase):
     updated_at: Optional[datetime] = None
     category: str = ""  # Default to empty string, will be populated with category name
     content: Optional[ArticleContent] = None
+    citations: List[ArticleCitation] = Field(default_factory=list)
+    corrections: List[ArticleCorrection] = Field(default_factory=list)
     embedding: Optional[List[float]] = None
 
     class Config:
