@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 
+from motor.motor_asyncio import AsyncIOMotorDatabase
+
+from app.database import get_db
 from app.schemas.digest import DigestResponse, DigestWithArticlesResponse
 from app.services.digest_service import (
     get_latest_digest,
@@ -14,7 +17,7 @@ from app.core.dependencies import get_current_user
 router = APIRouter()
 
 @router.get("/latest", response_model=DigestWithArticlesResponse)
-async def fetch_latest_digest():
+async def fetch_latest_digest(db: AsyncIOMotorDatabase = Depends(get_db)):
     digest = await get_latest_digest()
     if not digest:
         raise HTTPException(status_code=404, detail="No digests found")
@@ -22,21 +25,21 @@ async def fetch_latest_digest():
     # Populate articles
     articles = []
     for aid in digest.article_ids:
-        art = await get_article_by_id(aid)
+        art = await get_article_by_id(db, aid)
         if art:
             articles.append(art)
     
     return {**digest.model_dump(), "articles": articles}
 
 @router.get("/{date}", response_model=DigestWithArticlesResponse)
-async def fetch_digest_by_date(date: str):
+async def fetch_digest_by_date(date: str, db: AsyncIOMotorDatabase = Depends(get_db)):
     digest = await get_digest_by_date(date)
     if not digest:
         raise HTTPException(status_code=404, detail="Digest not found")
         
     articles = []
     for aid in digest.article_ids:
-        art = await get_article_by_id(aid)
+        art = await get_article_by_id(db, aid)
         if art:
             articles.append(art)
             

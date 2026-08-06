@@ -55,16 +55,15 @@ async def generate_daily_digest() -> Optional[DailyDigest]:
         return existing
 
     # Get top 5 published articles
-    # For now, just grab latest 5 trending/breaking or just latest 5
-    articles, _ = await get_articles(limit=5, status=PUBLIC_STATUS)
+    articles = await get_articles(db, limit=5, status=PUBLIC_STATUS)
     if not articles:
         return None
 
     articles_data = [
         {
-            "id": a.id,
-            "title": a.title,
-            "summary": a.summary
+            "id": a["id"],
+            "title": a.get("title", ""),
+            "summary": a.get("summary", "")
         } for a in articles
     ]
 
@@ -108,6 +107,10 @@ async def broadcast_digest_newsletter(digest: DailyDigest):
     </html>
     """
 
-    # In a real app, send via batching. Here we just loop (assuming small scale for now)
+    # Send to each subscriber; isolate failures so one bad address or provider
+    # error doesn't prevent the rest of the list from receiving the digest.
     for sub in subscribers:
-        await send_email(sub["email"], subject, body_html)
+        try:
+            await send_email(sub["email"], subject, body_html)
+        except Exception as e:
+            logger.warning(f"Failed to email digest to {sub['email']}: {e}")
