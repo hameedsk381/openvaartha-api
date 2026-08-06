@@ -38,17 +38,21 @@ class Settings(BaseSettings):
     REGISTER_RATE_LIMIT: str = "5/minute"
     MUTATION_RATE_LIMIT: str = "60/minute"
 
+    # WebSocket
+    WS_MAX_CONNECTIONS: int = 500
+    WS_CONNECT_RATE_LIMIT: str = "30/minute"
+    WS_PING_INTERVAL_SECONDS: int = 30
+
     # AI generation
     AI_TEMPERATURE: float = 0.3
     AI_MAX_OUTPUT_TOKENS: int = 4096
     AI_MAX_POINTS: int = 8
     AI_TIMEOUT: int = 60  # seconds for AI API call
 
-    # RSS auto-ingestion: when True, AI-rewritten articles from RSS sources go
-    # live immediately with no human review. This is a deliberate editorial
-    # choice made with the risk (accuracy, copyright) explicitly flagged —
-    # flip to False to fall back to draft-for-review without a code change.
-    AUTO_PUBLISH_RSS: bool = True
+    # RSS-generated stories must enter the editorial queue by default.  A
+    # source can opt in to auto-publishing only after it has been explicitly
+    # vetted and the newsroom accepts that risk.
+    AUTO_PUBLISH_RSS: bool = False
 
     # Groq
     GROQ_API_KEY: str = ""
@@ -61,6 +65,12 @@ class Settings(BaseSettings):
     # Google Cloud Storage (GCS)
     GCS_BUCKET_NAME: str = ""
     GCS_CREDENTIALS_BASE64: str = ""
+    # When True the bucket is treated as private (no public read) and every
+    # media URL returned to clients is a short-lived V4 signed URL. Keep False
+    # while the bucket still grants public-read so existing articles keep
+    # working.
+    GCS_PRIVATE_BUCKET: bool = False
+    GCS_SIGNED_URL_TTL_SECONDS: int = 3600
 
     # Google Sign-In (verifies the ID token's audience — no client secret
     # needed since the frontend uses Google Identity Services' implicit flow)

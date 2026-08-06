@@ -213,12 +213,17 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
         from app.services.article_service import invalidate_article_caches
         await invalidate_article_caches()
 
-        await Article_sources(**{
+        # Keep the source relation in its own collection.  ``ArticleSource``
+        # is a Pydantic value object, not a persisted document model.
+        await db["article_sources"].insert_one({
             "article_id": article_id,
             "source_id": source["_id"],
             "guid": guid,
             "url": entry.get("link", ""),
-        }).insert()
+            "publisher": source.get("name", ""),
+            "published_at": published,
+            "created_at": datetime.now(timezone.utc),
+        })
 
         new_count += 1
 

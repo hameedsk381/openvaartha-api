@@ -114,6 +114,30 @@ class TestArticleService:
         assert article is not None
         assert article["title"] == "Service Test Article"
         assert article["slug"] == "service-test-article"
+
+    @pytest.mark.asyncio
+    async def test_create_article_persists_scheduling_and_discovery_fields(self, db, test_category):
+        scheduled_at = datetime(2030, 1, 1, tzinfo=timezone.utc)
+        article = await article_service.create_article(
+            db,
+            ArticleCreate(
+                title="Scheduled article",
+                summary="A scheduled story",
+                category_id=test_category["id"],
+                read_time="3 min",
+                status="scheduled",
+                scheduled_at=scheduled_at,
+                tags=["India", "Policy"],
+                author="Test Author",
+                author_id="editor-1",
+                content=ArticleContentCreate(body="Body"),
+            ),
+        )
+
+        # The non-tz_aware motor client round-trips datetimes as naive UTC.
+        assert article["scheduled_at"] == scheduled_at.replace(tzinfo=None)
+        assert article["tags"] == ["india", "policy"]
+        assert article["author_id"] == "editor-1"
     
     @pytest.mark.asyncio
     async def test_update_article(self, db, test_article):

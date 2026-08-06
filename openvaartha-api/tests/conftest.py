@@ -57,7 +57,9 @@ async def db(mongo_client, test_settings):
 
     collections = [
         "users", "articles", "categories", "newsletter_subscribers",
-        "reading_lists", "reading_history", "sources", "article_content", "article_sources"
+        "reading_lists", "reading_history", "sources", "article_content", "article_sources",
+        "comments", "article_reactions", "article_corrections", "article_revisions",
+        "sessions",
     ]
     for collection in collections:
         await db[collection].delete_many({})

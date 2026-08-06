@@ -19,7 +19,10 @@ async def create_source(db: AsyncIOMotorDatabase, data: SourceCreate) -> dict:
         "last_fetched_at": None,
         "created_at": datetime.now(timezone.utc),
     }
-    await Sources(**doc).insert()
+    # Sources are managed through the Motor collection (there is no Beanie
+    # ``Sources`` document model).  Keeping this explicit also matches every
+    # read/update operation in this service.
+    await db["sources"].insert_one(doc)
     doc["id"] = doc["_id"]
     return doc
 

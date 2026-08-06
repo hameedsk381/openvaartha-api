@@ -15,7 +15,7 @@ celery_app = Celery(
     "openvaartha",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
-    include=["app.tasks.rss_generator", "app.tasks.news_agents_task", "app.tasks.morning_briefing", "app.tasks.scheduler"],
+    include=["app.tasks.rss_generator", "app.tasks.news_agents_task", "app.tasks.morning_briefing", "app.tasks.scheduler", "app.worker"],
 )
 
 # "Morning Briefing" in Settings promises 8 AM specifically for an Indian

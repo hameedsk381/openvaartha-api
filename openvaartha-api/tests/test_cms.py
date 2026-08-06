@@ -287,11 +287,15 @@ class TestRefreshTokenTypEnforcement:
 
     @pytest.mark.asyncio
     async def test_refresh_endpoint_accepts_refresh_token(
-        self, client: AsyncClient, test_user
+        self, client: AsyncClient, test_user, db
     ):
         from app.core.security import create_refresh_token
+        from app.services import session_service
 
         refresh = create_refresh_token(data={"sub": test_user["id"], "email": test_user["email"]})
+        # Rotation requires a server-side session (sessions collection); a bare
+        # token with no session record is treated as invalid.
+        await session_service.start_session(db, test_user["id"], refresh, request=None)
         response = await client.post(
             "/api/v1/users/refresh",
             json={"refresh_token": refresh},

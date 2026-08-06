@@ -12,13 +12,8 @@ from app.core.dependencies import get_current_active_admin
 from app.core.observability import init_sentry
 from app.core.rate_limit import limiter
 from app.core.security_headers import SecurityHeadersMiddleware
-from app.database import client, db
+from app.database import client
 from app.models.user import User as UserModel
-from app.services.article_service import ensure_article_indexes
-from app.services.category_service import ensure_category_indexes
-from app.services.dispatch_service import ensure_dispatch_indexes
-from app.services.push_service import ensure_push_indexes
-from app.services.seed_service import ensure_admin_user
 
 # Block known-unsafe production configs at import time.
 settings.assert_safe_for_production()
@@ -50,22 +45,10 @@ async def lifespan(app: FastAPI):
     from app.database import init_db
     await init_db()
 
-    await ensure_article_indexes(db)
-    await ensure_category_indexes(db)
-    await ensure_dispatch_indexes(db)
-    await ensure_push_indexes(db)
-    
-    from app.services.poll_service import ensure_poll_indexes
-    await ensure_poll_indexes(db)
-    
-    from app.services.comment_service import ensure_comment_indexes
-    await ensure_comment_indexes(db)
-
-    await ensure_admin_user(db)
-
-    from app.services.source_seed import seed_categories_and_sources
-    seed_result = await seed_categories_and_sources(db)
-    print(f"INFO: Source seed result: {seed_result}")
+    # Index creation, admin-user seeding and RSS source seeding are intentionally
+    # NOT part of the request-path startup — they run once as the idempotent
+    # migration job (scripts/migrate.py), so multiple API replicas don't race.
+    # See app/services/migration_service.py.
 
     if not settings.GROQ_API_KEY:
         print("WARNING: GROQ_API_KEY is not set. AI article generation will be unavailable.")
@@ -147,9 +130,15 @@ def health_check():
     }
 
 
+@app.get("/health/ops")
+async def ops_health_check():
+    # Admin-only: discloses worker/beat/queue liveness for monitoring/alerting.
+    from app.services.health_service import get_ops_health
+    return await get_ops_health()
+
+
 @app.get("/health/env")
-def env_check(current_user: UserModel = Depends(get_current_active_admin)):
-    # Admin-only: discloses exactly which secrets are configured (recon aid).
+def env_check(current_user: UserModel = Depends(get_current_active_admin)):    # Admin-only: discloses exactly which secrets are configured (recon aid).
     # Helper to check if string contains actual config and not default fallback placeholders
     return {
         "MONGODB_URL_set": bool(settings.MONGODB_URL),

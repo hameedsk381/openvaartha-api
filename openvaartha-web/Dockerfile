@@ -1,5 +1,5 @@
 # Stage 1: Build Vite React assets
-FROM node:20-alpine AS builder
+FROM node:20.17.0-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
@@ -15,7 +15,7 @@ ENV VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
 RUN npm run build
 
 # Stage 2: Serve with Nginx
-FROM nginx:stable-alpine
+FROM nginx:1.27.2-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 

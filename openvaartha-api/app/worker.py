@@ -2,7 +2,7 @@ import asyncio
 import logging
 from typing import Any, Dict
 
-from app.core.celery_app import celery_app
+from app.tasks import celery_app
 from app.database import AsyncIOMotorClient
 from app.config import settings
 from app.services import push_service

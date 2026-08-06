@@ -102,6 +102,17 @@ async def dashboard_stats(
     }
 
 
+@router.get("/stats/editorial")
+async def editorial_stats(
+    days: int = Query(30, ge=1, le=365),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """Editorial metrics: publishing/engagement time-series, category & author
+    breakdowns, and pipeline health (admin only)."""
+    from app.services.analytics_service import get_editorial_stats
+    return await get_editorial_stats(db, days=days)
+
+
 @router.get("/users")
 async def list_users(
     skip: int = Query(0, ge=0),
