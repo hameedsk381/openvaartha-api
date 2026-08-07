@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import * as Sentry from "@sentry/react";
 import { registerSW } from "virtual:pwa-register";
+import { ThemeProvider } from "next-themes";
 import App from "./App.tsx";
 import "./index.css";
 
@@ -21,7 +22,17 @@ if (sentryDsn) {
   });
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <ThemeProvider
+    attribute="class"
+    defaultTheme="light"
+    enableSystem
+    disableTransitionOnChange
+    storageKey="theme"
+  >
+    <App />
+  </ThemeProvider>
+);
 
 // Recovery from stale-build chunk errors. After a deploy the new assets dist/
 // cleans up old chunk files (their hashed filenames change). A tab that was

@@ -108,16 +108,17 @@ const App = () => {
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
 
-    // Apply Theme
+    // Apply Theme — next-themes owns the <html> class via <ThemeProvider>
+    // (attribute="class", storageKey="theme"). We only re-sync on cross-tab
+    // changes here; the provider handles its own storage key so there is a
+    // single source of truth (dark/light/system) instead of the old
+    // capitalized ('Dark'/'Light') custom scheme that conflicted with the
+    // components expecting next-themes' lowercase values.
     const applyTheme = () => {
-      const theme = localStorage.getItem('theme') || 'Light';
+      const theme = localStorage.getItem('theme') || 'system';
       const root = window.document.documentElement;
-      
-      if (theme === 'Dark') {
-        root.classList.add('dark');
-      } else {
-        root.classList.remove('dark');
-      }
+      const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      root.classList.toggle('dark', isDark);
     };
 
     // Apply Font Size

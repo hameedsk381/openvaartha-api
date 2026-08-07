@@ -30,8 +30,13 @@ const isTouchDevice = () =>
 const initDark = (): boolean => {
   if (typeof window === "undefined") return false;
   const stored = localStorage.getItem("theme");
-  if (stored) return stored === "dark";
-  return false;
+  if (stored) {
+    if (stored === "system") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+    return stored === "dark";
+  }
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
 };
 
 const Navbar = ({ isInsideStack, hideBottomNav }: NavbarProps) => {
@@ -100,6 +105,7 @@ const Navbar = ({ isInsideStack, hideBottomNav }: NavbarProps) => {
     document.documentElement.classList.toggle("dark", next);
     localStorage.setItem("theme", next ? "dark" : "light");
     setIsDark(next);
+    window.dispatchEvent(new Event("appearance-change"));
   };
 
   const filtered = query.trim().length > 1 ? searchResults : [];

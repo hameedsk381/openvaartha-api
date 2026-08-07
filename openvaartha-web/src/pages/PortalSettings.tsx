@@ -71,7 +71,7 @@ export default function PortalSettings() {
   };
 
   const [appearance, setAppearance] = useState({
-    theme: localStorage.getItem('theme') || 'Light',
+    theme: (localStorage.getItem('theme') || 'light').toLowerCase(),
     fontSize: localStorage.getItem('font-size') || 'Medium',
   });
 
@@ -84,7 +84,7 @@ export default function PortalSettings() {
       const data = await apiFetch<any>("/users/me");
       setUser(data);
       setAppearance({
-        theme: data.theme || localStorage.getItem('theme') || 'Light',
+        theme: (data.theme || localStorage.getItem('theme') || 'light').toLowerCase(),
         fontSize: data.fontSize || localStorage.getItem('font-size') || 'Medium',
       });
     } catch (err) {
@@ -150,14 +150,15 @@ export default function PortalSettings() {
   };
 
   const updateAppearance = async (type: 'theme' | 'fontSize', value: string) => {
-    setAppearance(p => ({ ...p, [type]: value }));
-    localStorage.setItem(type === 'theme' ? 'theme' : 'font-size', value);
-    
+    const normalized = type === 'theme' ? value.toLowerCase() : value;
+    setAppearance(p => ({ ...p, [type]: type === 'theme' ? normalized : value }));
+    localStorage.setItem(type === 'theme' ? 'theme' : 'font-size', normalized);
+
     // Apply instantly
     const root = window.document.documentElement;
     if (type === 'theme') {
-      if (value === 'Dark') root.classList.add('dark');
-      else root.classList.remove('dark');
+      const isDark = normalized === 'dark' || (normalized === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      root.classList.toggle('dark', isDark);
     } else {
       const sizes: Record<string, string> = { 'Small': '14px', 'Medium': '16px', 'Large': '18px' };
       root.style.fontSize = sizes[value] || '16px';
@@ -169,7 +170,7 @@ export default function PortalSettings() {
     try {
       const updatedUser = await apiFetch<any>("/users/me", {
         method: 'PUT',
-        body: JSON.stringify(type === 'theme' ? { theme: value } : { font_size: value })
+        body: JSON.stringify(type === 'theme' ? { theme: normalized } : { font_size: value })
       });
       setUser(updatedUser);
       toast.success(`${type} preference saved`);
@@ -302,7 +303,8 @@ export default function PortalSettings() {
         <SelectRow 
           label="Theme" 
           value={appearance.theme} 
-          options={['Light', 'Dark']}
+          options={['light', 'dark']}
+          optionLabels={{ light: 'Light', dark: 'Dark' }}
           onChange={(val) => updateAppearance('theme', val)}
         />
         <SelectRow 
@@ -418,7 +420,7 @@ function EditableRow({ label, value, onSave, isUpdating }: { label: string; valu
   );
 }
 
-function SelectRow({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) {
+function SelectRow({ label, value, options, onChange, optionLabels }: { label: string; value: string; options: string[]; onChange: (v: string) => void; optionLabels?: Record<string, string> }) {
   return (
     <div className="flex items-center justify-between p-4">
       <span className="text-sm font-semibold">{label}</span>
@@ -427,7 +429,7 @@ function SelectRow({ label, value, options, onChange }: { label: string; value: 
         onChange={e => onChange(e.target.value)}
         className="bg-transparent text-sm text-muted-foreground font-medium focus:outline-none cursor-pointer"
       >
-        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+        {options.map(opt => <option key={opt} value={opt}>{optionLabels?.[opt] ?? opt}</option>)}
       </select>
     </div>
   );
