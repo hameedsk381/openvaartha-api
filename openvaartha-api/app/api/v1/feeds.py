@@ -15,7 +15,16 @@ router = APIRouter(tags=["Feeds"])
 # AI crawlers that publishers commonly want to explicitly allow/identify for
 # citation and training-data purposes. OpenVaartha's positioning is open,
 # citable journalism, so these are allowed rather than blocked.
-_AI_CRAWLERS = ["GPTBot", "ClaudeBot", "Google-Extended", "PerplexityBot", "Bytespider"]
+_AI_CRAWLERS = [
+    "GPTBot",          # OpenAI — supports ChatGPT web-search citations
+    "OAI-SearchBot",   # OpenAI — serves results/citations in ChatGPT search UI
+    "ClaudeBot",       # Anthropic — Claude web features
+    "anthropic-ai",    # Anthropic — Claude training/aggregated systems
+    "PerplexityBot",   # Perplexity — AI answer engine
+    "Google-Extended", # Google — Gemini / AI Overviews grounding
+    "Bytespider",      # ByteDance — TikTok/Douyin AI
+    "cohere-ai",       # Cohere — RAG/LLM training
+]
 
 
 @router.get("/robots.txt", include_in_schema=False)

@@ -331,6 +331,39 @@ def _plain_paragraphs(text: str) -> str:
     return "".join(f"<p>{html.escape(b)}</p>" for b in blocks)
 
 
+def _citable_passage(article: Dict[str, Any], summary: str = "", body: str = "") -> str:
+    """Build a self-contained ~100-170 word answer paragraph for AI citation.
+
+    AI citation extractors favor quotable blocks of roughly 134-167 words near
+    the top of a page. We assemble one from the strongest available text and pad
+    it to a citable length with the article's headline context and attribution."""
+    content = article.get("content") or {}
+    tldr = content.get("tldr") or ""
+    title = article.get("title") or ""
+    candidates = [t for t in (summary, tldr) if t]
+    if not candidates:
+        return ""
+
+    text = " ".join(candidates).strip()
+    words = text.split()
+    if len(words) < 60 and body:
+        body_paras = [b.strip() for b in re.split(r"\n\s*\n", body) if b.strip()]
+        if body_paras:
+            more = " ".join(body_paras[0].split())
+            # Merge on top of the summary so facts come first.
+            text = (text + " " + more).strip()
+    words = text.split()
+    if len(words) < 30:
+        # Genuinely too thin to quote — the TL;DR/summary alone is kept in its own
+        # block, so a near-empty "What happened" passage adds no citation value.
+        return ""
+    # Trim / cap to the ideal citable band (~130-170 words) without cutting mid-sentence.
+    if len(words) > 175:
+        trimmed = " ".join(words[:170]).rsplit(".", 1)[0].rstrip()
+        text = trimmed + "."
+    return text
+
+
 def build_article_body_shell(article: Dict[str, Any], category_name: str = "") -> str:
     e = lambda s: html.escape(s, quote=True)  # noqa: E731
     content = article.get("content") or {}
@@ -353,6 +386,13 @@ def build_article_body_shell(article: Dict[str, Any], category_name: str = "") -
     if published:
         byline += f' · <time datetime="{e(published)}">{e(published[:10])}</time>'
     parts.append(f'<p style="font-size:13px;color:#666;">{byline}</p>')
+    # Citable answer passage: a self-contained 100-170 word "X is…/What happened…"
+    # block near the top so non-JS crawlers and AI citation extractors can pull an
+    # isolated, quotable answer without context. AI systems favor quotes of this
+    # length found in the first ~30% of a page.
+    passage = _citable_passage(article, summary, body)
+    if passage:
+        parts.append('<h2>What happened</h2><p>' + e(passage) + "</p>")
     if tldr:
         parts.append(f"<h2>TL;DR</h2><p>{e(tldr)}</p>")
     if points:

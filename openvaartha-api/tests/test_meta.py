@@ -5,6 +5,8 @@ import pytest
 from app.config import settings
 from app.services.meta_service import (
     SITE_TITLE,
+    _citable_passage,
+    build_article_body_shell,
     build_article_head,
     build_default_head,
     build_list_body_shell,
@@ -124,6 +126,35 @@ class TestListBodyShell:
         assert "<h1>Hi</h1>" in result
 
 
+class TestCitablePassage:
+    def test_builds_self_contained_block(self):
+        a = _article(
+            summary="The Reserve Bank cut its benchmark rate by 25 basis points to 5.75%, the first reduction in two years. Economists say the move targets rising urban consumption while keeping inflation near the 4% target. Analysts expect further easing if monsoon rains stay weak across the northern states this quarter.",
+        )
+        passage = _citable_passage(a, summary=a["summary"])
+        n = len(passage.split())
+        assert 30 <= n, f"passage too short: {n} words"
+        # The summary text survives (escaped) in the passage.
+        assert "Reserve Bank cut its benchmark rate" in passage
+
+    def test_appears_in_body_shell_under_what_happened(self):
+        a = _article(
+            summary="A self-contained answer about the decision: the government announced new rules today, the policy takes effect next month, and analysts say it changes the funding picture for small firms in meaningful ways that affect suppliers and customers alike.",
+        )
+        shell = build_article_body_shell(a)
+        assert "<h2>What happened</h2>" in shell
+        assert "A self-contained answer about the decision" in shell
+
+    def test_too_thin_returns_empty(self):
+        a = _article(summary="Too short.")
+        assert _citable_passage(a, summary=a["summary"]) == ""
+
+    def test_caps_overlong_passage_to_band(self):
+        a = _article(summary=". ".join(["This is a factual sentence about the development." for _ in range(60)]))
+        passage = _citable_passage(a, summary=a["summary"])
+        assert len(passage.split()) <= 175
+
+
 @pytest.mark.asyncio
 async def test_robots_txt_advertises_sitemap(client):
     resp = await client.get("/robots.txt")
@@ -133,3 +164,6 @@ async def test_robots_txt_advertises_sitemap(client):
     assert "User-agent: *" in body
     assert f"Sitemap: {settings.SITE_URL.rstrip('/')}/sitemap.xml" in body
     assert "Disallow: /admin" in body
+    # Key AI crawlers explicitly allowed for citation.
+    for crawler in ("GPTBot", "OAI-SearchBot", "anthropic-ai", "PerplexityBot"):
+        assert f"User-agent: {crawler}\nAllow: /" in body
