@@ -181,6 +181,12 @@ def _homepage_json_ld() -> str:
     ])
 
 
+def has_static_route(route: str) -> bool:
+    """Whether a fixed SPA route has dedicated (non-homepage) meta, so the SSR
+    layer can decide to proxy it for head injection."""
+    return route.strip("/") in _STATIC_ROUTE_META
+
+
 def build_default_head(path: str = "") -> str:
     normalized = path.strip("/")
     canonical = f"{_base_url()}/{normalized}".rstrip("/")
@@ -363,6 +369,37 @@ def inject_body(index_html: str, body_shell: str) -> str:
     """Seed the SPA mount point with a server-rendered shell. No-op if the
     marker is absent (e.g. an older index.html)."""
     return index_html.replace(_BODY_MARKER, body_shell, 1)
+
+
+def build_list_body_shell(
+    articles: list[Dict[str, Any]],
+    *,
+    heading: str = "Latest News",
+    subheading: str = "",
+) -> str:
+    """Server-rendered crawlable list for index/category/feed pages: an <h1>,
+    a short lede, and an <ol> of article headlines linking to each story. Non-JS
+    crawlers (Google, Bing) get real text + internal links instead of an empty
+    shell, and it boots fast before React mounts. React replaces it on mount."""
+    e = lambda s: html.escape(s, quote=True)  # noqa: E731
+    parts = ['<article style="max-width:720px;margin:0 auto;padding:24px;font-family:system-ui,-apple-system,sans-serif;line-height:1.6;">']
+    if subheading:
+        parts.append(f'<p style="text-transform:uppercase;letter-spacing:.08em;font-size:12px;font-weight:700;">{e(subheading)}</p>')
+    parts.append(f"<h1>{e(heading)}</h1>")
+    if not articles:
+        parts.append("<p>No stories published yet.</p>")
+    else:
+        parts.append("<ul>")
+        for a in articles:
+            title = a.get("title") or ""
+            slug = a.get("slug") or ""
+            if not (title and slug):
+                continue
+            href = _abs_url(f"/article/{slug}")
+            parts.append(f'<li><a href="{e(href)}">{e(title)}</a></li>')
+        parts.append("</ul>")
+    parts.append("</article>")
+    return "".join(parts)
 
 
 def render_article_html(template_html: str, article: Dict[str, Any], category_name: str = "") -> str:

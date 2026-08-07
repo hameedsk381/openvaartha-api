@@ -7,6 +7,9 @@ from app.services.meta_service import (
     SITE_TITLE,
     build_article_head,
     build_default_head,
+    build_list_body_shell,
+    has_static_route,
+    inject_body,
     inject_head,
 )
 
@@ -88,6 +91,37 @@ class TestArticleHead:
     def test_absolute_thumbnail_url_is_kept(self):
         head = build_article_head(_article(thumbnail_url="https://cdn.example.com/a.jpg"))
         assert 'content="https://cdn.example.com/a.jpg"' in head
+
+
+class TestStaticRouteMeta:
+    def test_has_static_route_true_for_known(self):
+        assert has_static_route("trending")
+        assert has_static_route("about")
+        assert has_static_route("/privacy/")  # normalized
+
+    def test_has_static_route_false_for_unknown(self):
+        assert not has_static_route("zzz-unknown-route")
+
+
+class TestListBodyShell:
+    def test_renders_headline_links(self):
+        articles = [
+            {"title": "Story One", "slug": "story-one"},
+            {"title": "Story Two", "slug": "story-two"},
+        ]
+        shell = build_list_body_shell(articles, heading="Trending News", subheading="Most-read")
+        base = settings.SITE_URL.rstrip("/")
+        assert "<h1>Trending News</h1>" in shell
+        assert f'href="{base}/article/story-one"' in shell
+        assert f'href="{base}/article/story-two"' in shell
+        assert "<ul>" in shell
+
+    def test_inject_body_seeds_root(self):
+        template = '<div id="root"><!--app-body--></div>'
+        shell = "<article><h1>Hi</h1></article>"
+        result = inject_body(template, shell)
+        assert "<!--app-body-->" not in result
+        assert "<h1>Hi</h1>" in result
 
 
 @pytest.mark.asyncio
