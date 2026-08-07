@@ -23,6 +23,14 @@ CATEGORIES = [
     ("science", "#5b21b6", "🔬"),
     ("entertainment", "#9d174d", "🎬"),
     ("sports", "#0f766e", "🏆"),
+    # Geo + local targets — Andhra Pradesh, Telangana, and Hyderabad need their
+    # own surfaces so state/local coverage isn't buried under national "world"
+    # or "politics" feeds. India is the national home category.
+    ("india", "#b45309", "🇮🇳"),
+    ("andhra", "#a16207", "📍"),
+    ("telangana", "#4d7c0f", "📍"),
+    ("hyderabad", "#7e22ce", "🏙️"),
+    ("cinema", "#be185d", "🎥"),
 ]
 
 # (source name, feed URL, category name)
@@ -43,9 +51,20 @@ SOURCES = [
     ("The Hindu — Science", "https://www.thehindu.com/sci-tech/science/feeder/default.rss", "science"),
     ("Indian Express — Entertainment", "https://indianexpress.com/section/entertainment/feed/", "entertainment"),
     ("The Hindu — Entertainment", "https://www.thehindu.com/entertainment/feeder/default.rss", "entertainment"),
-    ("The Hindu — Sports", "https://www.thehindu.com/sport/feeder/default.rss", "sports"),
+    ("Hindu — Sports", "https://www.thehindu.com/sport/feeder/default.rss", "sports"),
     ("Indian Express — Sports", "https://indianexpress.com/section/sports/feed/", "sports"),
     ("Hindustan Times — Sports", "https://www.hindustantimes.com/feeds/rss/sports/rssfeed.xml", "sports"),
+    # India national
+    ("The Hindu — India", "https://www.thehindu.com/news/national/feeder/default.rss", "india"),
+    ("Hindustan Times — India", "https://www.hindustantimes.com/feeds/rss/national/rssfeed.xml", "india"),
+    # Telangana / Hyderabad
+    ("Telangana Today", "https://telanganatoday.com/feed", "telangana"),
+    ("The Hindu — Hyderabad", "https://www.thehindu.com/news/cities/Hyderabad/feeder/default.rss", "hyderabad"),
+    # Andhra Pradesh — Deccan Chronicle is Hyderabad/AP-centric and serves a
+    # valid XML feed (specific AP feeds from The Hans India are bot-gated/403).
+    ("Deccan Chronicle — South", "https://www.deccanchronicle.com/rss_feed/", "andhra"),
+    # Cinema / regional cinema
+    ("123Telugu", "https://123telugu.com/feed/", "cinema"),
 ]
 
 # Feeds previously shipped that we removed from the catalog. On boot we

@@ -1,12 +1,13 @@
 from app.models.article import Article
 from app.models.category import Category
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from xml.etree.ElementTree import Element, SubElement, tostring
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.config import settings
+from app.services.meta_service import SITE_NAME
 
 
 def _rfc2822(dt: datetime) -> str:
@@ -75,6 +76,45 @@ async def build_sitemap(db: AsyncIOMotorDatabase) -> str:
             SubElement(url, "lastmod").text = _w3cdtf(lastmod)
         SubElement(url, "changefreq").text = "weekly"
         SubElement(url, "priority").text = "0.6"
+
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + tostring(urlset, encoding="unicode")
+
+
+_NEWS_SITEMAP_WINDOW_HOURS = 48
+"""Google News sitemaps should only contain articles from the last 48 hours."""
+
+
+async def build_news_sitemap(db: AsyncIOMotorDatabase) -> str:
+    """Generate a Google News sitemap of articles published in the last 48 hours.
+
+    This supplements (not replaces) the general sitemap: Google News requires
+    the sitemap-news namespace and a 48-hour freshness window, which the regular
+    sitemap does not model. URL count is inherently capped by the window.
+    """
+    base = settings.SITE_URL.rstrip("/")
+    since = datetime.now(timezone.utc) - timedelta(hours=_NEWS_SITEMAP_WINDOW_HOURS)
+
+    articles = await Article.get_motor_collection().find(
+        {"status": "published", "published_at": {"$gte": since}},
+        {"slug": 1, "title": 1, "published_at": 1},
+    ).sort("published_at", -1).to_list(length=None)
+
+    urlset = Element("urlset")
+    urlset.set("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9")
+    urlset.set("xmlns:news", "http://www.google.com/schemas/sitemap-news/0.9")
+
+    for article in articles:
+        pub_date = article.get("published_at")
+        if not pub_date:
+            continue
+        url = SubElement(urlset, "url")
+        SubElement(url, "loc").text = f"{base}/article/{article['slug']}"
+        news = SubElement(url, "news:news")
+        publication = SubElement(news, "news:publication")
+        SubElement(publication, "news:name").text = SITE_NAME
+        SubElement(publication, "news:language").text = "en"
+        SubElement(news, "news:publication_date").text = _w3cdtf(pub_date)
+        SubElement(news, "news:title").text = article.get("title", "")
 
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + tostring(urlset, encoding="unicode")
 

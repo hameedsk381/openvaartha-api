@@ -16,7 +16,7 @@ const Footer = () => {
     <footer className="border-t border-border bg-[hsl(var(--surface))]">
       <div className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-10">
-          <div className="md:col-span-4">
+          <div className="md:col-span-3">
             <div className="flex items-start gap-3">
               <div className="h-10 w-10 flex items-center justify-center shrink-0">
                 <img src={BRAND.iconMaroonPath} alt="Open Vaartha" className="h-full w-full object-contain dark:hidden" />

@@ -7,41 +7,65 @@ import { Landmark, Cpu, Briefcase, Film, MapPin, Trophy, Flame } from "lucide-re
 const categoryIcons: Record<string, React.ElementType> = {
   politics: Landmark,
   tech: Cpu,
+  technology: Cpu,
   business: Briefcase,
   cinema: Film,
+  entertainment: Film,
   "local news": MapPin,
   sports: Trophy,
   national: MapPin,
+  india: MapPin,
+  andhra: MapPin,
+  telangana: MapPin,
+  hyderabad: MapPin,
 };
 
 const categoryGradients: Record<string, string> = {
   politics: "from-[#550000] to-rose-700",
   tech: "from-[#4a5568] to-slate-400",
+  technology: "from-[#4a5568] to-slate-400",
   business: "from-[#6b705c] to-stone-400",
   cinema: "from-[#cb997e] to-orange-200",
+  entertainment: "from-[#cb997e] to-orange-200",
   "local news": "from-[#bc6c25] to-amber-500",
   sports: "from-[#ddb892] to-yellow-100",
   national: "from-[#550000] to-orange-300",
+  india: "from-[#550000] to-orange-300",
+  andhra: "from-[#0f766e] to-teal-400",
+  telangana: "from-[#7e22ce] to-purple-400",
+  hyderabad: "from-[#be185d] to-rose-300",
 };
 
 const categoryBackgrounds: Record<string, string> = {
   politics: "bg-[#550000]/10 dark:bg-[#550000]/30",
   tech: "bg-[#4a5568]/10 dark:bg-[#4a5568]/30",
+  technology: "bg-[#4a5568]/10 dark:bg-[#4a5568]/30",
   business: "bg-[#6b705c]/10 dark:bg-[#6b705c]/30",
   cinema: "bg-[#cb997e]/20 dark:bg-[#cb997e]/30",
+  entertainment: "bg-[#cb997e]/20 dark:bg-[#cb997e]/30",
   "local news": "bg-[#bc6c25]/10 dark:bg-[#bc6c25]/30",
   sports: "bg-[#ddb892]/20 dark:bg-[#ddb892]/30",
   national: "bg-[#550000]/10 dark:bg-[#550000]/30",
+  india: "bg-[#550000]/10 dark:bg-[#550000]/30",
+  andhra: "bg-[#0f766e]/10 dark:bg-[#0f766e]/30",
+  telangana: "bg-[#7e22ce]/10 dark:bg-[#7e22ce]/30",
+  hyderabad: "bg-[#be185d]/10 dark:bg-[#be185d]/30",
 };
 
 const categoryTextColors: Record<string, string> = {
   politics: "text-[#550000] dark:text-rose-400",
   tech: "text-[#4a5568] dark:text-slate-300",
+  technology: "text-[#4a5568] dark:text-slate-300",
   business: "text-[#6b705c] dark:text-stone-300",
   cinema: "text-[#cb997e] dark:text-orange-200",
+  entertainment: "text-[#cb997e] dark:text-orange-200",
   "local news": "text-[#bc6c25] dark:text-amber-400",
   sports: "text-[#ddb892] dark:text-yellow-200",
   national: "text-[#550000] dark:text-rose-400",
+  india: "text-[#550000] dark:text-rose-400",
+  andhra: "text-[#0f766e] dark:text-teal-300",
+  telangana: "text-[#7e22ce] dark:text-purple-300",
+  hyderabad: "text-[#be185d] dark:text-rose-300",
 };
 
 export function StoriesBar() {

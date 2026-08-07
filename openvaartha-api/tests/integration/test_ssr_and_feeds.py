@@ -46,6 +46,17 @@ class TestSEORoutes:
         assert "application/xml" in r.headers["content-type"]
         assert "<urlset" in r.text
 
+    def test_news_sitemap_xml(self, client, sample_article):
+        r = client.get("/news-sitemap.xml")
+        assert r.status_code == 200
+        assert "application/xml" in r.headers["content-type"]
+        assert 'xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"' in r.text
+        assert f"/article/{sample_article['slug']}" in r.text
+
+    def test_robots_txt_advertises_news_sitemap(self, client):
+        r = client.get("/robots.txt")
+        assert "news-sitemap.xml" in r.text
+
     def test_feed_xml_is_rss(self, client):
         r = client.get("/feed.xml")
         assert r.status_code == 200

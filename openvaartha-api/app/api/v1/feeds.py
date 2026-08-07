@@ -7,7 +7,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.config import settings
 from app.database import get_db
-from app.services.feed_service import _slugify, build_sitemap, build_rss
+from app.services.feed_service import _slugify, build_sitemap, build_rss, build_news_sitemap
 from app.services.meta_service import SITE_DESCRIPTION, SITE_NAME
 
 router = APIRouter(tags=["Feeds"])
@@ -33,6 +33,7 @@ async def robots():
     ] + [f"User-agent: {bot}\nAllow: /" for bot in _AI_CRAWLERS] + [
         "",
         f"Sitemap: {base}/sitemap.xml",
+        f"Sitemap: {base}/news-sitemap.xml",
     ]
     content = "\n".join(lines)
     return Response(content=content, media_type="text/plain")
@@ -107,6 +108,12 @@ async def agents_json():
 @router.get("/sitemap.xml", include_in_schema=False)
 async def sitemap(db: AsyncIOMotorDatabase = Depends(get_db)):
     xml = await build_sitemap(db)
+    return Response(content=xml, media_type="application/xml")
+
+
+@router.get("/news-sitemap.xml", include_in_schema=False)
+async def news_sitemap(db: AsyncIOMotorDatabase = Depends(get_db)):
+    xml = await build_news_sitemap(db)
     return Response(content=xml, media_type="application/xml")
 
 

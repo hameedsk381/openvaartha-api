@@ -60,7 +60,10 @@ const TEXT_SIZE_LABELS = ["A−", "A", "A+"];
 function useSEOMeta(article: Article | undefined) {
   useEffect(() => {
     if (!article) return;
-    const url = window.location.href;
+    // Canonical must be the clean article URL, not the raw location (which may
+    // carry tracking params like ?utm_source=...). Derived from the path so the
+    // canonical/og:url always match the server-rendered <link rel="canonical">.
+    const url = `${window.location.origin}${window.location.pathname}`;
     const image = getArticleImage(article.thumbnailUrl);
     const desc = article.summary || article.content?.tldr || "";
     const effectivePublishedAt = article.publishedAt || article.createdAt || new Date().toISOString();
@@ -104,6 +107,9 @@ function useSEOMeta(article: Article | undefined) {
       document.head.appendChild(link);
     }
     link.setAttribute("href", url);
+
+    let ogUrl = document.querySelector('meta[property="og:url"]') as HTMLMetaElement | null;
+    if (ogUrl) ogUrl.setAttribute("content", url);
 
     const jsonLd = {
       "@context": "https://schema.org",
