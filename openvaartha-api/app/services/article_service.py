@@ -21,6 +21,7 @@ from app.core.sanitize import sanitize_html, sanitize_points, sanitize_text
 from app.models.article import ArticleStatus, PUBLIC_STATUS
 from app.services.comment_service import ensure_comment_indexes
 from app.services.gemini_service import generate_embedding
+from app.services.indexnow_service import submit_article
 
 import math
 _redis_client: Optional[redis_async.Redis] = None
@@ -744,7 +745,10 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
         )
 
     await invalidate_article_caches()
-    return await get_article_by_id(db, article_id, include_unpublished=True)
+    created = await get_article_by_id(db, article_id, include_unpublished=True)
+    if article_status == PUBLIC_STATUS:
+        _fire_and_forget(submit_article(created.get("slug") or slug))
+    return created
 
 
 _PLAIN_TEXT_FIELDS = {"title", "summary", "author"}
@@ -800,14 +804,28 @@ async def update_article(
             update_dict[field] = sanitize_text(update_dict[field])
 
     if update_dict:
+        prev = await Article.get_motor_collection().find_one({"_id": article_id}, {"slug": 1, "status": 1, "published_at": 1})
+        prev_status = prev.get("status") if prev else None
+        prev_slug = prev.get("slug") if prev else ""
+
         # If the article is being published, ensure it has a published_at date
         if update_dict.get("status") == PUBLIC_STATUS:
-            existing = await Article.get_motor_collection().find_one({"_id": article_id}, {"published_at": 1})
-            if not existing or not existing.get("published_at"):
+            if not prev or not prev.get("published_at"):
                 update_dict["published_at"] = datetime.now(timezone.utc)
-                
+
         update_dict["last_updated"] = datetime.now(timezone.utc)
         update_dict["updated_at"] = datetime.now(timezone.utc)
+
+        # Newly published → tell Bing/IndexNow immediately (best-effort, async,
+        # never blocks or raises on failure).
+        becoming_published = (
+            update_dict.get("status") == PUBLIC_STATUS
+            and prev_status != PUBLIC_STATUS
+            and prev_slug
+        )
+        if becoming_published:
+            _fire_and_forget(submit_article(prev_slug))
+
         await Article.get_motor_collection().update_one({"_id": article_id}, {"$set": update_dict})
 
     if content_data:

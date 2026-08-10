@@ -8,6 +8,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.config import settings
 from app.database import get_db
 from app.services.feed_service import _slugify, build_sitemap, build_rss, build_news_sitemap
+from app.services.indexnow_service import indexnow_key as get_indexnow_key
 from app.services.meta_service import SITE_DESCRIPTION, SITE_NAME
 
 router = APIRouter(tags=["Feeds"])
@@ -136,3 +137,14 @@ async def rss_feed(db: AsyncIOMotorDatabase = Depends(get_db)):
 async def rss_category_feed(category_id: str, db: AsyncIOMotorDatabase = Depends(get_db)):
     xml = await build_rss(db, category_id=category_id)
     return Response(content=xml, media_type="application/rss+xml")
+
+
+@router.get("/{indexnow_key}.txt", include_in_schema=False)
+async def indexnow_key_file(indexnow_key: str):
+    """Serve the IndexNow key file engines verify before trusting pings. The key
+    is derived (indexnow_service.indexnow_key), so it's stable across restarts
+    and matches what publish-time pings send."""
+    expected = get_indexnow_key()
+    if indexnow_key != expected:
+        return Response(content=f"Key mismatch. Expected {expected}", status_code=404)
+    return Response(content=expected, media_type="text/plain")
