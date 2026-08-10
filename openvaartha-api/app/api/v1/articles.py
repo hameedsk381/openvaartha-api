@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import BaseModel, Field
 from typing import List, Optional, Union, Dict, Any
@@ -407,11 +407,12 @@ async def get_article_tts(
     from app.services.groq_tts_service import GroqTTSService
     tts_service = GroqTTSService()
     
-    response = await tts_service.generate_speech(text_content)
+    audio_bytes = await tts_service.generate_speech(text_content)
     
-    return StreamingResponse(
-        response.aiter_bytes(),
-        media_type="audio/mpeg"
+    return Response(
+        content=audio_bytes,
+        media_type="audio/wav",
+        headers={"Accept-Ranges": "bytes"},
     )
 
 

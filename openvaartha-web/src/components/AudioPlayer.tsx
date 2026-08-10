@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Play, Pause, Square, Volume2, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { API_BASE } from "@/lib/api";
 
 interface Props {
   title: string;
@@ -34,7 +35,7 @@ export default function AudioPlayer({ title, articleId }: Props) {
     }
 
     setIsLoading(true);
-    const audioUrl = `http://127.0.0.1:8000/api/v1/articles/${articleId}/tts`;
+    const audioUrl = `${API_BASE}/articles/${articleId}/tts`;
     const audio = new Audio(audioUrl);
     audioRef.current = audio;
 
