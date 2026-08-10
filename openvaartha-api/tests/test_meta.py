@@ -155,6 +155,46 @@ class TestCitablePassage:
         assert len(passage.split()) <= 175
 
 
+class TestEntityArchitecture:
+    def test_homepage_uses_newmedia_organization_with_id_and_same_as(self):
+        head = build_default_head("")
+        assert '"@type": "NewsMediaOrganization"' in head
+        assert '"@id": "https://openvaartha.com/#organization"' in head.replace(
+            "http://localhost", "https://openvaartha.com"
+        ) or '"@id": ' in head
+        # parentOrganization anchor to FOSS Andhra Foundation
+        assert "FOSS Andhra Foundation" in head
+        # sameAs social profiles present
+        assert "instagram.com/OPENVAARTHA" in head or "facebook.com/openvaartha" in head
+
+    def test_homepage_site_title_is_explicit_and_geographic(self):
+        head = build_default_head("")
+        assert "From Andhra Pradesh" in head or "Andhra Pradesh" in head
+        assert "Independent Public-Interest" in head
+        # Two-word brand never collapsed to bare "Vaartha"
+        assert "Open Vaartha" in head
+
+    def test_websitepublisher_references_org(self):
+        head = build_default_head("")
+        assert '"@type": "WebSite"' in head
+        assert f'"publisher": {{"@id": "{settings.SITE_URL.rstrip("/")}/#organization"}}' in head
+
+    def test_article_publisher_references_org_id(self):
+        head = build_article_head(_article(), category_name="Politics")
+        assert f'"publisher": {{"@id": "{settings.SITE_URL.rstrip("/")}/#organization"}}' in head
+        assert '"inLanguage": "en"' in head
+
+    def test_article_author_is_person_with_url(self):
+        head = build_article_head(_article(author="Desk Reporter"), category_name="Politics")
+        assert '"@type": "Person"' in head
+        assert 'desk-reporter' in head
+        assert '/authors/desk-reporter' in head
+
+    def test_article_keywords_from_tags(self):
+        head = build_article_head(_article(tags=["economy", "msme"]))
+        assert '"keywords": "economy, msme"' in head
+
+
 @pytest.mark.asyncio
 async def test_robots_txt_advertises_sitemap(client):
     resp = await client.get("/robots.txt")

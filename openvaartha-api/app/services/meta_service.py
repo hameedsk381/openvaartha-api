@@ -8,12 +8,16 @@ from app.config import settings
 
 # Mirrors BRAND in openvaartha-web/src/lib/brand.ts — keep in sync.
 SITE_NAME = "Open Vaartha"
-SITE_TITLE = "Open Vaartha — An Open News Platform, Built by Gen Z"
+# Explicit entity positioning: name + category + geography, so search engines
+# (and AI assistants) can immediately understand what Open Vaartha is and
+# where it operates, rather than a cryptic tagline.
+SITE_TITLE = "Open Vaartha | Independent Public-Interest Journalism from Andhra Pradesh"
 # Kept under 160 chars, keywords first — long descriptions get truncated in
 # search snippets and social previews.
 SITE_DESCRIPTION = (
-    "Open Vaartha is an independent, youth-led news initiative — open "
-    "journalism built by Gen Z, for a freer internet."
+    "Open Vaartha is an independent digital news initiative focused on "
+    "politics, governance, society, technology, environment and "
+    "public-interest journalism from Andhra Pradesh."
 )
 TWITTER_HANDLE = "@openvaartha"
 # Proper 1200x630 social-card composite (wordmark on the brand's cream
@@ -25,6 +29,25 @@ DEFAULT_IMAGE = "/og-image.png"
 # never updated after the real logo shipped. Every NewsArticle/Organization
 # JSON-LD publisher.logo was serving that wrong image until this was fixed.
 PUBLISHER_LOGO = "/pwa-512x512.png"
+
+# Entity architecture — consistent machine-readable identity so search engines
+# (and AI assistants) can connect Open Vaartha ↔ openvaartha.com ↔ FOSS Andhra
+# Foundation ↔ official social profiles. Keep in sync with brand.ts.
+# The @id is referenced by every NewsArticle publisher block on the site.
+ORG_ID = "https://openvaartha.com/#organization"
+ORG_TYPE = "NewsMediaOrganization"
+ORG_DESCRIPTION = (
+    "Open Vaartha is an independent digital news initiative focused on "
+    "politics, governance, society, technology, environment and "
+    "public-interest journalism from Andhra Pradesh."
+)
+ORG_PARENT_NAME = "FOSS Andhra Foundation"
+ORG_SAME_AS = [
+    "https://www.instagram.com/OPENVAARTHA/",
+    "https://www.facebook.com/openvaartha/",
+    "https://youtube.com/@openvaartha",
+    "https://x.com/openvaartha",
+]
 
 # The block in index.html (between these markers) that gets replaced per-request.
 _HEAD_BLOCK_RE = re.compile(r"<!--app-head-->.*?<!--/app-head-->", re.DOTALL)
@@ -162,16 +185,31 @@ def _homepage_json_ld() -> str:
     return "\n  ".join([
         _json_ld_script({
             "@context": "https://schema.org",
-            "@type": "Organization",
+            "@type": ORG_TYPE,
+            "@id": f"{base}/#organization",
             "name": SITE_NAME,
             "url": base,
-            "logo": _abs_url(PUBLISHER_LOGO),
+            "logo": {"@type": "ImageObject", "url": _abs_url(PUBLISHER_LOGO)},
+            "image": _abs_url(PUBLISHER_LOGO),
+            "description": ORG_DESCRIPTION,
+            "parentOrganization": {
+                "@type": "Organization",
+                "name": ORG_PARENT_NAME,
+            },
+            "sameAs": ORG_SAME_AS,
+            "contactPoint": {
+                "@type": "ContactPoint",
+                "email": "office@openvaartha.com",
+                "contactType": "editorial",
+            },
         }),
         _json_ld_script({
             "@context": "https://schema.org",
             "@type": "WebSite",
+            "@id": f"{base}/#website",
             "name": SITE_NAME,
             "url": base,
+            "publisher": {"@id": f"{base}/#organization"},
             "potentialAction": {
                 "@type": "SearchAction",
                 "target": f"{base}/search?q={{search_term_string}}",
@@ -255,26 +293,33 @@ def build_article_head(article: Dict[str, Any], category_name: str = "") -> str:
     if category_name:
         extra_lines.append(f'<meta property="article:section" content="{e(category_name)}">')
 
+    author_name = article.get("author") or SITE_NAME
+    author_slug = article.get("author_slug") or _slugify(author_name) or "desk"
     news_ld: Dict[str, Any] = {
         "@context": "https://schema.org",
         "@type": "NewsArticle",
         "headline": title,
         "description": description,
         "image": _abs_url(image),
-        "author": {"@type": "Person", "name": article.get("author") or SITE_NAME},
-        "publisher": {
-            "@type": "Organization",
-            "name": SITE_NAME,
-            "logo": {"@type": "ImageObject", "url": _abs_url(PUBLISHER_LOGO)},
+        "author": {
+            "@type": "Person",
+            "@id": f"{base}/#author-{author_slug}",
+            "name": author_name,
+            "url": f"{base}/authors/{author_slug}",
         },
+        "publisher": {"@id": f"{base}/#organization"},
         "mainEntityOfPage": {"@type": "WebPage", "@id": url},
         "url": url,
+        "inLanguage": "en",
     }
     if published:
         news_ld["datePublished"] = published
         news_ld["dateModified"] = modified
     if category_name:
         news_ld["articleSection"] = category_name
+    tags = article.get("tags") or []
+    if tags:
+        news_ld["keywords"] = ", ".join(str(t) for t in tags if t)
     extra_lines.append(_json_ld_script(news_ld))
 
     breadcrumb_items = [
