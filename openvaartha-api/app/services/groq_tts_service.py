@@ -1,10 +1,19 @@
 import asyncio
+import base64
+import hashlib
 import io
+import logging
 import os
 import struct
 
 import httpx
 from fastapi import HTTPException
+
+from app.core.cache import get_redis
+
+logger = logging.getLogger(__name__)
+
+_TTS_CACHE_TTL = 60 * 60 * 24 * 7  # 7 days
 
 
 class GroqTTSService:
@@ -22,6 +31,8 @@ class GroqTTSService:
         self.model = "canopylabs/orpheus-v1-english"
         self.voice = "troy"
         self.chunk_size = 200
+        self.max_retries = 3
+        self.retry_delay = 2.0  # seconds; doubles on each retry
 
     async def _generate_chunk(self, client: httpx.AsyncClient, text: str) -> bytes:
         headers = {
@@ -34,18 +45,33 @@ class GroqTTSService:
             "voice": self.voice,
             "response_format": "wav",
         }
-        response = await client.post(
-            self.api_url,
-            json=payload,
-            headers=headers,
-            timeout=60.0,
-        )
-        if response.status_code != 200:
+        for attempt in range(self.max_retries):
+            response = await client.post(
+                self.api_url,
+                json=payload,
+                headers=headers,
+                timeout=60.0,
+            )
+            if response.status_code == 200:
+                return response.content
+
+            # 429 (rate limit) and 5xx (transient) get a short backoff; 4xx
+            # errors are permanent so fail fast.
+            retryable = response.status_code == 429 or response.status_code >= 500
+            if retryable and attempt < self.max_retries - 1:
+                delay = self.retry_delay * (2 ** attempt)
+                logger.warning(
+                    "Groq TTS retry %s/%s after %s (status %s)",
+                    attempt + 1, self.max_retries, delay, response.status_code,
+                )
+                await asyncio.sleep(delay)
+                continue
+
             raise HTTPException(
                 status_code=response.status_code,
                 detail=f"TTS generation failed: {response.text[:200]}",
             )
-        return response.content
+        raise HTTPException(status_code=502, detail="TTS generation failed")
 
     def _chunk_text(self, text: str) -> list[str]:
         """Split into <=200-char pieces on whitespace where possible."""
@@ -99,8 +125,20 @@ class GroqTTSService:
         if not self.api_key:
             raise HTTPException(status_code=500, detail="GROQ_API_KEY is not set")
 
+        # Identical text (same article, unchanged body) reuses the rendered
+        # audio instead of re-billing Groq on every play.
+        key = "tts:" + hashlib.sha256(text.encode()).hexdigest()
+        redis = await get_redis()
+        if redis is not None:
+            try:
+                cached = await redis.get(key)
+                if cached:
+                    return base64.b64decode(cached)
+            except Exception:
+                pass  # cache is best-effort; fall through to generation
+
         chunks = self._chunk_text(text)
-        semaphore = asyncio.Semaphore(3)  # cap concurrent renders to dodge rate limits
+        semaphore = asyncio.Semaphore(2)  # keep burst low to dodge rate limits
 
         async def _render(chunk: str) -> bytes:
             async with semaphore:
@@ -108,4 +146,11 @@ class GroqTTSService:
                     return await self._generate_chunk(client, chunk)
 
         wavs = await asyncio.gather(*(_render(chunk) for chunk in chunks))
-        return self._merge_wavs(wavs)
+        merged = self._merge_wavs(wavs)
+
+        if redis is not None:
+            try:
+                await redis.set(key, base64.b64encode(merged).decode(), ex=_TTS_CACHE_TTL)
+            except Exception:
+                pass
+        return merged

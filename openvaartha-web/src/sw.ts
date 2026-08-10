@@ -39,10 +39,20 @@ registerRoute(
 
 registerRoute(
   ({ url }) => /^https:\/\/fonts\.googleapis\.com\//i.test(url.href),
-  new CacheFirst({
-    cacheName: "google-fonts",
-    plugins: [new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 })],
-  })
+  async ({ request }) => {
+    try {
+      const strategy = new CacheFirst({
+        cacheName: "google-fonts",
+        plugins: [new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 })],
+      });
+      return await strategy.handle({ request });
+    } catch {
+      // Rejecting the cached/fetched promise would surface as a
+      // "FetchEvent.respondWith() rejected" error in the console and break
+      // font loading; any network hiccup just falls back to the network copy.
+      return fetch(request);
+    }
+  }
 );
 
 // Page navigations: always try the network first — /article/* gets real
