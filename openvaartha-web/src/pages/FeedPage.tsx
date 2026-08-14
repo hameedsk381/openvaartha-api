@@ -1,36 +1,12 @@
 import React, { useRef, useEffect, useMemo, useState } from 'react';
-import { useFeed, useLikeDispatch } from '@/lib/api-hooks';
+import { useFeed, useLikeDispatch, useRepostDispatch } from '@/lib/api-hooks';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FeedCard from '@/components/FeedCard';
 import { StoriesBar } from '@/components/StoriesBar';
 import { BytesPageSkeleton } from '@/components/PageSkeletons';
 import { Radio, Zap, Image as ImageIcon } from 'lucide-react';
-import { format, isToday, isYesterday } from 'date-fns';
-import type { Dispatch } from '@/lib/types';
 import { cn } from '@/lib/utils';
-
-function DateSeparator({ dateStr }: { dateStr: string }) {
-  let label = dateStr;
-  const d = new Date(dateStr);
-  if (isToday(d)) {
-    label = 'Today';
-  } else if (isYesterday(d)) {
-    label = 'Yesterday';
-  } else {
-    label = format(d, 'MMMM d, yyyy');
-  }
-
-  return (
-    <div className="flex items-center my-6 max-w-xl mx-auto px-4">
-      <div className="flex-1 border-t border-border/40"></div>
-      <div className="px-3 py-1 text-[11px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/40 rounded-full border border-border/40">
-        {label}
-      </div>
-      <div className="flex-1 border-t border-border/40"></div>
-    </div>
-  );
-}
 
 export default function FeedPage() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useFeed(20);
@@ -64,29 +40,6 @@ export default function FeedPage() {
     return raw;
   }, [data, filter]);
 
-  const groupedByDate = useMemo(() => {
-    const groups: Record<string, Dispatch[]> = {};
-    dispatches.forEach(d => {
-      if (!d) return;
-      const rawDate = d.createdAt || (d as any).created_at;
-      if (!rawDate) return;
-      let dateStr = '';
-      if (typeof rawDate === 'string') {
-        dateStr = rawDate.includes('T') ? rawDate.split('T')[0] : rawDate.substring(0, 10);
-      } else {
-        try {
-          dateStr = new Date(rawDate).toISOString().split('T')[0];
-        } catch {
-          dateStr = new Date().toISOString().split('T')[0];
-        }
-      }
-      if (!dateStr) return;
-      if (!groups[dateStr]) groups[dateStr] = [];
-      groups[dateStr].push(d);
-    });
-    return Object.entries(groups).map(([date, items]) => ({ date, items })).sort((a, b) => b.date.localeCompare(a.date));
-  }, [dispatches]);
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -98,66 +51,62 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans antialiased">
-      <div className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
+      <div className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border/40">
         <Navbar />
       </div>
       
-      <main className="flex-1 pb-16">
+      <main className="flex-1 pb-20">
         {/* Top Stories Bar (Instagram-style Category Stories) */}
-        <div className="border-b border-border/40 bg-card/50">
-          <div className="max-w-2xl mx-auto">
+        <div className="border-b border-border/40 bg-card/30">
+          <div className="max-w-xl mx-auto">
             <StoriesBar />
           </div>
         </div>
 
         {/* Filter Pills Bar */}
-        <div className="max-w-xl mx-auto px-4 pt-4 pb-2 flex items-center justify-between">
+        <div className="max-w-xl mx-auto px-4 pt-3 pb-1 flex items-center justify-center">
           <div className="flex items-center gap-1.5 p-1 bg-muted/40 rounded-full border border-border/40">
             <button
               onClick={() => setFilter('all')}
               className={cn(
-                "px-3 py-1 rounded-full text-xs font-semibold transition-all press flex items-center gap-1",
+                "px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all press flex items-center gap-1.5",
                 filter === 'all' 
                   ? "bg-background text-foreground shadow-xs font-bold" 
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Zap className="h-3 w-3" />
+              <Zap className="h-3.5 w-3.5" />
               All
             </button>
             <button
               onClick={() => setFilter('media')}
               className={cn(
-                "px-3 py-1 rounded-full text-xs font-semibold transition-all press flex items-center gap-1",
+                "px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all press flex items-center gap-1.5",
                 filter === 'media' 
                   ? "bg-background text-foreground shadow-xs font-bold" 
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <ImageIcon className="h-3 w-3" />
+              <ImageIcon className="h-3.5 w-3.5" />
               Media
             </button>
             <button
               onClick={() => setFilter('breaking')}
               className={cn(
-                "px-3 py-1 rounded-full text-xs font-semibold transition-all press flex items-center gap-1",
+                "px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all press flex items-center gap-1.5",
                 filter === 'breaking' 
                   ? "bg-background text-foreground shadow-xs font-bold" 
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Radio className="h-3 w-3 text-red-500" />
+              <Radio className="h-3.5 w-3.5 text-red-500" />
               Breaking
             </button>
           </div>
-
-          <span className="text-[11px] font-semibold text-muted-foreground">
-            {dispatches.length} posts
-          </span>
         </div>
 
-        <div className="max-w-2xl mx-auto w-full px-2 sm:px-4 pt-2">
-          {/* Feed Content */}
+        {/* Continuous Social Media Timeline (No card borders, no date banners) */}
+        <div className="max-w-xl mx-auto w-full">
           {dispatches.length === 0 ? (
             <div className="text-center py-20 px-4 max-w-sm mx-auto">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/50 flex items-center justify-center">
@@ -169,20 +118,14 @@ export default function FeedPage() {
               </p>
             </div>
           ) : (
-            <div>
-              {groupedByDate.map(group => (
-                <div key={group.date}>
-                  <DateSeparator dateStr={group.date} />
-                  {group.items.map(dispatch => (
-                    <FeedCard 
-                      key={dispatch.id} 
-                      dispatch={dispatch} 
-                      onLike={likeDispatch} 
-                      onRepost={repostDispatch}
-                    />
-                  ))}
-
-                </div>
+            <div className="divide-y divide-border/40">
+              {dispatches.map(dispatch => (
+                <FeedCard 
+                  key={dispatch.id} 
+                  dispatch={dispatch} 
+                  onLike={likeDispatch} 
+                  onRepost={repostDispatch}
+                />
               ))}
             </div>
           )}
@@ -201,4 +144,3 @@ export default function FeedPage() {
     </div>
   );
 }
-

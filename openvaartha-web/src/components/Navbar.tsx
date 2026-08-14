@@ -268,8 +268,9 @@ const Navbar = ({ isInsideStack, hideBottomNav }: NavbarProps) => {
       </header>
 
       {!hideBottomNav && (
-        <nav className="bottom-nav sm:hidden">
-          <div className="flex items-center justify-around h-16 px-1">
+        <nav className="bottom-nav">
+          <div className="flex items-center justify-around h-16 max-w-xl mx-auto px-1">
+
             <BottomNavItem icon={<AnimatedIcon animationType="scale"><Home className="h-5 w-5" /></AnimatedIcon>} label="Home" to="/" active={location.pathname === "/"} />
             <BottomNavItem icon={<Search className="h-5 w-5" animateOnHover />} label="Search" onClick={() => setSearchOpen(true)} active={false} />
             <BottomNavItem
