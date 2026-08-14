@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useDispatches } from "@/lib/api-hooks";
+import { useDispatches, useCategories } from "@/lib/api-hooks";
 import { StoryViewerModal } from "./StoryViewerModal";
 import { cn } from "@/lib/utils";
 import { Landmark, Cpu, Briefcase, Film, MapPin, Trophy, Flame } from "lucide-react";
@@ -69,25 +69,31 @@ const categoryTextColors: Record<string, string> = {
 };
 
 export function StoriesBar() {
-  const { data: rawBytes = [], isLoading } = useDispatches(15, { todayOnly: true });
+  const { data: rawBytes = [] } = useDispatches(30);
+  const { data: categories = [] } = useCategories();
   const [activeGroupIndex, setActiveGroupIndex] = useState<number | null>(null);
 
   const categoryGroups = useMemo(() => {
     const map = new Map<string, typeof rawBytes>();
     rawBytes.forEach(b => {
-      const cat = b.category || "News";
+      const cat = b.category || "National";
       if (!map.has(cat)) map.set(cat, []);
       map.get(cat)!.push(b);
     });
+
+    if (map.size === 0 && categories.length > 0) {
+      categories.forEach(c => map.set(c.name, []));
+    }
     
     return Array.from(map.entries()).map(([name, items]) => ({
       name,
       items,
       coverImage: items.find(i => i.imageUrl)?.imageUrl || null
     }));
-  }, [rawBytes]);
+  }, [rawBytes, categories]);
 
-  if (isLoading || rawBytes.length === 0) return null;
+  if (categoryGroups.length === 0) return null;
+
 
   return (
     <div className="w-full bg-background border-b border-border py-4 px-4 sm:px-6">
