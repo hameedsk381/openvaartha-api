@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from datetime import datetime, timezone
+from typing import Optional
 from app.database import get_db
 from app.core.dependencies import get_current_user, get_current_user_optional
 from app.schemas.poll import PollCreate, PollResponse, PollVoteCreate
@@ -27,7 +28,7 @@ async def create_poll(
 async def get_poll(
     poll_id: str,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user_optional)
+    current_user: Optional[UserModel] = Depends(get_current_user_optional)
 ):
     if poll_id == "101":
         return {
@@ -56,7 +57,7 @@ async def vote_poll(
     poll_id: str,
     vote: PollVoteCreate,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user_optional)
+    current_user: Optional[UserModel] = Depends(get_current_user_optional)
 ):
     if poll_id == "101":
         # Return mock updated poll

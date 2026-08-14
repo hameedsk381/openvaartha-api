@@ -1,4 +1,3 @@
-from app.models.article import Article
 import hashlib
 import logging
 import re
@@ -198,7 +197,7 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
             "has_deep_content": False,
         }
 
-        await Article(**article_doc).insert()
+        await db["articles"].insert_one(article_doc)
 
         content_doc = {
             "article_id": article_id,

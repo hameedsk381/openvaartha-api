@@ -57,13 +57,15 @@ async def get_replies(
     limit: int = 20,
 ) -> List[dict]:
     cursor = (
-        Comment
+        Comment.get_motor_collection()
         .find({"parent_id": parent_id, "is_active": True})
         .sort("created_at", 1)
         .skip(skip)
         .limit(limit)
     )
-    return [{"id": c["_id"], **c} for c in await cursor.to_list(length=limit)]
+    docs = await cursor.to_list(length=limit)
+    return [{"id": str(c["_id"]), **c} for c in docs]
+
 
 
 async def create_comment(

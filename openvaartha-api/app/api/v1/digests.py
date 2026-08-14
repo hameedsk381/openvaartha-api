@@ -12,7 +12,8 @@ from app.services.digest_service import (
     broadcast_digest_newsletter
 )
 from app.services.article_service import get_article_by_id
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_editor
+from app.models.user import User as UserModel
 
 router = APIRouter()
 
@@ -46,10 +47,7 @@ async def fetch_digest_by_date(date: str, db: AsyncIOMotorDatabase = Depends(get
     return {**digest.model_dump(), "articles": articles}
 
 @router.post("/generate", response_model=DigestResponse)
-async def trigger_digest_generation(current_user: dict = Depends(get_current_user)):
-    if current_user.get("role") not in ["admin", "editor"]:
-        raise HTTPException(status_code=403, detail="Not authorized")
-        
+async def trigger_digest_generation(current_user: UserModel = Depends(get_current_editor)):
     digest = await generate_daily_digest()
     if not digest:
         raise HTTPException(status_code=500, detail="Failed to generate digest")
@@ -58,3 +56,4 @@ async def trigger_digest_generation(current_user: dict = Depends(get_current_use
     await broadcast_digest_newsletter(digest)
     
     return digest
+
