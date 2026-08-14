@@ -22,6 +22,7 @@ import { Heart } from "lucide-react";
 interface NavbarProps { 
   isInsideStack?: boolean;
   hideBottomNav?: boolean;
+  hideHeader?: boolean;
 }
 
 const isTouchDevice = () =>
@@ -39,7 +40,7 @@ const initDark = (): boolean => {
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
 };
 
-const Navbar = ({ isInsideStack, hideBottomNav }: NavbarProps) => {
+const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
   const [isDark, setIsDark]       = useState(initDark);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery]         = useState("");
@@ -114,10 +115,12 @@ const Navbar = ({ isInsideStack, hideBottomNav }: NavbarProps) => {
 
   return (
     <>
-      <header className={cn(
-        "bg-background w-full",
-        isInsideStack ? "" : "border-b border-border"
-      )}>
+      {!hideHeader && (
+        <header className={cn(
+          "bg-background w-full",
+          isInsideStack ? "" : "border-b border-border"
+        )}>
+
         <div className="h-14 flex items-center justify-between px-4 sm:px-6 max-w-screen-2xl mx-auto">
           <Link to="/" className="press shrink-0 flex items-center gap-2.5">
             <img src={BRAND.iconMaroonPath} alt="Open Vaartha" className="h-9 w-9 dark:hidden" />
@@ -266,6 +269,7 @@ const Navbar = ({ isInsideStack, hideBottomNav }: NavbarProps) => {
           <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
         </div>
       </header>
+      )}
 
       {!hideBottomNav && (
         <nav className="bottom-nav">
