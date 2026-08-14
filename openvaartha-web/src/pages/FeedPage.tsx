@@ -1,10 +1,11 @@
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useRef, useEffect, useMemo, useState } from 'react';
 import { useFeed, useLikeDispatch } from '@/lib/api-hooks';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FeedCard from '@/components/FeedCard';
+import { StoriesBar } from '@/components/StoriesBar';
 import { BytesPageSkeleton } from '@/components/PageSkeletons';
-import { Radio } from 'lucide-react';
+import { Radio, Zap, Image as ImageIcon } from 'lucide-react';
 import { format, isToday, isYesterday } from 'date-fns';
 import type { Dispatch } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -21,12 +22,12 @@ function DateSeparator({ dateStr }: { dateStr: string }) {
   }
 
   return (
-    <div className="flex items-center my-8">
-      <div className="flex-1 border-t border-border/60"></div>
-      <div className="px-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+    <div className="flex items-center my-6 max-w-xl mx-auto px-4">
+      <div className="flex-1 border-t border-border/40"></div>
+      <div className="px-3 py-1 text-[11px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/40 rounded-full border border-border/40">
         {label}
       </div>
-      <div className="flex-1 border-t border-border/60"></div>
+      <div className="flex-1 border-t border-border/40"></div>
     </div>
   );
 }
@@ -35,6 +36,7 @@ export default function FeedPage() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useFeed(20);
   const { mutate: likeDispatch } = useLikeDispatch();
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const [filter, setFilter] = useState<'all' | 'media' | 'breaking'>('all');
 
   useEffect(() => {
     if (!sentinelRef.current || !hasNextPage) return;
@@ -51,8 +53,15 @@ export default function FeedPage() {
   }, [hasNextPage, fetchNextPage]);
 
   const dispatches = useMemo(() => {
-    return data?.pages.flatMap(p => p.items) || [];
-  }, [data]);
+    const raw = data?.pages.flatMap(p => p.items) || [];
+    if (filter === 'media') {
+      return raw.filter(d => !!(d.imageUrl || d.videoUrl || (d as any).image_url || (d as any).video_url));
+    }
+    if (filter === 'breaking') {
+      return raw.filter(d => d.category?.toLowerCase() === 'national' || d.category?.toLowerCase() === 'politics' || d.category?.toLowerCase() === 'breaking');
+    }
+    return raw;
+  }, [data, filter]);
 
   const groupedByDate = useMemo(() => {
     const groups: Record<string, Dispatch[]> = {};
@@ -77,7 +86,6 @@ export default function FeedPage() {
     return Object.entries(groups).map(([date, items]) => ({ date, items })).sort((a, b) => b.date.localeCompare(a.date));
   }, [dispatches]);
 
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -94,35 +102,73 @@ export default function FeedPage() {
       </div>
       
       <main className="flex-1 pb-16">
-        <div className="max-w-2xl mx-auto w-full">
-          {/* Header */}
-          <header className="px-4 py-8 sm:py-10 text-center border-b border-border/40">
-            <h1 className="font-display font-extrabold text-4xl sm:text-5xl tracking-tight mb-3">
-              Feed
-              <span className="inline-flex relative ml-3 -top-1">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-              </span>
-            </h1>
-            <p className="text-muted-foreground text-sm sm:text-base font-medium max-w-md mx-auto flex items-center justify-center gap-2">
-              <Radio className="h-4 w-4" />
-              Short dispatches from the newsroom
-            </p>
-          </header>
+        {/* Top Stories Bar (Instagram-style Category Stories) */}
+        <div className="border-b border-border/40 bg-card/50">
+          <div className="max-w-2xl mx-auto">
+            <StoriesBar />
+          </div>
+        </div>
 
+        {/* Filter Pills Bar */}
+        <div className="max-w-xl mx-auto px-4 pt-4 pb-2 flex items-center justify-between">
+          <div className="flex items-center gap-1.5 p-1 bg-muted/40 rounded-full border border-border/40">
+            <button
+              onClick={() => setFilter('all')}
+              className={cn(
+                "px-3 py-1 rounded-full text-xs font-semibold transition-all press flex items-center gap-1",
+                filter === 'all' 
+                  ? "bg-background text-foreground shadow-xs font-bold" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Zap className="h-3 w-3" />
+              All
+            </button>
+            <button
+              onClick={() => setFilter('media')}
+              className={cn(
+                "px-3 py-1 rounded-full text-xs font-semibold transition-all press flex items-center gap-1",
+                filter === 'media' 
+                  ? "bg-background text-foreground shadow-xs font-bold" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <ImageIcon className="h-3 w-3" />
+              Media
+            </button>
+            <button
+              onClick={() => setFilter('breaking')}
+              className={cn(
+                "px-3 py-1 rounded-full text-xs font-semibold transition-all press flex items-center gap-1",
+                filter === 'breaking' 
+                  ? "bg-background text-foreground shadow-xs font-bold" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Radio className="h-3 w-3 text-red-500" />
+              Breaking
+            </button>
+          </div>
+
+          <span className="text-[11px] font-semibold text-muted-foreground">
+            {dispatches.length} posts
+          </span>
+        </div>
+
+        <div className="max-w-2xl mx-auto w-full px-2 sm:px-4 pt-2">
           {/* Feed Content */}
           {dispatches.length === 0 ? (
-            <div className="text-center py-20 px-4">
-              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-muted/50 flex items-center justify-center">
-                <Radio className="h-10 w-10 text-muted-foreground opacity-50" />
+            <div className="text-center py-20 px-4 max-w-sm mx-auto">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/50 flex items-center justify-center">
+                <Radio className="h-8 w-8 text-muted-foreground opacity-50" />
               </div>
-              <h2 className="text-xl font-bold mb-2">No dispatches yet</h2>
-              <p className="text-muted-foreground max-w-sm mx-auto">
-                Check back later for live updates, short bursts of news, and behind-the-scenes content.
+              <h2 className="text-lg font-bold mb-1">No posts found</h2>
+              <p className="text-sm text-muted-foreground">
+                Check back soon for live updates and short dispatches from the newsroom.
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-border/20">
+            <div>
               {groupedByDate.map(group => (
                 <div key={group.date}>
                   <DateSeparator dateStr={group.date} />
@@ -152,3 +198,4 @@ export default function FeedPage() {
     </div>
   );
 }
+

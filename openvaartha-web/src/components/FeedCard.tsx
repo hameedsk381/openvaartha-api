@@ -70,121 +70,122 @@ export default function FeedCard({ dispatch, onLike }: FeedCardProps) {
   const imageUrl = dispatch.imageUrl || (dispatch as any).image_url;
   const videoUrl = dispatch.videoUrl || (dispatch as any).video_url;
 
-  const categoryColor = dispatch.category ? categoryColors[dispatch.category] : 'bg-muted';
+  const categoryColor = dispatch.category ? categoryColors[dispatch.category] : 'bg-primary';
 
   return (
-    <div 
+    <article 
       onClick={handleCardClick}
       className={cn(
-        "cursor-pointer w-full max-w-2xl mx-auto border-b border-border hover:bg-muted/30 transition-colors p-4 sm:p-5 flex gap-3 sm:gap-4",
-        "bg-background text-foreground"
+        "group cursor-pointer w-full max-w-xl mx-auto rounded-2xl border border-border/60 bg-card p-4 sm:p-5 mb-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200",
+        "text-card-foreground"
       )}
     >
-      {/* Avatar */}
-      <div className="shrink-0 pt-1">
-        <div className="w-10 h-10 rounded-full gradient-maroon flex items-center justify-center shadow-sm overflow-hidden border border-border/50">
-          <img src={BRAND.iconWhitePath} alt={BRAND.shortName} className="w-5 h-5 object-contain" />
+      {/* Header Row */}
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Avatar */}
+          <div className="w-10 h-10 rounded-full gradient-maroon p-0.5 ring-2 ring-primary/20 flex items-center justify-center shadow-xs overflow-hidden shrink-0">
+            <img src={BRAND.iconWhitePath} alt={BRAND.shortName} className="w-5 h-5 object-contain" />
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="font-display font-bold text-sm sm:text-base leading-tight group-hover:text-primary transition-colors truncate">
+                {BRAND.shortName}
+              </span>
+              <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-primary text-white text-[9px] font-bold shrink-0">
+                ✓
+              </span>
+            </div>
+            <span className="text-xs text-muted-foreground font-medium">
+              {relativeTime(createdAt)}
+            </span>
+          </div>
         </div>
+
+        {dispatch.category && (
+          <span className={cn("chip text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full text-white font-bold tracking-wide uppercase shrink-0 shadow-xs", categoryColor)}>
+            {dispatch.category}
+          </span>
+        )}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-bold text-[15px] hover:underline truncate">
-            {BRAND.shortName}
-          </span>
-          {dispatch.category && (
-            <>
-              <span className="text-muted-foreground text-sm">·</span>
-              <span className={cn("chip text-xs px-2 py-0.5 rounded-full text-white font-medium", categoryColor)}>
-                {dispatch.category}
-              </span>
-            </>
-          )}
-          <span className="text-muted-foreground text-sm">·</span>
-          <span className="text-muted-foreground text-sm hover:underline shrink-0">
-            {relativeTime(createdAt)}
-          </span>
+      {/* Body Text */}
+      <p className="text-[15px] sm:text-base leading-relaxed text-foreground/90 font-normal whitespace-pre-wrap break-words mb-3">
+        {dispatch.text}
+      </p>
+
+      {/* Media Attachment */}
+      {imageUrl && !videoUrl && (
+        <div className="mb-3.5 rounded-xl overflow-hidden border border-border/40 max-h-[380px] relative bg-muted/20">
+          <img 
+            src={imageUrl} 
+            alt="Dispatch media" 
+            className="w-full h-full object-cover max-h-[380px] group-hover:scale-[1.01] transition-transform duration-300"
+          />
         </div>
+      )}
 
-        <p className="text-[15px] leading-snug whitespace-pre-wrap break-words mb-3">
-          {dispatch.text}
-        </p>
+      {videoUrl && (
+        <div className="mb-3.5 rounded-xl overflow-hidden border border-border/40 max-h-[380px] bg-black relative">
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            controls
+            muted
+            loop
+            playsInline
+            className="w-full h-full max-h-[380px] object-contain"
+          />
+        </div>
+      )}
 
-        {imageUrl && !videoUrl && (
-          <div className="mb-3 rounded-xl overflow-hidden border border-border max-h-[400px]">
-            <img 
-              src={imageUrl} 
-              alt="Dispatch media" 
-              className="w-full h-full object-cover max-h-[400px]"
-            />
-          </div>
-        )}
-
-        {videoUrl && (
-          <div className="mb-3 rounded-xl overflow-hidden border border-border max-h-[400px] bg-black">
-            <video
-              ref={videoRef}
-              src={videoUrl}
-              controls
-              muted
-              loop
-              playsInline
-              className="w-full h-full max-h-[400px] object-contain"
-            />
-          </div>
-        )}
-
-        {/* Action Bar */}
-        <div className="flex items-center gap-6 mt-1 text-muted-foreground">
+      {/* Action Bar */}
+      <div className="flex items-center justify-between pt-2 border-t border-border/30 text-muted-foreground">
+        <div className="flex items-center gap-2">
+          {/* Like Button */}
           <button 
             onClick={handleLike}
             className={cn(
-              "group flex items-center gap-1.5 hover:text-red-500 transition-colors press rounded-full p-1 -ml-1",
-              hasLiked && "text-red-500"
+              "group/btn flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-red-500/10 hover:text-red-500 transition-colors press text-xs font-semibold",
+              hasLiked && "text-red-500 bg-red-500/10"
             )}
             aria-label="Like"
           >
-            <div className="relative flex items-center justify-center w-8 h-8 rounded-full group-hover:bg-red-500/10 transition-colors">
-              <Heart 
-                size={18} 
-                className={cn(
-                  "transition-all duration-300",
-                  hasLiked ? "fill-red-500 text-red-500" : "stroke-[1.5]",
-                  likeAnimating && "scale-125"
-                )} 
-              />
-            </div>
-            <span className={cn("text-xs font-medium", hasLiked && "text-red-500")}>
-              {likeCount}
-            </span>
+            <Heart 
+              size={16} 
+              className={cn(
+                "transition-all duration-300",
+                hasLiked ? "fill-red-500 text-red-500" : "stroke-[1.75]",
+                likeAnimating && "scale-125"
+              )} 
+            />
+            <span>{likeCount}</span>
           </button>
 
+          {/* Share Button */}
           <button 
             onClick={handleShare}
-            className="group flex items-center gap-1.5 hover:text-primary transition-colors press rounded-full p-1"
+            className="group/btn flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-primary/10 hover:text-primary transition-colors press text-xs font-semibold"
             aria-label="Share"
           >
-            <div className="flex items-center justify-center w-8 h-8 rounded-full group-hover:bg-primary/10 transition-colors">
-              <Share2 size={18} className="stroke-[1.5]" />
-            </div>
+            <Share2 size={16} className="stroke-[1.75]" />
+            <span className="hidden sm:inline">Share</span>
           </button>
-
-          {articleSlug && (
-            <Link
-              to={`/article/${articleSlug}`}
-              onClick={(e) => e.stopPropagation()}
-              className="group flex items-center gap-1.5 hover:text-primary transition-colors ml-auto press rounded-full p-1 pr-3"
-            >
-              <div className="flex items-center justify-center w-8 h-8 rounded-full group-hover:bg-primary/10 transition-colors">
-                <ExternalLink size={18} className="stroke-[1.5]" />
-              </div>
-              <span className="text-xs font-medium hidden sm:inline">Full Story</span>
-            </Link>
-          )}
         </div>
-      </div>
-    </div>
-  );
 
+        {/* Read Full Story Button */}
+        {articleSlug && (
+          <Link
+            to={`/article/${articleSlug}`}
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-xs press"
+          >
+            <span>Full Story</span>
+            <ExternalLink size={13} className="stroke-[2]" />
+          </Link>
+        )}
+      </div>
+    </article>
+  );
 }

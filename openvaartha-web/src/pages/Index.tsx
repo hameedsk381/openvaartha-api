@@ -10,8 +10,8 @@ import CategoryStrip from '@/components/home/CategoryStrip';
 import EditorPicks from '@/components/home/EditorPicks';
 import MainFeed from '@/components/home/MainFeed';
 import TrendingSidebar from '@/components/home/TrendingSidebar';
-import { StoriesBar } from '@/components/StoriesBar';
 import SupportBanner from '@/components/SupportBanner';
+
 
 import {
   useArticles,
@@ -85,8 +85,6 @@ export default function Index() {
             </div>
           )}
 
-          {/* Stories Bar */}
-          {!isFiltered && <StoriesBar />}
 
           {/* One-time dismissible support banner */}
           <SupportBanner className={isFiltered ? "hidden" : undefined} />
