@@ -24,9 +24,11 @@ class CommentUpdate(BaseModel):
 
 class Comment(BaseModel):
     id: str
-    article_id: str
+    article_id: Optional[str] = None
+    dispatch_id: Optional[str] = None
     user_id: str
     author_name: str
+
     author_email: str
     body: str
     parent_id: Optional[str] = None

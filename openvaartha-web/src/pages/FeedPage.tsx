@@ -35,6 +35,7 @@ function DateSeparator({ dateStr }: { dateStr: string }) {
 export default function FeedPage() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useFeed(20);
   const { mutate: likeDispatch } = useLikeDispatch();
+  const { mutate: repostDispatch } = useRepostDispatch();
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [filter, setFilter] = useState<'all' | 'media' | 'breaking'>('all');
 
@@ -177,8 +178,10 @@ export default function FeedPage() {
                       key={dispatch.id} 
                       dispatch={dispatch} 
                       onLike={likeDispatch} 
+                      onRepost={repostDispatch}
                     />
                   ))}
+
                 </div>
               ))}
             </div>

@@ -10,18 +10,26 @@ from app.core.sanitize import sanitize_text
 async def ensure_comment_indexes(db: AsyncIOMotorDatabase) -> None:
     await Comment.get_motor_collection().create_index([("article_id", 1), ("created_at", -1)])
     await Comment.get_motor_collection().create_index([("article_id", 1), ("is_active", 1), ("created_at", -1)])
+    await Comment.get_motor_collection().create_index([("dispatch_id", 1), ("is_active", 1), ("created_at", -1)])
     await Comment.get_motor_collection().create_index([("user_id", 1)])
     await Comment.get_motor_collection().create_index([("parent_id", 1)])
 
 
 async def get_comments(
     db: AsyncIOMotorDatabase,
-    article_id: str,
+    article_id: Optional[str] = None,
+    dispatch_id: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
 ) -> List[dict]:
+    match_filter: dict = {"is_active": True}
+    if article_id:
+        match_filter["article_id"] = article_id
+    elif dispatch_id:
+        match_filter["dispatch_id"] = dispatch_id
+
     pipeline = [
-        {"$match": {"article_id": article_id, "is_active": True}},
+        {"$match": match_filter},
         {"$sort": {"created_at": -1}},
         {"$skip": skip},
         {"$limit": limit},
@@ -67,14 +75,14 @@ async def get_replies(
     return [{"id": str(c["_id"]), **c} for c in docs]
 
 
-
 async def create_comment(
     db: AsyncIOMotorDatabase,
-    article_id: str,
     user_id: str,
     author_name: str,
     author_email: str,
     body: str,
+    article_id: Optional[str] = None,
+    dispatch_id: Optional[str] = None,
     parent_id: Optional[str] = None,
 ) -> dict:
     comment_id = str(uuid4())
@@ -87,6 +95,7 @@ async def create_comment(
     doc = {
         "_id": comment_id,
         "article_id": article_id,
+        "dispatch_id": dispatch_id,
         "user_id": user_id,
         "author_name": author_name,
         "author_email": author_email,
@@ -105,8 +114,10 @@ async def create_comment(
     from app.core.ws_manager import manager
     await manager.broadcast("NEW_COMMENT", {
         "article_id": article_id,
+        "dispatch_id": dispatch_id,
         "comment": result
     })
+
     
     return result
 

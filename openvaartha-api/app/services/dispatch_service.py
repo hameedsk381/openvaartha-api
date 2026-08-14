@@ -98,11 +98,18 @@ async def get_dispatch(db: AsyncIOMotorDatabase, dispatch_id: str, user_id: Opti
 
     like_counts = await dispatch_reaction_service.get_like_counts(db, [dispatch_id])
     has_liked = await dispatch_reaction_service.has_user_liked(db, [dispatch_id], user_id)
+    repost_counts = await dispatch_reaction_service.get_repost_counts(db, [dispatch_id])
+    has_reposted = await dispatch_reaction_service.has_user_reposted(db, [dispatch_id], user_id)
+    comment_counts = await dispatch_reaction_service.get_comment_counts(db, [dispatch_id])
 
     d["like_count"] = like_counts.get(dispatch_id, 0)
     d["has_liked"] = has_liked.get(dispatch_id, False)
+    d["repost_count"] = repost_counts.get(dispatch_id, 0)
+    d["has_reposted"] = has_reposted.get(dispatch_id, False)
+    d["comment_count"] = comment_counts.get(dispatch_id, 0)
 
     return d
+
 
 
 async def _assert_valid_refs(db: AsyncIOMotorDatabase, article_id: Optional[str], category_id: Optional[str]) -> None:
@@ -203,10 +210,17 @@ async def list_dispatches_paginated(
     dispatch_ids = [d["id"] for d in dispatches]
     like_counts = await dispatch_reaction_service.get_like_counts(db, dispatch_ids)
     has_user_liked = await dispatch_reaction_service.has_user_liked(db, dispatch_ids, user_id)
+    repost_counts = await dispatch_reaction_service.get_repost_counts(db, dispatch_ids)
+    has_user_reposted = await dispatch_reaction_service.has_user_reposted(db, dispatch_ids, user_id)
+    comment_counts = await dispatch_reaction_service.get_comment_counts(db, dispatch_ids)
     
     for d in dispatches:
         d["like_count"] = like_counts.get(d["id"], 0)
         d["has_liked"] = has_user_liked.get(d["id"], False)
+        d["repost_count"] = repost_counts.get(d["id"], 0)
+        d["has_reposted"] = has_user_reposted.get(d["id"], False)
+        d["comment_count"] = comment_counts.get(d["id"], 0)
+
         
     next_cursor = None
     if has_next and dispatches:

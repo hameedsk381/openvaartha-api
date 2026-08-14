@@ -144,3 +144,16 @@ async def delete_dispatch(
     if not success:
         raise HTTPException(status_code=404, detail="Dispatch not found")
     return {"message": "Dispatch deleted"}
+
+
+@router.post("/{dispatch_id}/repost")
+@limiter.limit(MUTATION_LIMIT)
+async def toggle_dispatch_repost(
+    request: Request,
+    dispatch_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """Toggle repost on a dispatch (auth required)."""
+    return await dispatch_reaction_service.toggle_repost(db, dispatch_id, current_user.id)
+

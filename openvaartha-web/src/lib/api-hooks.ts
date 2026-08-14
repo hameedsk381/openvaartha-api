@@ -257,7 +257,7 @@ export function useLikeDispatch() {
             ...page,
             items: page.items.map((item: any) =>
               item.id === dispatchId
-                ? { ...item, hasLiked: !item.hasLiked, likeCount: (item.likeCount || 0) + (item.hasLiked ? -1 : 1) }
+                ? { ...item, hasLiked: !item.hasLiked, likeCount: Math.max(0, (item.likeCount || 0) + (item.hasLiked ? -1 : 1)) }
                 : item
             ),
           })),
@@ -267,3 +267,54 @@ export function useLikeDispatch() {
     onSettled: () => qc.invalidateQueries({ queryKey: ['feed'] }),
   });
 }
+
+// Repost toggle with optimistic update
+export function useRepostDispatch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (dispatchId: string) => apiFetch(`/dispatches/${dispatchId}/repost`, { method: 'POST' }),
+    onMutate: async (dispatchId) => {
+      await qc.cancelQueries({ queryKey: ['feed'] });
+      qc.setQueriesData({ queryKey: ['feed'] }, (old: any) => {
+        if (!old?.pages) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            items: page.items.map((item: any) =>
+              item.id === dispatchId
+                ? { ...item, hasReposted: !item.hasReposted, repostCount: Math.max(0, (item.repostCount || 0) + (item.hasReposted ? -1 : 1)) }
+                : item
+            ),
+          })),
+        };
+      });
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['feed'] }),
+  });
+}
+
+export function useDispatchComments(dispatchId: string, skip = 0, limit = 20) {
+  return useQuery<Comment[]>({
+    queryKey: ["dispatch-comments", dispatchId, skip, limit],
+    queryFn: () => apiFetch<Comment[]>(`/comments/?dispatch_id=${dispatchId}&skip=${skip}&limit=${limit}`),
+    enabled: !!dispatchId,
+    placeholderData: [],
+  });
+}
+
+export function useCreateDispatchComment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ dispatchId, body }: { dispatchId: string; body: string }) =>
+      apiFetch<Comment>(`/comments/?dispatch_id=${dispatchId}`, {
+        method: "POST",
+        body: JSON.stringify({ body }),
+      }),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ["dispatch-comments", variables.dispatchId] });
+      qc.invalidateQueries({ queryKey: ["feed"] });
+    },
+  });
+}
+

@@ -118,16 +118,21 @@ export interface Dispatch {
   createdAt: string;
   likeCount?: number;
   hasLiked?: boolean;
+  repostCount?: number;
+  hasReposted?: boolean;
+  commentCount?: number;
 }
 
 export interface Comment {
   id: string;
-  articleId: string;
+  articleId?: string | null;
+  dispatchId?: string | null;
   userId: string;
   authorName: string;
   authorEmail: string;
   body: string;
   parentId?: string | null;
+
   likes: string[];
   isEdited: boolean;
   isActive: boolean;

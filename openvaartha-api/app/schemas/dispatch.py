@@ -57,6 +57,10 @@ class Dispatch(BaseModel):
     created_by: Optional[str] = None
     like_count: int = 0
     has_liked: bool = False
+    repost_count: int = 0
+    has_reposted: bool = False
+    comment_count: int = 0
+
 
     @model_validator(mode="before")
     @classmethod
