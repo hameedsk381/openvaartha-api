@@ -6,7 +6,7 @@ from app.core.dependencies import get_current_editor, get_current_user_optional,
 from app.core.rate_limit import limiter, MUTATION_LIMIT
 from app.database import get_db
 from app.models.user import User as UserModel
-from app.schemas.dispatch import Dispatch as DispatchSchema, DispatchCreate, DispatchUpdate
+from app.schemas.dispatch import Dispatch as DispatchSchema, DispatchCreate, DispatchUpdate, DispatchPaginatedResponse
 from app.services import dispatch_service, push_service, dispatch_reaction_service
 from app.worker import send_push_notification_task
 from typing import Optional
@@ -69,7 +69,7 @@ async def backfill_dispatch_categories(
     return {"message": f"Categorized {updated} dispatch(es)", "updated": updated}
 
 
-@router.get("/feed")
+@router.get("/feed", response_model=DispatchPaginatedResponse)
 async def feed_dispatches(
     limit: int = Query(20, ge=1, le=50),
     cursor: Optional[str] = Query(None),

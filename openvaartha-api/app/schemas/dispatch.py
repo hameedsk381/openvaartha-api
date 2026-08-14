@@ -70,3 +70,14 @@ class Dispatch(BaseModel):
         alias_generator = to_camel
         populate_by_name = True
         from_attributes = True
+
+
+class DispatchPaginatedResponse(BaseModel):
+    items: list[Dispatch]
+    next_cursor: Optional[str] = None
+
+    class Config:
+        alias_generator = to_camel
+        populate_by_name = True
+        from_attributes = True
+

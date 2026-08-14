@@ -57,12 +57,26 @@ export default function FeedPage() {
   const groupedByDate = useMemo(() => {
     const groups: Record<string, Dispatch[]> = {};
     dispatches.forEach(d => {
-      const dateStr = d.createdAt.split('T')[0];
+      if (!d) return;
+      const rawDate = d.createdAt || (d as any).created_at;
+      if (!rawDate) return;
+      let dateStr = '';
+      if (typeof rawDate === 'string') {
+        dateStr = rawDate.includes('T') ? rawDate.split('T')[0] : rawDate.substring(0, 10);
+      } else {
+        try {
+          dateStr = new Date(rawDate).toISOString().split('T')[0];
+        } catch {
+          dateStr = new Date().toISOString().split('T')[0];
+        }
+      }
+      if (!dateStr) return;
       if (!groups[dateStr]) groups[dateStr] = [];
       groups[dateStr].push(d);
     });
     return Object.entries(groups).map(([date, items]) => ({ date, items })).sort((a, b) => b.date.localeCompare(a.date));
   }, [dispatches]);
+
 
   if (isLoading) {
     return (

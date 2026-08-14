@@ -62,6 +62,14 @@ export default function FeedCard({ dispatch, onLike }: FeedCardProps) {
     navigate(`/feed/${dispatch.id}`);
   };
 
+  const createdAt = dispatch.createdAt || (dispatch as any).created_at;
+  const hasLiked = dispatch.hasLiked ?? (dispatch as any).has_liked ?? false;
+  const likeCount = dispatch.likeCount ?? (dispatch as any).like_count ?? 0;
+  const articleSlug = dispatch.articleSlug || (dispatch as any).article_slug;
+  const articleTitle = dispatch.articleTitle || (dispatch as any).article_title;
+  const imageUrl = dispatch.imageUrl || (dispatch as any).image_url;
+  const videoUrl = dispatch.videoUrl || (dispatch as any).video_url;
+
   const categoryColor = dispatch.category ? categoryColors[dispatch.category] : 'bg-muted';
 
   return (
@@ -95,7 +103,7 @@ export default function FeedCard({ dispatch, onLike }: FeedCardProps) {
           )}
           <span className="text-muted-foreground text-sm">·</span>
           <span className="text-muted-foreground text-sm hover:underline shrink-0">
-            {relativeTime(dispatch.createdAt)}
+            {relativeTime(createdAt)}
           </span>
         </div>
 
@@ -103,21 +111,21 @@ export default function FeedCard({ dispatch, onLike }: FeedCardProps) {
           {dispatch.text}
         </p>
 
-        {dispatch.imageUrl && !dispatch.videoUrl && (
+        {imageUrl && !videoUrl && (
           <div className="mb-3 rounded-xl overflow-hidden border border-border max-h-[400px]">
             <img 
-              src={dispatch.imageUrl} 
+              src={imageUrl} 
               alt="Dispatch media" 
               className="w-full h-full object-cover max-h-[400px]"
             />
           </div>
         )}
 
-        {dispatch.videoUrl && (
+        {videoUrl && (
           <div className="mb-3 rounded-xl overflow-hidden border border-border max-h-[400px] bg-black">
             <video
               ref={videoRef}
-              src={dispatch.videoUrl}
+              src={videoUrl}
               controls
               muted
               loop
@@ -133,7 +141,7 @@ export default function FeedCard({ dispatch, onLike }: FeedCardProps) {
             onClick={handleLike}
             className={cn(
               "group flex items-center gap-1.5 hover:text-red-500 transition-colors press rounded-full p-1 -ml-1",
-              dispatch.hasLiked && "text-red-500"
+              hasLiked && "text-red-500"
             )}
             aria-label="Like"
           >
@@ -142,13 +150,13 @@ export default function FeedCard({ dispatch, onLike }: FeedCardProps) {
                 size={18} 
                 className={cn(
                   "transition-all duration-300",
-                  dispatch.hasLiked ? "fill-red-500 text-red-500" : "stroke-[1.5]",
+                  hasLiked ? "fill-red-500 text-red-500" : "stroke-[1.5]",
                   likeAnimating && "scale-125"
                 )} 
               />
             </div>
-            <span className={cn("text-xs font-medium", dispatch.hasLiked && "text-red-500")}>
-              {dispatch.likeCount || 0}
+            <span className={cn("text-xs font-medium", hasLiked && "text-red-500")}>
+              {likeCount}
             </span>
           </button>
 
@@ -162,9 +170,9 @@ export default function FeedCard({ dispatch, onLike }: FeedCardProps) {
             </div>
           </button>
 
-          {dispatch.articleSlug && (
+          {articleSlug && (
             <Link
-              to={`/article/${dispatch.articleSlug}`}
+              to={`/article/${articleSlug}`}
               onClick={(e) => e.stopPropagation()}
               className="group flex items-center gap-1.5 hover:text-primary transition-colors ml-auto press rounded-full p-1 pr-3"
             >
@@ -178,4 +186,5 @@ export default function FeedCard({ dispatch, onLike }: FeedCardProps) {
       </div>
     </div>
   );
+
 }

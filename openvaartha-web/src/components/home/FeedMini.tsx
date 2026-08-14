@@ -25,11 +25,14 @@ export default function FeedMini() {
       </div>
       <ul className="divide-y divide-border">
         {dispatches.map((u) => {
+          const rawDate = u.createdAt || (u as any).created_at;
+          const dateObj = rawDate ? new Date(rawDate) : new Date();
           const time = (
             <span className="text-[10px] text-muted-foreground font-medium">
-              {new Date(u.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+              {isNaN(dateObj.getTime()) ? '' : dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
             </span>
           );
+
           const text = (
             <p className="text-xs font-semibold leading-snug text-foreground group-hover:text-primary transition-colors mt-0.5 line-clamp-2">
               {u.text}
