@@ -42,8 +42,10 @@ async def lifespan(app: FastAPI):
             import sentry_sdk
             sentry_sdk.capture_exception(e)  # no-op if SENTRY_DSN unset
 
-    from app.database import init_db
+    from app.database import init_db, db
     await init_db()
+    from app.services.dispatch_reaction_service import ensure_dispatch_reaction_indexes
+    await ensure_dispatch_reaction_indexes(db)
 
     # Index creation, admin-user seeding and RSS source seeding are intentionally
     # NOT part of the request-path startup — they run once as the idempotent

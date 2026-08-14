@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/api";
 import type { Article } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import FeedCard from "@/components/FeedCard";
+import ArticleCard from "@/components/ArticleCard";
 import { ArticleSkeleton } from "@/components/PageSkeletons";
 import { ArrowLeft } from "@/components/animate-ui/icons/arrow-left";
 import { Layers } from "lucide-react";
@@ -81,7 +81,7 @@ export default function SeriesPage() {
                   <span className="absolute top-3 left-3 z-20 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
                     Part {index + 1}
                   </span>
-                  <FeedCard article={article} />
+                  <ArticleCard article={article} />
                 </div>
               ))}
             </div>

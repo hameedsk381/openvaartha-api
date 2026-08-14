@@ -17,6 +17,7 @@ from zoneinfo import ZoneInfo
 
 from app.core.sanitize import sanitize_text
 from app.services import ai_service
+from app.services import dispatch_reaction_service
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +85,7 @@ async def list_dispatches(db: AsyncIOMotorDatabase, limit: int = 50, today_only:
     return await _populate_dispatch_extras(db, dispatches)
 
 
-async def get_dispatch(db: AsyncIOMotorDatabase, dispatch_id: str) -> Optional[dict]:
+async def get_dispatch(db: AsyncIOMotorDatabase, dispatch_id: str, user_id: Optional[str] = None) -> Optional[dict]:
     """Fetch a single dispatch by id, regardless of what day it was posted —
     shared links (see /bytes/:id) must keep working even after a byte has
     rolled out of the same-day feed."""
@@ -93,7 +94,15 @@ async def get_dispatch(db: AsyncIOMotorDatabase, dispatch_id: str) -> Optional[d
         return None
     dispatch = {**doc, "id": doc.pop("_id")}
     populated = await _populate_dispatch_extras(db, [dispatch])
-    return populated[0]
+    d = populated[0]
+
+    like_counts = await dispatch_reaction_service.get_like_counts(db, [dispatch_id])
+    has_liked = await dispatch_reaction_service.has_user_liked(db, [dispatch_id], user_id)
+
+    d["like_count"] = like_counts.get(dispatch_id, 0)
+    d["has_liked"] = has_liked.get(dispatch_id, False)
+
+    return d
 
 
 async def _assert_valid_refs(db: AsyncIOMotorDatabase, article_id: Optional[str], category_id: Optional[str]) -> None:
@@ -162,6 +171,48 @@ async def update_dispatch(
 async def delete_dispatch(db: AsyncIOMotorDatabase, dispatch_id: str) -> bool:
     result = await Dispatch.get_motor_collection().delete_one({"_id": dispatch_id})
     return result.deleted_count > 0
+
+
+async def list_dispatches_paginated(
+    db: AsyncIOMotorDatabase,
+    limit: int = 20,
+    cursor: Optional[str] = None,
+    user_id: Optional[str] = None,
+) -> dict:
+    """Cursor-based paginated feed. Returns {items: List[dict], nextCursor: str|None}.
+    cursor is the created_at of the last item from the previous page.
+    Enriches each dispatch with likeCount and hasLiked."""
+    query = {}
+    if cursor:
+        try:
+            cursor_dt = datetime.fromisoformat(cursor.replace("Z", "+00:00"))
+            query["created_at"] = {"$lt": cursor_dt}
+        except ValueError:
+            pass
+
+    db_cursor = Dispatch.get_motor_collection().find(query).sort("created_at", -1).limit(limit + 1)
+    docs = await db_cursor.to_list(length=limit + 1)
+    
+    has_next = len(docs) > limit
+    if has_next:
+        docs.pop()
+        
+    dispatches = [{**d, "id": str(d.pop("_id"))} for d in docs]
+    dispatches = await _populate_dispatch_extras(db, dispatches)
+    
+    dispatch_ids = [d["id"] for d in dispatches]
+    like_counts = await dispatch_reaction_service.get_like_counts(db, dispatch_ids)
+    has_user_liked = await dispatch_reaction_service.has_user_liked(db, dispatch_ids, user_id)
+    
+    for d in dispatches:
+        d["like_count"] = like_counts.get(d["id"], 0)
+        d["has_liked"] = has_user_liked.get(d["id"], False)
+        
+    next_cursor = None
+    if has_next and dispatches:
+        next_cursor = dispatches[-1]["created_at"].isoformat()
+        
+    return {"items": dispatches, "nextCursor": next_cursor}
 
 
 async def backfill_categories(db: AsyncIOMotorDatabase) -> int:

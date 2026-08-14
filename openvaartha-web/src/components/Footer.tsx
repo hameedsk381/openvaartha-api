@@ -88,7 +88,7 @@ const Footer = () => {
             <p className="overline mb-4">Read</p>
             <ul className="space-y-2.5 text-sm">
               <li><Link to="/trending" className="text-muted-foreground hover:text-primary transition-colors">Trending</Link></li>
-              <li><Link to="/bytes" className="text-muted-foreground hover:text-primary transition-colors">Bytes</Link></li>
+              <li><Link to="/feed" className="text-muted-foreground hover:text-primary transition-colors">Feed</Link></li>
               <li><Link to="/explainers" className="text-muted-foreground hover:text-primary transition-colors">Explainers</Link></li>
             </ul>
           </div>

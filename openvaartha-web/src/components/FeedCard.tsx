@@ -1,114 +1,181 @@
-import { Link } from "react-router-dom";
-import { cn, handleImageFallback } from "@/lib/utils";
-import type { Article } from "@/lib/types";
-import { ArrowUpRight } from "lucide-react";
-import { ChevronRight } from "@/components/animate-ui/icons/chevron-right";
+import React, { useRef, useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Heart, Share2, ExternalLink } from 'lucide-react';
+import { BRAND } from '@/lib/brand';
+import { cn, relativeTime } from '@/lib/utils';
+import type { Dispatch } from '@/lib/types';
+import { categoryColors } from '@/lib/types';
+import { toast } from 'sonner';
 
 interface FeedCardProps {
-  article: Article;
-  index?: number;
-  variant?: "hero" | "grid" | "list" | "compact" | "minimal";
+  dispatch: Dispatch;
+  onLike?: (id: string) => void;
 }
 
-const FeedCard = ({ article, index = 0, variant = "grid" }: FeedCardProps) => {
-  const delay = Math.min(index * 50, 250);
+export default function FeedCard({ dispatch, onLike }: FeedCardProps) {
+  const navigate = useNavigate();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [likeAnimating, setLikeAnimating] = useState(false);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            videoRef.current?.play().catch(() => {});
+          } else {
+            videoRef.current?.pause();
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(videoRef.current);
+    return () => observer.disconnect();
+  }, [dispatch.videoUrl]);
+
+  const handleLike = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setLikeAnimating(true);
+    setTimeout(() => setLikeAnimating(false), 300);
+    if (onLike) onLike(dispatch.id);
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (navigator.share) {
+      navigator.share({
+        title: dispatch.articleTitle || "OpenVaartha Dispatch",
+        text: dispatch.text,
+        url: `${window.location.origin}/feed/${dispatch.id}`
+      }).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(`${window.location.origin}/feed/${dispatch.id}`);
+      toast.success("Link copied to clipboard");
+    }
+  };
+
+  const handleCardClick = () => {
+    navigate(`/feed/${dispatch.id}`);
+  };
+
+  const categoryColor = dispatch.category ? categoryColors[dispatch.category] : 'bg-muted';
 
   return (
-    <Link
-      to={`/article/${article.slug}`}
-      className="block group animate-fade-in relative z-10 w-full h-full"
-      style={{ animationDelay: `${delay}ms`, animationFillMode: "both" }}
+    <div 
+      onClick={handleCardClick}
+      className={cn(
+        "cursor-pointer w-full max-w-2xl mx-auto border-b border-border hover:bg-muted/30 transition-colors p-4 sm:p-5 flex gap-3 sm:gap-4",
+        "bg-background text-foreground"
+      )}
     >
-      <article
-        className={cn(
-          "relative overflow-hidden h-full flex flex-col group",
-          "sticker sticker-hover",
-          variant === "list" ? "sm:flex-row" : "",
-        )}
-      >
-        {/* Instagram Look: Top Category Bar (Cream) */}
-        {variant !== "minimal" && variant !== "compact" && (
-          <div className="flex items-center justify-between border-b border-black/5 bg-secondary/50 px-4 py-3 dark:border-white/5 sm:px-5">
-            <span className="text-[9px] font-black uppercase tracking-[0.22em] text-primary dark:text-primary-foreground sm:tracking-[0.3em]">
-              {article.category}
-            </span>
-            <div className="h-1.5 w-1.5 rounded-full bg-primary/20 animate-pulse" />
-          </div>
-
-        )}
-
-        {/* Thumbnail Section */}
-        {variant !== "minimal" && article.thumbnailUrl && (
-          <div className={cn(
-            "relative overflow-hidden flex-shrink-0",
-            variant === "hero" ? "w-full aspect-[16/9] sm:aspect-[21/9]" :
-              variant === "list" ? "w-full sm:w-80 h-full" :
-                "w-full aspect-square"
-          )} >
-            <img
-              src={article.thumbnailUrl}
-              alt={article.title}
-              className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
-              loading="lazy"
-              decoding="async"
-              onError={handleImageFallback}
-            />
-            {/* Glossy Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
-            {article.isTrending && (
-              <div className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full glass bg-white/20 text-white backdrop-blur-md">
-                <ArrowUpRight className="h-4 w-4" />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Content Area */}
-        <div className={cn(
-          "relative flex-1 flex flex-col justify-between transition-colors",
-          "p-4 sm:p-6 lg:p-7",
-          variant === "grid" || variant === "hero" 
-            ? "bg-primary text-primary-foreground" 
-            : "bg-card text-foreground"
-        )}>
-
-          <div className="space-y-3.5 sm:space-y-4">
-            <h2
-              className={cn(
-                "font-display font-extrabold text-balance leading-[1.05] tracking-tight",
-                variant === "hero" ? "text-2xl sm:text-4xl lg:text-5xl" : "text-lg sm:text-2xl"
-              )}
-            >
-              {article.title}
-            </h2>
-
-            {variant !== "compact" && (
-              <p className={cn(
-                "leading-relaxed opacity-80 font-medium line-clamp-3",
-                variant === "hero" ? "text-base sm:text-lg" : "text-sm"
-              )}>
-                {article.summary}
-              </p>
-            )}
-          </div>
-
-          {/* Footer Card Section */}
-          <div className={cn(
-            "mt-5 flex items-center justify-between gap-3 border-t border-current/10 pt-4 sm:mt-8 sm:pt-6",
-          )}>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[11px] text-muted-foreground">Read time</span>
-              <span className="text-xs font-medium tabular-nums">{article.readTime}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs font-medium group/link">
-              Read more <ChevronRight className="h-3 w-3 group-hover/link:translate-x-1 transition-transform" animateOnHover />
-            </div>
-          </div>
+      {/* Avatar */}
+      <div className="shrink-0 pt-1">
+        <div className="w-10 h-10 rounded-full gradient-maroon flex items-center justify-center shadow-sm overflow-hidden border border-border/50">
+          <img src={BRAND.iconWhitePath} alt={BRAND.shortName} className="w-5 h-5 object-contain" />
         </div>
-      </article>
-    </Link>
-  );
-};
+      </div>
 
-export default FeedCard;
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="font-bold text-[15px] hover:underline truncate">
+            {BRAND.shortName}
+          </span>
+          {dispatch.category && (
+            <>
+              <span className="text-muted-foreground text-sm">·</span>
+              <span className={cn("chip text-xs px-2 py-0.5 rounded-full text-white font-medium", categoryColor)}>
+                {dispatch.category}
+              </span>
+            </>
+          )}
+          <span className="text-muted-foreground text-sm">·</span>
+          <span className="text-muted-foreground text-sm hover:underline shrink-0">
+            {relativeTime(dispatch.createdAt)}
+          </span>
+        </div>
+
+        <p className="text-[15px] leading-snug whitespace-pre-wrap break-words mb-3">
+          {dispatch.text}
+        </p>
+
+        {dispatch.imageUrl && !dispatch.videoUrl && (
+          <div className="mb-3 rounded-xl overflow-hidden border border-border max-h-[400px]">
+            <img 
+              src={dispatch.imageUrl} 
+              alt="Dispatch media" 
+              className="w-full h-full object-cover max-h-[400px]"
+            />
+          </div>
+        )}
+
+        {dispatch.videoUrl && (
+          <div className="mb-3 rounded-xl overflow-hidden border border-border max-h-[400px] bg-black">
+            <video
+              ref={videoRef}
+              src={dispatch.videoUrl}
+              controls
+              muted
+              loop
+              playsInline
+              className="w-full h-full max-h-[400px] object-contain"
+            />
+          </div>
+        )}
+
+        {/* Action Bar */}
+        <div className="flex items-center gap-6 mt-1 text-muted-foreground">
+          <button 
+            onClick={handleLike}
+            className={cn(
+              "group flex items-center gap-1.5 hover:text-red-500 transition-colors press rounded-full p-1 -ml-1",
+              dispatch.hasLiked && "text-red-500"
+            )}
+            aria-label="Like"
+          >
+            <div className="relative flex items-center justify-center w-8 h-8 rounded-full group-hover:bg-red-500/10 transition-colors">
+              <Heart 
+                size={18} 
+                className={cn(
+                  "transition-all duration-300",
+                  dispatch.hasLiked ? "fill-red-500 text-red-500" : "stroke-[1.5]",
+                  likeAnimating && "scale-125"
+                )} 
+              />
+            </div>
+            <span className={cn("text-xs font-medium", dispatch.hasLiked && "text-red-500")}>
+              {dispatch.likeCount || 0}
+            </span>
+          </button>
+
+          <button 
+            onClick={handleShare}
+            className="group flex items-center gap-1.5 hover:text-primary transition-colors press rounded-full p-1"
+            aria-label="Share"
+          >
+            <div className="flex items-center justify-center w-8 h-8 rounded-full group-hover:bg-primary/10 transition-colors">
+              <Share2 size={18} className="stroke-[1.5]" />
+            </div>
+          </button>
+
+          {dispatch.articleSlug && (
+            <Link
+              to={`/article/${dispatch.articleSlug}`}
+              onClick={(e) => e.stopPropagation()}
+              className="group flex items-center gap-1.5 hover:text-primary transition-colors ml-auto press rounded-full p-1 pr-3"
+            >
+              <div className="flex items-center justify-center w-8 h-8 rounded-full group-hover:bg-primary/10 transition-colors">
+                <ExternalLink size={18} className="stroke-[1.5]" />
+              </div>
+              <span className="text-xs font-medium hidden sm:inline">Full Story</span>
+            </Link>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

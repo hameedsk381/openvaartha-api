@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/api";
 import type { Article } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import FeedCard from "@/components/FeedCard";
+import ArticleCard from "@/components/ArticleCard";
 import { ArticleSkeleton } from "@/components/PageSkeletons";
 import { ArrowLeft } from "@/components/animate-ui/icons/arrow-left";
 import { Tag } from "lucide-react";
@@ -66,7 +66,7 @@ export default function TopicPage() {
         ) : articles && articles.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {articles.map((article) => (
-              <FeedCard key={article.id} article={article} />
+              <ArticleCard key={article.id} article={article} />
             ))}
           </div>
         ) : (

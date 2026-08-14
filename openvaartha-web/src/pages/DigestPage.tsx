@@ -6,7 +6,7 @@ import { ArrowLeft, Share2, Calendar, Layout, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import FeedCard from "@/components/FeedCard";
+import ArticleCard from "@/components/ArticleCard";
 
 export default function DigestPage() {
   const { date } = useParams<{ date?: string }>();
@@ -91,7 +91,7 @@ export default function DigestPage() {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {digest.articles.map((article) => (
-              <FeedCard key={article.id} article={article} />
+              <ArticleCard key={article.id} article={article} />
             ))}
           </div>
         </div>

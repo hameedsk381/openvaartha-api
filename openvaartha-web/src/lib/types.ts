@@ -116,6 +116,8 @@ export interface Dispatch {
   categoryId?: string | null;
   category?: string | null;
   createdAt: string;
+  likeCount?: number;
+  hasLiked?: boolean;
 }
 
 export interface Comment {

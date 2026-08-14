@@ -3,7 +3,7 @@ import type { Article, CategoryName as Category } from '@/lib/types';
 import { CategoryIcon } from './CategoryIcon';
 import { ChevronRight } from '@/components/animate-ui/icons/chevron-right';
 import { Link } from 'react-router-dom';
-import FeedCard from './FeedCard';
+import ArticleCard from './ArticleCard';
 
 interface CategoryStripProps {
   category: Category;
@@ -31,7 +31,7 @@ const CategoryStrip = ({ category, articles }: CategoryStripProps) => {
       
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
         {articles.slice(0, 3).map((article) => (
-          <FeedCard key={article.id} article={article} />
+          <ArticleCard key={article.id} article={article} />
         ))}
       </div>
       

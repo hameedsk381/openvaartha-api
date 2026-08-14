@@ -2,13 +2,14 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, R
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List
 
-from app.core.dependencies import get_current_editor
+from app.core.dependencies import get_current_editor, get_current_user_optional, get_current_user
 from app.core.rate_limit import limiter, MUTATION_LIMIT
 from app.database import get_db
 from app.models.user import User as UserModel
 from app.schemas.dispatch import Dispatch as DispatchSchema, DispatchCreate, DispatchUpdate
-from app.services import dispatch_service, push_service
+from app.services import dispatch_service, push_service, dispatch_reaction_service
 from app.worker import send_push_notification_task
+from typing import Optional
 
 router = APIRouter()
 
@@ -68,18 +69,44 @@ async def backfill_dispatch_categories(
     return {"message": f"Categorized {updated} dispatch(es)", "updated": updated}
 
 
+@router.get("/feed")
+async def feed_dispatches(
+    limit: int = Query(20, ge=1, le=50),
+    cursor: Optional[str] = Query(None),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Optional[UserModel] = Depends(get_current_user_optional),
+):
+    """Paginated feed for the /feed page. Returns {items, nextCursor}."""
+    user_id = current_user.id if current_user else None
+    return await dispatch_service.list_dispatches_paginated(db, limit=limit, cursor=cursor, user_id=user_id)
+
+
 @router.get("/{dispatch_id}", response_model=DispatchSchema)
 async def get_dispatch(
     dispatch_id: str,
     db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Optional[UserModel] = Depends(get_current_user_optional),
 ):
     """Public: fetch a single dispatch by id — powers shared /bytes/:id
     permalinks, which must keep resolving even after a byte has rolled out of
     the same-day feed."""
-    dispatch = await dispatch_service.get_dispatch(db, dispatch_id)
+    user_id = current_user.id if current_user else None
+    dispatch = await dispatch_service.get_dispatch(db, dispatch_id, user_id)
     if not dispatch:
         raise HTTPException(status_code=404, detail="Dispatch not found")
     return dispatch
+
+
+@router.post("/{dispatch_id}/like")
+@limiter.limit(MUTATION_LIMIT)
+async def toggle_dispatch_like(
+    request: Request,
+    dispatch_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """Toggle like on a dispatch (auth required)."""
+    return await dispatch_reaction_service.toggle_like(db, dispatch_id, current_user.id)
 
 
 @router.put("/{dispatch_id}", response_model=DispatchSchema)

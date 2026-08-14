@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import type { Article, Category, Comment, CorrectionIndexItem, Dispatch } from "./types";
 import { apiFetch } from "./api";
 
@@ -226,3 +226,44 @@ export function useLatestDigest() {
 }
 
 
+// Infinite scroll feed
+export function useFeed(limit = 20) {
+  return useInfiniteQuery<{ items: Dispatch[]; nextCursor: string | null }>({
+    queryKey: ['feed'],
+    queryFn: ({ pageParam }) => {
+      const params = new URLSearchParams({ limit: String(limit) });
+      if (pageParam) params.set('cursor', pageParam as string);
+      return apiFetch(`/dispatches/feed?${params}`);
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    refetchInterval: 30000, // Poll every 30s for new posts
+  });
+}
+
+// Like toggle with optimistic update
+export function useLikeDispatch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (dispatchId: string) => apiFetch(`/dispatches/${dispatchId}/like`, { method: 'POST' }),
+    onMutate: async (dispatchId) => {
+      // Optimistic update in the infinite query cache
+      await qc.cancelQueries({ queryKey: ['feed'] });
+      qc.setQueriesData({ queryKey: ['feed'] }, (old: any) => {
+        if (!old?.pages) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            items: page.items.map((item: any) =>
+              item.id === dispatchId
+                ? { ...item, hasLiked: !item.hasLiked, likeCount: (item.likeCount || 0) + (item.hasLiked ? -1 : 1) }
+                : item
+            ),
+          })),
+        };
+      });
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['feed'] }),
+  });
+}

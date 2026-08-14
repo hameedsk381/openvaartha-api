@@ -6,7 +6,7 @@ import { LoaderCircle } from '@/components/animate-ui/icons/loader-circle';
 import { toast } from 'sonner';
 import { useNewsletterSubscribe } from '@/lib/api-hooks';
 import type { Article } from '@/lib/types';
-import BytesMini from './BytesMini';
+import FeedMini from './FeedMini';
 
 export default function TrendingSidebar({ trending }: { trending: Article[] }) {
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -89,7 +89,7 @@ export default function TrendingSidebar({ trending }: { trending: Article[] }) {
       </div>
 
       {/* Bytes Mini */}
-      <BytesMini />
+      <FeedMini />
     </div>
   );
 }

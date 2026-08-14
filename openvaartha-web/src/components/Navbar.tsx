@@ -270,7 +270,7 @@ const Navbar = ({ isInsideStack, hideBottomNav }: NavbarProps) => {
       {!hideBottomNav && (
         <nav className="bottom-nav sm:hidden">
           <div className="flex items-center justify-around h-16 px-1">
-            <BottomNavItem icon={<AnimatedIcon animationType="scale"><Home className="h-5 w-5" /></AnimatedIcon>} label="Feed" to="/" active={location.pathname === "/"} />
+            <BottomNavItem icon={<AnimatedIcon animationType="scale"><Home className="h-5 w-5" /></AnimatedIcon>} label="Home" to="/" active={location.pathname === "/"} />
             <BottomNavItem icon={<Search className="h-5 w-5" animateOnHover />} label="Search" onClick={() => setSearchOpen(true)} active={false} />
             <BottomNavItem
               icon={
@@ -279,7 +279,7 @@ const Navbar = ({ isInsideStack, hideBottomNav }: NavbarProps) => {
                   {hasBreaking && <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-red-500 rounded-full" />}
                 </div>
               }
-              label="Bytes" to="/bytes" active={location.pathname === "/bytes"} />
+              label="Feed" to="/feed" active={location.pathname === "/feed"} />
             <BottomNavItem
               icon={
                 <div className="relative">

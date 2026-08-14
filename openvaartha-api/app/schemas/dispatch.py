@@ -55,6 +55,8 @@ class Dispatch(BaseModel):
     category: Optional[str] = None
     created_at: datetime
     created_by: Optional[str] = None
+    like_count: int = 0
+    has_liked: bool = False
 
     @model_validator(mode="before")
     @classmethod

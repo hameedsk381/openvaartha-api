@@ -43,8 +43,8 @@ const TrendingPage = lazy(() => import("./pages/TrendingPage.tsx"));
 const TopicPage = lazy(() => import("./pages/TopicPage.tsx"));
 const SeriesPage = lazy(() => import("./pages/SeriesPage.tsx"));
 const ExplainersPage = lazy(() => import("./pages/ExplainersPage.tsx"));
-const BytesPage = lazy(() => import("./pages/BytesPage.tsx"));
-const BytePage = lazy(() => import("./pages/BytePage.tsx"));
+const FeedPage = lazy(() => import("./pages/FeedPage.tsx"));
+const FeedPostPage = lazy(() => import("./pages/FeedPostPage.tsx"));
 const DigestPage = lazy(() => import("./pages/DigestPage.tsx"));
 const AboutPage = lazy(() => import("./pages/AboutPage.tsx"));
 const ContactPage = lazy(() => import("./pages/ContactPage.tsx"));
@@ -218,10 +218,12 @@ const AuthListener = () => {
                 <Route path="/digest/:date" element={<DigestPage />} />
                 <Route path="/digest" element={<DigestPage />} />
                 <Route path="/explainers" element={<ExplainersPage />} />
-                <Route path="/bytes" element={<BytesPage />} />
-                <Route path="/bytes/:byteId" element={<BytePage />} />
+                <Route path="/feed" element={<FeedPage />} />
+                <Route path="/feed/:postId" element={<FeedPostPage />} />
+                <Route path="/bytes" element={<Navigate to="/feed" replace />} />
+                <Route path="/bytes/:byteId" element={<Navigate to="/feed" replace />} />
                 {/* Renamed from /live — keep old links/bookmarks working. */}
-                <Route path="/live" element={<Navigate to="/bytes" replace />} />
+                <Route path="/live" element={<Navigate to="/feed" replace />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/support" element={<SupportPage />} />
