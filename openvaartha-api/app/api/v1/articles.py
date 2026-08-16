@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import BaseModel, Field
+from pymongo.errors import DuplicateKeyError
 from typing import List, Optional, Union, Dict, Any
 from datetime import datetime, timezone
 
@@ -685,9 +686,15 @@ async def restore_revision(
     article_fields["last_updated"] = now
     article_fields["updated_at"] = now
     if article_fields:
-        await ArticleModel.get_motor_collection().update_one(
-            {"_id": article_id}, {"$set": article_fields}
-        )
+        try:
+            await ArticleModel.get_motor_collection().update_one(
+                {"_id": article_id}, {"$set": article_fields}
+            )
+        except DuplicateKeyError:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Restoring this revision would set a slug that is already in use by another article.",
+            )
 
     content_fields = {k: v for k, v in restored_content.items() if k != "_id"}
     if content_fields:

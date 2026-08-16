@@ -11,7 +11,7 @@ from uuid import uuid4
 from datetime import datetime, timezone
 import json
 from fastapi import HTTPException, status
-from pymongo.errors import OperationFailure
+from pymongo.errors import OperationFailure, DuplicateKeyError
 from bson import ObjectId
 from redis import asyncio as redis_async
 from redis.exceptions import RedisError
@@ -128,6 +128,18 @@ def _fire_and_forget(coro) -> None:
     task = asyncio.create_task(coro)
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
+
+
+async def _notify_indexnow(slug: str) -> None:
+    # ``submit_article`` is a blocking (urllib) sync function; run it off the
+    # event loop and give ``_fire_and_forget`` a real coroutine. Passing the
+    # sync call's return value directly crashed publishes with
+    # "TypeError: a coroutine was expected, got None".
+    try:
+        await asyncio.to_thread(submit_article, slug)
+    except Exception:
+        # Never break a publish for a best-effort notification.
+        pass
 
 
 async def _increment_view_count(db: AsyncIOMotorDatabase, slug: str) -> None:
@@ -747,7 +759,7 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
     await invalidate_article_caches()
     created = await get_article_by_id(db, article_id, include_unpublished=True)
     if article_status == PUBLIC_STATUS:
-        _fire_and_forget(submit_article(created.get("slug") or slug))
+        _fire_and_forget(_notify_indexnow(created.get("slug") or slug))
     return created
 
 
@@ -824,9 +836,15 @@ async def update_article(
             and prev_slug
         )
         if becoming_published:
-            _fire_and_forget(submit_article(prev_slug))
+            _fire_and_forget(_notify_indexnow(prev_slug))
 
-        await Article.get_motor_collection().update_one({"_id": article_id}, {"$set": update_dict})
+        try:
+            await Article.get_motor_collection().update_one({"_id": article_id}, {"$set": update_dict})
+        except DuplicateKeyError:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Slug '{update_dict.get('slug', '')}' is already in use by another article. Please choose a different slug.",
+            )
 
     if content_data:
         sanitized_content: dict[str, Any] = {}
