@@ -305,7 +305,6 @@ def build_article_head(article: Dict[str, Any], category_name: str = "") -> str:
             "@type": "Person",
             "@id": f"{base}/#author-{author_slug}",
             "name": author_name,
-            "url": f"{base}/authors/{author_slug}",
         },
         "publisher": {"@id": f"{base}/#organization"},
         "mainEntityOfPage": {"@type": "WebPage", "@id": url},
