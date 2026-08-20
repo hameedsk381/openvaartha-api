@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Must match the API's category slugifier (meta_service._slugify / feed_service._slugify)
+// so client links point to the server-rendered /category/{slug} pages.
+export const categorySlug = (name: string) =>
+  name.toLowerCase().replace(/[^a-z0-9_-]/g, "-").replace(/^-+|-+$/g, "");
+
 export const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=2069&auto=format&fit=crop";
 
 export function getArticleImage(thumbnail?: string | null) {

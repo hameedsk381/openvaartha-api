@@ -4,7 +4,7 @@ import { BlurFade } from '@/components/ui/blur-fade';
 import { MagicCard } from '@/components/ui/magic-card';
 import { ChevronRight } from '@/components/animate-ui/icons/chevron-right';
 import { CategoryIcon } from '@/components/CategoryIcon';
-import { getArticleImage, handleImageFallback, relativeTime } from '@/lib/utils';
+import { getArticleImage, handleImageFallback, relativeTime, categorySlug } from '@/lib/utils';
 import { useArticlesByCategory } from '@/lib/api-hooks';
 import type { Category } from '@/lib/types';
 
@@ -21,7 +21,7 @@ export default function CategoryStrip({ category }: { category: Category }) {
           <h3 className="font-display text-lg sm:text-xl font-bold tracking-tight text-foreground">{category.name}</h3>
         </div>
         <Link
-          to={`/?category=${category.name}`}
+          to={`/category/${categorySlug(category.name)}`}
           className="text-[11px] font-bold uppercase tracking-[0.15em] text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
         >
           View all <ChevronRight className="h-3 w-3" animateOnHover />

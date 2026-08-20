@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { cn, categorySlug } from "@/lib/utils";
 import { Bookmark, Home } from "lucide-react";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { Search } from "@/components/animate-ui/icons/search";
@@ -47,15 +47,18 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
   const { saved }                 = useReadingList();
   const { streak }                = useStreak();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const selectedCat = searchParams.get('category') || 'All';
+  const selectedCat = location.pathname.startsWith('/category/')
+    ? location.pathname.split('/category/')[1].replace(/-/g, ' ')
+    : (searchParams.get('category') || 'All');
   const searchOverlayRef = useRef<HTMLDivElement | null>(null);
 
   const setCategory = (cat: string) => {
     if (cat.toLowerCase() === 'all') {
       navigate('/');
     } else {
-      navigate(`/?category=${cat}`);
+      navigate(`/category/${categorySlug(cat)}`);
     }
   };
 
@@ -329,7 +332,7 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
                     {categoryNames.map(cat => (
                       <button
                         key={cat}
-                        onClick={() => { navigate(`/?category=${cat}`); setSearchOpen(false); setQuery(""); }}
+                        onClick={() => { navigate(`/category/${categorySlug(cat)}`); setSearchOpen(false); setQuery(""); }}
                         className="h-11 px-4 rounded-full text-sm font-medium border border-border hover:bg-primary hover:text-white hover:border-primary transition-colors press"
                       >
                         {cat}

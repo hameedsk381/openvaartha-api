@@ -17,7 +17,7 @@ import { ArrowLeft } from "@/components/animate-ui/icons/arrow-left";
 import { Clock } from "@/components/animate-ui/icons/clock";
 import { Sparkles } from "@/components/animate-ui/icons/sparkles";
 import { User } from "@/components/animate-ui/icons/user";
-import { cn, getArticleImage, handleImageFallback } from "@/lib/utils";
+import { cn, getArticleImage, handleImageFallback, categorySlug } from "@/lib/utils";
 import { categoryColors } from "@/lib/types";
 import { BRAND, pageTitle, SITE_TITLE } from "@/lib/brand";
 import { apiFetch } from "@/lib/api";
@@ -144,7 +144,7 @@ function useSEOMeta(article: Article | undefined) {
       "@type": "BreadcrumbList",
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "Home", item: window.location.origin },
-        { "@type": "ListItem", position: 2, name: article.category, item: `${window.location.origin}/?category=${article.category}` },
+        { "@type": "ListItem", position: 2, name: article.category, item: `${window.location.origin}/category/${categorySlug(article.category)}` },
         { "@type": "ListItem", position: 3, name: article.title, item: url },
       ],
     };
@@ -324,7 +324,7 @@ const SingleArticle = ({ articleId, onInView, isActive = true }: { articleId: st
         <ol className="flex items-center gap-2 text-xs text-muted-foreground">
           <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
           <li aria-hidden="true">/</li>
-          <li><Link to={`/?category=${article.category}`} className="hover:text-primary transition-colors">{article.category}</Link></li>
+          <li><Link to={`/category/${categorySlug(article.category)}`} className="hover:text-primary transition-colors">{article.category}</Link></li>
           <li aria-hidden="true">/</li>
           <li className="text-foreground font-medium truncate max-w-[200px]" aria-current="page">{article.title}</li>
         </ol>
@@ -360,7 +360,7 @@ const SingleArticle = ({ articleId, onInView, isActive = true }: { articleId: st
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-16">
             <div className="flex items-center gap-3 mb-5">
               <Link
-                to={`/?category=${article.category}`}
+                to={`/category/${categorySlug(article.category)}`}
                 className="overline text-primary hover:underline underline-offset-4"
               >
                 {article.category}

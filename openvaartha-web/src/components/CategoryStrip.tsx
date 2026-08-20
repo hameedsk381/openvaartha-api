@@ -4,6 +4,7 @@ import { CategoryIcon } from './CategoryIcon';
 import { ChevronRight } from '@/components/animate-ui/icons/chevron-right';
 import { Link } from 'react-router-dom';
 import ArticleCard from './ArticleCard';
+import { categorySlug } from '@/lib/utils';
 
 interface CategoryStripProps {
   category: Category;
@@ -22,7 +23,7 @@ const CategoryStrip = ({ category, articles }: CategoryStripProps) => {
         </div>
 
         <Link 
-          to={`/category/${category.toLowerCase().replace(' ', '-')}`}
+          to={`/category/${categorySlug(category)}`}
           className="flex shrink-0 items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest text-primary transition-all hover:gap-2 sm:text-[10px]"
         >
           Explore All <ChevronRight className="h-3 w-3" animateOnHover />

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useCategories } from "@/lib/api-hooks";
 import { BRAND } from "@/lib/brand";
+import { categorySlug } from "@/lib/utils";
 import { Instagram, Facebook, Youtube } from "lucide-react";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import NewsletterCapture from "@/components/NewsletterCapture";
@@ -74,7 +75,7 @@ const Footer = () => {
               {categoryNames.map((c) => (
                 <li key={c}>
                   <button
-                    onClick={() => navigate(`/?category=${c}`)}
+                    onClick={() => navigate(`/category/${categorySlug(c)}`)}
                     className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors press"
                   >
                     {c}

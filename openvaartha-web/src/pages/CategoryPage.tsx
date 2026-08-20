@@ -10,6 +10,7 @@ import { BRAND } from '@/lib/brand';
 import { useReadingList } from '@/hooks/use-reading-list';
 import { useArticles, useCategories } from '@/lib/api-hooks';
 import { CategoryPageSkeleton } from '@/components/PageSkeletons';
+import { categorySlug } from '@/lib/utils';
 
 const relativeTime = (iso: string) => {
   const h = Math.round((Date.now() - new Date(iso).getTime()) / 3_600_000);
@@ -27,7 +28,7 @@ const CategoryPage = () => {
 
   const categoryObj = useMemo(() => {
     return categories.find(
-      (c) => c.name.toLowerCase().replace(/\s+/g, '-') === categoryId,
+      (c) => categorySlug(c.name) === categoryId,
     );
   }, [categoryId, categories]);
 
