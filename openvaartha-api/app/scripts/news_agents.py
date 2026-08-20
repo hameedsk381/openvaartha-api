@@ -9,6 +9,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.config import settings
 from app.services.ai_service import generate_article
 from app.core.sanitize import sanitize_html
+from app.services.rss_service import is_duplicate_story
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +109,12 @@ async def process_articles(db: AsyncIOMotorDatabase, raw_articles: list[dict], c
             
         article_id = str(uuid4())
         slug = _slugify(raw["title"]) or f"article-{article_id[:8]}"
+
+        # NewsAPI and MediaStack return the same story under different URLs;
+        # dedupe by slug/title so we don't ingest it twice.
+        if await is_duplicate_story(db, slug, raw["title"]):
+            logger.info("Skipping already-covered story: %s", raw["title"])
+            continue
         
         # We default to draft for automated scrape so editors can review the rich content
         article_doc = {

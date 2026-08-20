@@ -16,6 +16,27 @@ from app.services.source_service import set_last_fetched
 logger = logging.getLogger(__name__)
 
 
+async def is_duplicate_story(db: AsyncIOMotorDatabase, slug: str, title: str) -> bool:
+    """Return True if an article already exists for this story.
+
+    The RSS/news-agent pipelines ingest the same headline from many sources.
+    Without this check the same story is inserted multiple times, surfacing as
+    ``-2``/``-3`` near-duplicate articles that pollute the sitemap and dilute
+    Google's crawl budget. Matches on either the exact slug or a
+    case-insensitive title so syndicated copies are caught regardless of which
+    source delivered them first.
+    """
+    if not slug:
+        return False
+    or_clauses = [{"slug": slug}]
+    stripped_title = (title or "").strip()
+    if stripped_title:
+        or_clauses.append(
+            {"title": {"$regex": f"^{re.escape(stripped_title)}$", "$options": "i"}}
+        )
+    return await db["articles"].find_one({"$or": or_clauses}, {"_id": 1}) is not None
+
+
 def _extract_thumbnail(entry) -> Optional[str]:
     """Try to pull an image URL from various RSS/Atom media extensions."""
     # media:content or media:thumbnail (feedparser normalises these)
@@ -173,6 +194,12 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
 
         article_id = str(uuid4())
         slug = _slugify(entry["title"]) or f"article-{article_id[:8]}"
+
+        # Same story syndicated across multiple sources must only be ingested
+        # once — otherwise we create slug ``-2``/``-3`` near-duplicate articles.
+        if await is_duplicate_story(db, slug, entry["title"]):
+            logger.info("Skipping already-covered story: %s", entry["title"])
+            continue
 
         published_dt = published or datetime.now(timezone.utc)
         article_doc = {
