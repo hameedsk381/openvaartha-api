@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import { BRAND, pageTitle } from '../lib/brand';
+---
+
+<Base
+  title={pageTitle('Search')}
+  description="Search Open Vaartha."
+  canonical={`${BRAND.url}/search`}
+  noindex={true}
+>
+  <section class="px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
+    <div class="max-w-screen-xl mx-auto">
+      <h1 class="poster text-4xl sm:text-6xl font-bold tracking-tight mb-8">Search</h1>
+
+      <div id="search-island" class="max-w-2xl">
+        <p class="text-muted-foreground italic">
+          Search functionality will be loaded as a React island.
+        </p>
+      </div>
+    </div>
+  </section>
+</Base>

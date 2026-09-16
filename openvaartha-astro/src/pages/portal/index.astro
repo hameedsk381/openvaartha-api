@@ -1,0 +1,36 @@
+---
+import Base from '../../layouts/Base.astro';
+import { BRAND, pageTitle } from '../../lib/brand';
+---
+
+<Base title={pageTitle('Your Dashboard')} description="Your Open Vaartha dashboard." canonical={`${BRAND.url}/portal`} noindex={true}>
+  <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
+    <div class="flex items-center gap-3 mb-8">
+      <a href="/" class="overline text-muted-foreground hover:text-primary transition-colors">Home</a>
+      <span class="text-muted-foreground/50">/</span>
+      <span class="overline text-primary">Dashboard</span>
+    </div>
+
+    <h1 class="font-display text-3xl font-bold tracking-tight mb-2">Your Dashboard</h1>
+    <p class="text-muted-foreground mb-8">Manage your reading list, history, and settings.</p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+      <a href="/portal/saved" class="card-hover p-6">
+        <h3 class="font-display text-lg font-bold">Saved Articles</h3>
+        <p class="text-sm text-muted-foreground mt-1">Your reading list</p>
+      </a>
+      <a href="/portal/history" class="card-hover p-6">
+        <h3 class="font-display text-lg font-bold">Reading History</h3>
+        <p class="text-sm text-muted-foreground mt-1">Articles you've read</p>
+      </a>
+      <a href="/portal/settings" class="card-hover p-6">
+        <h3 class="font-display text-lg font-bold">Settings</h3>
+        <p class="text-sm text-muted-foreground mt-1">Profile and preferences</p>
+      </a>
+    </div>
+
+    <div id="portal-dashboard" class="card-base p-6">
+      <p class="text-muted-foreground italic text-sm">Dashboard content will be loaded as a React island.</p>
+    </div>
+  </div>
+</Base>

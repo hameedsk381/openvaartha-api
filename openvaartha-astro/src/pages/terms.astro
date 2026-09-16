@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import { BRAND, pageTitle } from '../lib/brand';
+---
+
+<Base title={pageTitle('Terms of Use')} description="Open Vaartha terms of use." canonical={`${BRAND.url}/terms`}>
+  <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-12 sm:py-20">
+    <div class="max-w-3xl">
+      <span class="overline text-primary mb-3 block">Legal</span>
+      <h1 class="poster text-4xl sm:text-6xl font-bold tracking-tight mb-6">Terms of Use</h1>
+      <div class="prose prose-lg max-w-none font-serif text-foreground/90 leading-relaxed space-y-6">
+        <p><em>Last updated: January 2026</em></p>
+        <p>By accessing Open Vaartha, you agree to these terms. Our content is published under Creative Commons Attribution-ShareAlike 4.0 unless otherwise noted.</p>
+        <h2>Content reuse</h2>
+        <p>You may republish our stories provided you give proper attribution to Open Vaartha and link back to the original. Commercial use requires written permission.</p>
+        <h2>User conduct</h2>
+        <p>You agree not to misuse our services, attempt unauthorised access, or use our content for deceptive purposes.</p>
+        <h2>Disclaimer</h2>
+        <p>While we strive for accuracy, Open Vaartha content is provided "as is" without warranties. We are not liable for any damages arising from use of our site.</p>
+      </div>
+    </div>
+  </div>
+</Base>

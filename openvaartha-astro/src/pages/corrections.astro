@@ -1,0 +1,36 @@
+---
+import Base from '../layouts/Base.astro';
+import { BRAND, pageTitle } from '../lib/brand';
+
+let corrections: any[] = [];
+try {
+  const res = await fetch(`${import.meta.env.SITE_API_URL || 'http://localhost:8000/api/v1'}/articles/corrections`);
+  if (res.ok) corrections = await res.json();
+} catch (e) {}
+---
+
+<Base title={pageTitle('Corrections')} description="Corrections and clarifications." canonical={`${BRAND.url}/corrections`}>
+  <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-12 sm:py-20">
+    <div class="max-w-3xl">
+      <span class="overline text-primary mb-3 block">Transparency</span>
+      <h1 class="poster text-4xl sm:text-6xl font-bold tracking-tight mb-6">Corrections</h1>
+      <p class="font-serif text-lg text-muted-foreground mb-10">We correct errors promptly and transparently. Below is a log of all corrections made to published stories.</p>
+
+      {corrections.length > 0 ? (
+        <div class="space-y-6">
+          {corrections.map((c: any) => (
+            <div class="p-5 rounded-xl border border-border">
+              <time class="text-xs text-muted-foreground font-medium">{new Date(c.date || c.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+              <h3 class="font-serif text-base font-bold mt-1">
+                {c.article_title && <a href={`/article/${c.article_slug}`} class="hover:text-primary transition-colors">{c.article_title}</a>}
+              </h3>
+              <p class="text-sm text-muted-foreground mt-2">{c.correction || c.text}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p class="text-muted-foreground italic">No corrections to date.</p>
+      )}
+    </div>
+  </div>
+</Base>

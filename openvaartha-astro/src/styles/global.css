@@ -1,0 +1,229 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background:   36 38% 98%;
+    --foreground:   20 14% 9%;
+    --surface:      36 35% 96%;
+    --surface-2:    34 30% 92%;
+    --surface-3:    34 28% 86%;
+    --primary:            0 70% 23%;
+    --primary-foreground: 36 38% 98%;
+    --primary-subtle:     0 50% 95%;
+    --primary-hover:      0 75% 18%;
+    --primary-bright:     0 60% 32%;
+    --primary-muted:      0 35% 50%;
+    --secondary:            34 55% 78%;
+    --secondary-foreground: 0 70% 18%;
+    --secondary-dark:       34 45% 68%;
+    --muted:            34 22% 91%;
+    --muted-foreground: 25 14% 36%;
+    --accent:            34 60% 86%;
+    --accent-foreground: 0 75% 18%;
+    --destructive:            0 75% 42%;
+    --destructive-foreground: 36 38% 98%;
+    --success:             145 50% 30%;
+    --success-foreground:   36 38% 98%;
+    --warning:              35 88% 38%;
+    --warning-foreground:   36 38% 98%;
+    --border: 34 24% 83%;
+    --input:  34 24% 83%;
+    --ring:   0 70% 23%;
+    --card:               36 40% 99%;
+    --card-foreground:    20 14% 9%;
+    --popover:            36 40% 99%;
+    --popover-foreground: 20 14% 9%;
+    --sidebar-background:          0 70% 22%;
+    --sidebar-foreground:          36 30% 90%;
+    --sidebar-primary:             34 55% 78%;
+    --sidebar-primary-foreground:  0 70% 22%;
+    --sidebar-accent:              0 70% 28%;
+    --sidebar-accent-foreground:   36 30% 90%;
+    --sidebar-border:              0 70% 28%;
+    --sidebar-ring:                34 55% 78%;
+    --font-sans:  "Inter", system-ui, -apple-system, sans-serif;
+    --font-serif: "Source Serif 4", Georgia, serif;
+    --font-display: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
+    --sticker-shadow: 4px 4px 0 hsl(var(--primary));
+    --sticker-shadow-sm: 3px 3px 0 hsl(var(--primary));
+    --sticker-shadow-hover: 6px 6px 0 hsl(var(--primary));
+  }
+
+  .dark {
+    --background:   20 12% 7%;
+    --foreground:   36 30% 92%;
+    --surface:      20 14% 10%;
+    --surface-2:    20 14% 13%;
+    --surface-3:    20 14% 18%;
+    --primary:            0 60% 45%;
+    --primary-foreground: 36 32% 96%;
+    --primary-subtle:     0 40% 18%;
+    --primary-hover:      0 65% 53%;
+    --primary-bright:     0 65% 55%;
+    --primary-muted:      0 35% 60%;
+    --secondary:            34 30% 30%;
+    --secondary-foreground: 36 30% 92%;
+    --secondary-dark:       34 25% 22%;
+    --muted:            20 12% 15%;
+    --muted-foreground: 34 18% 65%;
+    --accent:            0 35% 22%;
+    --accent-foreground: 36 30% 92%;
+    --destructive:            0 65% 55%;
+    --destructive-foreground: 36 30% 95%;
+    --success:             145 45% 50%;
+    --success-foreground:   20 12% 7%;
+    --warning:              35 85% 58%;
+    --warning-foreground:   20 12% 7%;
+    --border: 20 10% 22%;
+    --input:  20 10% 22%;
+    --ring:   0 60% 45%;
+    --card:               20 14% 9%;
+    --card-foreground:    36 30% 92%;
+    --popover:            20 14% 9%;
+    --popover-foreground: 36 30% 92%;
+    --sidebar-background:          20 16% 5%;
+    --sidebar-foreground:          36 25% 85%;
+    --sidebar-primary:             0 60% 45%;
+    --sidebar-primary-foreground:  36 32% 96%;
+    --sidebar-accent:              0 35% 18%;
+    --sidebar-accent-foreground:   36 30% 92%;
+    --sidebar-border:              20 12% 14%;
+    --sidebar-ring:                0 60% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    font-optical-sizing: auto;
+    font-feature-settings: "cv01","cv02","cv03","cv04","cv05","cv11","cv12","liga","kern";
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    @apply font-bold tracking-tight;
+  }
+  h1 { font-size: clamp(2.25rem, 6vw, 4.25rem); line-height: 0.98; letter-spacing: -0.03em; font-weight: 800; }
+  h2 { font-size: clamp(1.5rem, 3.5vw, 2.5rem); line-height: 1.05; letter-spacing: -0.025em; font-weight: 800; }
+  h3 { font-size: clamp(1.125rem, 2vw, 1.5rem); line-height: 1.2; letter-spacing: -0.015em; font-weight: 700; }
+  a { @apply text-inherit; }
+  ::selection {
+    background-color: hsl(var(--primary) / 0.18);
+    color: hsl(var(--primary));
+  }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .safe-top    { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .pb-safe     { padding-bottom: calc(4rem + env(safe-area-inset-bottom)); }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .press { @apply transition-transform duration-100 active:scale-[0.97]; }
+  .overline {
+    font-family: var(--font-sans);
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    @apply text-muted-foreground;
+  }
+  .body-sm { @apply text-sm text-muted-foreground leading-relaxed; }
+  .body-xs { @apply text-xs text-muted-foreground leading-relaxed; }
+  .article-body {
+    font-family: var(--font-serif);
+    font-optical-sizing: auto;
+    line-height: 1.8;
+    letter-spacing: 0.005em;
+    word-spacing: 0.03em;
+  }
+  .article-body p + p { margin-top: 1.5em; }
+  .divider { @apply border-t border-border; }
+  .section { @apply py-16 sm:py-24; }
+  .section-header { @apply flex items-center justify-between py-3 border-b border-border; }
+  .card-base { @apply bg-card border border-border rounded-xl shadow-xs; }
+  .card-hover { @apply card-base transition-shadow duration-200 hover:shadow-md hover:-translate-y-0.5; }
+  .card-surface { background-color: hsl(var(--surface-2)); @apply border border-border rounded-xl; }
+  .feed-item {
+    @apply flex gap-4 px-4 py-4 border-b border-border last:border-0
+           hover:bg-[hsl(var(--surface))] transition-colors press cursor-pointer;
+  }
+  .tag {
+    @apply inline-flex items-center h-5 px-2 rounded-sm
+           text-2xs font-black uppercase tracking-widest
+           bg-[hsl(var(--primary-subtle))] text-primary;
+  }
+  .tag-secondary {
+    @apply inline-flex items-center h-5 px-2 rounded-sm
+           text-2xs font-black uppercase tracking-widest
+           bg-secondary/40 text-[hsl(var(--secondary-foreground))];
+  }
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50 safe-bottom
+           bg-background/95 backdrop-blur-xl border-t border-border;
+  }
+  .font-display { font-family: var(--font-display); }
+  .sticker {
+    @apply border-2 border-foreground rounded-2xl bg-card;
+    box-shadow: var(--sticker-shadow);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+  }
+  .sticker-hover:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--sticker-shadow-hover);
+  }
+  .sticker-hover:active {
+    transform: translate(2px, 2px);
+    box-shadow: 0 0 0 hsl(var(--primary));
+  }
+  .chip {
+    font-family: var(--font-display);
+    @apply inline-flex items-center gap-1 h-7 px-3 rounded-full
+           border-2 border-foreground bg-secondary
+           text-xs font-bold uppercase tracking-wide
+           text-[hsl(var(--secondary-foreground))];
+  }
+  .chip-primary {
+    font-family: var(--font-display);
+    @apply inline-flex items-center gap-1 h-7 px-3 rounded-full
+           border-2 border-foreground bg-primary text-primary-foreground
+           text-xs font-bold uppercase tracking-wide;
+  }
+  .poster {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 0.98;
+    text-wrap: balance;
+  }
+  .marquee-strip {
+    @apply bg-primary text-primary-foreground border-y-2 border-foreground overflow-hidden;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sticker, .sticker-hover, .press,
+    .ticker-track, .animate-fade-in, .animate-fade-up {
+      animation: none !important;
+      transition: none !important;
+    }
+    .sticker-hover:hover, .sticker-hover:active, .press:active { transform: none !important; }
+    html { scroll-behavior: auto; }
+  }
+}

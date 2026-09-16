@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+import { BRAND, pageTitle } from '../lib/brand';
+---
+
+<Base title={pageTitle('Editorial Standards')} description="Our editorial standards and practices." canonical={`${BRAND.url}/editorial`}>
+  <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-12 sm:py-20">
+    <div class="max-w-3xl">
+      <span class="overline text-primary mb-3 block">How we work</span>
+      <h1 class="poster text-4xl sm:text-6xl font-bold tracking-tight mb-6">Editorial Standards</h1>
+      <div class="prose prose-lg max-w-none font-serif text-foreground/90 leading-relaxed space-y-6">
+        <p>Open Vaartha is committed to accuracy, fairness, and transparency in everything we publish.</p>
+        <h2>Fact-checking</h2>
+        <p>Every story is fact-checked before publication. We verify claims with primary sources, official records, and named experts. When we cannot independently verify a claim, we say so.</p>
+        <h2>Sourcing</h2>
+        <p>We attribute information to named sources whenever possible. Anonymous sources are used only when the source faces a genuine risk of retaliation, and only when the information is of significant public interest.</p>
+        <h2>Corrections</h2>
+        <p>We correct errors promptly and transparently. See our <a href="/corrections">corrections page</a> for a log of all corrections made to published stories.</p>
+        <h2>Independence</h2>
+        <p>Our editorial decisions are not influenced by advertisers, donors, or political interests. We disclose any conflicts of interest.</p>
+      </div>
+    </div>
+  </div>
+</Base>

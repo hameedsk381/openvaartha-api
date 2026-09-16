@@ -1,0 +1,114 @@
+---
+import Base from '../../layouts/Base.astro';
+import { BRAND, pageTitle } from '../../lib/brand';
+import { getArticleBySlug } from '../../lib/api';
+
+const { slug } = Astro.params;
+
+let article = null;
+let error = null;
+try {
+  article = await getArticleBySlug(slug);
+} catch (e) {
+  error = e.message;
+}
+
+if (!article) {
+  return Astro.redirect('/404');
+}
+---
+
+<Base
+  title={pageTitle(article.title)}
+  description={article.summary}
+  canonical={`${BRAND.url}/article/${article.slug}`}
+  ogImage={article.thumbnail_url || `${BRAND.url}/og-default.png`}
+>
+  {/* Breadcrumb */}
+  <nav aria-label="Breadcrumb" class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 pt-4 pb-0">
+    <ol class="flex items-center gap-2 text-xs text-muted-foreground">
+      <li><a href="/" class="hover:text-primary transition-colors">Home</a></li>
+      <li aria-hidden="true">/</li>
+      <li><a href={`/category/${article.category?.toLowerCase().replace(/\s+/g, '-')}`} class="hover:text-primary transition-colors">{article.category}</a></li>
+      <li aria-hidden="true">/</li>
+      <li class="text-foreground font-medium truncate max-w-[200px]" aria-current="page">{article.title}</li>
+    </ol>
+  </nav>
+
+  <article class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-10 py-8 sm:py-12">
+    {/* Category + timestamp */}
+    <div class="flex items-center gap-3 mb-5">
+      <a
+        href={`/category/${article.category?.toLowerCase().replace(/\s+/g, '-')}`}
+        class="overline text-primary hover:underline underline-offset-4"
+      >
+        {article.category}
+      </a>
+      <span class="h-1 w-1 rounded-full bg-border" />
+      <time datetime={article.published_at} class="text-[11px] text-muted-foreground font-medium tracking-wide">
+        {new Date(article.published_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+      </time>
+    </div>
+
+    {/* Title */}
+    <h1 class="font-serif text-3xl sm:text-5xl font-bold leading-tight tracking-tight mb-4">
+      {article.title}
+    </h1>
+
+    {/* Summary */}
+    {article.summary && (
+      <p class="font-serif text-lg text-muted-foreground leading-relaxed mb-6 max-w-3xl">
+        {article.summary}
+      </p>
+    )}
+
+    {/* Author + read time */}
+    <div class="flex items-center gap-3 text-sm text-muted-foreground mb-8 pb-8 border-b border-border">
+      <span class="font-medium text-foreground">{article.author || BRAND.authorName}</span>
+      {article.read_time && (
+        <>
+          <span class="h-1 w-1 rounded-full bg-border" />
+          <span>{article.read_time}</span>
+        </>
+      )}
+    </div>
+
+    {/* Thumbnail */}
+    {article.thumbnail_url && (
+      <div class="aspect-[16/9] overflow-hidden rounded-2xl bg-muted mb-10">
+        <img
+          src={article.thumbnail_url}
+          alt={article.title}
+          class="w-full h-full object-cover"
+          loading="eager"
+        />
+      </div>
+    )}
+
+    {/* Article body — rendered by the SPA client-side for now.
+        TODO: Add server-rendered article body from API once content endpoint is ready. */}
+    <div id="article-content" class="article-body prose prose-lg max-w-none" data-article-id={article._id}>
+      <p class="text-muted-foreground italic">
+        Article body is loaded client-side. Full SSR coming in Phase 2.
+      </p>
+    </div>
+
+    {/* Tags */}
+    {article.tags && article.tags.length > 0 && (
+      <div class="mt-10 pt-6 border-t border-border">
+        <div class="flex flex-wrap gap-2">
+          {article.tags.map((tag: string) => (
+            <a href={`/topic/${tag.toLowerCase().replace(/\s+/g, '-')}`} class="chip-ghost">
+              {tag}
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+  </article>
+</Base>
+
+<script>
+  // Client-side: fetch full article content and render it
+  // TODO: In Phase 2, this will be server-rendered
+</script>

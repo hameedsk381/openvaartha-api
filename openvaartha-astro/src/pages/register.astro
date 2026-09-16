@@ -1,0 +1,25 @@
+---
+import Base from '../layouts/Base.astro';
+import { BRAND, pageTitle } from '../lib/brand';
+---
+
+<Base title={pageTitle('Create Account')} description="Create an Open Vaartha account." canonical={`${BRAND.url}/register`} noindex={true}>
+  <div class="min-h-[70vh] flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+      <div class="text-center mb-8">
+        <h1 class="font-display text-3xl font-bold tracking-tight">Create your account</h1>
+        <p class="text-muted-foreground mt-2">Join the Open Vaartha community</p>
+      </div>
+
+      <div id="register-form" class="card-base p-6 sm:p-8">
+        <p class="text-muted-foreground text-center italic text-sm py-8">
+          Registration form will be loaded as a React island.
+        </p>
+      </div>
+
+      <p class="text-center text-sm text-muted-foreground mt-6">
+        Already have an account? <a href="/login" class="text-primary font-medium hover:underline">Sign in</a>
+      </p>
+    </div>
+  </div>
+</Base>

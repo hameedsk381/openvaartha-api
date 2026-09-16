@@ -1,0 +1,50 @@
+---
+import Base from '../layouts/Base.astro';
+import { BRAND, pageTitle } from '../lib/brand';
+
+let digest = null;
+let articles: any[] = [];
+try {
+  const res = await fetch(`${import.meta.env.SITE_API_URL || 'http://localhost:8000/api/v1'}/digests/latest`);
+  if (res.ok) {
+    digest = await res.json();
+    articles = digest?.articles || [];
+  }
+} catch (e) {}
+---
+
+<Base
+  title={pageTitle('Daily Digest')}
+  description="Your daily roundup of the most important stories."
+  canonical={`${BRAND.url}/digest`}
+>
+  <section class="px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
+    <div class="max-w-screen-xl mx-auto">
+      <span class="overline text-primary mb-3 block">Daily digest</span>
+      <h1 class="poster text-4xl sm:text-6xl font-bold tracking-tight mb-2">Today's Digest</h1>
+      {digest?.date && (
+        <p class="text-muted-foreground mb-8">
+          {new Date(digest.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        </p>
+      )}
+
+      {articles.length > 0 ? (
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {articles.map((article: any) => (
+            <a href={`/article/${article.slug}`} class="group block">
+              {article.thumbnail_url && (
+                <div class="aspect-[16/9] overflow-hidden rounded-xl bg-muted mb-4">
+                  <img src={article.thumbnail_url} alt={article.title} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+                </div>
+              )}
+              <h3 class="font-serif text-lg font-bold leading-snug group-hover:text-primary transition-colors line-clamp-3">{article.title}</h3>
+              <p class="text-sm text-muted-foreground mt-2 line-clamp-2">{article.summary}</p>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p class="text-muted-foreground text-center py-16">No digest available yet.</p>
+      )}
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,47 @@
+---
+import Base from '../../layouts/Base.astro';
+import { BRAND, pageTitle } from '../../lib/brand';
+import { getArticles } from '../../lib/api';
+
+const { tag } = Astro.params;
+const tagLabel = tag?.replace(/-/g, ' ') || '';
+
+let articles = [];
+try {
+  // Tag filtering via search endpoint
+  const res = await fetch(`${import.meta.env.SITE_API_URL || 'http://localhost:8000/api/v1'}/search/?q=${encodeURIComponent(tagLabel)}&limit=20`);
+  if (res.ok) articles = await res.json();
+} catch (e) {}
+---
+
+<Base
+  title={pageTitle(`${tagLabel}`)}
+  description={`Stories tagged "${tagLabel}" on Open Vaartha.`}
+  canonical={`${BRAND.url}/topic/${tag}`}
+>
+  <section class="px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
+    <div class="max-w-screen-xl mx-auto">
+      <span class="overline text-primary mb-3 block">Topic</span>
+      <h1 class="poster text-4xl sm:text-6xl font-bold tracking-tight mb-8">{tagLabel}</h1>
+
+      {articles.length > 0 ? (
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {articles.map((article: any) => (
+            <a href={`/article/${article.slug}`} class="group block">
+              {article.thumbnail_url && (
+                <div class="aspect-[16/9] overflow-hidden rounded-xl bg-muted mb-4">
+                  <img src={article.thumbnail_url} alt={article.title} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+                </div>
+              )}
+              <span class="tag mb-2">{article.category}</span>
+              <h3 class="font-serif text-lg font-bold leading-snug group-hover:text-primary transition-colors line-clamp-3">{article.title}</h3>
+              <p class="text-sm text-muted-foreground mt-2 line-clamp-2">{article.summary}</p>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p class="text-muted-foreground text-center py-16">No stories found for this topic.</p>
+      )}
+    </div>
+  </section>
+</Base>

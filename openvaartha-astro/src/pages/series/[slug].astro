@@ -1,0 +1,47 @@
+---
+import Base from '../../layouts/Base.astro';
+import { BRAND, pageTitle } from '../../lib/brand';
+
+const { slug } = Astro.params;
+
+let series = null;
+let articles: any[] = [];
+try {
+  const res = await fetch(`${import.meta.env.SITE_API_URL || 'http://localhost:8000/api/v1'}/series/${slug}`);
+  if (res.ok) series = await res.json();
+  const artRes = await fetch(`${import.meta.env.SITE_API_URL || 'http://localhost:8000/api/v1'}/articles/?series=${slug}&limit=20`);
+  if (artRes.ok) articles = await artRes.json();
+} catch (e) {}
+---
+
+<Base
+  title={pageTitle(series?.title || slug || 'Series')}
+  description={series?.description || `A series of articles on ${slug}.`}
+  canonical={`${BRAND.url}/series/${slug}`}
+>
+  <section class="px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
+    <div class="max-w-screen-xl mx-auto">
+      <span class="overline text-primary mb-3 block">Series</span>
+      <h1 class="poster text-4xl sm:text-6xl font-bold tracking-tight mb-4">{series?.title || slug}</h1>
+      {series?.description && (
+        <p class="font-serif text-lg text-muted-foreground mb-8 max-w-3xl">{series.description}</p>
+      )}
+
+      {articles.length > 0 ? (
+        <div class="space-y-6">
+          {articles.map((article: any, i: number) => (
+            <a href={`/article/${article.slug}`} class="group flex gap-6 items-start p-5 rounded-xl border border-border hover:bg-[hsl(var(--surface))] transition-colors">
+              <span class="text-4xl font-display font-bold text-primary/20 shrink-0">{String(i + 1).padStart(2, '0')}</span>
+              <div class="flex-1 min-w-0">
+                <h3 class="font-serif text-lg font-bold leading-snug group-hover:text-primary transition-colors">{article.title}</h3>
+                <p class="text-sm text-muted-foreground mt-1 line-clamp-2">{article.summary}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p class="text-muted-foreground text-center py-16">No articles in this series yet.</p>
+      )}
+    </div>
+  </section>
+</Base>

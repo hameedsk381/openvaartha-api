@@ -1,0 +1,42 @@
+---
+import Base from '../layouts/Base.astro';
+import { BRAND, pageTitle } from '../lib/brand';
+import { getTrendingArticles } from '../lib/api';
+
+let articles = [];
+try {
+  articles = await getTrendingArticles(20);
+} catch (e) {}
+---
+
+<Base
+  title={pageTitle('Trending')}
+  description="Trending stories on Open Vaartha."
+  canonical={`${BRAND.url}/trending`}
+>
+  <section class="px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
+    <div class="max-w-screen-xl mx-auto">
+      <h1 class="poster text-4xl sm:text-6xl font-bold tracking-tight mb-2">Trending</h1>
+      <p class="text-muted-foreground mb-8">The stories everyone's reading right now.</p>
+
+      {articles.length > 0 ? (
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {articles.map((article) => (
+            <a href={`/article/${article.slug}`} class="group block">
+              {article.thumbnail_url && (
+                <div class="aspect-[16/9] overflow-hidden rounded-xl bg-muted mb-4">
+                  <img src={article.thumbnail_url} alt={article.title} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+                </div>
+              )}
+              <span class="tag mb-2">{article.category}</span>
+              <h3 class="font-serif text-lg font-bold leading-snug group-hover:text-primary transition-colors line-clamp-3">{article.title}</h3>
+              <p class="text-sm text-muted-foreground mt-2 line-clamp-2">{article.summary}</p>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p class="text-muted-foreground text-center py-16">No trending stories yet.</p>
+      )}
+    </div>
+  </section>
+</Base>

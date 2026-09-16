@@ -1,0 +1,45 @@
+---
+import Base from '../../layouts/Base.astro';
+import { BRAND, pageTitle } from '../../lib/brand';
+
+const { postId } = Astro.params;
+
+let post: any = null;
+try {
+  const res = await fetch(`${import.meta.env.SITE_API_URL || 'http://localhost:8000/api/v1'}/dispatches/${postId}`);
+  if (res.ok) post = await res.json();
+} catch (e) {}
+
+if (!post) return Astro.redirect('/feed');
+---
+
+<Base
+  title={pageTitle(post?.title || 'Update')}
+  description={post?.body?.slice(0, 160) || 'A feed update.'}
+  canonical={`${BRAND.url}/feed/${postId}`}
+>
+  <article class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
+    <a href="/feed" class="overline text-primary hover:underline mb-6 inline-block">&larr; Back to feed</a>
+
+    <div class="flex items-center gap-2 mb-3">
+      <span class="tag">{post?.category || 'Update'}</span>
+      {post?.created_at && (
+        <time class="text-[11px] text-muted-foreground font-medium">
+          {new Date(post.created_at).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+        </time>
+      )}
+    </div>
+
+    <h1 class="font-serif text-2xl sm:text-3xl font-bold leading-snug mb-6">{post?.title}</h1>
+
+    {post?.image_url && (
+      <div class="aspect-[16/9] overflow-hidden rounded-xl bg-muted mb-8">
+        <img src={post.image_url} alt={post.title} class="w-full h-full object-cover" />
+      </div>
+    )}
+
+    <div class="article-body prose prose-lg max-w-none">
+      <p>{post?.body}</p>
+    </div>
+  </article>
+</Base>

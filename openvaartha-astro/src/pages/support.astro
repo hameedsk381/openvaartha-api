@@ -1,0 +1,33 @@
+---
+import Base from '../layouts/Base.astro';
+import { BRAND, pageTitle } from '../lib/brand';
+---
+
+<Base title={pageTitle('Support Us')} description="Support independent journalism." canonical={`${BRAND.url}/support`}>
+  <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-12 sm:py-20">
+    <div class="max-w-3xl">
+      <span class="overline text-primary mb-3 block">Reader support</span>
+      <h1 class="poster text-4xl sm:text-6xl font-bold tracking-tight mb-6">
+        Support<br />
+        <span class="text-primary">independent journalism.</span>
+      </h1>
+      <div class="prose prose-lg max-w-none font-serif text-foreground/90 leading-relaxed space-y-6">
+        <p>Open Vaartha is funded by readers like you. We don't have paywalls, and we don't sell your data. Our journalism is supported by people who believe in public-interest reporting.</p>
+        <p>Every contribution — big or small — helps us continue producing accurate, independent stories that hold power to account.</p>
+        <div class="not-prose mt-8">
+          <a
+            href={BRAND.supportUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center h-12 px-8 rounded-full bg-primary text-primary-foreground text-sm font-bold uppercase tracking-wider hover:bg-primary-hover transition-colors shadow-maroon"
+          >
+            Support Open Vaartha
+          </a>
+        </div>
+        {BRAND.supportUpiId && (
+          <p class="text-sm text-muted-foreground">UPI: <code class="font-mono bg-muted px-2 py-0.5 rounded">{BRAND.supportUpiId}</code></p>
+        )}
+      </div>
+    </div>
+  </div>
+</Base>

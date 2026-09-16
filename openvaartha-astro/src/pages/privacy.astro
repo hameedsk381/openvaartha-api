@@ -1,0 +1,25 @@
+---
+import Base from '../layouts/Base.astro';
+import { BRAND, pageTitle } from '../lib/brand';
+---
+
+<Base title={pageTitle('Privacy Policy')} description="Open Vaartha privacy policy." canonical={`${BRAND.url}/privacy`}>
+  <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-12 sm:py-20">
+    <div class="max-w-3xl">
+      <span class="overline text-primary mb-3 block">Legal</span>
+      <h1 class="poster text-4xl sm:text-6xl font-bold tracking-tight mb-6">Privacy Policy</h1>
+      <div class="prose prose-lg max-w-none font-serif text-foreground/90 leading-relaxed space-y-6">
+        <p><em>Last updated: January 2026</em></p>
+        <p>Open Vaartha ("we", "us", "our") is committed to protecting your privacy. This policy explains how we collect, use, and safeguard your information when you visit our website.</p>
+        <h2>Information we collect</h2>
+        <p>We collect minimal data: email address when you subscribe to our newsletter, and reading preferences stored locally on your device. We do not sell or share personal data with third parties.</p>
+        <h2>Cookies</h2>
+        <p>We use essential cookies for authentication and analytics cookies (Google Analytics) to understand how our site is used. You can disable analytics cookies in your browser settings.</p>
+        <h2>Data security</h2>
+        <p>We implement industry-standard security measures to protect your data. However, no method of transmission over the internet is 100% secure.</p>
+        <h2>Contact</h2>
+        <p>For privacy-related queries, email <a href={`mailto:${BRAND.contactEmail}`}>{BRAND.contactEmail}</a>.</p>
+      </div>
+    </div>
+  </div>
+</Base>

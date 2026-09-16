@@ -1,0 +1,18 @@
+---
+import Base from '../../layouts/Base.astro';
+import { BRAND, pageTitle } from '../../lib/brand';
+---
+
+<Base title={pageTitle('Reading History')} description="Your reading history." canonical={`${BRAND.url}/portal/history`} noindex={true}>
+  <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
+    <nav class="flex items-center gap-2 text-xs text-muted-foreground mb-8">
+      <a href="/" class="hover:text-primary transition-colors">Home</a><span>/</span>
+      <a href="/portal" class="hover:text-primary transition-colors">Dashboard</a><span>/</span>
+      <span class="text-foreground font-medium">History</span>
+    </nav>
+    <h1 class="font-display text-3xl font-bold tracking-tight mb-8">Reading History</h1>
+    <div id="portal-history" class="card-base p-6">
+      <p class="text-muted-foreground italic text-sm">Reading history will be loaded as a React island.</p>
+    </div>
+  </div>
+</Base>

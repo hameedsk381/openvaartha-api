@@ -1,0 +1,82 @@
+---
+import Base from '../layouts/Base.astro';
+import { BRAND, SITE_TITLE, SITE_DESCRIPTION } from '../lib/brand';
+import { getArticles, getCategories } from '../lib/api';
+
+let articles = [];
+let categories = [];
+try {
+  [articles, categories] = await Promise.all([
+    getArticles({ limit: 20 }),
+    getCategories(),
+  ]);
+} catch (e) {
+  // API not available at build time — render static shell
+}
+---
+
+<Base title={SITE_TITLE} description={SITE_DESCRIPTION}>
+  {/* Hero section */}
+  <section class="px-4 sm:px-6 lg:px-10 py-12 sm:py-20 border-b border-border">
+    <div class="max-w-screen-xl mx-auto">
+      <h1 class="poster text-5xl sm:text-7xl lg:text-8xl text-foreground">
+        News that<br />
+        <span class="text-primary">matters.</span>
+      </h1>
+      <p class="font-serif text-lg sm:text-xl text-muted-foreground mt-6 max-w-2xl leading-relaxed">
+        {BRAND.tagline}
+      </p>
+      <div class="flex items-center gap-3 mt-6">
+        <a href="/trending" class="inline-flex items-center h-11 px-6 rounded-full bg-primary text-primary-foreground text-sm font-bold uppercase tracking-wider hover:bg-primary-hover transition-colors">
+          Read trending
+        </a>
+        <a href="/about" class="inline-flex items-center h-11 px-6 rounded-full border-2 border-border text-sm font-bold uppercase tracking-wider hover:bg-muted transition-colors">
+          About us
+        </a>
+      </div>
+    </div>
+  </section>
+
+  {/* Latest articles */}
+  <section class="px-4 sm:px-6 lg:px-10 py-12 sm:py-16">
+    <div class="max-w-screen-xl mx-auto">
+      <div class="section-header mb-8">
+        <h2 class="font-display text-2xl font-bold">Latest</h2>
+        <span class="text-xs text-muted-foreground font-medium">{articles.length} stories</span>
+      </div>
+
+      {articles.length > 0 ? (
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {articles.slice(0, 9).map((article) => (
+            <a href={`/article/${article.slug}`} class="group block">
+              {article.thumbnail_url && (
+                <div class="aspect-[16/9] overflow-hidden rounded-xl bg-muted mb-4">
+                  <img
+                    src={article.thumbnail_url}
+                    alt={article.title}
+                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                </div>
+              )}
+              <div class="flex items-center gap-2 mb-2">
+                <span class="tag">{article.category}</span>
+                {article.read_time && (
+                  <span class="text-[11px] text-muted-foreground font-medium">{article.read_time}</span>
+                )}
+              </div>
+              <h3 class="font-serif text-lg font-bold leading-snug group-hover:text-primary transition-colors line-clamp-3">
+                {article.title}
+              </h3>
+              <p class="text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                {article.summary}
+              </p>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p class="text-muted-foreground text-center py-16">Articles will appear here once the API is connected.</p>
+      )}
+    </div>
+  </section>
+</Base>

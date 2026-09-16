@@ -1,0 +1,80 @@
+---
+import Base from '../../layouts/Base.astro';
+import { BRAND, pageTitle } from '../../lib/brand';
+import { getArticles, getCategories } from '../../lib/api';
+
+const { categoryId } = Astro.params;
+
+let articles = [];
+let categoryName = categoryId?.replace(/-/g, ' ') || '';
+
+try {
+  const categories = await getCategories();
+  const matched = categories.find(
+    (c) => c.name.toLowerCase().replace(/\s+/g, '-') === categoryId
+  );
+  if (matched) {
+    categoryName = matched.name;
+    articles = await getArticles({ category: matched.id, limit: 20 });
+  }
+} catch (e) {
+  // API not available
+}
+---
+
+<Base
+  title={pageTitle(`${categoryName} News`)}
+  description={`Latest news and stories in ${categoryName} from Open Vaartha.`}
+  canonical={`${BRAND.url}/category/${categoryId}`}
+>
+  <header class="px-4 sm:px-6 lg:px-10 py-10 sm:py-14 border-b border-border bg-[hsl(var(--surface))]">
+    <div class="max-w-screen-xl mx-auto">
+      <div class="flex items-center gap-2 mb-3">
+        <a href="/" class="overline text-muted-foreground hover:text-primary transition-colors">
+          {BRAND.name}
+        </a>
+        <span class="text-muted-foreground/50">/</span>
+        <span class="overline text-primary">Section</span>
+      </div>
+      <h1 class="poster text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.02]">
+        {categoryName}
+      </h1>
+      <p class="font-serif italic text-base sm:text-lg text-muted-foreground mt-4 max-w-2xl leading-relaxed">
+        Independent reporting on {categoryName.toLowerCase()} — verified, unfiltered, no gatekeepers.
+      </p>
+    </div>
+  </header>
+
+  <section class="px-4 sm:px-6 lg:px-10 py-8 sm:py-12">
+    <div class="max-w-screen-xl mx-auto">
+      {articles.length > 0 ? (
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {articles.map((article) => (
+            <a href={`/article/${article.slug}`} class="group block">
+              {article.thumbnail_url && (
+                <div class="aspect-[16/9] overflow-hidden rounded-xl bg-muted mb-4">
+                  <img
+                    src={article.thumbnail_url}
+                    alt={article.title}
+                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                </div>
+              )}
+              <h3 class="font-serif text-lg font-bold leading-snug group-hover:text-primary transition-colors line-clamp-3">
+                {article.title}
+              </h3>
+              <p class="text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                {article.summary}
+              </p>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="py-16 text-center">
+          <p class="font-serif italic text-muted-foreground">No stories in this section yet.</p>
+        </div>
+      )}
+    </div>
+  </section>
+</Base>

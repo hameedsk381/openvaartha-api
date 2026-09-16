@@ -1,0 +1,49 @@
+---
+import Base from '../layouts/Base.astro';
+import { BRAND, pageTitle } from '../lib/brand';
+
+let dispatches: any[] = [];
+try {
+  const res = await fetch(`${import.meta.env.SITE_API_URL || 'http://localhost:8000/api/v1'}/dispatches/?limit=30`);
+  if (res.ok) dispatches = await res.json();
+} catch (e) {}
+---
+
+<Base
+  title={pageTitle('Feed')}
+  description="Live updates and breaking news from Open Vaartha."
+  canonical={`${BRAND.url}/feed`}
+>
+  <section class="px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
+    <div class="max-w-screen-xl mx-auto">
+      <div class="max-w-2xl">
+        <span class="overline text-primary mb-3 block">Live updates</span>
+        <h1 class="poster text-4xl sm:text-6xl font-bold tracking-tight mb-2">Feed</h1>
+        <p class="text-muted-foreground mb-8">Breaking news, live updates, and short-form stories.</p>
+      </div>
+
+      {dispatches.length > 0 ? (
+        <div class="max-w-2xl space-y-0">
+          {dispatches.map((d: any) => (
+            <div class="feed-item">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="tag text-[9px]">{d.category || 'Update'}</span>
+                  <time class="text-[10px] text-muted-foreground font-medium">
+                    {new Date(d.created_at || d.published_at).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                  </time>
+                </div>
+                <p class="font-serif text-base leading-snug">{d.title || d.body}</p>
+                {d.body && d.title && (
+                  <p class="text-sm text-muted-foreground mt-1 line-clamp-3">{d.body}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p class="text-muted-foreground text-center py-16">No updates yet.</p>
+      )}
+    </div>
+  </section>
+</Base>

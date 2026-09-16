@@ -1,0 +1,65 @@
+---
+import Base from '../layouts/Base.astro';
+import { BRAND, pageTitle } from '../lib/brand';
+---
+
+<Base
+  title={pageTitle('About')}
+  description="About Open Vaartha — independent public-interest journalism from Andhra Pradesh."
+  canonical={`${BRAND.url}/about`}
+>
+  <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-12 sm:py-20">
+    <div class="max-w-3xl">
+      <span class="overline text-primary mb-3 block">About us</span>
+      <h1 class="poster text-4xl sm:text-6xl font-bold tracking-tight mb-6">
+        Independent journalism<br />
+        <span class="text-primary">for the public interest.</span>
+      </h1>
+
+      <div class="prose prose-lg max-w-none font-serif text-foreground/90 leading-relaxed space-y-6">
+        <p>
+          Open Vaartha is an independent digital news initiative focused on politics, governance,
+          society, technology, environment and public-interest journalism from Andhra Pradesh.
+        </p>
+
+        <p>
+          We believe quality journalism should be accessible to everyone, without paywalls or
+          corporate influence. Our reporting is driven by public interest, not advertising revenue.
+        </p>
+
+        <p>
+          Founded by the FOSS Andhra Foundation, Open Vaartha operates with a small team of
+          dedicated journalists and contributors who are committed to accurate, fair, and
+          transparent reporting.
+        </p>
+
+        <h2>Our editorial promise</h2>
+
+        <p>
+          Every story we publish is fact-checked, sourced, and written with the reader's interest
+          at heart. We correct errors promptly and transparently. We don't sensationalize. We
+          don't ignore inconvenient truths. We report the facts and let you decide.
+        </p>
+
+        <h2>Support our work</h2>
+
+        <p>
+          Independent journalism costs money. If you value our reporting, consider supporting
+          us through a donation. Every contribution helps us continue providing quality news
+          coverage to the communities that need it most.
+        </p>
+
+        <div class="mt-8">
+          <a
+            href={BRAND.supportUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center h-11 px-6 rounded-full bg-primary text-primary-foreground text-sm font-bold uppercase tracking-wider hover:bg-primary-hover transition-colors"
+          >
+            Support Open Vaartha
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</Base>

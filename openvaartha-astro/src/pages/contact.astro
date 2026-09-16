@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+import { BRAND, pageTitle } from '../lib/brand';
+---
+
+<Base title={pageTitle('Contact')} description="Contact Open Vaartha." canonical={`${BRAND.url}/contact`}>
+  <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-12 sm:py-20">
+    <div class="max-w-3xl">
+      <span class="overline text-primary mb-3 block">Get in touch</span>
+      <h1 class="poster text-4xl sm:text-6xl font-bold tracking-tight mb-6">Contact us</h1>
+      <div class="prose prose-lg max-w-none font-serif text-foreground/90 leading-relaxed space-y-6">
+        <p>For general enquiries, story tips, corrections, or feedback, reach us at:</p>
+        <p><a href={`mailto:${BRAND.contactEmail}`} class="text-primary font-medium hover:underline">{BRAND.contactEmail}</a></p>
+        <p>For advertising or partnership enquiries, please email us with details. We'll get back to you within 2 business days.</p>
+        <h2>Follow us</h2>
+        <p>Find us on <a href={BRAND.instagramUrl} target="_blank" rel="noopener noreferrer">Instagram</a>, <a href={BRAND.facebookUrl} target="_blank" rel="noopener noreferrer">Facebook</a>, and <a href={BRAND.youtubeUrl} target="_blank" rel="noopener noreferrer">YouTube</a>.</p>
+      </div>
+    </div>
+  </div>
+</Base>
