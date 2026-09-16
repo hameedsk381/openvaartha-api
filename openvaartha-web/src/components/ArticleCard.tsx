@@ -48,6 +48,8 @@ const ArticleCard = ({ article, index = 0, variant = "grid" }: ArticleCardProps)
             <img
               src={article.thumbnailUrl}
               alt={article.title}
+              width={variant === "hero" ? 1200 : variant === "list" ? 320 : 600}
+              height={variant === "hero" ? 514 : variant === "list" ? 400 : 600}
               className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
               loading="lazy"
               decoding="async"
