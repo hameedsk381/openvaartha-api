@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { BRAND, pageTitle } from '../lib/brand';
+import LoginForm from '../components/LoginForm';
 ---
 
 <Base title={pageTitle('Sign In')} description="Sign in to Open Vaartha." canonical={`${BRAND.url}/login`} noindex={true}>
@@ -11,10 +12,8 @@ import { BRAND, pageTitle } from '../lib/brand';
         <p class="text-muted-foreground mt-2">Sign in to your Open Vaartha account</p>
       </div>
 
-      <div id="login-form" class="card-base p-6 sm:p-8">
-        <p class="text-muted-foreground text-center italic text-sm py-8">
-          Login form will be loaded as a React island.
-        </p>
+      <div class="card-base p-6 sm:p-8">
+        <LoginForm client:load />
       </div>
 
       <p class="text-center text-sm text-muted-foreground mt-6">
