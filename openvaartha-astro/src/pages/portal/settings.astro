@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { BRAND, pageTitle } from '../../lib/brand';
+import Settings from '../../components/Settings';
 ---
 
 <Base title={pageTitle('Settings')} description="Your account settings." canonical={`${BRAND.url}/portal/settings`} noindex={true}>
@@ -11,8 +12,6 @@ import { BRAND, pageTitle } from '../../lib/brand';
       <span class="text-foreground font-medium">Settings</span>
     </nav>
     <h1 class="font-display text-3xl font-bold tracking-tight mb-8">Settings</h1>
-    <div id="portal-settings" class="card-base p-6">
-      <p class="text-muted-foreground italic text-sm">Settings form will be loaded as a React island (profile, theme, push notifications, password).</p>
-    </div>
+    <Settings client:load />
   </div>
 </Base>

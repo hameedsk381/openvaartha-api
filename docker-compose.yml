@@ -50,15 +50,33 @@ services:
     depends_on:
       - api
     restart: unless-stopped
-    # Publish the freshly-built index.html to a shared volume on each start so
-    # the API's server-rendered article route injects into the byte-identical
-    # index.html this container serves (guarantees matching hashed asset URLs).
     command: ["/bin/sh", "-c", "cp /usr/share/nginx/html/index.html /web-shared/index.html && nginx -g 'daemon off;'"]
     volumes:
       - media-data:/usr/share/nginx/html/media
       - web-dist:/web-shared
     networks:
       - openvaartha
+
+  astro:
+    build:
+      context: ./openvaartha-astro
+      dockerfile: Dockerfile
+    environment:
+      SITE_API_URL: http://api:8000
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 4321
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - openvaartha
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4321/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   api:
     build:
