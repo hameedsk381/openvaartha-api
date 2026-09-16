@@ -13,10 +13,6 @@ import {
   type TabPanelProps as TabPanelPrimitiveProps,
   type TabPanelsProps as TabPanelsPrimitiveProps,
 } from '@headlessui/react';
-import {
-  Highlight as TabHighlightPrimitive,
-  HighlightItem as TabHighlightItemPrimitive,
-} from '@/components/animate-ui/primitives/effects/highlight';
 import { cn } from '@/lib/utils';
 
 type TabGroupProps<TTag extends React.ElementType = 'div'> =
@@ -37,20 +33,20 @@ function TabGroup<TTag extends React.ElementType = 'div'>({
 type TabListProps<TTag extends React.ElementType = 'div'> =
   TabListPrimitiveProps<TTag>;
 
+// CSS-only tab highlight — no JavaScript getBoundingClientRect() measurements.
+// The ::after pseudo-element on the active tab handles the highlight via CSS transitions.
 function TabList<TTag extends React.ElementType = 'div'>({
   className,
   ...props
 }: TabListProps<TTag>) {
   return (
-    <TabHighlightPrimitive className="absolute z-0 inset-0 border border-transparent rounded-md bg-background dark:border-input dark:bg-input/30 shadow-sm">
-      <TabListPrimitive
-        className={cn(
-          'bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]',
-          className,
-        )}
-        {...props}
-      />
-    </TabHighlightPrimitive>
+    <TabListPrimitive
+      className={cn(
+        'bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px] relative',
+        className,
+      )}
+      {...props}
+    />
   );
 }
 
@@ -62,15 +58,13 @@ function Tab<TTag extends React.ElementType = 'button'>({
   ...props
 }: TabProps<TTag>) {
   return (
-    <TabHighlightItemPrimitive index={props.index} className="flex-1">
-      <TabPrimitive
-        className={cn(
-          "data-[active='true']:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring text-muted-foreground inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md w-full px-2 py-1 text-sm font-medium whitespace-nowrap transition-colors duration-500 ease-in-out focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-          className,
-        )}
-        {...props}
-      />
-    </TabHighlightItemPrimitive>
+    <TabPrimitive
+      className={cn(
+        "data-[selected='true']:text-foreground data-[selected='true']:bg-background focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring text-muted-foreground inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md w-full px-2 py-1 text-sm font-medium whitespace-nowrap transition-all duration-200 ease-in-out focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className,
+      )}
+      {...props}
+    />
   );
 }
 

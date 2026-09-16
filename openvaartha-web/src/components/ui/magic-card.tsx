@@ -121,11 +121,17 @@ export function MagicCard(props: MagicCardProps) {
     [mouseX, mouseY, orbVisible]
   )
 
+  const rafRef = useRef<number | null>(null)
+
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      const rect = e.currentTarget.getBoundingClientRect()
-      mouseX.set(e.clientX - rect.left)
-      mouseY.set(e.clientY - rect.top)
+      // Cancel any pending measurement to avoid layout thrashing
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+      rafRef.current = requestAnimationFrame(() => {
+        const rect = e.currentTarget.getBoundingClientRect()
+        mouseX.set(e.clientX - rect.left)
+        mouseY.set(e.clientY - rect.top)
+      })
     },
     [mouseX, mouseY]
   )
