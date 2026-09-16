@@ -281,6 +281,7 @@ export default function FeedCard({ dispatch, onLike, onRepost }: FeedCardProps) 
             <button
               type="submit"
               disabled={isPostingComment || !commentText.trim()}
+              aria-label="Post reply"
               className="h-9 px-3 rounded-full bg-primary text-white text-xs font-bold inline-flex items-center gap-1 hover:bg-primary/90 transition-colors press disabled:opacity-40 shrink-0"
             >
               {isPostingComment ? (

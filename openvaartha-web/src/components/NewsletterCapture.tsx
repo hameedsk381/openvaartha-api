@@ -89,7 +89,7 @@ export default function NewsletterCapture({ className, variant = "inline" }: New
             )}
             disabled={loading}
           />
-          <Button type="submit" disabled={loading} size={isFooter ? "icon" : "default"} className={cn(!isFooter && "bg-white text-black hover:bg-zinc-200")}>
+          <Button type="submit" disabled={loading} size={isFooter ? "icon" : "default"} aria-label="Subscribe" className={cn(!isFooter && "bg-white text-black hover:bg-zinc-200")}>
             {loading ? <LoaderCircle animate className="h-4 w-4" /> : isFooter ? <ArrowRight className="h-4 w-4" /> : "Subscribe"}
           </Button>
         </form>
