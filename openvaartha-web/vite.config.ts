@@ -4,6 +4,22 @@ import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
 import { componentTagger } from "lovable-tagger";
 
+// Makes injected <link rel="stylesheet"> non-render-blocking by swapping
+// rel to preload + switching to media="print" onload.  Eliminates the
+// ~1500 ms render-blocking CSS penalty flagged by PageSpeed Insights.
+function nonBlockingCss() {
+  return {
+    name: "non-blocking-css",
+    enforce: "post",
+    transformIndexHtml(html: string) {
+      return html.replace(
+        /<link\s+rel="stylesheet"\s+crossorigin\s+href="(\/assets\/[^"]+\.css)"\s*\/?>/g,
+        '<link rel="preload" href="$1" as="style" crossorigin onload="this.onload=null;this.rel=\'stylesheet\'"><noscript><link rel="stylesheet" href="$1"></noscript>'
+      );
+    },
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
@@ -45,6 +61,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    nonBlockingCss(),
     VitePWA({
       registerType: "autoUpdate",
       // Registered explicitly in main.tsx via `virtual:pwa-register`
