@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import { BRAND, SITE_TITLE, SITE_DESCRIPTION } from '../lib/brand';
 import { getArticles, getCategories } from '../lib/api';
+import NewsletterCapture from '../components/NewsletterCapture';
 
 let articles = [];
 let categories = [];
@@ -77,6 +78,13 @@ try {
       ) : (
         <p class="text-muted-foreground text-center py-16">Articles will appear here once the API is connected.</p>
       )}
+    </div>
+  </section>
+
+  {/* Newsletter */}
+  <section class="px-4 sm:px-6 lg:px-10 py-12 sm:py-16 border-t border-border">
+    <div class="max-w-screen-xl mx-auto">
+      <NewsletterCapture client:visible />
     </div>
   </section>
 </Base>

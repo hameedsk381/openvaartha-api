@@ -2,20 +2,21 @@
 import Base from '../../layouts/Base.astro';
 import { BRAND, pageTitle } from '../../lib/brand';
 import { getArticleBySlug } from '../../lib/api';
+import AudioPlayer from '../../components/AudioPlayer';
+import Reactions from '../../components/Reactions';
+import Comments from '../../components/Comments';
+import QuoteCard from '../../components/QuoteCard';
 
 const { slug } = Astro.params;
 
 let article = null;
-let error = null;
 try {
   article = await getArticleBySlug(slug);
 } catch (e) {
-  error = e.message;
-}
-
-if (!article) {
   return Astro.redirect('/404');
 }
+
+if (!article) return Astro.redirect('/404');
 ---
 
 <Base
@@ -38,12 +39,7 @@ if (!article) {
   <article class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-10 py-8 sm:py-12">
     {/* Category + timestamp */}
     <div class="flex items-center gap-3 mb-5">
-      <a
-        href={`/category/${article.category?.toLowerCase().replace(/\s+/g, '-')}`}
-        class="overline text-primary hover:underline underline-offset-4"
-      >
-        {article.category}
-      </a>
+      <a href={`/category/${article.category?.toLowerCase().replace(/\s+/g, '-')}`} class="overline text-primary hover:underline underline-offset-4">{article.category}</a>
       <span class="h-1 w-1 rounded-full bg-border" />
       <time datetime={article.published_at} class="text-[11px] text-muted-foreground font-medium tracking-wide">
         {new Date(article.published_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
@@ -51,46 +47,38 @@ if (!article) {
     </div>
 
     {/* Title */}
-    <h1 class="font-serif text-3xl sm:text-5xl font-bold leading-tight tracking-tight mb-4">
-      {article.title}
-    </h1>
+    <h1 class="font-serif text-3xl sm:text-5xl font-bold leading-tight tracking-tight mb-4">{article.title}</h1>
 
     {/* Summary */}
     {article.summary && (
-      <p class="font-serif text-lg text-muted-foreground leading-relaxed mb-6 max-w-3xl">
-        {article.summary}
-      </p>
+      <p class="font-serif text-lg text-muted-foreground leading-relaxed mb-6 max-w-3xl">{article.summary}</p>
     )}
 
     {/* Author + read time */}
     <div class="flex items-center gap-3 text-sm text-muted-foreground mb-8 pb-8 border-b border-border">
       <span class="font-medium text-foreground">{article.author || BRAND.authorName}</span>
-      {article.read_time && (
-        <>
-          <span class="h-1 w-1 rounded-full bg-border" />
-          <span>{article.read_time}</span>
-        </>
-      )}
+      {article.read_time && (<><span class="h-1 w-1 rounded-full bg-border" /><span>{article.read_time}</span></>)}
     </div>
 
     {/* Thumbnail */}
     {article.thumbnail_url && (
       <div class="aspect-[16/9] overflow-hidden rounded-2xl bg-muted mb-10">
-        <img
-          src={article.thumbnail_url}
-          alt={article.title}
-          class="w-full h-full object-cover"
-          loading="eager"
-        />
+        <img src={article.thumbnail_url} alt={article.title} class="w-full h-full object-cover" loading="eager" />
       </div>
     )}
 
-    {/* Article body — rendered by the SPA client-side for now.
-        TODO: Add server-rendered article body from API once content endpoint is ready. */}
+    {/* Audio Player */}
+    <div class="mb-8">
+      <AudioPlayer client:load articleSlug={article.slug} title={article.title} />
+    </div>
+
+    {/* Article body */}
     <div id="article-content" class="article-body prose prose-lg max-w-none" data-article-id={article._id}>
-      <p class="text-muted-foreground italic">
-        Article body is loaded client-side. Full SSR coming in Phase 2.
-      </p>
+      {article.body ? (
+        <Fragment set:html={article.body} />
+      ) : (
+        <p class="text-muted-foreground italic">Article body is loaded client-side. Full SSR coming soon.</p>
+      )}
     </div>
 
     {/* Tags */}
@@ -98,17 +86,26 @@ if (!article) {
       <div class="mt-10 pt-6 border-t border-border">
         <div class="flex flex-wrap gap-2">
           {article.tags.map((tag: string) => (
-            <a href={`/topic/${tag.toLowerCase().replace(/\s+/g, '-')}`} class="chip-ghost">
-              {tag}
-            </a>
+            <a href={`/topic/${tag.toLowerCase().replace(/\s+/g, '-')}`} class="chip-ghost">{tag}</a>
           ))}
         </div>
       </div>
     )}
+
+    {/* Reactions */}
+    <div class="mt-10 pt-6 border-t border-border">
+      <h3 class="font-display text-sm font-bold mb-4">Reactions</h3>
+      <Reactions client:load articleSlug={article.slug} />
+    </div>
+
+    {/* Share / Quote Card */}
+    <div class="mt-10 pt-6 border-t border-border">
+      <QuoteCard client:visible title={article.title} slug={article.slug} summary={article.summary} category={article.category} />
+    </div>
+
+    {/* Comments */}
+    <div class="mt-10 pt-6 border-t border-border">
+      <Comments client:load articleSlug={article.slug} />
+    </div>
   </article>
 </Base>
-
-<script>
-  // Client-side: fetch full article content and render it
-  // TODO: In Phase 2, this will be server-rendered
-</script>

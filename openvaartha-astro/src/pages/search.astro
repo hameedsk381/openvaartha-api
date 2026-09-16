@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { BRAND, pageTitle } from '../lib/brand';
+import SearchOverlay from '../components/SearchOverlay';
 ---
 
 <Base
@@ -12,11 +13,8 @@ import { BRAND, pageTitle } from '../lib/brand';
   <section class="px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
     <div class="max-w-screen-xl mx-auto">
       <h1 class="poster text-4xl sm:text-6xl font-bold tracking-tight mb-8">Search</h1>
-
-      <div id="search-island" class="max-w-2xl">
-        <p class="text-muted-foreground italic">
-          Search functionality will be loaded as a React island.
-        </p>
+      <div class="max-w-2xl">
+        <SearchOverlay client:load open={true} onClose={() => {}} />
       </div>
     </div>
   </section>
