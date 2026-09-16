@@ -80,10 +80,12 @@ def upload_image_bytes(contents: bytes, content_type: str = "image/webp") -> str
     """Upload raw bytes to GCS and return a client URL.
 
     The caller is responsible for producing the bytes (image compression etc.).
+    Content-addressed UUID filenames are immutable, so we set a 1-year cache.
     """
     try:
         bucket = get_bucket()
         blob = bucket.blob(_new_object_name(content_type))
+        blob.cache_control = "public, max-age=31536000, immutable"
         blob.upload_from_string(contents, content_type=content_type)
         return blob_url(blob.name)
     except HTTPException:
@@ -101,6 +103,7 @@ def upload_stream(file_obj, content_type: str, extension: str) -> str:
     try:
         bucket = get_bucket()
         blob = bucket.blob(name)
+        blob.cache_control = "public, max-age=31536000, immutable"
         blob.upload_from_file(file_obj, content_type=content_type)
         return blob_url(blob.name)
     except HTTPException:
