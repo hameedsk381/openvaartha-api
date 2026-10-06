@@ -56,19 +56,25 @@ services:
     volumes:
       - media-data:/usr/share/nginx/html/media
       - web-dist:/web-shared
+    networks:
+      - dokploy-network
 
   astro:
     build:
       context: ./openvaartha-astro
       dockerfile: Dockerfile
     environment:
-      SITE_API_URL: http://api:8000
+      # Unique alias (not bare "api") — dokploy-network is shared with other
+      # apps, so "api" would resolve ambiguously across their services too.
+      SITE_API_URL: http://openvaartha-8ud53n-api:8000
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 4321
     depends_on:
       - api
     restart: unless-stopped
+    networks:
+      - dokploy-network
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:4321/"]
       interval: 30s
@@ -92,6 +98,13 @@ services:
       # Read the web build's index.html (published by the web container) so the
       # server-rendered article route can inject into it. WEB_INDEX_PATH points here.
       - web-dist:/app/web:ro
+    networks:
+      # dokploy-network is shared across every app Dokploy runs, so a bare
+      # "api" hostname collides with other apps' services. This unique alias is
+      # how web/nginx and astro address the API (see openvaartha-web/nginx.conf).
+      dokploy-network:
+        aliases:
+          - openvaartha-8ud53n-api
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
       interval: 30s
@@ -120,6 +133,8 @@ services:
       migrate:
         condition: service_completed_successfully
     restart: unless-stopped
+    networks:
+      - dokploy-network
     healthcheck:
       test: ["CMD-SHELL", "celery -A app.tasks:celery_app inspect ping -d celery@$$(hostname) 2>/dev/null || exit 1"]
       interval: 60s
@@ -151,6 +166,8 @@ services:
       migrate:
         condition: service_completed_successfully
     restart: unless-stopped
+    networks:
+      - dokploy-network
     deploy:
       resources:
         limits:
@@ -170,6 +187,8 @@ services:
     command: ["python", "scripts/migrate.py"]
     environment: *app-environment
     restart: "no"
+    networks:
+      - dokploy-network
 
 # MongoDB and Redis are external managed services — configured via MONGODB_URL
 # and REDIS_URL in .env. They are intentionally not run as containers here.
@@ -177,3 +196,11 @@ services:
 volumes:
   media-data:
   web-dist:
+
+# dokploy-network is created and managed by Dokploy and shared across all the
+# apps it runs — declared external so this stack joins it instead of creating
+# its own. The api service takes a unique alias on it (see the api service) to
+# avoid hostname collisions with other apps' "api" services.
+networks:
+  dokploy-network:
+    external: true
