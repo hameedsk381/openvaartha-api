@@ -118,11 +118,14 @@ app.include_router(authors.router, prefix="/api/v1/authors", tags=["Authors"])
 app.include_router(series.router, prefix="/api/v1/series", tags=["Series"])
 app.include_router(polls.router, prefix="/api/v1/polls", tags=["Polls"])
 app.include_router(ws.router, prefix="/api/v1/ws", tags=["WebSockets"])
-# Root-level routes (sitemap, RSS feeds, server-rendered article HTML)
-app.include_router(feeds.router)
-app.include_router(pages.router)
 
 
+# Liveness probe — MUST be registered before pages.router. That router ends in a
+# single-segment catch-all (@router.get("/{route}")) for server-rendered frontend
+# routes, and FastAPI matches in registration order; including pages first let the
+# catch-all swallow bare "/health" and 404 it, which failed the container
+# healthcheck and sent Dokploy into a redeploy loop (→ 502s). Keep this above the
+# root-level router includes below.
 @app.get("/health")
 def health_check():
     return {
@@ -130,6 +133,13 @@ def health_check():
         "ai_available": bool(settings.GROQ_API_KEY),
         "ai_model": settings.GROQ_MODEL,
     }
+
+
+# Root-level routes (sitemap, RSS feeds, server-rendered article HTML). The pages
+# router's single-segment catch-all means it must come after every explicit
+# root-level route (the /health probe above, and the /health/* routes below).
+app.include_router(feeds.router)
+app.include_router(pages.router)
 
 
 @app.get("/health/ops")
