@@ -56,8 +56,6 @@ services:
     volumes:
       - media-data:/usr/share/nginx/html/media
       - web-dist:/web-shared
-    networks:
-      - openvaartha
 
   astro:
     build:
@@ -71,8 +69,6 @@ services:
     depends_on:
       - api
     restart: unless-stopped
-    networks:
-      - openvaartha
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:4321/"]
       interval: 30s
@@ -96,8 +92,6 @@ services:
       # Read the web build's index.html (published by the web container) so the
       # server-rendered article route can inject into it. WEB_INDEX_PATH points here.
       - web-dist:/app/web:ro
-    networks:
-      - openvaartha
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
       interval: 30s
@@ -126,8 +120,6 @@ services:
       migrate:
         condition: service_completed_successfully
     restart: unless-stopped
-    networks:
-      - openvaartha
     healthcheck:
       test: ["CMD-SHELL", "celery -A app.tasks:celery_app inspect ping -d celery@$$(hostname) 2>/dev/null || exit 1"]
       interval: 60s
@@ -159,8 +151,6 @@ services:
       migrate:
         condition: service_completed_successfully
     restart: unless-stopped
-    networks:
-      - openvaartha
     deploy:
       resources:
         limits:
@@ -180,8 +170,6 @@ services:
     command: ["python", "scripts/migrate.py"]
     environment: *app-environment
     restart: "no"
-    networks:
-      - openvaartha
 
 # MongoDB and Redis are external managed services — configured via MONGODB_URL
 # and REDIS_URL in .env. They are intentionally not run as containers here.
@@ -189,7 +177,3 @@ services:
 volumes:
   media-data:
   web-dist:
-
-networks:
-  openvaartha:
-    driver: bridge
