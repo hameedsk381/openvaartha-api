@@ -74,7 +74,11 @@ services:
       - api
     restart: unless-stopped
     networks:
-      - dokploy-network
+      # Unique alias on Dokploy's shared network, same reason as the api
+      # service — a bare "astro" host would collide with other apps' services.
+      dokploy-network:
+        aliases:
+          - openvaartha-8ud53n-astro
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:4321/"]
       interval: 30s
