@@ -47,15 +47,16 @@ cp .env.example .env
 
 ```text
 JWT_SECRET_KEY
-MONGO_INITDB_ROOT_PASSWORD
-MONGODB_URL
-REDIS_PASSWORD
-REDIS_URL
-CELERY_BROKER_URL
-CELERY_RESULT_BACKEND
+MONGODB_URL          # external managed MongoDB (e.g. Atlas)
+REDIS_URL            # external managed Redis (use rediss:// for TLS)
 ADMIN_EMAILS
 CORS_ORIGINS
 ```
+
+MongoDB and Redis are **external managed services** — this stack no longer runs
+them as containers. `CELERY_BROKER_URL` / `CELERY_RESULT_BACKEND` are optional:
+leave them blank to reuse `REDIS_URL`, or set them if your Redis plan gives you
+separate logical DBs.
 
 3. Build and start the stack:
 
@@ -70,14 +71,20 @@ docker compose ps
 curl http://localhost:8000/health
 ```
 
-The public app and API are served from `http://localhost:${API_PORT}`. MongoDB and Redis are internal-only services in compose and are not published to the host.
+The public app and API are served from `http://localhost:${API_PORT}`. MongoDB
+and Redis are **external managed services** reached via `MONGODB_URL` and
+`REDIS_URL` — they are not run as containers in this stack.
 
 ## Services
 
 - `api`: FastAPI app serving `/api/v1/*` and the built React SPA.
-- `worker`: Celery worker using the same image and centralized env.
-- `mongo`: persistent MongoDB volume `mongo-data`.
-- `redis`: persistent Redis volume `redis-data`, password-protected.
+- `web` / `astro`: the built frontend(s).
+- `celery-worker`: Celery worker running RSS ingestion / AI rewrite tasks.
+- `celery-beat`: Celery scheduler (single-instance via `beat_lock.py`).
+- `migrate`: one-shot bootstrap (indexes + admin/RSS seed) run before the rest.
+
+MongoDB and Redis are **external** (e.g. MongoDB Atlas + a managed Redis) and
+are configured entirely through `.env`.
 
 ## Admin Access
 

@@ -12,8 +12,10 @@ x-app-environment: &app-environment
   DATABASE_NAME: ${DATABASE_NAME:?DATABASE_NAME is required}
   MONGODB_URL: ${MONGODB_URL:?MONGODB_URL is required}
   REDIS_URL: ${REDIS_URL:?REDIS_URL is required}
-  CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://:${REDIS_PASSWORD}@redis:6379/1}
-  CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://:${REDIS_PASSWORD}@redis:6379/2}
+  # Leave blank to reuse REDIS_URL for broker + results (fine for single-DB
+  # managed Redis). Set only if your provider offers separate logical DBs.
+  CELERY_BROKER_URL: ${CELERY_BROKER_URL:-}
+  CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-}
   CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-300}
   GROQ_API_KEY: ${GROQ_API_KEY:-}
   GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
@@ -83,11 +85,9 @@ services:
       context: .
       dockerfile: openvaartha-api/Dockerfile
     environment: *app-environment
+    # MongoDB and Redis are external managed services — compose can't health-gate
+    # them, so the app/migrate handle connection retries themselves.
     depends_on:
-      mongo:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     restart: unless-stopped
@@ -123,10 +123,6 @@ services:
     command: ["celery", "-A", "app.tasks:celery_app", "worker", "--loglevel=info", "--concurrency=2", "--time-limit=300", "--soft-time-limit=270", "--max-tasks-per-child=200"]
     environment: *app-environment
     depends_on:
-      mongo:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     restart: unless-stopped
@@ -160,10 +156,8 @@ services:
     command: ["python", "-m", "app.tasks.beat_lock", "celery", "-A", "app.tasks:celery_app", "beat", "--loglevel=info"]
     environment: *app-environment
     depends_on:
-      mongo:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
     networks:
       - openvaartha
@@ -185,53 +179,14 @@ services:
       dockerfile: openvaartha-api/Dockerfile
     command: ["python", "scripts/migrate.py"]
     environment: *app-environment
-    depends_on:
-      mongo:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     restart: "no"
     networks:
       - openvaartha
 
-  mongo:
-    image: mongo:7.0.14
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: ${DATABASE_NAME}
-    volumes:
-      - mongo-data:/data/db
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "mongosh --quiet --username \"$${MONGO_INITDB_ROOT_USERNAME}\" --password \"$${MONGO_INITDB_ROOT_PASSWORD}\" --authenticationDatabase admin --eval \"db.adminCommand('ping').ok\" | grep 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    networks:
-      - openvaartha
-
-  redis:
-    image: redis:7.4.1-alpine
-    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
-    volumes:
-      - redis-data:/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep PONG"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-    networks:
-      - openvaartha
+# MongoDB and Redis are external managed services — configured via MONGODB_URL
+# and REDIS_URL in .env. They are intentionally not run as containers here.
 
 volumes:
-  mongo-data:
-  redis-data:
   media-data:
   web-dist:
 

@@ -17,11 +17,16 @@ class Settings(BaseSettings):
     MONGODB_URL: str = "mongodb://127.0.0.1:27017"
     DATABASE_NAME: str = "openvaartha"
 
-    # Redis
+    # Redis — a single managed-Redis connection string (REDIS_URL) is enough.
+    # Use rediss:// for TLS; redis-py's from_url handles that scheme natively,
+    # and Celery's broker/result backend fall back to REDIS_URL (see the
+    # celery_broker_url / celery_result_backend properties below). Set the two
+    # CELERY_* vars explicitly only if your provider gives you separate logical
+    # DBs and you want Celery isolated from the app cache (e.g. .../1 and .../2).
     REDIS_URL: str = "redis://localhost:6379/0"
     CACHE_TTL_SECONDS: int = 300
-    CELERY_BROKER_URL: str = "redis://localhost:6379/1"
-    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
+    CELERY_BROKER_URL: str = ""
+    CELERY_RESULT_BACKEND: str = ""
 
     # JWT
     JWT_SECRET_KEY: str = "your-jwt-secret-key-change-in-production"
@@ -122,6 +127,17 @@ class Settings(BaseSettings):
         }
 
     @property
+    def celery_broker_url(self) -> str:
+        """Celery broker URL, falling back to REDIS_URL when unset so one
+        managed-Redis connection string covers cache + broker + results."""
+        return self.CELERY_BROKER_URL or self.REDIS_URL
+
+    @property
+    def celery_result_backend(self) -> str:
+        """Celery result backend, falling back to REDIS_URL when unset."""
+        return self.CELERY_RESULT_BACKEND or self.REDIS_URL
+
+    @property
     def is_production(self) -> bool:
         return self.ENVIRONMENT.lower() == "production"
 
@@ -139,6 +155,16 @@ class Settings(BaseSettings):
             problems.append("CORS_ORIGINS must contain at least one explicit origin in production")
         if self.DEBUG:
             problems.append("DEBUG must be False in production")
+        # DB and Redis are now external managed services — there are no
+        # in-compose mongo/redis containers to fall back to. A localhost or
+        # old in-compose hostname here almost always means the managed
+        # connection string was never wired in, so fail fast rather than
+        # silently trying to reach a host that doesn't exist.
+        _local_markers = ("localhost", "127.0.0.1", "@mongo:", "//mongo:", "@redis:", "//redis:")
+        if any(m in self.MONGODB_URL for m in _local_markers):
+            problems.append("MONGODB_URL still points at a local/in-compose host; set it to your managed MongoDB URI")
+        if any(m in self.REDIS_URL for m in _local_markers):
+            problems.append("REDIS_URL still points at a local/in-compose host; set it to your managed Redis URL")
         if problems:
             joined = "; ".join(problems)
             raise RuntimeError(f"Refusing to start: {joined}")
