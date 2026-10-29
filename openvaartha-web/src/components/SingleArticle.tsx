@@ -489,7 +489,7 @@ const SingleArticle = ({ articleId, onInView, isActive = true }: { articleId: st
                 className="w-full aspect-[16/9] sm:aspect-[21/9] object-cover"
                 onError={handleImageFallback}
                 loading="eager"
-                fetchpriority="high"
+                fetchPriority="high"
                 decoding="async"
               />
               <figcaption className="px-4 sm:px-6 lg:px-10 py-3 text-[11px] font-serif italic text-muted-foreground border-t border-border bg-background">

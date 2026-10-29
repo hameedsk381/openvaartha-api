@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { FactCheck } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { Shield, ShieldAlert, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 
 interface FactCheckOverlayProps {

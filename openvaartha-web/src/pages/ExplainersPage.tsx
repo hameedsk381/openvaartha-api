@@ -65,8 +65,8 @@ const ExplainersPage = () => {
             <div className="px-4 sm:px-6 lg:px-10 py-6 border-b border-border bg-background">
               <TabGroup onChange={(index) => setSelectedCategory(categories[index])}>
                 <TabList>
-                  {categories.map((cat, idx) => (
-                    <Tab key={cat} index={idx}>
+                  {categories.map((cat) => (
+                    <Tab key={cat}>
                       {cat}
                     </Tab>
                   ))}

@@ -25,7 +25,7 @@ const [SwitchProvider, useSwitch] =
 
 type SwitchProps<TTag extends React.ElementType = typeof motion.button> =
   SwitchPrimitiveProps<TTag> &
-    HTMLMotionProps<'button'> & {
+    Omit<HTMLMotionProps<'button'>, 'onChange'> & {
       as?: TTag;
     };
 

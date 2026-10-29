@@ -186,7 +186,7 @@ export default function AdminAuthors() {
                 <UserIcon className="h-6 w-6 text-muted-foreground" />
               )}
             </div>
-            <Button type="button" variant="outline" size="xs" onClick={() => handleAvatarUpload(false)}>
+            <Button type="button" variant="outline" size="sm" onClick={() => handleAvatarUpload(false)}>
               Upload
             </Button>
           </div>
@@ -247,7 +247,7 @@ export default function AdminAuthors() {
                       )}
                     </div>
                     {isEditing && (
-                      <Button type="button" variant="ghost" size="xs" onClick={() => handleAvatarUpload(true)} className="mt-1">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => handleAvatarUpload(true)} className="mt-1">
                         Change
                       </Button>
                     )}
@@ -329,7 +329,7 @@ export default function AdminAuthors() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => confirmDelete(author)}
+                          onClick={() => setDeleteTarget(author)}
                           disabled={isMutating}
                           className="h-8 w-8 text-destructive hover:bg-destructive/10"
                         >
@@ -350,9 +350,9 @@ export default function AdminAuthors() {
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title="Delete Author Profile"
         description={`Are you sure you want to delete the author profile for "${deleteTarget?.name}"? This action cannot be undone.`}
-        confirmText="Delete"
+        confirmLabel="Delete"
         onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
-        isDestructive
+        variant="destructive"
       />
     </div>
   );

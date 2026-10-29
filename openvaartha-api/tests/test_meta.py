@@ -184,11 +184,17 @@ class TestEntityArchitecture:
         assert f'"publisher": {{"@id": "{settings.SITE_URL.rstrip("/")}/#organization"}}' in head
         assert '"inLanguage": "en"' in head
 
-    def test_article_author_is_person_with_url(self):
+    def test_article_author_is_person_entity_without_dead_profile_url(self):
+        """Author is a Person entity with a stable @id and name. It must NOT
+        link to /authors/<slug>: no public author page exists yet (nginx 404s
+        that path), and advertising it in JSON-LD sent crawlers to a dead URL
+        (see commit 8e01d29). Re-add the URL assertion when author pages ship.
+        """
         head = build_article_head(_article(author="Desk Reporter"), category_name="Politics")
         assert '"@type": "Person"' in head
-        assert 'desk-reporter' in head
-        assert '/authors/desk-reporter' in head
+        assert '#author-desk-reporter' in head
+        assert '"name": "Desk Reporter"' in head
+        assert '/authors/' not in head
 
     def test_article_keywords_from_tags(self):
         head = build_article_head(_article(tags=["economy", "msme"]))

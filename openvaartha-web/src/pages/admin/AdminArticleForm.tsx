@@ -1042,7 +1042,7 @@ export default function AdminArticleForm() {
                     }
                   }}
                 >
-                  <AnimatedIcon icon={LoaderCircle} className="w-4 h-4 mr-2" />
+                  <LoaderCircle className="w-4 h-4 mr-2" animate />
                   Generate Fact Check
                 </Button>
                 {!isEditing && <p className="text-[10px] text-destructive">You must save the article first before generating a fact check.</p>}

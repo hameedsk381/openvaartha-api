@@ -17,6 +17,40 @@ def test_settings():
     )
 
 
+@pytest.fixture(autouse=True)
+async def _reset_global_redis_clients():
+    """Drop module-global async Redis clients after every test.
+
+    app.core.cache and app.services.article_service each cache one
+    redis.asyncio client at module level. pytest-asyncio runs every test in its
+    own event loop, so a client created during test N is bound to a loop that
+    is already closed by test N+1 and fails with "RuntimeError: Event loop is
+    closed". (Production has a single long-lived loop, so this is purely a
+    test-isolation concern.) Closing here — in the same loop that created the
+    client — and clearing the globals makes the next test build a fresh one.
+
+    It also clears the app's cached article lists before each test. Tests seed
+    Mongo directly (bypassing the service layer that normally invalidates), so
+    with a real Redis a list cached by an earlier test — e.g. the empty list
+    from test_get_articles_empty — would otherwise be served to the next one.
+    Only the app's own `openvaartha:articles:*` keys are touched, never FLUSHDB.
+    """
+    from app.core import cache
+    from app.services import article_service
+
+    await article_service.invalidate_article_caches()
+    yield
+
+    await cache.close_redis()
+    client = getattr(article_service, "_redis_client", None)
+    if client is not None:
+        try:
+            await client.close()
+        except Exception:
+            pass
+        article_service._redis_client = None
+
+
 @pytest.fixture(scope="function")
 async def mongo_client(test_settings):
     """Create MongoDB client for testing."""

@@ -39,13 +39,13 @@ registerRoute(
 
 registerRoute(
   ({ url }) => /^https:\/\/fonts\.googleapis\.com\//i.test(url.href),
-  async ({ request }) => {
+  async ({ request, event }) => {
     try {
       const strategy = new CacheFirst({
         cacheName: "google-fonts",
         plugins: [new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 })],
       });
-      return await strategy.handle({ request });
+      return await strategy.handle({ request, event });
     } catch {
       // Rejecting the cached/fetched promise would surface as a
       // "FetchEvent.respondWith() rejected" error in the console and break
