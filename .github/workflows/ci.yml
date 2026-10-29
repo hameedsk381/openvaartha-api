@@ -82,6 +82,26 @@ jobs:
       - run: npm run lint
         continue-on-error: true
 
+  # Astro isn't serving traffic yet (staged migration), but it is built and
+  # deployed with every release. Building it here keeps it from silently
+  # rotting until cutover. It has no test suite or typecheck script yet, so the
+  # build is the only gate; add `astro check` (needs @astrojs/check) later.
+  astro:
+    name: Astro (build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: openvaartha-astro
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: openvaartha-astro/package-lock.json
+      - run: npm ci
+      - run: npm run build
+
   compose:
     name: Compose config validates
     runs-on: ubuntu-latest
