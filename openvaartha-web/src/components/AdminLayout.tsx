@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, FileText, FolderTree, Users, MessageSquare, Mail, Rss, Inbox, BarChart, User as UserIcon, Radio } from "lucide-react";
+import { LayoutDashboard, FileText, FolderTree, Users, MessageSquare, Mail, Rss, Inbox, BarChart, BarChart3, User as UserIcon, Radio } from "lucide-react";
 import { ArrowLeft } from "@/components/animate-ui/icons/arrow-left";
 import { LogOut } from "@/components/animate-ui/icons/log-out";
 import { apiFetch } from "@/lib/api";
@@ -21,6 +21,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Articles", icon: FileText, path: "/admin/articles", roles: ["admin", "editor"] },
   { label: "Review Queue", icon: Inbox, path: "/admin/contributions", roles: ["admin", "editor"] },
   { label: "Dispatches", icon: Radio, path: "/admin/dispatches", roles: ["admin", "editor"] },
+  { label: "Polls", icon: BarChart3, path: "/admin/polls", roles: ["admin", "editor"] },
   { label: "Categories", icon: FolderTree, path: "/admin/categories", roles: ["admin", "editor"] },
   { label: "Authors", icon: UserIcon, path: "/admin/authors", roles: ["admin", "editor"] },
   { label: "Users", icon: Users, path: "/admin/users", roles: ["admin"] },

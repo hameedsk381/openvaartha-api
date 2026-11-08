@@ -43,6 +43,7 @@ const TrendingPage = lazy(() => import("./pages/TrendingPage.tsx"));
 const TopicPage = lazy(() => import("./pages/TopicPage.tsx"));
 const SeriesPage = lazy(() => import("./pages/SeriesPage.tsx"));
 const ExplainersPage = lazy(() => import("./pages/ExplainersPage.tsx"));
+const PollsPage = lazy(() => import("./pages/PollsPage.tsx"));
 const FeedPage = lazy(() => import("./pages/FeedPage.tsx"));
 const FeedPostPage = lazy(() => import("./pages/FeedPostPage.tsx"));
 const DigestPage = lazy(() => import("./pages/DigestPage.tsx"));
@@ -77,6 +78,7 @@ const AdminNewsletter = lazy(() => import("./pages/admin/AdminNewsletter.tsx"));
 const AdminSources = lazy(() => import("./pages/admin/AdminSources.tsx"));
 const AdminContributions = lazy(() => import("./pages/admin/AdminContributions.tsx"));
 const AdminDispatches = lazy(() => import("./pages/admin/AdminDispatches.tsx"));
+const AdminPolls = lazy(() => import("./pages/admin/AdminPolls.tsx"));
 
 /* ─── Premium Loading Screen ─────────────────────────── */
 
@@ -218,6 +220,7 @@ const AuthListener = () => {
                 <Route path="/digest/:date" element={<DigestPage />} />
                 <Route path="/digest" element={<DigestPage />} />
                 <Route path="/explainers" element={<ExplainersPage />} />
+                <Route path="/polls" element={<PollsPage />} />
                 <Route path="/feed" element={<FeedPage />} />
                 <Route path="/feed/:postId" element={<FeedPostPage />} />
                 <Route path="/bytes" element={<Navigate to="/feed" replace />} />
@@ -254,6 +257,7 @@ const AuthListener = () => {
                 <Route path="/admin/sources" element={<AdminRoute roles={["admin"]}><AdminLayout><AdminSources /></AdminLayout></AdminRoute>} />
                 <Route path="/admin/contributions" element={<AdminRoute roles={["admin", "editor"]}><AdminLayout><AdminContributions /></AdminLayout></AdminRoute>} />
                 <Route path="/admin/dispatches" element={<AdminRoute roles={["admin", "editor"]}><AdminLayout><AdminDispatches /></AdminLayout></AdminRoute>} />
+                <Route path="/admin/polls" element={<AdminRoute roles={["admin", "editor"]}><AdminLayout><AdminPolls /></AdminLayout></AdminRoute>} />
 
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -4,21 +4,7 @@ import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { BarChart3, CheckCircle2 } from "lucide-react";
-
-interface PollOption {
-  id: string;
-  text: string;
-  votes: number;
-  percentage: number;
-}
-
-interface Poll {
-  id: string;
-  question: string;
-  options: PollOption[];
-  totalVotes: number;
-  userVotedOptionId: string | null;
-}
+import type { Poll } from "@/lib/types";
 
 export function InteractivePoll({ pollId }: { pollId: string }) {
   const queryClient = useQueryClient();

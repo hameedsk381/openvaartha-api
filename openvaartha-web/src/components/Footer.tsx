@@ -91,6 +91,7 @@ const Footer = () => {
               <li><Link to="/trending" className="text-muted-foreground hover:text-primary transition-colors">Trending</Link></li>
               <li><Link to="/feed" className="text-muted-foreground hover:text-primary transition-colors">Feed</Link></li>
               <li><Link to="/explainers" className="text-muted-foreground hover:text-primary transition-colors">Explainers</Link></li>
+              <li><Link to="/polls" className="text-muted-foreground hover:text-primary transition-colors">Polls</Link></li>
             </ul>
           </div>
 

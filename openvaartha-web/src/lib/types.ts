@@ -167,4 +167,21 @@ export interface DigestWithArticles extends Digest {
   articles: Article[];
 }
 
+export interface PollOption {
+  id: string;
+  text: string;
+  votes: number;
+  percentage: number;
+}
+
+export interface Poll {
+  id: string;
+  question: string;
+  options: PollOption[];
+  totalVotes: number;
+  userVotedOptionId: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
 

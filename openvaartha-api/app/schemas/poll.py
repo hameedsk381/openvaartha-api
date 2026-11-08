@@ -27,6 +27,7 @@ class PollResponse(BaseModel):
     options: List[PollOptionResponse]
     totalVotes: int
     userVotedOptionId: Optional[str] = None
+    isActive: bool = True
     createdAt: datetime
 
     class Config:
@@ -35,6 +36,13 @@ class PollResponse(BaseModel):
 
 class PollVoteCreate(BaseModel):
     optionId: str
+
+    class Config:
+        alias_generator = to_camel
+        populate_by_name = True
+
+class PollActiveUpdate(BaseModel):
+    isActive: bool
 
     class Config:
         alias_generator = to_camel

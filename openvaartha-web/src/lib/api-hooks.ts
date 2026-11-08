@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
-import type { Article, Category, Comment, CorrectionIndexItem, Dispatch } from "./types";
+import type { Article, Category, Comment, CorrectionIndexItem, Dispatch, Poll } from "./types";
 import { apiFetch } from "./api";
 
 export function useCorrectionsIndex(params?: { skip?: number; limit?: number }) {
@@ -315,6 +315,16 @@ export function useCreateDispatchComment() {
       qc.invalidateQueries({ queryKey: ["dispatch-comments", variables.dispatchId] });
       qc.invalidateQueries({ queryKey: ["feed"] });
     },
+  });
+}
+
+// Polls Hub feed — see InteractivePoll for the per-poll fetch/vote hooks
+// used both here and embedded in articles.
+export function usePolls(activeOnly = true) {
+  return useQuery<Poll[]>({
+    queryKey: ["polls", activeOnly],
+    queryFn: () => apiFetch<Poll[]>(`/polls/?active_only=${activeOnly}`),
+    placeholderData: [],
   });
 }
 

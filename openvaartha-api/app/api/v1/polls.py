@@ -1,15 +1,27 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from datetime import datetime, timezone
-from typing import Optional
+from typing import List, Optional
 from app.database import get_db
 from app.core.dependencies import get_current_user, get_current_user_optional
-from app.schemas.poll import PollCreate, PollResponse, PollVoteCreate
+from app.schemas.poll import PollActiveUpdate, PollCreate, PollResponse, PollVoteCreate
 from app.models.user import User as UserModel
-from app.core.rate_limit import limiter
+from app.core.rate_limit import limiter, MUTATION_LIMIT
 from app.services import poll_service
 
 router = APIRouter()
+
+
+@router.get("/", response_model=List[PollResponse])
+async def list_polls(
+    active_only: bool = Query(True, description="Hide closed polls (Polls Hub default)"),
+    limit: int = Query(50, ge=1, le=100),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Optional[UserModel] = Depends(get_current_user_optional),
+):
+    """Public: the Polls Hub feed — newest first."""
+    user_id = current_user.id if current_user else None
+    return await poll_service.list_polls(db, active_only=active_only, current_user_id=user_id, limit=limit)
 
 @router.post("/", response_model=str, status_code=status.HTTP_201_CREATED)
 @limiter.limit("10/minute")
@@ -84,7 +96,25 @@ async def vote_poll(
         await poll_service.vote_poll(db, poll_id, user_id, vote.optionId)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
+
     # Return updated results
     poll = await poll_service.get_poll_with_results(db, poll_id, user_id)
+    return poll
+
+@router.put("/{poll_id}/active", response_model=PollResponse)
+@limiter.limit(MUTATION_LIMIT)
+async def set_poll_active(
+    request: Request,
+    poll_id: str,
+    payload: PollActiveUpdate,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """Open/close a poll (admin/editor only). A closed poll drops out of the
+    public Polls Hub but stays votable-read via direct link/admin."""
+    if current_user.role not in ("admin", "editor"):
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    poll = await poll_service.set_poll_active(db, poll_id, payload.isActive)
+    if not poll:
+        raise HTTPException(status_code=404, detail="Poll not found")
     return poll
