@@ -37,7 +37,8 @@ export function FlipCard({ frontContent, backContent, className, onClick }: Flip
 
   return (
     <div
-      className={cn("relative perspective-1000 cursor-pointer", className)}
+      className={cn("relative cursor-pointer", className)}
+      style={{ perspective: 1000 }}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -47,7 +48,7 @@ export function FlipCard({ frontContent, backContent, className, onClick }: Flip
         className="absolute inset-0 backface-hidden"
         animate={isFlipped ? 'back' : 'front'}
         variants={cardVariants}
-        style={{ transformStyle: 'preserve-3d' }}
+        style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
       >
         {frontContent}
       </motion.div>
@@ -58,7 +59,7 @@ export function FlipCard({ frontContent, backContent, className, onClick }: Flip
         initial={{ rotateY: 180 }}
         animate={isFlipped ? 'front' : 'back'}
         variants={cardVariants}
-        style={{ transformStyle: 'preserve-3d', rotateY: 180 }}
+        style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden', rotateY: 180 }}
       >
         {backContent}
       </motion.div>
