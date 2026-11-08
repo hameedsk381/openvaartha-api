@@ -20,9 +20,10 @@ type DraftCategory = {
   name: string;
   emoji: string;
   colorCode: string;
+  priority: number;
 };
 
-const emptyDraft: DraftCategory = { name: "", emoji: "", colorCode: "#641313" };
+const emptyDraft: DraftCategory = { name: "", emoji: "", colorCode: "#641313", priority: 50 };
 
 export default function AdminCategories() {
   const queryClient = useQueryClient();
@@ -40,7 +41,7 @@ export default function AdminCategories() {
     mutationFn: () =>
       apiFetch<Category>("/categories/", {
         method: "POST",
-        body: JSON.stringify({ name: draft.name, emoji: draft.emoji, color_code: draft.colorCode }),
+        body: JSON.stringify({ name: draft.name, emoji: draft.emoji, color_code: draft.colorCode, priority: draft.priority }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
@@ -54,7 +55,7 @@ export default function AdminCategories() {
     mutationFn: (id: string) =>
       apiFetch<Category>(`/categories/${id}`, {
         method: "PUT",
-        body: JSON.stringify({ name: edit.name, emoji: edit.emoji, color_code: edit.colorCode }),
+        body: JSON.stringify({ name: edit.name, emoji: edit.emoji, color_code: edit.colorCode, priority: edit.priority }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
@@ -82,7 +83,7 @@ export default function AdminCategories() {
 
   const startEdit = (category: Category) => {
     setEditingId(category.id);
-    setEdit({ name: category.name, emoji: category.emoji, colorCode: category.colorCode });
+    setEdit({ name: category.name, emoji: category.emoji, colorCode: category.colorCode, priority: category.priority });
   };
 
   const cancelEdit = () => {
@@ -112,7 +113,7 @@ export default function AdminCategories() {
         </div>
       )}
 
-      <form onSubmit={onSubmit} className="border border-border rounded-xl p-5 grid md:grid-cols-[1fr_120px_140px_auto] gap-4 items-end">
+      <form onSubmit={onSubmit} className="border border-border rounded-xl p-5 grid md:grid-cols-[1fr_100px_90px_140px_auto] gap-4 items-end">
         <div className="space-y-2">
           <Label>Name</Label>
           <Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} required placeholder="e.g. Politics" />
@@ -120,6 +121,15 @@ export default function AdminCategories() {
         <div className="space-y-2">
           <Label>Emoji</Label>
           <Input value={draft.emoji} onChange={(e) => setDraft({ ...draft, emoji: e.target.value })} required placeholder="e.g. 🏛️" />
+        </div>
+        <div className="space-y-2">
+          <Label title="Lower shows first in nav and the homepage">Priority</Label>
+          <Input
+            type="number"
+            value={draft.priority}
+            onChange={(e) => setDraft({ ...draft, priority: Number(e.target.value) })}
+            required
+          />
         </div>
         <div className="space-y-2">
           <Label>Color</Label>
@@ -137,9 +147,10 @@ export default function AdminCategories() {
       </form>
 
       <div className="border border-border rounded-xl overflow-hidden">
-        <div className="hidden md:grid grid-cols-[80px_1fr_180px_160px] gap-4 h-11 px-5 items-center border-b border-border bg-muted/50 text-xs font-semibold text-muted-foreground">
+        <div className="hidden md:grid grid-cols-[80px_1fr_90px_180px_160px] gap-4 h-11 px-5 items-center border-b border-border bg-muted/50 text-xs font-semibold text-muted-foreground">
           <span>Icon</span>
           <span>Name</span>
+          <span>Priority</span>
           <span>Color</span>
           <span className="text-right">Actions</span>
         </div>
@@ -155,7 +166,7 @@ export default function AdminCategories() {
               (updateMutation.isPending && updateMutation.variables === category.id) ||
               (deleteMutation.isPending && deleteMutation.variables === category.id);
             return (
-              <div key={category.id} className="block md:grid md:grid-cols-[80px_1fr_180px_160px] md:gap-4 md:items-center p-4 md:px-5">
+              <div key={category.id} className="block md:grid md:grid-cols-[80px_1fr_90px_180px_160px] md:gap-4 md:items-center p-4 md:px-5">
                 <div className="mb-1 md:mb-0 flex md:block items-center gap-2">
                   <span className="text-xs text-muted-foreground md:hidden">Icon: </span>
                   {isEditing ? (
@@ -170,6 +181,19 @@ export default function AdminCategories() {
                     <Input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} className="h-9 text-sm" />
                   ) : (
                     <span className="text-sm font-semibold">{category.name}</span>
+                  )}
+                </div>
+                <div className="mb-1 md:mb-0 flex md:block items-center gap-2">
+                  <span className="text-xs text-muted-foreground md:hidden">Priority: </span>
+                  {isEditing ? (
+                    <Input
+                      type="number"
+                      value={edit.priority}
+                      onChange={(e) => setEdit({ ...edit, priority: Number(e.target.value) })}
+                      className="h-9 text-sm"
+                    />
+                  ) : (
+                    <span className="text-sm text-muted-foreground tabular-nums">{category.priority}</span>
                   )}
                 </div>
                 <div className="mb-2 md:mb-0 flex md:block items-center gap-2">

@@ -15,6 +15,10 @@ from uuid import uuid4
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
+# Display order (which category shows first in nav/homepage) is governed
+# centrally by category_service.CATEGORY_PRIORITY_DEFAULTS, applied via the
+# migration job — not by this list's order, which only matters for a
+# never-before-seeded (brand-new) deployment before that step runs.
 CATEGORIES = [
     ("politics", "#641313", "🏛️"),
     ("technology", "#1e3a8a", "💻"),

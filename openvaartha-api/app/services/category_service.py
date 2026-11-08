@@ -23,8 +23,12 @@ async def ensure_category_indexes(db: AsyncIOMotorDatabase) -> None:
 
 
 async def get_categories(db: AsyncIOMotorDatabase) -> List[dict]:
-    """Get all categories."""
-    return await Category.get_motor_collection().find({}).to_list(length=None)
+    """Get all categories, ordered by editorial priority (lower first, see
+    Category.priority) then name — this single ordering drives Navbar,
+    homepage category strips, and every other category list in the app."""
+    return await Category.get_motor_collection().find({}).sort(
+        [("priority", 1), ("name", 1)]
+    ).to_list(length=None)
 
 
 async def get_category_by_id(db: AsyncIOMotorDatabase, category_id: str) -> Optional[dict]:
@@ -55,6 +59,7 @@ async def create_category(db: AsyncIOMotorDatabase, category_data: CategoryCreat
         "name": category_data.name.strip(),
         "color_code": category_data.color_code,
         "emoji": category_data.emoji,
+        "priority": category_data.priority,
         "created_at": datetime.now(timezone.utc),
     }
     try:
@@ -108,6 +113,48 @@ async def delete_category(db: AsyncIOMotorDatabase, category_id: str) -> bool:
         )
     result = await Category.get_motor_collection().delete_one({"_id": category_id})
     return result.deleted_count > 0
+
+
+# Lower = shown first across nav, homepage category strips, and filters.
+# Tier 0-9: national/state politics and geo-civic coverage — the sociopolitical
+# core. Tier 10-19: economy/tech/science, civic-adjacent but not the center.
+# Tier 20-29: entertainment/lifestyle, kept but pushed last. Anything not
+# listed here keeps the neutral default (50) rather than being guessed at.
+CATEGORY_PRIORITY_DEFAULTS: dict[str, int] = {
+    "politics": 0,
+    "india": 1,
+    "world": 2,
+    "andhra": 3,
+    "telangana": 4,
+    "hyderabad": 5,
+    "business": 10,
+    "technology": 11,
+    "science": 12,
+    "entertainment": 20,
+    "cinema": 21,
+    "sports": 22,
+}
+
+
+async def apply_category_priority_defaults(db: AsyncIOMotorDatabase) -> int:
+    """One-time-per-name, idempotent: assign the sociopolitical-first priority
+    ranking to recognized category names, and backfill the neutral default
+    (50) onto any category that predates the `priority` field entirely (a
+    missing field would otherwise sort ahead of everything in get_categories'
+    ascending sort). Safe to re-run — every category ends up with an explicit
+    priority either way."""
+    updated = 0
+    cursor = Category.get_motor_collection().find({}, {"name": 1, "priority": 1})
+    async for doc in cursor:
+        name_key = doc["name"].strip().lower()
+        target = CATEGORY_PRIORITY_DEFAULTS.get(name_key, doc.get("priority", 50))
+        if doc.get("priority") == target:
+            continue
+        await Category.get_motor_collection().update_one(
+            {"_id": doc["_id"]}, {"$set": {"priority": target}}
+        )
+        updated += 1
+    return updated
 
 
 async def get_category_stats(db: AsyncIOMotorDatabase) -> List[dict]:

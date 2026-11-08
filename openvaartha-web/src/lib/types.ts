@@ -90,6 +90,9 @@ export interface Category {
   name: string;
   colorCode: string;
   emoji: string;
+  // Display order across nav, homepage category strips, and filters — lower
+  // shows first.
+  priority: number;
   createdAt: string;
 }
 

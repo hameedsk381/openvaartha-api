@@ -8,6 +8,9 @@ class CategoryBase(BaseModel):
     name: str
     color_code: str
     emoji: str
+    # Display order across nav, homepage category strips, and filters — lower
+    # shows first.
+    priority: int = 50
 
     class Config:
         alias_generator = to_camel
@@ -22,6 +25,7 @@ class CategoryUpdate(BaseModel):
     name: Optional[str] = None
     color_code: Optional[str] = None
     emoji: Optional[str] = None
+    priority: Optional[int] = None
 
     class Config:
         alias_generator = to_camel

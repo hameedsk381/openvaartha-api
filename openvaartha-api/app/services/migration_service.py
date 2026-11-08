@@ -100,15 +100,18 @@ async def migrate(db: AsyncIOMotorDatabase) -> dict:
     """Run the full, ordered bootstrap. Idempotent — safe to run repeatedly."""
     from app.services.seed_service import ensure_admin_user
     from app.services.source_seed import seed_categories_and_sources
+    from app.services.category_service import apply_category_priority_defaults
 
     indexed = await ensure_all_indexes(db)
     await ensure_admin_user(db)
     seed_result = await seed_categories_and_sources(db)
+    categories_reprioritized = await apply_category_priority_defaults(db)
     duplicates = await cleanup_near_duplicate_articles(db)
 
     return {
         "indexed": indexed,
         "admin_user": "ensured",
         "seed_result": seed_result,
+        "categories_reprioritized": categories_reprioritized,
         "duplicates": duplicates,
     }
