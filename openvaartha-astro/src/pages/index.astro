@@ -1,54 +1,212 @@
 ---
 import Base from '../layouts/Base.astro';
 import { BRAND, SITE_TITLE, SITE_DESCRIPTION } from '../lib/brand';
-import { getArticles, getCategories } from '../lib/api';
+import { getArticles, getTrendingArticles, getCategories, type Article, type Category } from '../lib/api';
 import NewsletterCapture from '../components/NewsletterCapture';
 
-let articles = [];
-let categories = [];
+let articles: Article[] = [];
+let trending: Article[] = [];
+let categories: Category[] = [];
+
 try {
-  [articles, categories] = await Promise.all([
+  [articles, trending, categories] = await Promise.all([
     getArticles({ limit: 20 }),
+    getTrendingArticles(5),
     getCategories(),
   ]);
-} catch (e) {
-  // API not available at build time — render static shell
+} catch {
+  // API unreachable. The page renders its empty states.
 }
+
+const lead = articles[0];
+const secondary = articles.slice(1, 3);
+const latest = articles.slice(3, 9);
+
+const rails: { category: Category; items: Article[] }[] = [];
+for (const category of categories) {
+  if (rails.length === 2) break;
+  try {
+    const items = await getArticles({ category: category.id, limit: 3 });
+    if (items.length > 0) rails.push({ category, items });
+  } catch {
+    // Skip a category whose request fails.
+  }
+}
+
+const today = new Intl.DateTimeFormat('en-IN', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+}).format(new Date());
+
+const shortDate = (iso?: string) => {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(date);
+};
+
+const timeAgo = (iso?: string) => {
+  if (!iso) return '';
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return '';
+  const minutes = Math.round((Date.now() - then) / 60000);
+  if (minutes < 60) return `${Math.max(minutes, 1)} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const days = Math.round(hours / 24);
+  return `${days} d ago`;
+};
 ---
 
 <Base title={SITE_TITLE} description={SITE_DESCRIPTION}>
-  {/* Hero section */}
-  <section class="px-4 sm:px-6 lg:px-10 py-12 sm:py-20 border-b border-border">
-    <div class="max-w-screen-xl mx-auto">
-      <h1 class="poster text-5xl sm:text-7xl lg:text-8xl text-foreground">
-        News that<br />
-        <span class="text-primary">matters.</span>
-      </h1>
-      <p class="font-serif text-lg sm:text-xl text-muted-foreground mt-6 max-w-2xl leading-relaxed">
-        {BRAND.tagline}
-      </p>
-      <div class="flex items-center gap-3 mt-6">
-        <a href="/trending" class="inline-flex items-center h-11 px-6 rounded-full bg-primary text-primary-foreground text-sm font-bold uppercase tracking-wider hover:bg-primary-hover transition-colors">
-          Read trending
-        </a>
-        <a href="/about" class="inline-flex items-center h-11 px-6 rounded-full border-2 border-border text-sm font-bold uppercase tracking-wider hover:bg-muted transition-colors">
-          About us
-        </a>
+  <!-- Masthead -->
+  <section class="border-b border-border">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="overline text-muted-foreground">{today}</p>
+          <h1 class="poster text-4xl sm:text-5xl lg:text-6xl leading-none">
+            News that <span class="text-primary">matters.</span>
+          </h1>
+        </div>
+        <p class="font-serif text-base sm:text-lg text-muted-foreground max-w-md">
+          {BRAND.tagline}
+        </p>
       </div>
     </div>
   </section>
 
-  {/* Latest articles */}
-  <section class="px-4 sm:px-6 lg:px-10 py-12 sm:py-16">
-    <div class="max-w-screen-xl mx-auto">
-      <div class="section-header mb-8">
-        <h2 class="font-display text-2xl font-bold">Latest</h2>
-        <span class="text-xs text-muted-foreground font-medium">{articles.length} stories</span>
-      </div>
+  {lead ? (
+    <!-- Front page: lead story and the second read -->
+    <section class="px-4 sm:px-6 lg:px-10 pt-8 sm:pt-10 pb-8">
+      <div class="max-w-screen-2xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+        <article class="lg:col-span-7 xl:col-span-8">
+          <a href={`/article/${lead.slug}`} class="group block">
+            {lead.thumbnail_url && (
+              <div class="aspect-[16/9] overflow-hidden rounded-xl bg-muted">
+                <img
+                  src={lead.thumbnail_url}
+                  alt={lead.title}
+                  class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                  loading="eager"
+                />
+              </div>
+            )}
+            <div class="mt-4 flex items-center gap-2">
+              <span class="tag">{lead.category}</span>
+              {lead.published_at && (
+                <span class="text-xs text-muted-foreground font-medium">{timeAgo(lead.published_at)}</span>
+              )}
+            </div>
+            <h2 class="poster text-3xl sm:text-4xl lg:text-5xl mt-3 group-hover:text-primary transition-colors">
+              {lead.title}
+            </h2>
+            <p class="font-serif text-lg text-muted-foreground mt-3 max-w-3xl leading-relaxed">
+              {lead.summary}
+            </p>
+            <p class="text-xs text-muted-foreground mt-4 font-medium">
+              {lead.author}
+              {lead.read_time ? ` \u00b7 ${lead.read_time}` : ''}
+            </p>
+          </a>
+        </article>
 
-      {articles.length > 0 ? (
+        <aside class="lg:col-span-5 xl:col-span-4 flex flex-col gap-6">
+          {secondary.length > 0 && (
+            <div class="flex flex-col gap-5">
+              <div class="section-header">
+                <h2 class="font-display text-lg font-bold">Also today</h2>
+              </div>
+              {secondary.map((article) => (
+                <a href={`/article/${article.slug}`} class="group flex gap-4">
+                  {article.thumbnail_url && (
+                    <div class="w-24 h-20 shrink-0 overflow-hidden rounded-lg bg-muted">
+                      <img
+                        src={article.thumbnail_url}
+                        alt={article.title}
+                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  <div class="min-w-0">
+                    <span class="text-xs text-primary font-bold uppercase tracking-wider">{article.category}</span>
+                    <h3 class="font-serif text-base font-bold leading-snug mt-1 group-hover:text-primary transition-colors line-clamp-3">
+                      {article.title}
+                    </h3>
+                    <p class="text-xs text-muted-foreground mt-1">{timeAgo(article.published_at)}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+
+          {trending.length > 0 && (
+            <div class="flex flex-col gap-3">
+              <div class="section-header">
+                <h2 class="font-display text-lg font-bold">Trending</h2>
+                <a href="/trending" class="text-xs font-bold uppercase tracking-wider text-primary hover:underline">See all</a>
+              </div>
+              <ol class="flex flex-col divide-y divide-border">
+                {trending.map((article, index) => (
+                  <li>
+                    <a href={`/article/${article.slug}`} class="group flex items-start gap-3 py-3">
+                      <span class="font-display text-xl font-extrabold text-primary/40 w-6 shrink-0">{index + 1}</span>
+                      <span class="font-serif text-sm font-bold leading-snug group-hover:text-primary transition-colors">
+                        {article.title}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          {secondary.length === 0 && trending.length === 0 && (
+            <p class="text-sm text-muted-foreground">
+              More stories are on the way from the newsroom.
+            </p>
+          )}
+        </aside>
+      </div>
+    </section>
+  ) : (
+    <!-- Composed empty state while the wire is quiet -->
+    <section class="px-4 sm:px-6 lg:px-10 py-16 sm:py-24 border-b border-border">
+      <div class="max-w-screen-xl mx-auto text-center">
+        <p class="overline text-primary">The wire is quiet</p>
+        <p class="poster text-3xl sm:text-4xl mt-3">Stories appear here as the newsroom publishes.</p>
+        <p class="font-serif text-lg text-muted-foreground mt-3 max-w-xl mx-auto">
+          Reading, saving and the morning digest all work. The front page fills in the moment the
+          newsroom files.
+        </p>
+        <div class="mt-6 flex items-center justify-center gap-3">
+          <a href="/about" class="inline-flex items-center h-11 px-6 rounded-full bg-primary text-primary-foreground text-sm font-bold uppercase tracking-wider hover:bg-primary-hover transition-colors">
+            About the newsroom
+          </a>
+          <a href="/join" class="inline-flex items-center h-11 px-6 rounded-full border-2 border-border text-sm font-bold uppercase tracking-wider hover:bg-muted transition-colors">
+            Create an account
+          </a>
+        </div>
+      </div>
+    </section>
+  )}
+
+  {latest.length > 0 && (
+    <!-- Latest -->
+    <section class="px-4 sm:px-6 lg:px-10 py-8 sm:py-12 border-t border-border">
+      <div class="max-w-screen-2xl mx-auto">
+        <div class="section-header mb-6">
+          <h2 class="font-display text-2xl font-bold">Latest</h2>
+          <a href="/feed" class="text-xs font-bold uppercase tracking-wider text-primary hover:underline">
+            All stories
+          </a>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {articles.slice(0, 9).map((article) => (
+          {latest.map((article) => (
             <a href={`/article/${article.slug}`} class="group block">
               {article.thumbnail_url && (
                 <div class="aspect-[16/9] overflow-hidden rounded-xl bg-muted mb-4">
@@ -62,9 +220,7 @@ try {
               )}
               <div class="flex items-center gap-2 mb-2">
                 <span class="tag">{article.category}</span>
-                {article.read_time && (
-                  <span class="text-[11px] text-muted-foreground font-medium">{article.read_time}</span>
-                )}
+                <span class="text-xs text-muted-foreground font-medium">{timeAgo(article.published_at)}</span>
               </div>
               <h3 class="font-serif text-lg font-bold leading-snug group-hover:text-primary transition-colors line-clamp-3">
                 {article.title}
@@ -75,14 +231,64 @@ try {
             </a>
           ))}
         </div>
-      ) : (
-        <p class="text-muted-foreground text-center py-16">Articles will appear here once the API is connected.</p>
-      )}
+      </div>
+    </section>
+  )}
+
+  {rails.map((rail) => (
+    <section class="px-4 sm:px-6 lg:px-10 py-8 sm:py-12 border-t border-border">
+      <div class="max-w-screen-2xl mx-auto">
+        <div class="section-header mb-6">
+          <h2 class="font-display text-2xl font-bold">{rail.category.name}</h2>
+          <a
+            href={`/category/${rail.category.id}`}
+            class="text-xs font-bold uppercase tracking-wider text-primary hover:underline"
+          >
+            More in {rail.category.name}
+          </a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
+          {rail.items.map((article) => (
+            <a href={`/article/${article.slug}`} class="group block">
+              {article.thumbnail_url && (
+                <div class="aspect-[16/9] overflow-hidden rounded-xl bg-muted mb-3">
+                  <img
+                    src={article.thumbnail_url}
+                    alt={article.title}
+                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                </div>
+              )}
+              <h3 class="font-serif text-lg font-bold leading-snug group-hover:text-primary transition-colors line-clamp-3">
+                {article.title}
+              </h3>
+              <p class="text-xs text-muted-foreground mt-2 font-medium">
+                {shortDate(article.published_at)}
+                {article.read_time ? ` \u00b7 ${article.read_time}` : ''}
+              </p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  ))}
+
+  <!-- Account strip -->
+  <section class="border-y border-border bg-[hsl(var(--surface))]">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-6 flex flex-wrap items-center justify-between gap-4">
+      <p class="font-serif text-lg">
+        Save what you read. It waits for you on any device.
+      </p>
+      <a href="/join" class="text-sm font-bold uppercase tracking-wider text-primary hover:underline">
+        Create free account &rarr;
+      </a>
     </div>
   </section>
 
-  {/* Newsletter */}
-  <section class="px-4 sm:px-6 lg:px-10 py-12 sm:py-16 border-t border-border">
+  <!-- Newsletter -->
+  <section class="px-4 sm:px-6 lg:px-10 py-10 sm:py-14">
     <div class="max-w-screen-xl mx-auto">
       <NewsletterCapture client:visible />
     </div>

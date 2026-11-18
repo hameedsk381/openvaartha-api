@@ -1,0 +1,491 @@
+/* Landing page system for the Open Vaartha homepage.
+   Every value follows the landing-page-design skill.
+   Scoped under .lp so the rest of the site keeps its own tokens. */
+
+.lp {
+  --lp-ink: hsl(var(--foreground));
+  --lp-ink-soft: hsl(var(--muted-foreground));
+  --lp-paper: hsl(var(--background));
+  --lp-surface: hsl(var(--card));
+  --lp-tint: hsl(var(--surface-2));
+  --lp-line: hsl(var(--border));
+  --lp-accent: hsl(var(--primary));
+  --lp-accent-strong: hsl(var(--primary-hover));
+  --lp-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  font-family: "Manrope", system-ui, sans-serif;
+  color: var(--lp-ink);
+  background-color: var(--lp-paper);
+  text-wrap: pretty;
+}
+
+.lp h1,
+.lp h2,
+.lp h3,
+.lp h4,
+.lp h5,
+.lp h6 {
+  font-family: "Manrope", system-ui, sans-serif;
+}
+
+/* ---------- Text styles (skill B1), one definition each ---------- */
+
+.lp .heading-1 {
+  font-size: 3.75rem;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.lp .heading-2 {
+  font-size: 3rem;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.lp .heading-3 {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.lp .heading-4 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.lp .heading-5 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.lp .title-2 {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 500;
+}
+
+.lp .title-3 {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 500;
+}
+
+.lp .title-4 {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+}
+
+.lp .body-2 {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 500;
+}
+
+.lp .body-3 {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 400;
+}
+
+.lp .body-6 {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 400;
+}
+
+.lp .button-md {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+}
+
+.lp .button-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+}
+
+.lp .caption-2 {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 400;
+}
+
+.lp .caption-3 {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+}
+
+.lp .caption-5 {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 400;
+}
+
+.lp p,
+.lp li,
+.lp dd,
+.lp dt {
+  text-wrap: pretty;
+}
+
+/* Mobile snaps to the closest step below, never an invented size. */
+
+@media (max-width: 767px) {
+  .lp .heading-1 {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+
+  .lp .heading-2 {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+
+  .lp .heading-3 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+}
+
+/* ---------- Hero heading gradient (skill B5, light theme) ---------- */
+
+.lp .hero-heading {
+  background-image: linear-gradient(90deg, #000000, #666666);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .lp .hero-heading {
+    background-image: none;
+    color: var(--lp-ink);
+  }
+}
+
+/* ---------- Buttons (skill B2, B3, B7, B9) ---------- */
+
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 300ms var(--lp-ease),
+    color 300ms var(--lp-ease),
+    transform 300ms var(--lp-ease),
+    border-color 300ms var(--lp-ease);
+}
+
+.lp-btn--primary {
+  background-color: var(--lp-accent);
+  color: var(--lp-surface);
+}
+
+.lp-btn--primary:hover {
+  background-color: var(--lp-accent-strong);
+  transform: translateY(-1px);
+}
+
+.lp-btn--ghost {
+  background-color: transparent;
+  color: var(--lp-ink);
+  border: 1px solid var(--lp-line);
+}
+
+.lp-btn--ghost:hover {
+  background-color: var(--lp-tint);
+}
+
+.lp-btn:active {
+  transform: scale(0.98);
+}
+
+.lp-btn:focus-visible {
+  outline: 2px solid var(--lp-accent);
+  outline-offset: 2px;
+}
+
+.lp-btn[disabled] {
+  opacity: 0.6;
+  cursor: progress;
+  transform: none;
+}
+
+/* Text link, used inline and in the standards strip */
+
+.lp-link {
+  color: var(--lp-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  transition: color 300ms var(--lp-ease), text-decoration-color 300ms var(--lp-ease);
+}
+
+.lp-link:hover {
+  color: var(--lp-accent-strong);
+}
+
+.lp-link:focus-visible {
+  outline: 2px solid var(--lp-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.lp-soft {
+  color: var(--lp-ink-soft);
+}
+
+.lp-img {
+  border-radius: 8px;
+}
+
+.lp-accent {
+  color: var(--lp-accent);
+}
+
+.lp-story:hover .lp-story-title {
+  color: var(--lp-accent);
+}
+
+.lp-story:hover .lp-accent {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* ---------- Surfaces (skill B3, B4) ---------- */
+
+.lp-card {
+  background-color: var(--lp-surface);
+  border: 1px solid var(--lp-line);
+  border-radius: 16px;
+  padding: 8px;
+}
+
+.lp-tile {
+  border-radius: 8px;
+  padding: 16px;
+  background-color: var(--lp-surface);
+}
+
+.lp-tile--tint {
+  background-color: var(--lp-tint);
+}
+
+.lp-rule {
+  border: 0;
+  border-top: 1px solid var(--lp-line);
+}
+
+/* ---------- Reading list mock (hero visual) ---------- */
+
+.lp-mock-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 16px 16px;
+}
+
+.lp-mock-row {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 8px;
+  align-items: start;
+  border-top: 1px solid var(--lp-line);
+  padding: 16px;
+}
+
+.lp-mock-mark {
+  font-variant-numeric: tabular-nums;
+  color: var(--lp-ink-soft);
+}
+
+.lp-mock-title {
+  color: var(--lp-ink);
+}
+
+.lp-mock-meta {
+  color: var(--lp-ink-soft);
+  margin-top: 4px;
+}
+
+.lp-mock-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid var(--lp-line);
+  padding: 16px;
+}
+
+.lp-mock-empty {
+  border-top: 1px solid var(--lp-line);
+  padding: 24px 16px;
+  color: var(--lp-ink-soft);
+}
+
+/* ---------- Tagline reveal (skill B11) ---------- */
+
+.lp-tagline {
+  max-width: 900px;
+}
+
+.lp-word {
+  display: inline-block;
+  opacity: 0.3;
+  transition: opacity 500ms var(--lp-ease);
+}
+
+.lp-word.is-on {
+  opacity: 1;
+}
+
+/* ---------- Scroll reveals (skill B7) ---------- */
+
+.lp [data-reveal] {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity 700ms var(--lp-ease),
+    transform 700ms var(--lp-ease);
+}
+
+.lp [data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- FAQ (skill B9) ---------- */
+
+.lp-faq-item {
+  border-bottom: 1px solid var(--lp-line);
+}
+
+.lp-faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.lp-faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.lp-faq-item summary:focus-visible {
+  outline: 2px solid var(--lp-accent);
+  outline-offset: 2px;
+}
+
+.lp-faq-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  flex: none;
+  transition: transform 300ms var(--lp-ease), background-color 300ms var(--lp-ease);
+}
+
+.lp-faq-item summary:hover .lp-faq-toggle {
+  background-color: var(--lp-tint);
+}
+
+.lp-faq-item[open] .lp-faq-toggle {
+  transform: rotate(45deg);
+}
+
+.lp-faq-answer {
+  padding: 0 0 16px;
+}
+
+/* ---------- Newsletter form (skill B9) ---------- */
+
+.lp-field {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lp-input {
+  flex: 1 1 240px;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--lp-line);
+  border-radius: 8px;
+  background-color: var(--lp-surface);
+  color: var(--lp-ink);
+  transition: border-color 300ms var(--lp-ease), box-shadow 300ms var(--lp-ease);
+}
+
+.lp-input::placeholder {
+  color: var(--lp-ink-soft);
+}
+
+.lp-input:hover {
+  border-color: var(--lp-ink-soft);
+}
+
+.lp-input:focus-visible {
+  outline: 2px solid var(--lp-accent);
+  outline-offset: 2px;
+}
+
+.lp-input[aria-invalid="true"] {
+  border-color: #8b1111;
+}
+
+.lp-form-note {
+  min-height: 20px;
+  color: var(--lp-ink-soft);
+}
+
+.lp-form-note[data-tone="error"] {
+  color: #8b1111;
+}
+
+/* ---------- Reduced motion (skill B7, B11) ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .lp [data-reveal] {
+    transform: none;
+    transition: opacity 200ms linear;
+  }
+
+  .lp-word {
+    opacity: 1;
+    transition: none;
+  }
+
+  .lp-btn,
+  .lp-btn:hover,
+  .lp-btn:active,
+  .lp-faq-toggle,
+  .lp-input {
+    transform: none;
+    transition: none;
+  }
+}

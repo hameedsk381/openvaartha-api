@@ -57,10 +57,11 @@ export interface Category {
   name: string;
 }
 
-export async function getArticles(params?: { category?: string; limit?: number; status?: string }) {
+export async function getArticles(params?: { category?: string; limit?: number; status?: string; skip?: number }) {
   const qs = new URLSearchParams();
-  if (params?.category) qs.set("category", params.category);
+  if (params?.category) qs.set("category_id", params.category);
   if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.skip) qs.set("skip", String(params.skip));
   if (params?.status) qs.set("status", params.status);
   const q = qs.toString();
   return apiFetch<Article[]>(`/articles/${q ? `?${q}` : ""}`);

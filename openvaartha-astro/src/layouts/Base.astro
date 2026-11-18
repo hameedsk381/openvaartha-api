@@ -2,6 +2,7 @@
 import { BRAND, SITE_TITLE } from '../lib/brand';
 import SearchProvider from '../components/SearchProvider';
 import BreakingTicker from '../components/BreakingTicker';
+import '../styles/global.css';
 
 interface Props {
   title?: string;
@@ -50,9 +51,9 @@ const currentPath = Astro.url.pathname;
   <!-- Fonts (non-render-blocking) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
   <noscript>
-    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
   </noscript>
 
   <!-- Favicon -->
@@ -74,6 +75,7 @@ const currentPath = Astro.url.pathname;
   })} />
 </head>
 <body class="min-h-screen bg-background text-foreground">
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground">Skip to content</a>
   <!-- Navbar -->
   <nav class="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border">
     <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10">
