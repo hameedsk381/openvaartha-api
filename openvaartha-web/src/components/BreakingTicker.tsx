@@ -1,52 +1,31 @@
-import { useDispatches } from '@/lib/api-hooks';
-import { Clock } from '@/components/animate-ui/icons/clock';
+import { ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Marquee } from '@/components/ui/marquee';
+import { useDispatches } from '@/lib/api-hooks';
 
-const BreakingTicker = () => {
-  // Editor-authored breaking-news blurbs (see AdminDispatches) — a distinct
-  // stream from the article feed, not a repeat of the latest published articles.
-  const { data: dispatches = [] } = useDispatches(15);
+export default function BreakingTicker() {
+  const { data: dispatches = [] } = useDispatches(1);
+  const update = dispatches[0];
+  if (!update) return null;
 
   return (
-    <div className="flex items-center h-10 border-b border-border bg-primary overflow-hidden">
-      <div className="flex items-center gap-1.5 px-4 h-full bg-red-600 shrink-0 border-r border-border z-20 shadow-[4px_0_12px_rgba(220,38,38,0.2)]">
-        <Clock className="h-3.5 w-3.5 text-white" />
-        <span className="font-display text-xs font-bold uppercase tracking-[0.18em] text-white relative pl-4">
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-white animate-pulse" />
-          JUST IN
+    <aside aria-label="Latest dispatch" className="border-t border-[#e4d6ca] bg-[#fdf8f1] text-[#382729] dark:border-[#493638] dark:bg-[#1d1617] dark:text-[#f5e6de]">
+      <div className="mx-auto flex max-w-screen-2xl items-center gap-2 px-3 sm:gap-4 sm:px-6 lg:px-10">
+        <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-bold text-[#782a30] dark:text-[#f4a8a0]">
+          <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
+          Just in
         </span>
+        <Link
+          to={update.articleSlug ? `/article/${update.articleSlug}` : `/feed/${update.id}`}
+          className="flex min-h-11 min-w-0 flex-1 items-center rounded-sm text-sm font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+        >
+          <span className="truncate">{update.text}</span>
+        </Link>
+        <Link to="/feed" className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-sm text-xs font-semibold text-[#782a30] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary dark:text-[#f4a8a0]">
+          <span className="hidden sm:inline">All updates</span>
+          <span className="sm:hidden">Updates</span>
+          <ArrowUpRight className="size-3.5" aria-hidden="true" />
+        </Link>
       </div>
-      <div className="flex-1 relative overflow-hidden flex items-center h-full">
-        {dispatches.length > 0 ? (
-          <Marquee pauseOnHover className="[--duration:120s] [--gap:0px]" style={{ padding: 0 }}>
-            {dispatches.map((item) => {
-              const content = (
-                <>
-                  {item.text}
-                  <span className="text-muted-foreground/30 text-xs ml-1">|</span>
-                </>
-              );
-              const className = "font-display text-xs sm:text-[13px] font-semibold tracking-tight flex items-center gap-5 text-[#FFF8E7] hover:text-white transition-colors mx-4 h-full";
-              return item.articleSlug ? (
-                <Link key={item.id} to={`/article/${item.articleSlug}`} className={className}>
-                  {content}
-                </Link>
-              ) : (
-                <span key={item.id} className={className}>
-                  {content}
-                </span>
-              );
-            })}
-          </Marquee>
-        ) : (
-          <span className="font-display text-xs sm:text-[13px] font-semibold tracking-tight text-[#FFF8E7]/60 mx-4">Breaking news as it happens</span>
-        )}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-1/12 bg-gradient-to-r from-primary z-10"></div>
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/12 bg-gradient-to-l from-primary z-10"></div>
-      </div>
-    </div>
+    </aside>
   );
-};
-
-export default BreakingTicker;
+}

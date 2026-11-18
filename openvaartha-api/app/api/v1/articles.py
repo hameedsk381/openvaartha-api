@@ -5,7 +5,12 @@ from pydantic import BaseModel, Field, HttpUrl
 from pymongo.errors import DuplicateKeyError
 from typing import List, Optional, Union, Dict, Any, Literal
 from datetime import datetime, timezone
+from hashlib import sha256
+from html import unescape
+import re
 
+from app.core.cache import fetch_with_cache_and_lock
+from app.core.sanitize import sanitize_text
 from app.database import get_db
 from app.schemas.article import Article, ArticleCreate, ArticleUpdate, ContributionCreate, CorrectionCreate, CorrectionIndexItem
 from app.services import article_service
@@ -839,27 +844,57 @@ async def restore_revision(
     await article_service.invalidate_article_caches()
     return {"message": f"Article restored to revision {revision}"}
 
-@router.get("/{article_id}/explain")
+class ArticleExplanation(BaseModel):
+    explanation: str
+    source: Literal["ai", "article_summary"]
+
+
+@router.get("/{article_id}/explain", response_model=ArticleExplanation)
+@limiter.limit("12/minute")
 async def explain_article(
+    request: Request,
     article_id: str,
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
-    """
-    Returns a Gen-Z friendly 'Explain it like I'm 5' summary of the article.
-    """
+    """Explain a published article in plain language."""
     article = await article_service.get_article_by_id(db, article_id)
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
-        
-    text_to_explain = f"Title: {article.get('title', '')}\n\n{article.get('content', {}).get('body', '')}"
-    
-    from app.services.gemini_service import explain_article_eli5
-    result = await explain_article_eli5(text_to_explain)
-    
-    if not result:
-        raise HTTPException(status_code=500, detail="Explanation generation failed")
-        
-    return {"explanation": result}
+
+    content = article.get("content") or {}
+    title = unescape(sanitize_text(article.get("title")) or "").strip()
+    summary = (
+        unescape(sanitize_text(content.get("tldr")) or "").strip()
+        or unescape(sanitize_text(article.get("summary")) or "").strip()
+    )
+    raw_body = re.sub(r"</(?:p|li|h[1-6]|blockquote)>|<br\s*/?>", "\n", content.get("body") or "", flags=re.I)
+    body = unescape(sanitize_text(raw_body) or "").strip()
+    text_to_explain = "\n\n".join(part for part in (title, summary, body) if part)[:15000]
+
+    if body or summary:
+        from app.services.gemini_service import explain_article_in_plain_language
+
+        async def generate():
+            explanation = await explain_article_in_plain_language(text_to_explain)
+            if not explanation:
+                # An outage should never be written to the success cache.
+                raise HTTPException(status_code=503, detail="Explanation unavailable")
+            return explanation
+
+        digest = sha256(text_to_explain.encode()).hexdigest()
+        try:
+            explanation = await fetch_with_cache_and_lock(
+                f"openvaartha:reader-explanation:v1:{digest}", 86400, generate,
+                lock_timeout=20, wait_timeout=14,
+            )
+            return ArticleExplanation(explanation=explanation, source="ai")
+        except HTTPException as exc:
+            if exc.status_code != 503:
+                raise
+
+    if summary:
+        return ArticleExplanation(explanation=summary, source="article_summary")
+    raise HTTPException(status_code=503, detail="No explanation is available for this article.")
 
 
 @router.delete("/{article_id}")

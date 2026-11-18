@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, type MouseEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useArticle, useRelatedArticles } from "@/lib/api-hooks";
 import type { Article } from "@/lib/types";
@@ -216,6 +216,11 @@ const SingleArticle = ({ articleId, onInView, isActive = true }: { articleId: st
   const [scrollProgress, setScrollProgress] = useState(0);
   const [quoteCardOpen, setQuoteCardOpen] = useState(false);
   const [explainModalOpen, setExplainModalOpen] = useState(false);
+  const explainTrigger = useRef<HTMLButtonElement | null>(null);
+  const openExplanation = (event: MouseEvent<HTMLButtonElement>) => {
+    explainTrigger.current = event.currentTarget;
+    setExplainModalOpen(true);
+  };
   const [selectedQuote, setSelectedQuote] = useState("");
   const { toggleSave, isSaved } = useReadingList();
   const { incrementStreak } = useStreak();
@@ -600,6 +605,11 @@ const SingleArticle = ({ articleId, onInView, isActive = true }: { articleId: st
           </aside>
 
           <div className="lg:col-span-7 lg:col-start-4 max-w-2xl">
+            <button type="button" onClick={openExplanation}
+              className="mb-5 hidden min-h-11 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-semibold text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring lg:inline-flex"
+              aria-haspopup="dialog">
+              <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" /> Explain article
+            </button>
             <div className="lg:hidden mb-6 flex items-center justify-between border-b border-border pb-4">
               <span className="overline flex items-center gap-1.5"><Type className="h-3 w-3" /> Text size</span>
               <div className="flex border border-border rounded-md overflow-hidden">
@@ -822,8 +832,9 @@ const SingleArticle = ({ articleId, onInView, isActive = true }: { articleId: st
         <button onClick={() => cycleTextSize((textSizeIdx + 1) % TEXT_SIZES.length)} className="flex flex-col items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors press">
           <Type className="h-5 w-5" /> {TEXT_SIZE_LABELS[(textSizeIdx + 1) % TEXT_SIZES.length]}
         </button>
-        <button onClick={() => setExplainModalOpen(true)} className="flex flex-col items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors press">
-          <Sparkles className="h-5 w-5 text-indigo-500 animate-pulse" /> Explain
+        <button type="button" onClick={openExplanation} aria-haspopup="dialog"
+          className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 rounded-md text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors press focus-visible:ring-2 focus-visible:ring-ring">
+          <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" /> Explain
         </button>
         <button onClick={() => {
           if (navigator.share) {
@@ -841,6 +852,8 @@ const SingleArticle = ({ articleId, onInView, isActive = true }: { articleId: st
         open={explainModalOpen}
         onOpenChange={setExplainModalOpen}
         articleId={article?.id ?? ""}
+        articleVersion={article?.lastUpdated}
+        restoreFocus={() => explainTrigger.current?.focus()}
       />
     </>
   );

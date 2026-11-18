@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { cn, categorySlug } from "@/lib/utils";
-import { Bookmark, Home } from "lucide-react";
+import { Bookmark, ChevronDown, Flame, Heart, Home } from "lucide-react";
 import { AnimatedIcon } from "@/components/ui/animated-icon";
 import { Search } from "@/components/animate-ui/icons/search";
 import { Sun } from "@/components/animate-ui/icons/sun";
@@ -11,13 +11,11 @@ import { ChevronRight } from "@/components/animate-ui/icons/chevron-right";
 import { LogOut } from "@/components/animate-ui/icons/log-out";
 import { MessageSquare } from "@/components/animate-ui/icons/message-square";
 import { User } from "@/components/animate-ui/icons/user";
-import { Flame } from "lucide-react";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { useStreak } from "@/hooks/use-streak";
 import { useSearch, useCategories, useBreakingArticles } from "@/lib/api-hooks";
 import SignOutButton from "@/components/SignOutButton";
 import { BRAND } from "@/lib/brand";
-import { Heart } from "lucide-react";
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface NavbarProps { 
@@ -114,153 +112,158 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
   const categoryIsCurrent = (category: string) =>
     (location.pathname === "/" || location.pathname.startsWith("/category/"))
     && categorySlug(selectedCat) === categorySlug(category);
-  const topicLink = "inline-flex min-h-11 shrink-0 items-center justify-center rounded-md px-3 text-sm font-semibold whitespace-nowrap transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary";
+  const mastheadControl = "inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-[#fff4e5] transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#f7d3a5]";
+  const topicLink = "inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 px-2 text-[13px] font-semibold whitespace-nowrap transition-colors hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7b272b] dark:hover:bg-white/10 dark:focus-visible:ring-[#ffb8b1] sm:px-3.5 sm:text-sm";
+  const currentTopic = "bg-[#f1e2dc] text-[#692129] shadow-[inset_0_-2px_#8b3036] dark:bg-[#3a2527] dark:text-[#ffd1ca] dark:shadow-[inset_0_-2px_#e38d85]";
 
   return (
     <>
       {!hideHeader && (
         <header className={cn(
-          "bg-background w-full",
+          "w-full",
           isInsideStack ? "" : "border-b border-border"
         )}>
-
-        <div className="min-h-14 flex flex-wrap items-center justify-between px-4 sm:px-6 lg:px-10 max-w-screen-2xl mx-auto">
-          <Link to="/" className="press shrink-0 flex min-h-14 items-center gap-2.5">
-            <img src={BRAND.iconMaroonPath} alt="Open Vaartha" className="h-9 w-9 dark:hidden" />
-            <img src={BRAND.iconWhitePath} alt="Open Vaartha" className="h-9 w-9 hidden dark:block" />
-            <span className="hidden sm:inline font-display text-lg font-extrabold tracking-tight">
-              Open<span className="text-primary">vaartha</span>
-            </span>
-          </Link>
-
-        <div className="flex items-center gap-0.5">
-          <button
-            onClick={() => setSearchOpen(true)}
-            className="group h-11 w-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors press"
-            aria-label="Search"
-          >
-            <Search className="h-5 w-5" animateOnHover />
-          </button>
-
-          {!isTouchDevice() && (
-            <span className="hidden sm:inline text-xs text-muted-foreground/50 select-none">{isMac ? "⌘K" : "Ctrl+K"}</span>
-          )}
-
-          {streak > 0 && (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 h-10 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 font-bold text-sm">
-              <Flame className="w-4 h-4 fill-orange-500 animate-pulse" />
-              <span>{streak}</span>
-            </div>
-          )}
-
-          <Link
-            to="/support"
-            className="hidden sm:flex items-center gap-1.5 h-10 px-3 rounded-full bg-primary/10 border border-primary/20 text-primary hover:bg-primary/15 transition-colors press text-sm font-semibold"
-            aria-label="Support independent journalism"
-            title="Support us"
-          >
-            <Heart className="w-4 h-4 fill-current" />
-            Support
-          </Link>
-          
-          <button
-            onClick={toggleDark}
-            className="group h-11 w-11 rounded-lg flex items-center justify-center bg-transparent hover:bg-muted transition-colors press"
-            aria-label="Toggle theme"
-            title="Toggle theme"
-          >  {isDark ? <Sun className="h-5 w-5" animateOnTap /> : <Moon className="h-5 w-5" animateOnTap />}
-          </button>
-
-          <Link
-            to="/portal/saved"
-            className="hidden sm:flex h-11 w-11 rounded-lg items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors press relative"
-            aria-label="Saved articles"
-          >
-            <AnimatedIcon animationType="scale">
-              <Bookmark className="h-5 w-5" />
-            </AnimatedIcon>
-            {saved.length > 0 && (
-              <span className="absolute top-2 right-2 h-2 w-2 bg-primary rounded-full" />
-            )}
-          </Link>
-
-          {localStorage.getItem('token') ? (
-            <div className="flex items-center gap-1 ml-1">
-              <Link
-                to="/portal/dashboard"
-                className="hidden sm:flex h-11 w-11 rounded-full gradient-maroon items-center justify-center press shadow-sm shadow-primary/20 hover:shadow-maroon transition-shadow"
-                aria-label="Portal"
-              >
-                <User className="h-5 w-5 text-white" animateOnHover />
+          <div className="border-b border-[#7a3c3d] bg-[#46151c] text-[#fff4e5] dark:border-[#713c40] dark:bg-[#321419]">
+            <div className="mx-auto grid min-h-[64px] max-w-screen-2xl grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 px-3 sm:min-h-[74px] sm:px-6 lg:min-h-[92px] lg:grid-cols-[1fr_auto_1fr] lg:px-10">
+              <Link to="/support" className={cn(mastheadControl, "hidden justify-self-start gap-2 px-3 text-sm font-semibold lg:inline-flex")}>
+                <Heart className="h-4 w-4 text-[#f4bd97]" aria-hidden="true" />
+                Support
               </Link>
-              <SignOutButton>
-                {(onClick) => (
-                  <button
-                    onClick={onClick}
-                    className="h-11 w-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors press"
-                    aria-label="Log out"
-                    title="Log out"
-                  >
-                    <LogOut className="h-5 w-5" animateOnHover />
-                  </button>
-                )}
-              </SignOutButton>
-            </div>
-          ) : (
-            <Link
-              to="/login"
-              className="hidden sm:flex items-center h-11 px-4 rounded-lg bg-primary text-white text-sm font-semibold press hover:bg-primary/90 transition-all"
-            >
-              Sign in
-            </Link>
-          )}
-        </div>
-          <nav aria-label="News sections" className="flex w-full items-center gap-1 border-t border-border py-1">
-            <Link to="/" aria-current={categoryIsCurrent("All") ? "page" : undefined}
-              className={cn(topicLink, categoryIsCurrent("All") && "bg-primary/10 text-primary")}>
-              Top stories
-            </Link>
-            <div className="min-w-0 flex flex-1 items-center gap-1 overflow-x-auto no-scrollbar">
-              {navCategories.map((category, index) => (
-                <Link key={category} to={`/category/${categorySlug(category)}`}
-                  aria-current={categoryIsCurrent(category) ? "page" : undefined}
-                  className={cn(topicLink, index > 0 && "hidden sm:inline-flex", categoryIsCurrent(category) && "bg-primary/10 text-primary")}>
-                  {category}
-                </Link>
-              ))}
-            </div>
-            <Link to="/digest" aria-current={location.pathname === "/digest" ? "page" : undefined}
-              className={cn(topicLink, "gap-1.5 border-l border-border", location.pathname === "/digest" && "bg-primary/10 text-primary")}>
-              <Flame className="hidden h-4 w-4 sm:block" aria-hidden="true" />
-              Digest
-            </Link>
-            {categoryNames.length > 0 && (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <button type="button" className={cn(topicLink, "border border-border")}>All topics</button>
-                </DialogTrigger>
-                <DialogContent className="w-[calc(100%-2rem)] max-h-[75dvh] overflow-y-auto [&>button]:h-11 [&>button]:w-11" aria-describedby={undefined}>
-                  <DialogTitle className="pr-12">All topics</DialogTitle>
-                  <ul className="grid grid-cols-1 gap-1 rounded-lg border border-border bg-muted/30 p-2 sm:grid-cols-2">
-                    {categoryNames.map((category) => (
-                      <li key={category}>
-                        <DialogClose asChild>
-                          <Link to={`/category/${categorySlug(category)}`}
-                            aria-current={categoryIsCurrent(category) ? "page" : undefined}
-                            className={cn(topicLink, "flex w-full justify-start whitespace-normal", categoryIsCurrent(category) && "bg-primary/10 text-primary")}>
-                            {category}
-                          </Link>
-                        </DialogClose>
-                      </li>
-                    ))}
-                  </ul>
-                </DialogContent>
-              </Dialog>
-            )}
-          </nav>
+              <Link to="/" className="flex min-h-11 min-w-0 items-center gap-2 rounded-sm justify-self-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f7d3a5] sm:gap-3 lg:justify-self-center">
+                <img src={BRAND.iconWhitePath} alt="" className="size-8 shrink-0 sm:size-10 lg:size-12" width={48} height={48} />
+                <span className="whitespace-nowrap font-serif text-[clamp(1.35rem,6vw,1.9rem)] font-bold leading-none tracking-[-0.045em] lg:text-[2.85rem]">
+                  Open <span className="text-[#f4bd97]">Vaartha</span>
+                </span>
+              </Link>
+              <div className="flex items-center justify-end gap-0.5 sm:gap-1">
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
+                  className={cn(mastheadControl, "gap-2 sm:border sm:border-[#a66d6f] sm:px-3")}
+                  aria-label="Search"
+                >
+                  <Search className="h-5 w-5" animateOnHover />
+                  <span className="hidden text-sm font-semibold md:inline">Search</span>
+                  {!isTouchDevice() && (
+                    <kbd aria-hidden="true" className="hidden rounded border border-[#a66d6f] px-1.5 py-0.5 font-sans text-[10px] text-[#ffddbb] xl:inline">
+                      {isMac ? "⌘K" : "Ctrl+K"}
+                    </kbd>
+                  )}
+                </button>
 
-        </div>
-      </header>
+                {streak > 0 && (
+                  <div className="hidden items-center gap-1 px-2 text-sm font-semibold text-[#f4bd97] xl:flex" aria-label={`${streak}-day reading streak`}>
+                    <Flame className="h-4 w-4" aria-hidden="true" />
+                    <span>{streak}</span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={toggleDark}
+                  className={mastheadControl}
+                  aria-label="Toggle theme"
+                  aria-pressed={isDark}
+                  title="Toggle theme"
+                >  {isDark ? <Sun className="h-5 w-5" animateOnTap /> : <Moon className="h-5 w-5" animateOnTap />}
+                </button>
+
+                <Link
+                  to="/portal/saved"
+                  className={cn(mastheadControl, "relative hidden xl:inline-flex")}
+                  aria-label="Saved articles"
+                >
+                  <AnimatedIcon animationType="scale">
+                    <Bookmark className="h-5 w-5" />
+                  </AnimatedIcon>
+                  {saved.length > 0 && (
+                    <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#f4bd97]" />
+                  )}
+                </Link>
+
+                {localStorage.getItem('token') ? (
+                  <div className="hidden items-center gap-0.5 sm:flex">
+                    <Link
+                      to="/portal/dashboard"
+                      className={mastheadControl}
+                      aria-label="Portal"
+                    >
+                      <User className="h-5 w-5 text-white" animateOnHover />
+                    </Link>
+                    <SignOutButton>
+                      {(onClick) => (
+                        <button
+                          onClick={onClick}
+                          className={mastheadControl}
+                          aria-label="Log out"
+                          title="Log out"
+                        >
+                          <LogOut className="h-5 w-5" animateOnHover />
+                        </button>
+                      )}
+                    </SignOutButton>
+                  </div>
+                ) : (
+                  <Link
+                    to="/login"
+                    className={cn(mastheadControl, "ml-1 hidden border border-[#e2ad8a] px-3 text-sm font-semibold sm:inline-flex")}
+                  >
+                    Sign in
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="bg-[#f8f0e5] text-[#382729] dark:bg-[#241a1b] dark:text-[#f5e6de]">
+            <nav aria-label="News sections" className={cn(
+              "mx-auto grid max-w-screen-2xl items-stretch px-3 sm:flex sm:px-6 lg:px-10",
+              categoryNames.length > 0 ? "grid-cols-3" : "grid-cols-2",
+            )}>
+              <Link to="/" aria-current={categoryIsCurrent("All") ? "page" : undefined}
+                className={cn(topicLink, categoryIsCurrent("All") && currentTopic)}>
+                Top stories
+              </Link>
+              <div className="hidden min-w-0 flex-1 items-stretch overflow-x-auto no-scrollbar sm:flex">
+                {navCategories.map((category) => (
+                  <Link key={category} to={`/category/${categorySlug(category)}`}
+                    aria-current={categoryIsCurrent(category) ? "page" : undefined}
+                    className={cn(topicLink, categoryIsCurrent(category) && currentTopic)}>
+                    {category}
+                  </Link>
+                ))}
+              </div>
+              <Link to="/digest" aria-current={location.pathname === "/digest" ? "page" : undefined}
+                className={cn(topicLink, "border-l border-[#ddc8bb] dark:border-[#573e40]", location.pathname === "/digest" && currentTopic)}>
+                Digest
+              </Link>
+              {categoryNames.length > 0 && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button type="button" className={cn(topicLink, "border-l border-[#ddc8bb] dark:border-[#573e40]")}>
+                      All topics <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="w-[calc(100%-2rem)] max-h-[75dvh] overflow-y-auto [&>button]:h-11 [&>button]:w-11" aria-describedby={undefined}>
+                    <DialogTitle className="pr-12">All topics</DialogTitle>
+                    <ul className="grid grid-cols-1 gap-1 rounded-lg border border-border bg-muted/30 p-2 sm:grid-cols-2">
+                      {categoryNames.map((category) => (
+                        <li key={category}>
+                          <DialogClose asChild>
+                            <Link to={`/category/${categorySlug(category)}`}
+                              aria-current={categoryIsCurrent(category) ? "page" : undefined}
+                              className={cn(topicLink, "flex w-full justify-start rounded-md whitespace-normal", categoryIsCurrent(category) && currentTopic)}>
+                              {category}
+                            </Link>
+                          </DialogClose>
+                        </li>
+                      ))}
+                    </ul>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </nav>
+          </div>
+        </header>
       )}
 
       {!hideBottomNav && (
