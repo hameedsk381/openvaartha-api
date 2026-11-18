@@ -27,7 +27,7 @@ aiohttp==3.9.1
 
 # Task Queue
 celery==5.3.6
-redis==5.0.1
+redis==6.4.0
 
 # AI/ML — Groq is called directly over HTTP (see ai_service.py) using the
 # httpx dependency already pinned above; no separate SDK needed.
