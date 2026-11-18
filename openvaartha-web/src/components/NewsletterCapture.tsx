@@ -3,7 +3,7 @@ import { Mail, CheckCircle, ArrowRight } from "lucide-react";
 import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { apiFetch } from "@/lib/api";
+import { subscribeToNewsletter } from "@/lib/api-hooks";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -23,10 +23,7 @@ export default function NewsletterCapture({ className, variant = "inline" }: New
 
     setLoading(true);
     try {
-      await apiFetch("/newsletter/subscribe", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      });
+      await subscribeToNewsletter(email);
       setSuccess(true);
       toast.success("You're in! Thanks for subscribing.");
       setEmail("");

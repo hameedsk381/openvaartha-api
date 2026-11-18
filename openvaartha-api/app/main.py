@@ -1,8 +1,12 @@
+import asyncio
 import os
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse
+from pymongo.errors import PyMongoError
+from redis.exceptions import RedisError
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -12,7 +16,7 @@ from app.core.dependencies import get_current_active_admin
 from app.core.observability import init_sentry
 from app.core.rate_limit import limiter
 from app.core.security_headers import SecurityHeadersMiddleware
-from app.database import client
+from app.database import client, get_db
 from app.models.user import User as UserModel
 
 # Block known-unsafe production configs at import time.
@@ -135,6 +139,19 @@ def health_check():
     }
 
 
+@app.get("/health/ready")
+async def readiness_check(db=Depends(get_db)):
+    from app.core.ws_manager import manager
+
+    if manager.redis is None:
+        return JSONResponse({"status": "unavailable"}, status_code=503)
+    try:
+        await asyncio.wait_for(asyncio.gather(db.command("ping"), manager.redis.ping()), timeout=2)
+    except (asyncio.TimeoutError, PyMongoError, RedisError):
+        return JSONResponse({"status": "unavailable"}, status_code=503)
+    return {"status": "ready"}
+
+
 # Root-level routes (sitemap, RSS feeds, server-rendered article HTML). The pages
 # router's single-segment catch-all means it must come after every explicit
 # root-level route (the /health probe above, and the /health/* routes below).
@@ -143,7 +160,7 @@ app.include_router(pages.router)
 
 
 @app.get("/health/ops")
-async def ops_health_check():
+async def ops_health_check(current_user: UserModel = Depends(get_current_active_admin)):
     # Admin-only: discloses worker/beat/queue liveness for monitoring/alerting.
     from app.services.health_service import get_ops_health
     return await get_ops_health()

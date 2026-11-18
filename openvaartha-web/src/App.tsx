@@ -11,21 +11,14 @@ import SignupPrompt from "./components/SignupPrompt.tsx";
 import { PushPromptToast } from "./components/PushPromptToast.tsx";
 import { toast } from "sonner";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
-import ReactGA from "react-ga4";
+import { trackPage } from "./lib/reader-analytics";
 import { useLocation, useNavigate } from "react-router-dom";
-
-const gaTrackingId = import.meta.env.VITE_GA_TRACKING_ID;
-if (gaTrackingId) {
-  ReactGA.initialize(gaTrackingId);
-}
 
 const AnalyticsTracker = () => {
   const location = useLocation();
   useEffect(() => {
-    if (gaTrackingId) {
-      ReactGA.send({ hitType: "pageview", page: location.pathname + location.search });
-    }
-  }, [location]);
+    trackPage(location.pathname);
+  }, [location.pathname]);
   return null;
 };
 

@@ -4,6 +4,7 @@ import logging
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from app.config import settings
+from app.core.cache import close_redis
 from app.services.source_service import list_sources
 from app.services.rss_service import process_source
 from app.tasks import celery_app
@@ -38,3 +39,4 @@ async def _run():
         return {"processed": total_new, "total_sources": len(sources)}
     finally:
         client.close()
+        await close_redis()

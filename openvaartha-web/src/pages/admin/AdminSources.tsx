@@ -50,7 +50,7 @@ type DraftSource = {
   auto_publish: boolean;
 };
 
-const emptyDraft: DraftSource = { name: "", feed_url: "", category_id: "", language: "en", active: true, auto_publish: true };
+const emptyDraft: DraftSource = { name: "", feed_url: "", category_id: "", language: "en", active: true, auto_publish: false };
 // English-only portal — sources are not tagged by language beyond this.
 const LANGUAGES = [{ value: "en", label: "English" }];
 
@@ -143,7 +143,7 @@ export default function AdminSources() {
       category_id: source.categoryId || source.category_id || "",
       language: source.language,
       active: source.active ?? true,
-      auto_publish: source.autoPublish ?? source.auto_publish ?? true,
+      auto_publish: source.autoPublish ?? source.auto_publish ?? false,
     });
   };
 
@@ -363,8 +363,8 @@ export default function AdminSources() {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <span className={`text-xs font-medium ${(source.autoPublish ?? source.auto_publish ?? true) ? "text-blue-600" : "text-amber-600"}`}>
-                      {(source.autoPublish ?? source.auto_publish ?? true) ? "Auto-publish" : "Draft only"}
+                    <span className={`text-xs font-medium ${(source.autoPublish ?? source.auto_publish ?? false) ? "text-blue-600" : "text-amber-600"}`}>
+                      {(source.autoPublish ?? source.auto_publish ?? false) ? "Auto-publish" : "Draft only"}
                     </span>
                   )}
                 </div>

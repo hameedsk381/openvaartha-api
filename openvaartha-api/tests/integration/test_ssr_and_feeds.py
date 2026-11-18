@@ -24,9 +24,9 @@ class TestSSR:
         body = r.text
         assert 'rel="canonical"' in body or "og:title" in body
 
-    def test_article_page_has_ga_tag(self, client, sample_article):
+    def test_article_page_loads_react_entry(self, client, sample_article):
         r = client.get(f"/article/{sample_article['slug']}")
-        assert "googletagmanager.com" in r.text or "gtag" in r.text
+        assert 'type="module"' in r.text
 
     def test_unknown_article_slug_404(self, client):
         r = client.get("/article/this-article-does-not-exist-xyz")

@@ -45,14 +45,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user?.role === "admin" || user?.role === "editor" || user?.isAdmin) {
-      apiFetch<any>("/articles/?status=pending&include_unpublished=true&include_total=true")
-        .then((res) => {
-          if (res && typeof res === "object" && typeof res.total === "number") {
-            setPendingCount(res.total);
-          } else if (Array.isArray(res)) {
-            setPendingCount(res.length);
-          }
-        })
+      apiFetch<{ total: number }>("/articles/review/queue?limit=1")
+        .then(({ total }) => setPendingCount(total))
         .catch(() => {});
     }
   }, [user]);

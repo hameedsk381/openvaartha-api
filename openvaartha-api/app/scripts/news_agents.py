@@ -5,9 +5,11 @@ from uuid import uuid4
 
 import httpx
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.errors import DuplicateKeyError
 
 from app.config import settings
 from app.services.ai_service import generate_article
+from app.services.article_service import store_ingested_article
 from app.core.sanitize import sanitize_html
 from app.services.rss_service import is_duplicate_story
 
@@ -126,6 +128,7 @@ async def process_articles(db: AsyncIOMotorDatabase, raw_articles: list[dict], c
             "read_time": _estimate_read_time(result.get("body", "")),
             "language": "en",
             "status": "draft",
+            "ingestion_origin": "news-agent",
             "is_trending": False,
             "is_breaking": False,
             "is_editor_pick": False,
@@ -137,8 +140,6 @@ async def process_articles(db: AsyncIOMotorDatabase, raw_articles: list[dict], c
             "created_at": datetime.now(timezone.utc),
             "has_deep_content": bool(result.get("timeline") or result.get("explainer")),
         }
-        await db["articles"].insert_one(article_doc)
-        
         content_doc = {
             "article_id": article_id,
             "tldr": result.get("tldr", ""),
@@ -147,14 +148,21 @@ async def process_articles(db: AsyncIOMotorDatabase, raw_articles: list[dict], c
             "timeline": result.get("timeline", None),
             "explainer": result.get("explainer", None),
         }
-        await db["article_content"].insert_one(content_doc)
-        
-        await db["article_sources"].insert_one({
+        source_doc = {
             "article_id": article_id,
             "source_id": "news-agent",
             "guid": url,
             "url": url,
-        })
+            "publisher": raw.get("source_name") or raw.get("author") or "",
+        }
+        try:
+            await store_ingested_article(db, article_doc, content_doc, source_doc)
+        except DuplicateKeyError:
+            if await is_duplicate_story(db, slug, raw["title"]):
+                continue
+            if await db["article_sources"].find_one({"source_id": "news-agent", "guid": url}):
+                continue
+            raise
         
         new_count += 1
         

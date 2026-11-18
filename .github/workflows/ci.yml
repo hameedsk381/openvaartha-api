@@ -47,6 +47,27 @@ jobs:
       - run: pip install -r requirements.txt
       # `integration` tests target a live deployment; they don't belong in CI.
       - run: python -m pytest -m "not integration" -q
+      - name: Exercise RSS rollback on a real MongoDB replica set
+        env:
+          RSS_TRANSACTION_TEST_URL: mongodb://127.0.0.1:27018/?directConnection=true
+        run: |
+          docker run -d --name openvaartha-rss-mongo -p 127.0.0.1:27018:27017 mongo:7.0.14 --replSet rs0 --bind_ip_all
+          trap 'docker rm -f openvaartha-rss-mongo >/dev/null' EXIT
+          for attempt in {1..30}; do
+            if docker exec openvaartha-rss-mongo mongosh --quiet --eval 'db.adminCommand({ping:1}).ok'; then
+              break
+            fi
+            sleep 1
+          done
+          docker exec openvaartha-rss-mongo mongosh --quiet --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"localhost:27017"}]})'
+          for attempt in {1..30}; do
+            if docker exec openvaartha-rss-mongo mongosh --quiet --eval 'quit(db.hello().isWritablePrimary ? 0 : 1)'; then
+              python -m pytest -q tests/test_rss_service.py::test_rss_transaction_rolls_back_and_retries
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
 
   frontend:
     name: Frontend (typecheck, test, build)

@@ -58,15 +58,37 @@ class TestArticleLifecycle:
         title = f"{TEST_PREFIX} lifecycle {uuid.uuid4().hex[:8]}"
         aid = None
         try:
+            payload = _mk_article_payload(sample_category["id"], title)
+            payload["status"] = "draft"
             create = client.post(
                 "/api/v1/articles/",
-                json=_mk_article_payload(sample_category["id"], title),
+                json=payload,
                 headers=admin_headers,
             )
             assert create.status_code == 200, create.text[:500]
             article = create.json()
             aid = article["id"]
             assert article["title"] == title
+            article_path = f"/article/{article['slug']}"
+            assert client.get(article_path).status_code == 404
+
+            publish = client.put(
+                f"/api/v1/articles/{aid}",
+                json={"status": "published"},
+                headers=admin_headers,
+            )
+            assert publish.status_code == 200, publish.text[:500]
+
+            page = client.get(article_path)
+            assert page.status_code == 200
+            assert "text/html" in page.headers["content-type"]
+            assert title in page.text
+            assert "Integration test body." in page.text
+
+            feed = client.get("/feed.xml")
+            assert feed.status_code == 200
+            assert "xml" in feed.headers["content-type"]
+            assert article_path in feed.text
 
             fetch = client.get(f"/api/v1/articles/{aid}")
             assert fetch.status_code == 200
@@ -91,6 +113,29 @@ class TestArticleLifecycle:
                 assert deleted.status_code == 200, deleted.text[:300]
                 gone = client.get(f"/api/v1/articles/{aid}")
                 assert gone.status_code == 404
+
+
+def test_review_queue_claim_and_archive(client, admin_headers, sample_category):
+    payload = _mk_article_payload(sample_category["id"], f"{TEST_PREFIX} review {uuid.uuid4().hex[:8]}")
+    payload["status"] = "pending"
+    response = client.post("/api/v1/articles/", json=payload, headers=admin_headers)
+    assert response.status_code == 200, response.text[:500]
+    article_id = response.json()["id"]
+    review_path = f"/api/v1/articles/review/{article_id}"
+    try:
+        assert client.post(review_path, json={"action": "publish"}, headers=admin_headers).status_code == 409
+        assert client.post(review_path, json={"action": "claim"}, headers=admin_headers).status_code == 200
+        assert client.post(review_path, json={"action": "archive"}, headers=admin_headers).status_code == 422
+        archived = client.post(
+            review_path, json={"action": "archive", "reason": "Needs stronger sourcing."}, headers=admin_headers
+        )
+        assert archived.status_code == 200
+        record = client.get(review_path, headers=admin_headers)
+        assert record.status_code == 200
+        assert record.json()["review_reason"] == "Needs stronger sourcing."
+        assert client.get(f"/api/v1/articles/{article_id}").status_code == 404
+    finally:
+        assert client.delete(f"/api/v1/articles/{article_id}", headers=admin_headers).status_code == 200
 
 
 class TestCommentModeration:

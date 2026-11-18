@@ -7,6 +7,7 @@ import base64
 import uuid
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Optional, Any
+from urllib.parse import urlsplit
 from uuid import uuid4
 from datetime import datetime, timezone
 import json
@@ -164,6 +165,73 @@ async def invalidate_article_caches() -> None:
         return
 
 
+def is_attributed_source(source: dict) -> bool:
+    try:
+        url = source.get("url") or ""
+        parsed = urlsplit(url)
+        return bool(
+            (source.get("publisher") or "").strip()
+            and parsed.scheme in ("http", "https")
+            and parsed.hostname
+            and not any(char.isspace() for char in url)
+        )
+    except ValueError:
+        return False
+
+
+async def has_attributed_source(db, article_id: str, *, session=None) -> bool:
+    sources = await db["article_sources"].find(
+        {"article_id": article_id}, {"url": 1, "publisher": 1}, session=session
+    ).to_list(length=None)
+    return any(is_attributed_source(source) for source in sources)
+
+
+async def publish_article(db, article, *, actor: str, published_at=None, session=None) -> bool:
+    """Make a complete draft public if its workflow status has not changed."""
+    article_id = article["_id"]
+    content = await db["article_content"].find_one({"article_id": article_id}, session=session)
+    if not content or not sanitize_text(content.get("body")):
+        raise HTTPException(status_code=422, detail="Add an article body before publishing.")
+    if article.get("ingestion_origin") and not await has_attributed_source(db, article_id, session=session):
+        raise HTTPException(status_code=422, detail="Add source attribution before publishing.")
+
+    now = datetime.now(timezone.utc)
+    expected = {"_id": article_id, "status": article["status"]}
+    for field in ("scheduled_at", "review_owner_id"):
+        if field in article:
+            expected[field] = article[field]
+    result = await db["articles"].update_one(
+        expected,
+        {"$set": {
+            "status": PUBLIC_STATUS,
+            "published_at": published_at or article.get("published_at") or now,
+            "last_updated": now,
+            "updated_at": now,
+            "published_by": actor,
+            "reviewed_at": now,
+        }},
+        session=session,
+    )
+    return result.modified_count > 0
+
+
+async def after_article_publication(slug: str) -> None:
+    await invalidate_article_caches()
+    _fire_and_forget(_notify_indexnow(slug))
+
+
+async def store_ingested_article(db, article, content, source, *, auto_publish: bool = False) -> None:
+    async def write_article(session):
+        await db["articles"].insert_one(article, session=session)
+        await db["article_content"].insert_one(content, session=session)
+        await db["article_sources"].insert_one(source, session=session)
+        if auto_publish:
+            await publish_article(db, article, actor=article["ingestion_origin"], session=session)
+
+    async with await db.client.start_session() as session:
+        await session.with_transaction(write_article)
+
+
 def generate_slug(title: str) -> str:
     """Generate a URL-friendly slug from title."""
     slug = title.lower()
@@ -245,6 +313,7 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
         )
     await Article.get_motor_collection().create_index("slug", unique=True)
     await Article.get_motor_collection().create_index("status")
+    await Article.get_motor_collection().create_index([("status", 1), ("created_at", 1), ("_id", 1)])
     
     # Compound indexes for fast, sorted lookups without memory sorts
     await Article.get_motor_collection().create_index([("status", 1), ("published_at", -1)])
@@ -267,6 +336,7 @@ async def ensure_article_indexes(db: AsyncIOMotorDatabase) -> None:
     await db["article_sources"].create_index(
         [("source_id", 1), ("guid", 1)], unique=True
     )
+    await db["article_sources"].create_index("article_id")
     await db["article_corrections"].create_index([("article_id", 1), ("corrected_at", -1)])
     await db["article_revisions"].create_index([("article_id", 1), ("revision", -1)], unique=True)
     await ReadingHistory.get_motor_collection().create_index([("user_id", 1), ("article_id", 1)], unique=True)
@@ -687,7 +757,13 @@ def _has_deep_content(content: Any) -> bool:
     return bool(timeline) or bool(explainer)
 
 
-async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
+async def create_article(
+    db: AsyncIOMotorDatabase,
+    article_data: Any,
+    *,
+    editor_id: Optional[str] = None,
+    author_id: Optional[str] = None,
+):
     """Create a new article. Defaults to draft. Body and summary are sanitized."""
     await _assert_category_exists(db, article_data.category_id)
 
@@ -697,6 +773,9 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
     article_status = getattr(article_data, "status", ArticleStatus.DRAFT)
     if hasattr(article_status, "value"):
         article_status = article_status.value
+    publish_now = article_status == PUBLIC_STATUS
+    if publish_now and not sanitize_text(getattr(article_data.content, "body", None)):
+        raise HTTPException(status_code=422, detail="Add an article body before publishing.")
 
     article_doc = {
         "_id": article_id,
@@ -706,7 +785,7 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
         "category_id": str(article_data.category_id),
         "read_time": article_data.read_time,
         "language": article_data.language,
-        "status": article_status,
+        "status": ArticleStatus.DRAFT.value if publish_now else article_status,
         "scheduled_at": getattr(article_data, "scheduled_at", None),
         "tags": [tag.strip().lower() for tag in getattr(article_data, "tags", []) if tag.strip()],
         "is_trending": article_data.is_trending,
@@ -718,7 +797,7 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
         "published_at": article_data.published_at,
         "last_updated": article_data.last_updated or datetime.now(timezone.utc),
         "author": sanitize_text(article_data.author),
-        "author_id": getattr(article_data, "author_id", None),
+        "author_id": author_id if author_id is not None else getattr(article_data, "author_id", None),
         "created_at": datetime.now(timezone.utc),
         "has_deep_content": _has_deep_content(getattr(article_data, "content", None)),
     }
@@ -756,11 +835,11 @@ async def create_article(db: AsyncIOMotorDatabase, article_data: Any):
             {"$set": {"embedding": embedding}}
         )
 
-    await invalidate_article_caches()
-    created = await get_article_by_id(db, article_id, include_unpublished=True)
-    if article_status == PUBLIC_STATUS:
-        _fire_and_forget(_notify_indexnow(created.get("slug") or slug))
-    return created
+    if publish_now and await publish_article(db, article_doc, actor=editor_id or "cms"):
+        await after_article_publication(slug)
+    else:
+        await invalidate_article_caches()
+    return await get_article_by_id(db, article_id, include_unpublished=True)
 
 
 _PLAIN_TEXT_FIELDS = {"title", "summary", "author"}
@@ -808,6 +887,17 @@ async def update_article(
     if "status" in update_dict and hasattr(update_dict["status"], "value"):
         update_dict["status"] = update_dict["status"].value
 
+    publish_from = None
+    publish_at = None
+    if update_dict.get("status") == PUBLIC_STATUS:
+        update_dict.pop("status")
+        current = await db["articles"].find_one({"_id": article_id}, {"embedding": 0})
+        if current and current.get("status", PUBLIC_STATUS) != PUBLIC_STATUS:
+            publish_from = current
+            publish_at = update_dict.pop("published_at", None)
+            if "scheduled_at" in update_dict:
+                publish_from["scheduled_at"] = update_dict["scheduled_at"]
+
     if "thumbnail_url" in update_dict:
         update_dict["thumbnail_url"] = await _save_base64_thumbnail(update_dict["thumbnail_url"])
 
@@ -816,27 +906,8 @@ async def update_article(
             update_dict[field] = sanitize_text(update_dict[field])
 
     if update_dict:
-        prev = await Article.get_motor_collection().find_one({"_id": article_id}, {"slug": 1, "status": 1, "published_at": 1})
-        prev_status = prev.get("status") if prev else None
-        prev_slug = prev.get("slug") if prev else ""
-
-        # If the article is being published, ensure it has a published_at date
-        if update_dict.get("status") == PUBLIC_STATUS:
-            if not prev or not prev.get("published_at"):
-                update_dict["published_at"] = datetime.now(timezone.utc)
-
         update_dict["last_updated"] = datetime.now(timezone.utc)
         update_dict["updated_at"] = datetime.now(timezone.utc)
-
-        # Newly published → tell Bing/IndexNow immediately (best-effort, async,
-        # never blocks or raises on failure).
-        becoming_published = (
-            update_dict.get("status") == PUBLIC_STATUS
-            and prev_status != PUBLIC_STATUS
-            and prev_slug
-        )
-        if becoming_published:
-            _fire_and_forget(_notify_indexnow(prev_slug))
 
         try:
             await Article.get_motor_collection().update_one({"_id": article_id}, {"$set": update_dict})
@@ -896,7 +967,12 @@ async def update_article(
                     {"$set": {"embedding": embedding}}
                 )
 
-    await invalidate_article_caches()
+    if publish_from:
+        if not await publish_article(db, publish_from, actor=editor_id or "cms", published_at=publish_at):
+            raise HTTPException(status_code=409, detail="Article status changed. Reload before publishing.")
+        await after_article_publication(update_dict.get("slug") or publish_from["slug"])
+    else:
+        await invalidate_article_caches()
     return await get_article_by_id(db, article_id, include_unpublished=True)
 
 

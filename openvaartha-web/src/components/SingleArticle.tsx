@@ -21,6 +21,7 @@ import { cn, getArticleImage, handleImageFallback, categorySlug } from "@/lib/ut
 import { categoryColors } from "@/lib/types";
 import { BRAND, pageTitle, SITE_TITLE } from "@/lib/brand";
 import { apiFetch } from "@/lib/api";
+import { trackStory } from "@/lib/reader-analytics";
 import CommentSection from "@/components/CommentSection";
 import ReactionBar from "@/components/ReactionBar";
 import QuoteCardModal from "@/components/QuoteCardModal";
@@ -243,6 +244,9 @@ const SingleArticle = ({ articleId, onInView, isActive = true }: { articleId: st
       .catch(() => {});
   }, []);
   useSEOMeta(article);
+  useEffect(() => {
+    if (inView && article?.status === "published") trackStory(article.slug);
+  }, [inView, article?.slug, article?.status]);
 
   // Record this view in the signed-in reader's history. Fire-and-forget:
   // history is a convenience, not something a failed request should surface

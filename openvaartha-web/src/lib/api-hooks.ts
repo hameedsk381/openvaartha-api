@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import type { Article, Category, Comment, CorrectionIndexItem, Dispatch, Poll } from "./types";
 import { apiFetch } from "./api";
+import { trackNewsletterSignup } from "./reader-analytics";
 
 export function useCorrectionsIndex(params?: { skip?: number; limit?: number }) {
   const { skip = 0, limit = 50 } = params || {};
@@ -144,14 +145,19 @@ export function useCommentCount(articleId: string) {
   });
 }
 
+export async function subscribeToNewsletter(email: string) {
+  const result = await apiFetch<{ message: string; email: string }>("/newsletter/subscribe", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+  trackNewsletterSignup();
+  return result;
+}
+
 export function useNewsletterSubscribe() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (email: string) =>
-      apiFetch<{ message: string; email: string }>("/newsletter/subscribe", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      }),
+    mutationFn: subscribeToNewsletter,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["newsletter"] });
     },

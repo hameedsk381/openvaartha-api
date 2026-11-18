@@ -70,8 +70,8 @@ async def list_sources(db: AsyncIOMotorDatabase, active_only: bool = False) -> l
     return docs
 
 
-async def set_last_fetched(db: AsyncIOMotorDatabase, source_id: str):
+async def set_last_fetched(db: AsyncIOMotorDatabase, source_id: str, fetched_at: datetime):
     await db["sources"].update_one(
         {"_id": source_id},
-        {"$set": {"last_fetched_at": datetime.now(timezone.utc)}},
+        {"$max": {"last_fetched_at": fetched_at}},
     )

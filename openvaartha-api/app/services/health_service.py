@@ -20,14 +20,13 @@ async def get_worker_health() -> dict:
     from app.tasks import celery_app
 
     try:
-        # control.ping sends a broadcast ping and returns {node: reply}. Runs
-        # synchronously (it blocks the event loop briefly), so wrap in executor.
+        # control.ping returns a list of replies, one mapping per worker.
         import asyncio
         result = await asyncio.get_event_loop().run_in_executor(
             None,
             lambda: celery_app.control.ping(timeout=3.0),
         )
-        nodes = sorted(result.keys()) if isinstance(result, dict) else []
+        nodes = sorted({node for reply in result for node, data in reply.items() if data.get("ok") == "pong"})
         return {"alive": nodes, "count": len(nodes), "healthy": len(nodes) > 0}
     except Exception as e:  # broker down, auth error, etc.
         logger.warning("Worker ping failed: %s", e)

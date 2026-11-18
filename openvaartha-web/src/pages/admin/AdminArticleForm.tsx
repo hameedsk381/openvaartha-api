@@ -196,6 +196,15 @@ export default function AdminArticleForm() {
     enabled: isEditing,
     retry: 1,
   });
+  const reviewRecord = useQuery({
+    queryKey: ["admin", "review-record", articleId],
+    queryFn: () => apiFetch<{ review_owner_name?: string; review_reason?: string; status?: string; ingestion_origin?: string }>(
+      `/articles/review/${articleId}`,
+    ),
+    enabled: isEditing,
+  }).data;
+  const inReview = reviewRecord?.status === "pending"
+    || (reviewRecord?.status === "draft" && Boolean(reviewRecord.ingestion_origin));
 
   useEffect(() => {
     const article = articleQuery.data;
@@ -417,15 +426,17 @@ export default function AdminArticleForm() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <Link
-            to={form.status === "pending" ? "/admin/contributions" : "/admin/articles"}
+            to={inReview ? "/admin/contributions" : "/admin/articles"}
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-1"
           >
             <ArrowLeft className="h-4 w-4" animateOnHover />
-            {form.status === "pending" ? "Review Queue" : "Articles"}
+            {inReview ? "Review Queue" : "Articles"}
           </Link>
           <h1 className="text-2xl font-bold tracking-tight">
             {form.status === "pending" ? "Review Contribution" : isEditing ? "Edit article" : "New article"}
           </h1>
+          {reviewRecord?.review_owner_name && <p className="text-sm">Reviewer {reviewRecord.review_owner_name}</p>}
+          {reviewRecord?.review_reason && <p className="text-sm">Archive reason: {reviewRecord.review_reason}</p>}
           {form.status === "pending" && (
             <div className="mt-2 flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-600 border border-amber-500/20">
@@ -450,22 +461,6 @@ export default function AdminArticleForm() {
             if (data.read_time) update("readTime", data.read_time);
           }} />
           
-          {form.status === "pending" && (
-            <Button 
-              type="button" 
-              onClick={() => {
-                update("status", "published");
-                update("publishedAt", toDateInput(new Date().toISOString()));
-                setTimeout(() => mutation.mutate(), 50); // Small delay to let state update
-              }}
-              disabled={mutation.isPending} 
-              className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-            >
-              {mutation.isPending ? <LoaderCircle className="h-4 w-4" animate /> : <AnimatedIcon animationType="scale"><Save className="h-4 w-4" /></AnimatedIcon>}
-              Approve & Publish
-            </Button>
-          )}
-
           <Button type="submit" disabled={mutation.isPending} className="gap-2">
             {mutation.isPending ? <LoaderCircle className="h-4 w-4" animate /> : <AnimatedIcon animationType="scale"><Save className="h-4 w-4" /></AnimatedIcon>}
             {form.status === "pending" ? "Save Edits" : "Save"}
@@ -611,13 +606,16 @@ export default function AdminArticleForm() {
                 </SelectTrigger>
                 <SelectContent>
                   {ARTICLE_STATUSES.map((status) => (
-                    <SelectItem key={status} value={status}>
+                    <SelectItem key={status} value={status}
+                      disabled={inReview && (status === "published" || status === "archived")}>
                       {status.charAt(0).toUpperCase() + status.slice(1)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">Drafts and archived articles are invisible to readers.</p>
+              <p className="text-xs text-muted-foreground">
+                {inReview ? "Publish or archive this story from the Review Queue." : "Drafts and archived articles are invisible to readers."}
+              </p>
             </Field>
             <Field label="Category">
               <Select value={form.categoryId} onValueChange={(value) => update("categoryId", value)}>
@@ -1092,7 +1090,8 @@ export default function AdminArticleForm() {
             </SelectTrigger>
             <SelectContent>
               {ARTICLE_STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
+                <SelectItem key={status} value={status}
+                  disabled={inReview && (status === "published" || status === "archived")}>
                   {status.charAt(0).toUpperCase() + status.slice(1)}
                 </SelectItem>
               ))}

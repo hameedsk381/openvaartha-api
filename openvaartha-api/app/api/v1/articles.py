@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 from pymongo.errors import DuplicateKeyError
-from typing import List, Optional, Union, Dict, Any
+from typing import List, Optional, Union, Dict, Any, Literal
 from datetime import datetime, timezone
 
 from app.database import get_db
@@ -17,6 +17,133 @@ from app.models.user import User as UserModel
 from app.models.article import Article as ArticleModel
 
 router = APIRouter()
+
+REVIEW_QUEUE = {"$or": [
+    {"status": "pending"},
+    {"status": "draft", "ingestion_origin": {"$in": ["rss", "news-agent"]}},
+]}
+
+
+@router.get("/review/queue")
+async def review_queue(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=50),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_editor),
+):
+    collection = db["articles"]
+    rows = await collection.find(REVIEW_QUEUE, {
+        "title": 1, "summary": 1, "slug": 1, "author": 1, "category_id": 1,
+        "created_at": 1, "ingestion_origin": 1, "review_owner_id": 1, "review_owner_name": 1,
+    }).sort([("created_at", 1), ("_id", 1)]).skip(skip).limit(limit).to_list(length=limit)
+    return {
+        "items": [{
+            "id": str(row["_id"]),
+            "title": row["title"],
+            "summary": row["summary"],
+            "slug": row["slug"],
+            "author": row.get("author"),
+            "categoryId": str(row.get("category_id") or ""),
+            "createdAt": row["created_at"].replace(tzinfo=timezone.utc) if row.get("created_at") else None,
+            "origin": row.get("ingestion_origin") or "submission",
+            "owner": row.get("review_owner_name"),
+            "ownedByMe": row.get("review_owner_id") == current_user.id,
+        } for row in rows],
+        "total": await collection.count_documents(REVIEW_QUEUE),
+    }
+
+
+class ReviewAction(BaseModel):
+    action: Literal["claim", "release", "archive", "publish"]
+    reason: str = Field(default="", max_length=1000)
+
+
+class ReviewCitation(BaseModel):
+    publisher: str = Field(min_length=1, max_length=200)
+    url: HttpUrl
+
+
+@router.put("/review/{article_id}/citation")
+async def add_review_citation(
+    article_id: str,
+    body: ReviewCitation,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_editor),
+):
+    article = await db["articles"].find_one({
+        "_id": article_id, **REVIEW_QUEUE, "review_owner_id": current_user.id,
+        "ingestion_origin": {"$in": ["rss", "news-agent"]},
+    })
+    if not article or await article_service.has_attributed_source(db, article_id):
+        raise HTTPException(status_code=409, detail="The review changed or a source has already been added.")
+    publisher = body.publisher.strip()
+    if not publisher:
+        raise HTTPException(status_code=422, detail="Enter the source publisher.")
+    await db["article_sources"].update_one(
+        {"source_id": "editorial-review", "guid": article_id},
+        {"$setOnInsert": {
+            "article_id": article_id, "publisher": publisher, "url": str(body.url),
+            "created_at": datetime.now(timezone.utc), "added_by": current_user.id,
+        }},
+        upsert=True,
+    )
+    return {"status": "ok"}
+
+
+@router.post("/review/{article_id}")
+async def review_article(
+    article_id: str,
+    body: ReviewAction,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_editor),
+):
+    now = datetime.now(timezone.utc)
+    query = {"_id": article_id, **REVIEW_QUEUE}
+    if body.action == "publish":
+        query["review_owner_id"] = current_user.id
+        article = await db["articles"].find_one(query)
+        if not article or not await article_service.publish_article(db, article, actor=current_user.id, published_at=now):
+            raise HTTPException(status_code=409, detail="The review changed. Refresh the queue and try again.")
+        await article_service.after_article_publication(article["slug"])
+        return {"status": "ok"}
+
+    if body.action == "claim":
+        query["review_owner_id"] = {"$in": [None, current_user.id]}
+        update = {"$set": {
+            "review_owner_id": current_user.id,
+            "review_owner_name": current_user.full_name,
+            "review_claimed_at": now,
+        }}
+    elif body.action == "release":
+        query["review_owner_id"] = current_user.id
+        update = {"$unset": {"review_owner_id": "", "review_owner_name": "", "review_claimed_at": ""}}
+    else:
+        if not body.reason.strip():
+            raise HTTPException(status_code=422, detail="Enter an editorial reason before archiving.")
+        query["review_owner_id"] = current_user.id
+        update = {"$set": {
+            "status": "archived", "review_reason": body.reason.strip(),
+            "reviewed_at": now, "updated_at": now, "last_updated": now,
+        }}
+    result = await db["articles"].update_one(query, update)
+    if not result.matched_count:
+        raise HTTPException(status_code=409, detail="The review changed. Refresh the queue and try again.")
+    return {"status": "ok"}
+
+
+@router.get("/review/{article_id}")
+async def article_review_record(
+    article_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserModel = Depends(get_current_editor),
+):
+    article = await db["articles"].find_one({"_id": article_id}, {
+        "_id": 0, "review_owner_name": 1, "review_reason": 1, "reviewed_at": 1,
+        "published_by": 1, "status": 1, "ingestion_origin": 1,
+    })
+    if article is None:
+        raise HTTPException(status_code=404, detail="Article not found")
+    return article
 
 
 def _caller_can_see_unpublished(current_user: Optional[UserModel]) -> bool:
@@ -428,7 +555,7 @@ async def create_article(
     current_user: UserModel = Depends(get_current_editor),
 ):
     """Create a new article (admin only). Defaults to draft if status omitted."""
-    return await article_service.create_article(db, article_data)
+    return await article_service.create_article(db, article_data, editor_id=current_user.id)
 
 
 @router.put("/{article_id}", response_model=Article)
@@ -445,6 +572,11 @@ async def update_article(
     existing = await article_service.get_article_by_id(db, article_id, include_unpublished=True)
     if not existing:
         raise HTTPException(status_code=404, detail="Article not found")
+    if article_data.status in ("published", "archived") and (
+        existing.get("status") == "pending"
+        or (existing.get("status") == "draft" and existing.get("ingestion_origin"))
+    ):
+        raise HTTPException(status_code=409, detail="Use the Review Queue to publish or archive this story.")
     return await article_service.update_article(
         db, article_id, article_data, editor_id=current_user.id
     )

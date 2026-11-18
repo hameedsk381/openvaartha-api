@@ -4,8 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { apiFetch } from "@/lib/api";
-import { useArticles } from "@/lib/api-hooks";
+import { subscribeToNewsletter, useArticles } from "@/lib/api-hooks";
 import { BRAND, pageTitle, SITE_TITLE } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
@@ -239,10 +238,7 @@ const JoinPage = () => {
     setStatus("sending");
     setNote("");
     try {
-      await apiFetch("/newsletter/subscribe", {
-        method: "POST",
-        body: JSON.stringify({ email: value }),
-      });
+      await subscribeToNewsletter(value);
       setStatus("done");
       setEmail("");
       setNote("You are on the list. The first digest arrives tomorrow morning.");

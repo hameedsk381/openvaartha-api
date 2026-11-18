@@ -75,6 +75,50 @@ class TestDraftPublishWorkflow:
         assert data["status"] == "draft"
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize("automated", [False, True])
+    async def test_review_to_public_article(
+        self, client, admin_headers, auth_headers, test_user, test_category, db, automated
+    ):
+        payload = _article_payload(test_category["id"])
+        if automated:
+            created = await client.post("/api/v1/articles/", json=payload, headers=admin_headers)
+        else:
+            await db["users"].update_one({"_id": test_user["id"]}, {"$set": {"role": "contributor"}})
+            created = await client.post("/api/v1/articles/contributions", json=payload, headers=auth_headers)
+        assert created.status_code == 200, created.text
+        article = created.json()
+        article_id = article["id"]
+        if automated:
+            await db["articles"].update_one({"_id": article_id}, {"$set": {"ingestion_origin": "rss"}})
+        else:
+            assert article["authorId"] == test_user["id"]
+
+        queue_path = "/api/v1/articles/review/queue"
+        assert (await client.get(queue_path, headers=auth_headers)).status_code == 403
+        queue = await client.get(queue_path, headers=admin_headers)
+        entry = next(item for item in queue.json()["items"] if item["id"] == article_id)
+        assert entry["origin"] == ("rss" if automated else "submission")
+        assert entry["owner"] is None
+        review = f"/api/v1/articles/review/{article_id}"
+        assert (await client.post(review, json={"action": "claim"}, headers=admin_headers)).status_code == 200
+        if automated:
+            assert (await client.post(review, json={"action": "publish"}, headers=admin_headers)).status_code == 422
+            source = await client.put(
+                f"{review}/citation",
+                json={"publisher": "Example Press", "url": "https://example.com/story"},
+                headers=admin_headers,
+            )
+            assert source.status_code == 200, source.text
+        published = await client.post(review, json={"action": "publish"}, headers=admin_headers)
+        assert published.status_code == 200, published.text
+        public = await client.get(f"/api/v1/articles/{article['slug']}")
+        assert public.status_code == 200
+        assert public.json()["content"]["body"] == "<p>Body paragraph.</p>"
+        if automated:
+            assert public.json()["citations"][0]["publisher"] == "Example Press"
+        assert "review_owner_name" not in public.json()
+
+    @pytest.mark.asyncio
     async def test_drafts_hidden_from_public_list(self, client: AsyncClient, admin_headers, test_category):
         await client.post(
             "/api/v1/articles/",

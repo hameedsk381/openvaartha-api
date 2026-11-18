@@ -15,6 +15,17 @@ def test_health_env_requires_admin(client):
     assert client.get("/health/env").status_code == 401
 
 
+def test_readiness_checks_dependencies(client):
+    response = client.get("/health/ready")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready"}
+
+
+def test_ops_health_requires_admin(client, admin_headers):
+    assert client.get("/health/ops").status_code == 401
+    assert client.get("/health/ops", headers=admin_headers).status_code == 200
+
+
 def test_health_env_allows_admin(client, admin_headers):
     r = client.get("/health/env", headers=admin_headers)
     assert r.status_code == 200

@@ -7,9 +7,10 @@ from uuid import uuid4
 
 import feedparser
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.errors import DuplicateKeyError
 
 from app.config import settings
-from app.core.sanitize import sanitize_html, sanitize_text
+from app.core.sanitize import sanitize_text
 from app.services.ai_service import generate_article
 from app.services.source_service import set_last_fetched
 
@@ -149,19 +150,25 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
 
     Returns the number of new articles created.
     """
+    from app.services.article_service import after_article_publication, is_attributed_source, store_ingested_article
+
     feed_url = source.get("feed_url", "")
     if not feed_url:
         return 0
 
+    fetch_started_at = datetime.now(timezone.utc)
     entries = await fetch_and_parse(feed_url)
     if not entries:
         return 0
 
     last_fetched = source.get("last_fetched_at")
+    if last_fetched and last_fetched.tzinfo is None:
+        last_fetched = last_fetched.replace(tzinfo=timezone.utc)
     category_id = source.get("category_id", "")
     language = source.get("language", "en")
     auto_publish = source.get("auto_publish", settings.AUTO_PUBLISH_RSS)
     new_count = 0
+    generation_failed = False
 
     for entry in entries:
         published = entry["published"]
@@ -172,6 +179,11 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
         guid = entry["guid"]
         existing = await db["article_sources"].find_one({"guid": guid, "source_id": source["_id"]})
         if existing:
+            continue
+
+        slug = _slugify(entry["title"]) or f"article-{guid[:12]}"
+        if await is_duplicate_story(db, slug, entry["title"]):
+            logger.info("Skipping already-covered story: %s", entry["title"])
             continue
 
         source_text = f"{entry['title']}\n\n{entry['content'] or entry['summary']}"
@@ -186,31 +198,34 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
             )
         except Exception as e:
             logger.error("AI generation failed for entry %s: %s", guid, e)
+            generation_failed = True
             continue
 
         if not result:
             logger.warning("AI returned no result for entry %s", guid)
+            generation_failed = True
             continue
 
         article_id = str(uuid4())
-        slug = _slugify(entry["title"]) or f"article-{article_id[:8]}"
-
-        # Same story syndicated across multiple sources must only be ingested
-        # once — otherwise we create slug ``-2``/``-3`` near-duplicate articles.
-        if await is_duplicate_story(db, slug, entry["title"]):
-            logger.info("Skipping already-covered story: %s", entry["title"])
-            continue
 
         published_dt = published or datetime.now(timezone.utc)
+        body = result.get("body") or ""
+        source_url = (entry.get("link") or "").strip()
+        publisher = source.get("name") or ""
+        can_auto_publish = (
+            auto_publish and sanitize_text(body)
+            and is_attributed_source({"publisher": publisher, "url": source_url})
+        )
         article_doc = {
             "_id": article_id,
             "slug": slug,
             "title": result["title"],
             "summary": result["summary"],
             "category_id": category_id,
-            "read_time": _estimate_read_time(result.get("body", "")),
+            "read_time": _estimate_read_time(body),
             "language": language,
-            "status": "published" if auto_publish else "draft",
+            "status": "draft",
+            "ingestion_origin": "rss",
             "is_trending": False,
             "is_breaking": False,
             "is_editor_pick": False,
@@ -224,36 +239,42 @@ async def process_source(db: AsyncIOMotorDatabase, source: dict) -> int:
             "has_deep_content": False,
         }
 
-        await db["articles"].insert_one(article_doc)
-
         content_doc = {
             "article_id": article_id,
             "tldr": result.get("tldr", ""),
             "points": result.get("points", []),
-            "body": result.get("body", ""),
+            "body": body,
             "timeline": result.get("timeline", None),
             "explainer": result.get("explainer", None),
         }
-        await db["article_content"].insert_one(content_doc)
-        
-        from app.services.article_service import invalidate_article_caches
-        await invalidate_article_caches()
-
-        # Keep the source relation in its own collection.  ``ArticleSource``
-        # is a Pydantic value object, not a persisted document model.
-        await db["article_sources"].insert_one({
+        source_doc = {
             "article_id": article_id,
             "source_id": source["_id"],
             "guid": guid,
-            "url": entry.get("link", ""),
-            "publisher": source.get("name", ""),
+            "url": source_url,
+            "publisher": publisher,
             "published_at": published,
             "created_at": datetime.now(timezone.utc),
-        })
+        }
 
+        try:
+            await store_ingested_article(
+                db, article_doc, content_doc, source_doc, auto_publish=bool(can_auto_publish)
+            )
+        except DuplicateKeyError:
+            # A concurrent ingest can win either the slug or source/GUID index.
+            if await db["article_sources"].find_one({"guid": guid, "source_id": source["_id"]}):
+                continue
+            if await is_duplicate_story(db, slug, entry["title"]):
+                continue
+            raise
+
+        if can_auto_publish:
+            await after_article_publication(slug)
         new_count += 1
 
-    await set_last_fetched(db, source["_id"])
+    if not generation_failed:
+        await set_last_fetched(db, source["_id"], fetch_started_at)
     return new_count
 
 

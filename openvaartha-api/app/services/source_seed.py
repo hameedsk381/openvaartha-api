@@ -122,7 +122,7 @@ async def seed_categories_and_sources(db: AsyncIOMotorDatabase) -> dict:
             "category_id": category_ids[category_name],
             "language": "en",
             "active": True,
-            "auto_publish": True,
+            "auto_publish": False,
             "last_fetched_at": None,
             "created_at": datetime.now(timezone.utc),
         })

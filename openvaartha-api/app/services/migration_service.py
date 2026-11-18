@@ -107,6 +107,7 @@ async def migrate(db: AsyncIOMotorDatabase) -> dict:
     seed_result = await seed_categories_and_sources(db)
     categories_reprioritized = await apply_category_priority_defaults(db)
     duplicates = await cleanup_near_duplicate_articles(db)
+    automated_drafts = await backfill_automated_draft_origins(db)
 
     return {
         "indexed": indexed,
@@ -114,4 +115,40 @@ async def migrate(db: AsyncIOMotorDatabase) -> dict:
         "seed_result": seed_result,
         "categories_reprioritized": categories_reprioritized,
         "duplicates": duplicates,
+        "automated_drafts_classified": automated_drafts,
     }
+
+
+async def backfill_automated_draft_origins(db: AsyncIOMotorDatabase) -> int:
+    """Make existing sourced drafts visible in the review queue."""
+    from urllib.parse import urlsplit
+
+    cursor = db["articles"].aggregate([
+        {"$match": {"status": "draft", "ingestion_origin": {"$exists": False}}},
+        {"$lookup": {
+            "from": "article_sources", "localField": "_id",
+            "foreignField": "article_id", "as": "sources",
+        }},
+        {"$project": {"source": {"$arrayElemAt": ["$sources", 0]}}},
+        {"$match": {"source.source_id": {"$exists": True}, "source.guid": {"$exists": True}}},
+    ])
+    classified = 0
+    async for article in cursor:
+        source = article["source"]
+        origin = "news-agent" if source["source_id"] == "news-agent" else "rss"
+        if origin == "news-agent" and not source.get("publisher"):
+            try:
+                publisher = urlsplit(source.get("url") or "").hostname
+            except ValueError:
+                publisher = None
+            if publisher:
+                await db["article_sources"].update_one(
+                    {"_id": source["_id"], "publisher": {"$in": [None, ""]}},
+                    {"$set": {"publisher": publisher}},
+                )
+        result = await db["articles"].update_one(
+            {"_id": article["_id"], "status": "draft", "ingestion_origin": {"$exists": False}},
+            {"$set": {"ingestion_origin": origin}},
+        )
+        classified += result.modified_count
+    return classified
