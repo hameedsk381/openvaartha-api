@@ -6,7 +6,6 @@ import { Clock } from '@/components/animate-ui/icons/clock';
 import { getArticleImage, handleImageFallback, relativeTime } from '@/lib/utils';
 import { useReadingList } from '@/hooks/use-reading-list';
 import type { Article } from '@/lib/types';
-import HeroCarousel from '@/components/HeroCarousel';
 
 const MotionLink = motion.create(Link);
 
@@ -19,73 +18,51 @@ export default function HeroClassic({ articles }: { articles: Article[] }) {
   const topRail = articles.slice(1, 5);
 
   return (
-    <>
-      {/* Mobile: Swipeable carousel */}
-      <div className="lg:hidden">
-        <HeroCarousel articles={articles.slice(0, 5)} />
-      </div>
-
-      {/* Desktop: Hero + Top Stories sidebar */}
-      <section className="hidden lg:block border-b border-border">
+      <section aria-label="Top stories" className="border-b border-border">
         <div className="grid grid-cols-1 lg:grid-cols-12">
-          <div className="lg:col-span-8 lg:border-r lg:border-border">
+          <div className="relative lg:col-span-8 lg:border-r lg:border-border">
             <MotionLink
               to={`/article/${hero.slug}`}
               className="block group press relative"
               initial="initial"
               whileHover="hover"
             >
-              <div className="relative overflow-hidden aspect-[16/10] bg-[hsl(var(--surface-2))] bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900 border-b border-border">
+              <div className="relative overflow-hidden aspect-[16/9] lg:aspect-[16/10] bg-[hsl(var(--surface-2))] border-b border-border">
                 <img
                   src={getArticleImage(hero.thumbnailUrl)}
-                  alt={hero.title}
+                  alt=""
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                   loading="eager"
                   onError={handleImageFallback}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                <div className="absolute inset-0 hidden bg-gradient-to-t from-black/90 via-black/35 to-transparent lg:block" />
               </div>
 
-              <button
-                onClick={(e) => { e.preventDefault(); toggleSave(hero); }}
-                className="absolute top-4 right-4 h-11 w-11 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-primary transition-colors press"
-                aria-label={isSaved(hero.id) ? "Remove from reading list" : "Save article"}
-                aria-pressed={isSaved(hero.id)}
-              >
-                <AnimatedIcon animationType="scale">
-                  {isSaved(hero.id)
-                    ? <BookmarkCheck className="h-4 w-4 fill-current" />
-                    : <Bookmark className="h-4 w-4" />}
-                </AnimatedIcon>
-              </button>
-
-              <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 lg:p-10">
-                {/* One loud chip, one quiet metadata line: the section is the only
-                    maroon element on the lead story, so the eye has one anchor. */}
+              <div className="border-l-4 border-primary bg-card p-4 sm:p-6 lg:absolute lg:inset-x-0 lg:bottom-0 lg:border-0 lg:bg-transparent lg:p-10">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-4">
                   <span className="chip-primary">{hero.category}</span>
-                  <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-white/70">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground lg:text-white/80">
                     <Clock className="h-3 w-3" /> {hero.readTime}
                   </span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-white/50">
+                  <span className="text-xs font-semibold text-muted-foreground lg:text-white/70">
                     {relativeTime(hero.publishedAt)}
                   </span>
                   {hero.isTrending && (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-secondary">
+                    <span className="flex items-center gap-1 text-xs font-semibold text-primary lg:text-white">
                       <Flame className="h-3 w-3 fill-current" /> Trending
                     </span>
                   )}
                 </div>
-                <h2 className="poster text-white text-3xl sm:text-5xl lg:text-6xl max-w-3xl line-clamp-3">
+                <h2 className="poster text-foreground text-3xl sm:text-4xl lg:text-5xl lg:text-white max-w-3xl">
                   {hero.title}
                 </h2>
-                <p className="text-white/80 text-sm sm:text-base mt-3 line-clamp-2 max-w-2xl leading-relaxed">
+                <p className="text-muted-foreground lg:text-white/85 text-sm sm:text-base mt-3 line-clamp-2 max-w-2xl leading-relaxed">
                   {hero.summary}
                 </p>
-                <div className="flex items-center justify-between gap-4 mt-5">
-                  <span className="text-white/60 text-xs font-medium truncate">{hero.author}</span>
-                  <span className="text-white text-xs font-semibold uppercase tracking-[0.18em] flex items-center gap-1.5 group-hover:text-secondary transition-colors">
-                    Continue reading
+                <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
+                  <span className="text-muted-foreground lg:text-white/75 text-xs font-medium">{hero.author}</span>
+                  <span className="text-primary lg:text-white text-xs font-semibold flex items-center gap-1.5 group-hover:underline transition-colors">
+                    Read article
                     <AnimatedIcon animationType="arrowUpRight">
                       <ArrowUpRight className="h-3.5 w-3.5" />
                     </AnimatedIcon>
@@ -93,20 +70,29 @@ export default function HeroClassic({ articles }: { articles: Article[] }) {
                 </div>
               </div>
             </MotionLink>
+            <button type="button"
+              onClick={() => toggleSave(hero)}
+              className="absolute top-3 right-3 flex h-12 w-12 items-center justify-center rounded-full bg-black/65 text-white hover:bg-primary focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label={isSaved(hero.id) ? "Remove from reading list" : "Save article"}
+              aria-pressed={isSaved(hero.id)}
+            >
+              {isSaved(hero.id)
+                ? <BookmarkCheck className="h-5 w-5 fill-current" />
+                : <Bookmark className="h-5 w-5" />}
+            </button>
           </div>
 
-          <aside className="lg:col-span-4 flex flex-col">
-            <div className="px-6 py-4 lg:py-5 border-b border-border flex items-baseline justify-between">
-              <h3 className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
-                Top stories
+          {topRail.length > 0 && <aside className="lg:col-span-4 flex flex-col bg-muted/20 border-t lg:border-t-0 border-border">
+            <div className="px-4 sm:px-6 py-4 border-b border-border">
+              <h3 className="font-display text-sm font-bold tracking-wide text-foreground">
+                More top stories
               </h3>
-              <span className="overline">Now</span>
             </div>
             {topRail.map((art, i) => (
               <Link
                 key={art.id}
                 to={`/article/${art.slug}`}
-                className={`group press flex gap-4 px-6 py-4 hover:bg-[hsl(var(--surface))] transition-colors ${
+                className={`group press flex gap-4 px-4 sm:px-6 py-3.5 hover:bg-muted/60 transition-colors ${
                   i !== topRail.length - 1 ? 'border-b border-border' : ''
                 }`}
               >
@@ -136,9 +122,8 @@ export default function HeroClassic({ articles }: { articles: Article[] }) {
                 </div>
               </Link>
             ))}
-          </aside>
+          </aside>}
         </div>
       </section>
-    </>
   );
 }

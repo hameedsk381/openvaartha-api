@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { Clock } from '@/components/animate-ui/icons/clock';
 import { getArticleImage, handleImageFallback, relativeTime } from '@/lib/utils';
 import type { Article } from '@/lib/types';
-import SectionLink from './SectionLink';
 
 export default function EditorPicks({ picks }: { picks: Article[] }) {
   // Always render the section to reserve vertical space and prevent CLS.
@@ -11,15 +10,9 @@ export default function EditorPicks({ picks }: { picks: Article[] }) {
   return (
     <section className="border-b border-border bg-[hsl(var(--surface))] px-4 sm:px-6 lg:px-10 py-8 sm:py-12">
       <div className="flex items-center justify-between gap-4 mb-6">
-        <div>
-          <span className="overline text-primary">Editor's picks</span>
-          <h3 className="font-display text-2xl sm:text-3xl font-bold tracking-tight mt-1">
-            Worth your time
-          </h3>
-        </div>
-        <SectionLink to="/trending">
-          View all
-        </SectionLink>
+        <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
+          Editor’s picks
+        </h2>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

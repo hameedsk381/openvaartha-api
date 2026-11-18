@@ -37,24 +37,20 @@ export default function MainFeed({
 
   return (
     <>
-      {(switching || feed.length > 0) && (
-        <div className="px-4 sm:px-6 lg:px-10 py-5 border-b border-border flex items-baseline justify-between">
-          <div>
-            <span className="overline text-primary">{isFiltered ? displayCategoryName : 'Latest'}</span>
-            <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight mt-0.5">
+        <div className="px-4 sm:px-6 lg:px-10 py-5 border-b border-border flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight">
               {isFiltered ? `${displayCategoryName} stories` : 'The latest'}
-            </h3>
-          </div>
+            </h2>
 
           <div className="flex items-center gap-2">
             {!isFiltered && (
-              <div className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border border-border">
+              <div role="group" aria-label="Feed view" className="flex items-center gap-1 bg-secondary/50 p-1 rounded-lg border border-border">
                 <button
                   type="button"
                   onClick={() => setFeedTab('latest')}
                   aria-pressed={feedTab === 'latest'}
                   className={cn(
-                    "h-10 px-3 rounded-md text-xs font-semibold transition-colors press",
+                    "h-11 px-3 rounded-md text-sm font-semibold transition-colors press",
                     feedTab === 'latest' ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -65,7 +61,7 @@ export default function MainFeed({
                   onClick={() => setFeedTab('forYou')}
                   aria-pressed={feedTab === 'forYou'}
                   className={cn(
-                    "h-10 px-3 rounded-md text-xs font-semibold transition-colors press flex items-center gap-1",
+                    "h-11 px-3 rounded-md text-sm font-semibold transition-colors press flex items-center gap-1",
                     feedTab === 'forYou' ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -73,21 +69,26 @@ export default function MainFeed({
                 </button>
               </div>
             )}
-            <span className="text-xs text-muted-foreground font-medium hidden sm:inline">{feed.length} stories</span>
           </div>
         </div>
-      )}
 
       {switching ? (
         <div className="px-4 sm:px-6 lg:px-10 py-6"><FeedSkeleton /></div>
       ) : (
         <>
+          {feed.length === 0 && (
+            <p className="px-4 sm:px-6 lg:px-10 py-6 text-sm text-muted-foreground" role="status">
+              {isFiltered ? "No more stories in this section." : feedTab === 'forYou' ? "No recommendations yet." : "No more recent stories."}
+            </p>
+          )}
           {feed.map((art, index) => (
             <article
               key={art.id}
               className="group flex gap-4 sm:gap-6 px-4 sm:px-6 lg:px-10 py-5 sm:py-6 border-b border-border last:border-0 hover:bg-[hsl(var(--surface))] transition-colors"
             >
-              <Link to={`/article/${art.slug}`} className="flex-1 min-w-0 press">
+              <Link to={`/article/${art.slug}`}
+                className="flex min-w-0 flex-1 items-start gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:gap-5">
+                <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="overline text-primary">{art.category}</span>
                   <span className="h-1 w-1 rounded-full bg-border" />
@@ -126,24 +127,23 @@ export default function MainFeed({
                   <span>·</span>
                   <span className="truncate">{art.author}</span>
                 </div>
-              </Link>
-
-              <div className="flex flex-col items-end gap-2 shrink-0">
-                <Link to={`/article/${art.slug}`} className="press block">
-                    <div className="w-24 h-20 sm:w-32 sm:h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
+                </div>
+                    <div className="w-16 h-16 shrink-0 sm:w-32 sm:h-24 rounded-md overflow-hidden bg-[hsl(var(--surface-2))]">
                       <img
                         src={getArticleImage(art.thumbnailUrl)}
-                        alt={art.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        alt=""
+                        className="w-full h-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-[1.02]"
                         loading="lazy"
-                        sizes="(max-width: 640px) 96px, 128px"
+                        sizes="(max-width: 640px) 64px, 128px"
                         onError={handleImageFallback}
                       />
                     </div>
-                </Link>
+              </Link>
+              <div className="flex flex-col items-end gap-2 shrink-0">
                 <button
+                  type="button"
                   onClick={() => toggleSave(art)}
-                  className={`h-11 w-11 rounded-md flex items-center justify-center transition-colors press
+                  className={`h-11 w-11 rounded-md flex items-center justify-center transition-colors press focus-visible:ring-2 focus-visible:ring-primary
                     ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
                   aria-label={isSaved(art.id) ? "Remove from reading list" : "Save article"}
                   aria-pressed={isSaved(art.id)}
@@ -157,10 +157,10 @@ export default function MainFeed({
           ))}
 
           {/* Load More */}
-          {articlesDataLength >= limit && (
+          {(isFiltered || feedTab === 'latest') && articlesDataLength >= limit && (
             <div className="flex justify-center p-6 border-b border-border">
               <button
-                onClick={() => setLimit(prev => prev + 20)}
+                onClick={() => setLimit(prev => prev + 10)}
                 disabled={isFetching}
                 className="w-full max-w-xs h-11 rounded-md border border-border bg-background text-foreground text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface))] transition-colors press disabled:opacity-50"
               >

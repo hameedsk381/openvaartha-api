@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import BreakingTicker from '../components/BreakingTicker';
@@ -22,10 +22,8 @@ import {
 } from '@/lib/api-hooks';
 
 export default function Index() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const selectedCat = searchParams.get('category') || 'All';
-  const [switching, setSwitching] = useState(false);
-  const switchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: categories = [] } = useCategories();
 
@@ -35,24 +33,21 @@ export default function Index() {
     );
   }, [categories, selectedCat]);
 
-  const [limit, setLimit] = useState(40);
+  const [limit, setLimit] = useState(13);
 
   useEffect(() => {
-    setLimit(40);
+    setLimit(13);
   }, [selectedCat]);
 
   const [feedTab, setFeedTab] = useState<'latest' | 'forYou'>('latest');
-  const { data: articlesData = [], isFetching } = useArticles({
+  const { data: articlesData = [], isFetching, isLoading } = useArticles({
     category: selectedCategoryObj?.id,
     limit
-  });
+  }, true);
 
   const { data: trendingData = [] } = useTrendingArticles(5);
-  const { data: forYouData = [] } = useForYouArticles(25);
-  const { data: editorPicks = [] } = useEditorPicks(6);
-
-  // setCategory function is not used directly in this refactored component, 
-  // but if Navbar uses query params, we are good.
+  const { data: forYouData = [], isLoading: isLoadingForYou } = useForYouArticles(25);
+  const { data: editorPicks = [], isLoading: isLoadingPicks } = useEditorPicks(6);
 
   const displayCategoryName = selectedCategoryObj ? selectedCategoryObj.name : selectedCat;
 
@@ -92,27 +87,12 @@ export default function Index() {
           {/* Classic Hero Section */}
           <HeroClassic articles={filtered.slice(0, 5)} />
 
-          {/* Category Quick Strips. Three sections, so the front page stays
-              scannable and the latest feed is not 24 cards down the page. */}
-          {!isFiltered && categories.length > 0 && (
-            <section className="border-b border-border px-4 sm:px-6 lg:px-10 divide-y divide-border">
-              {categories.slice(0, 3).map((cat) => (
-                <CategoryStrip key={cat.id} category={cat} />
-              ))}
-            </section>
-          )}
-
-          {/* Editor's Picks */}
-          {!switching && !isFiltered && (
-            <EditorPicks picks={picks} />
-          )}
-
           {/* Main Feed + Trending Sidebar */}
-          <section className="grid grid-cols-1 lg:grid-cols-12">
+          <section aria-label="News feed" className="grid grid-cols-1 lg:grid-cols-12 border-b border-border">
             <div className="lg:col-span-8 lg:border-r lg:border-border">
               <MainFeed 
                 feed={feed}
-                switching={switching}
+                switching={feedTab === 'forYou' && !isFiltered ? isLoadingForYou : isLoading}
                 isFiltered={isFiltered}
                 displayCategoryName={displayCategoryName}
                 feedTab={feedTab}
@@ -124,10 +104,20 @@ export default function Index() {
               />
             </div>
 
-            <aside className="lg:col-span-4">
+            <aside className="lg:col-span-4 border-t lg:border-t-0 border-border bg-muted/20">
               <TrendingSidebar trending={trending} />
             </aside>
           </section>
+
+          {!isFiltered && (picks.length > 0 || isLoadingPicks) && <EditorPicks picks={picks} />}
+
+          {!isFiltered && categories.length > 0 && (
+            <section aria-label="News by topic" className="border-b border-border px-4 sm:px-6 lg:px-10 divide-y divide-border">
+              {categories.slice(0, 3).map((cat) => (
+                <CategoryStrip key={cat.id} category={cat} />
+              ))}
+            </section>
+          )}
 
           <Footer />
         </div>

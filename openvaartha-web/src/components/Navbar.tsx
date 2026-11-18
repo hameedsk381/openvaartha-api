@@ -18,6 +18,7 @@ import { useSearch, useCategories, useBreakingArticles } from "@/lib/api-hooks";
 import SignOutButton from "@/components/SignOutButton";
 import { BRAND } from "@/lib/brand";
 import { Heart } from "lucide-react";
+import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface NavbarProps { 
   isInsideStack?: boolean;
@@ -53,14 +54,6 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
     ? location.pathname.split('/category/')[1].replace(/-/g, ' ')
     : (searchParams.get('category') || 'All');
   const searchOverlayRef = useRef<HTMLDivElement | null>(null);
-
-  const setCategory = (cat: string) => {
-    if (cat.toLowerCase() === 'all') {
-      navigate('/');
-    } else {
-      navigate(`/category/${categorySlug(cat)}`);
-    }
-  };
 
   const { data: searchResults = [] } = useSearch(query, 0, 7);
   const { data: categories = [] } = useCategories();
@@ -116,12 +109,12 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
 
   const categoryNames = useMemo(() => categories.map((c) => c.name), [categories]);
 
-  // Hick's law: the header offers a fixed number of choices no matter how many
-  // sections the API returns. Anything past the cap lives behind "More", which
-  // opens the same category list the search overlay already shows.
-  const MAX_INLINE_CATEGORIES = 5;
+  const MAX_INLINE_CATEGORIES = 3;
   const navCategories = categoryNames.slice(0, MAX_INLINE_CATEGORIES);
-  const hasMoreCategories = categoryNames.length > MAX_INLINE_CATEGORIES;
+  const categoryIsCurrent = (category: string) =>
+    (location.pathname === "/" || location.pathname.startsWith("/category/"))
+    && categorySlug(selectedCat) === categorySlug(category);
+  const topicLink = "inline-flex min-h-11 shrink-0 items-center justify-center rounded-md px-3 text-sm font-semibold whitespace-nowrap transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary";
 
   return (
     <>
@@ -131,49 +124,14 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
           isInsideStack ? "" : "border-b border-border"
         )}>
 
-        <div className="h-14 flex items-center justify-between px-4 sm:px-6 max-w-screen-2xl mx-auto">
-          <Link to="/" className="press shrink-0 flex items-center gap-2.5">
+        <div className="min-h-14 flex flex-wrap items-center justify-between px-4 sm:px-6 lg:px-10 max-w-screen-2xl mx-auto">
+          <Link to="/" className="press shrink-0 flex min-h-14 items-center gap-2.5">
             <img src={BRAND.iconMaroonPath} alt="Open Vaartha" className="h-9 w-9 dark:hidden" />
             <img src={BRAND.iconWhitePath} alt="Open Vaartha" className="h-9 w-9 hidden dark:block" />
             <span className="hidden sm:inline font-display text-lg font-extrabold tracking-tight">
               Open<span className="text-primary">vaartha</span>
             </span>
           </Link>
-
-          {/* Desktop category pills in the center */}
-          <nav className="hidden md:flex items-center gap-2 mx-4 overflow-x-auto no-scrollbar max-w-2xl">
-            <Link
-              to="/digest"
-              className="shrink-0 h-10 px-4 rounded-full font-display text-xs font-bold uppercase tracking-wide transition-colors press whitespace-nowrap border-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 text-foreground border-orange-500/30 hover:border-orange-500 flex items-center justify-center gap-1.5"
-            >
-              <Flame className="w-4 h-4 fill-orange-500" />
-              Digest
-            </Link>
-
-            {(["All", ...navCategories] as string[]).map(cat => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                className={cn(
-                  "shrink-0 h-10 px-4 rounded-full font-display text-xs font-bold uppercase tracking-wide transition-colors press whitespace-nowrap border-2",
-                  selectedCat.toLowerCase() === cat.toLowerCase()
-                    ? "bg-primary text-primary-foreground border-foreground"
-                    : "bg-secondary/50 text-[hsl(var(--secondary-foreground))] border-transparent hover:border-foreground hover:bg-secondary"
-                )}
-              >
-                {cat}
-              </button>
-            ))}
-
-            {hasMoreCategories && (
-              <button
-                onClick={() => setSearchOpen(true)}
-                className="shrink-0 h-10 px-4 rounded-full font-display text-xs font-bold uppercase tracking-wide transition-colors press whitespace-nowrap border-2 border-dashed border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-              >
-                More
-              </button>
-            )}
-          </nav>
 
         <div className="flex items-center gap-0.5">
           <button
@@ -257,44 +215,50 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
             </Link>
           )}
         </div>
-        </div>
-        {/* Mobile scrollable category pills row */}
-        <div className="md:hidden relative border-t border-border/50 bg-background">
-          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
-          <div className="py-2 px-6 flex gap-2 overflow-x-auto no-scrollbar relative z-0">
-            <Link
-              to="/digest"
-              className="shrink-0 h-11 px-4 rounded-full text-xs font-bold transition-colors press whitespace-nowrap bg-gradient-to-r from-orange-500/20 to-red-500/20 text-foreground border border-orange-500/30 flex items-center justify-center gap-1"
-            >
-              <Flame className="w-3.5 h-3.5 fill-orange-500" />
+          <nav aria-label="News sections" className="flex w-full items-center gap-1 border-t border-border py-1">
+            <Link to="/" aria-current={categoryIsCurrent("All") ? "page" : undefined}
+              className={cn(topicLink, categoryIsCurrent("All") && "bg-primary/10 text-primary")}>
+              Top stories
+            </Link>
+            <div className="min-w-0 flex flex-1 items-center gap-1 overflow-x-auto no-scrollbar">
+              {navCategories.map((category, index) => (
+                <Link key={category} to={`/category/${categorySlug(category)}`}
+                  aria-current={categoryIsCurrent(category) ? "page" : undefined}
+                  className={cn(topicLink, index > 0 && "hidden sm:inline-flex", categoryIsCurrent(category) && "bg-primary/10 text-primary")}>
+                  {category}
+                </Link>
+              ))}
+            </div>
+            <Link to="/digest" aria-current={location.pathname === "/digest" ? "page" : undefined}
+              className={cn(topicLink, "gap-1.5 border-l border-border", location.pathname === "/digest" && "bg-primary/10 text-primary")}>
+              <Flame className="hidden h-4 w-4 sm:block" aria-hidden="true" />
               Digest
             </Link>
-            
-            {(["All", ...navCategories] as string[]).map(cat => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                className={cn(
-                  "shrink-0 h-11 px-4.5 rounded-full text-xs font-bold transition-colors press whitespace-nowrap",
-                  selectedCat.toLowerCase() === cat.toLowerCase()
-                    ? "bg-primary text-primary-foreground font-bold"
-                    : "bg-secondary/50 text-[hsl(var(--secondary-foreground))] hover:bg-secondary"
-                )}
-              >
-                {cat}
-              </button>
-            ))}
-
-            {hasMoreCategories && (
-              <button
-                onClick={() => setSearchOpen(true)}
-                className="shrink-0 h-11 px-4.5 rounded-full text-xs font-bold transition-colors press whitespace-nowrap border border-dashed border-border text-muted-foreground"
-              >
-                More
-              </button>
+            {categoryNames.length > 0 && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button type="button" className={cn(topicLink, "border border-border")}>All topics</button>
+                </DialogTrigger>
+                <DialogContent className="w-[calc(100%-2rem)] max-h-[75dvh] overflow-y-auto [&>button]:h-11 [&>button]:w-11" aria-describedby={undefined}>
+                  <DialogTitle className="pr-12">All topics</DialogTitle>
+                  <ul className="grid grid-cols-1 gap-1 rounded-lg border border-border bg-muted/30 p-2 sm:grid-cols-2">
+                    {categoryNames.map((category) => (
+                      <li key={category}>
+                        <DialogClose asChild>
+                          <Link to={`/category/${categorySlug(category)}`}
+                            aria-current={categoryIsCurrent(category) ? "page" : undefined}
+                            className={cn(topicLink, "flex w-full justify-start whitespace-normal", categoryIsCurrent(category) && "bg-primary/10 text-primary")}>
+                            {category}
+                          </Link>
+                        </DialogClose>
+                      </li>
+                    ))}
+                  </ul>
+                </DialogContent>
+              </Dialog>
             )}
-          </div>
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
+          </nav>
+
         </div>
       </header>
       )}

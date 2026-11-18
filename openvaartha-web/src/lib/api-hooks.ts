@@ -15,7 +15,7 @@ export function useArticles(params?: {
   category?: string;
   skip?: number;
   limit?: number;
-}) {
+}, keepStoriesOnLimitChange = false) {
   const { category, skip = 0, limit = 20 } = params || {};
   const query = new URLSearchParams({ skip: String(skip), limit: String(limit) });
   if (category) query.set("category_id", category);
@@ -23,6 +23,12 @@ export function useArticles(params?: {
   return useQuery<Article[]>({
     queryKey: ["articles", params],
     queryFn: () => apiFetch<Article[]>(`/articles/?${query}`),
+    placeholderData: keepStoriesOnLimitChange ? (stories, previousQuery) => {
+      const previousParams = previousQuery?.queryKey[1] as typeof params;
+      return previousParams?.category === category && (previousParams?.skip ?? 0) === skip
+        ? stories
+        : undefined;
+    } : undefined,
   });
 }
 
