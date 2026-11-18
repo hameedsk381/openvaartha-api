@@ -48,6 +48,7 @@ const FeedPage = lazy(() => import("./pages/FeedPage.tsx"));
 const FeedPostPage = lazy(() => import("./pages/FeedPostPage.tsx"));
 const DigestPage = lazy(() => import("./pages/DigestPage.tsx"));
 const AboutPage = lazy(() => import("./pages/AboutPage.tsx"));
+const JoinPage = lazy(() => import("./pages/JoinPage.tsx"));
 const ContactPage = lazy(() => import("./pages/ContactPage.tsx"));
 const SupportPage = lazy(() => import("./pages/SupportPage.tsx"));
 const EditorialStandardsPage = lazy(() => import("./pages/EditorialStandardsPage.tsx"));
@@ -228,6 +229,7 @@ const AuthListener = () => {
                 {/* Renamed from /live — keep old links/bookmarks working. */}
                 <Route path="/live" element={<Navigate to="/feed" replace />} />
                 <Route path="/about" element={<AboutPage />} />
+                <Route path="/join" element={<JoinPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/support" element={<SupportPage />} />
                 <Route path="/editorial" element={<EditorialStandardsPage />} />

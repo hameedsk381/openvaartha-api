@@ -142,6 +142,11 @@ _STATIC_ROUTE_META: Dict[str, Dict[str, Optional[str]]] = {
         "description": "Open Vaartha is an independent, youth-led news initiative operated by Gen Z.",
         "robots": None,
     },
+    "join": {
+        "title": f"Create a free account — {SITE_NAME}",
+        "description": "Create a free Open Vaartha account to save stories, keep your reading history and get one digest each morning. No card, no paywall.",
+        "robots": None,
+    },
     "contact": {
         "title": f"Contact — {SITE_NAME}",
         "description": "Reach the Open Vaartha team — story tips, corrections, feedback, and contributions.",

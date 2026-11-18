@@ -98,6 +98,7 @@ const Footer = () => {
           <div className="md:col-span-2">
             <p className="overline mb-4">Account & Trust</p>
             <ul className="space-y-2.5 text-sm">
+              <li><Link to="/join" className="text-muted-foreground hover:text-primary transition-colors">Create account</Link></li>
               <li><Link to="/login" className="text-muted-foreground hover:text-primary transition-colors">Sign in</Link></li>
               <li><Link to="/portal/saved" className="text-muted-foreground hover:text-primary transition-colors">Saved</Link></li>
               <li><Link to="/editorial" className="text-muted-foreground hover:text-primary transition-colors">Editorial</Link></li>

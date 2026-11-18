@@ -51,7 +51,6 @@ services:
         VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
     depends_on:
       - api
-      - astro
     restart: unless-stopped
     command: ["/bin/sh", "-c", "cp /usr/share/nginx/html/index.html /web-shared/index.html && nginx -g 'daemon off;'"]
     volumes:
@@ -59,33 +58,6 @@ services:
       - web-dist:/web-shared
     networks:
       - dokploy-network
-
-  astro:
-    build:
-      context: ./openvaartha-astro
-      dockerfile: Dockerfile
-    environment:
-      # Unique alias (not bare "api") — dokploy-network is shared with other
-      # apps, so "api" would resolve ambiguously across their services too.
-      SITE_API_URL: http://openvaartha-8ud53n-api:8000/api/v1
-      NODE_ENV: production
-      HOST: 0.0.0.0
-      PORT: 4321
-    depends_on:
-      - api
-    restart: unless-stopped
-    networks:
-      # Unique alias on Dokploy's shared network, same reason as the api
-      # service — a bare "astro" host would collide with other apps' services.
-      dokploy-network:
-        aliases:
-          - openvaartha-8ud53n-astro
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4321/"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
 
   api:
     build:
@@ -106,7 +78,7 @@ services:
     networks:
       # dokploy-network is shared across every app Dokploy runs, so a bare
       # "api" hostname collides with other apps' services. This unique alias is
-      # how web/nginx and astro address the API (see openvaartha-web/nginx.conf).
+      # how web/nginx reaches the API (see openvaartha-web/nginx.conf).
       dokploy-network:
         aliases:
           - openvaartha-8ud53n-api

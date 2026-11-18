@@ -78,7 +78,7 @@ and Redis are **external managed services** reached via `MONGODB_URL` and
 ## Services
 
 - `api`: FastAPI app serving `/api/v1/*` and the built React SPA.
-- `web` / `astro`: the built frontend(s).
+- `web`: nginx serving the built React SPA (`/`, `/admin`, `/polls`) and proxying the API.
 - `celery-worker`: Celery worker running RSS ingestion / AI rewrite tasks.
 - `celery-beat`: Celery scheduler (single-instance via `beat_lock.py`).
 - `migrate`: one-shot bootstrap (indexes + admin/RSS seed) run before the rest.
