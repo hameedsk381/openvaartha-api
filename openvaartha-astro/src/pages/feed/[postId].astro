@@ -1,12 +1,13 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { BRAND, pageTitle } from '../../lib/brand';
+import { API_BASE } from '../../lib/api';
 
 const { postId } = Astro.params;
 
 let post: any = null;
 try {
-  const res = await fetch(`${import.meta.env.SITE_API_URL || 'http://localhost:8000/api/v1'}/dispatches/${postId}`);
+  const res = await fetch(`${API_BASE}/dispatches/${postId}`);
   if (res.ok) post = await res.json();
 } catch (e) {}
 

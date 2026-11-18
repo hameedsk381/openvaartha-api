@@ -3,7 +3,9 @@
  * Runs in Node.js (SSR), not in the browser — no auth tokens, no refresh logic.
  */
 
-const API_BASE = import.meta.env.SITE_API_URL || "http://localhost:8000/api/v1";
+const runtimeEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env;
+export const API_BASE =
+  runtimeEnv?.SITE_API_URL || import.meta.env.SITE_API_URL || "http://localhost:8000/api/v1";
 
 export class ApiError extends Error {
   status: number;

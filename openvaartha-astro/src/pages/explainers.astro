@@ -1,10 +1,11 @@
 ---
 import Base from '../layouts/Base.astro';
 import { BRAND, pageTitle } from '../lib/brand';
+import { API_BASE } from '../lib/api';
 
 let articles = [];
 try {
-  const res = await fetch(`${import.meta.env.SITE_API_URL || 'http://localhost:8000/api/v1'}/articles/explainers?limit=20`);
+  const res = await fetch(`${API_BASE}/articles/explainers?limit=20`);
   if (res.ok) articles = await res.json();
 } catch (e) {}
 ---

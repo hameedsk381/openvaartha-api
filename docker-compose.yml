@@ -51,6 +51,7 @@ services:
         VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
     depends_on:
       - api
+      - astro
     restart: unless-stopped
     command: ["/bin/sh", "-c", "cp /usr/share/nginx/html/index.html /web-shared/index.html && nginx -g 'daemon off;'"]
     volumes:
@@ -66,7 +67,7 @@ services:
     environment:
       # Unique alias (not bare "api") — dokploy-network is shared with other
       # apps, so "api" would resolve ambiguously across their services too.
-      SITE_API_URL: http://openvaartha-8ud53n-api:8000
+      SITE_API_URL: http://openvaartha-8ud53n-api:8000/api/v1
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 4321

@@ -1,15 +1,16 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { BRAND, pageTitle } from '../../lib/brand';
+import { API_BASE } from '../../lib/api';
 
 const { slug } = Astro.params;
 
 let series = null;
 let articles: any[] = [];
 try {
-  const res = await fetch(`${import.meta.env.SITE_API_URL || 'http://localhost:8000/api/v1'}/series/${slug}`);
+  const res = await fetch(`${API_BASE}/series/${slug}`);
   if (res.ok) series = await res.json();
-  const artRes = await fetch(`${import.meta.env.SITE_API_URL || 'http://localhost:8000/api/v1'}/articles/?series=${slug}&limit=20`);
+  const artRes = await fetch(`${API_BASE}/articles/?series=${slug}&limit=20`);
   if (artRes.ok) articles = await artRes.json();
 } catch (e) {}
 ---

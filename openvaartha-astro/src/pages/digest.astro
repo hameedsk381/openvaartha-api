@@ -1,11 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
 import { BRAND, pageTitle } from '../lib/brand';
+import { API_BASE } from '../lib/api';
 
 let digest = null;
 let articles: any[] = [];
 try {
-  const res = await fetch(`${import.meta.env.SITE_API_URL || 'http://localhost:8000/api/v1'}/digests/latest`);
+  const res = await fetch(`${API_BASE}/digests/latest`);
   if (res.ok) {
     digest = await res.json();
     articles = digest?.articles || [];

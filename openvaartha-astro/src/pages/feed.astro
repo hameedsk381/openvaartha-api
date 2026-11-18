@@ -1,10 +1,11 @@
 ---
 import Base from '../layouts/Base.astro';
 import { BRAND, pageTitle } from '../lib/brand';
+import { API_BASE } from '../lib/api';
 
 let dispatches: any[] = [];
 try {
-  const res = await fetch(`${import.meta.env.SITE_API_URL || 'http://localhost:8000/api/v1'}/dispatches/?limit=30`);
+  const res = await fetch(`${API_BASE}/dispatches/?limit=30`);
   if (res.ok) dispatches = await res.json();
 } catch (e) {}
 ---

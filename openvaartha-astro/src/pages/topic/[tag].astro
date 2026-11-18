@@ -1,7 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { BRAND, pageTitle } from '../../lib/brand';
-import { getArticles } from '../../lib/api';
+import { API_BASE } from '../../lib/api';
 
 const { tag } = Astro.params;
 const tagLabel = tag?.replace(/-/g, ' ') || '';
@@ -9,7 +9,7 @@ const tagLabel = tag?.replace(/-/g, ' ') || '';
 let articles = [];
 try {
   // Tag filtering via search endpoint
-  const res = await fetch(`${import.meta.env.SITE_API_URL || 'http://localhost:8000/api/v1'}/search/?q=${encodeURIComponent(tagLabel)}&limit=20`);
+  const res = await fetch(`${API_BASE}/search/?q=${encodeURIComponent(tagLabel)}&limit=20`);
   if (res.ok) articles = await res.json();
 } catch (e) {}
 ---
