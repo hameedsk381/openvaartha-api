@@ -47,7 +47,7 @@ export default function Index() {
     limit
   });
 
-  const { data: trendingData = [] } = useTrendingArticles(8);
+  const { data: trendingData = [] } = useTrendingArticles(5);
   const { data: forYouData = [] } = useForYouArticles(25);
   const { data: editorPicks = [] } = useEditorPicks(6);
 
@@ -60,7 +60,7 @@ export default function Index() {
   const isFiltered = selectedCat.toLowerCase() !== 'all';
 
   const feed = feedTab === 'forYou' && !isFiltered ? forYouData : filtered.slice(5);
-  const trending = useMemo(() => trendingData.slice(0, 8), [trendingData]);
+  const trending = useMemo(() => trendingData.slice(0, 5), [trendingData]);
   const picks = useMemo(() => editorPicks.slice(0, 6), [editorPicks]);
 
   return (
@@ -92,10 +92,11 @@ export default function Index() {
           {/* Classic Hero Section */}
           <HeroClassic articles={filtered.slice(0, 5)} />
 
-          {/* Category Quick Strips */}
+          {/* Category Quick Strips. Three sections, so the front page stays
+              scannable and the latest feed is not 24 cards down the page. */}
           {!isFiltered && categories.length > 0 && (
             <section className="border-b border-border px-4 sm:px-6 lg:px-10 divide-y divide-border">
-              {categories.slice(0, 6).map((cat) => (
+              {categories.slice(0, 3).map((cat) => (
                 <CategoryStrip key={cat.id} category={cat} />
               ))}
             </section>

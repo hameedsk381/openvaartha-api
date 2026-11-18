@@ -52,9 +52,10 @@ export default function MainFeed({
                 <button
                   type="button"
                   onClick={() => setFeedTab('latest')}
+                  aria-pressed={feedTab === 'latest'}
                   className={cn(
-                    "px-3 py-1 rounded-md text-xs font-semibold transition-colors",
-                    feedTab === 'latest' ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                    "h-10 px-3 rounded-md text-xs font-semibold transition-colors press",
+                    feedTab === 'latest' ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   Latest
@@ -62,9 +63,10 @@ export default function MainFeed({
                 <button
                   type="button"
                   onClick={() => setFeedTab('forYou')}
+                  aria-pressed={feedTab === 'forYou'}
                   className={cn(
-                    "px-3 py-1 rounded-md text-xs font-semibold transition-colors flex items-center gap-1",
-                    feedTab === 'forYou' ? "bg-primary text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                    "h-10 px-3 rounded-md text-xs font-semibold transition-colors press flex items-center gap-1",
+                    feedTab === 'forYou' ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <Sparkles className="h-3 w-3" /> For You
@@ -80,7 +82,7 @@ export default function MainFeed({
         <div className="px-4 sm:px-6 lg:px-10 py-6"><FeedSkeleton /></div>
       ) : (
         <>
-          {feed.map((art) => (
+          {feed.map((art, index) => (
             <article
               key={art.id}
               className="group flex gap-4 sm:gap-6 px-4 sm:px-6 lg:px-10 py-5 sm:py-6 border-b border-border last:border-0 hover:bg-[hsl(var(--surface))] transition-colors"
@@ -101,10 +103,22 @@ export default function MainFeed({
                     </>
                   )}
                 </div>
-                <h3 className="font-display text-base sm:text-lg font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                {/* The first story in the feed carries slightly more weight:
+                    the top of a list is where readers actually land. */}
+                <h3
+                  className={cn(
+                    "font-display font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-2",
+                    index === 0 ? "text-lg sm:text-2xl" : "text-base sm:text-lg"
+                  )}
+                >
                   {art.title}
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
+                <p
+                  className={cn(
+                    "text-sm text-muted-foreground mt-1.5 leading-relaxed",
+                    index === 0 ? "line-clamp-3" : "line-clamp-2"
+                  )}
+                >
                   {art.summary}
                 </p>
                 <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground font-medium">
@@ -129,9 +143,10 @@ export default function MainFeed({
                 </Link>
                 <button
                   onClick={() => toggleSave(art)}
-                  className={`h-9 w-9 rounded-md flex items-center justify-center transition-colors press
+                  className={`h-11 w-11 rounded-md flex items-center justify-center transition-colors press
                     ${isSaved(art.id) ? 'text-primary bg-[hsl(var(--primary-subtle))]' : 'text-muted-foreground hover:text-primary hover:bg-[hsl(var(--primary-subtle))]'}`}
-                  aria-label="Save"
+                  aria-label={isSaved(art.id) ? "Remove from reading list" : "Save article"}
+                  aria-pressed={isSaved(art.id)}
                 >
                   <AnimatedIcon animationType="scale">
                     {isSaved(art.id) ? <BookmarkCheck className="h-4 w-4 fill-current" /> : <Bookmark className="h-4 w-4" />}

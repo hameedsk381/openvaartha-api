@@ -5,6 +5,7 @@ import { Clock } from '@/components/animate-ui/icons/clock';
 import { LoaderCircle } from '@/components/animate-ui/icons/loader-circle';
 import { toast } from 'sonner';
 import { useNewsletterSubscribe } from '@/lib/api-hooks';
+import { cn } from '@/lib/utils';
 import type { Article } from '@/lib/types';
 import FeedMini from './FeedMini';
 
@@ -26,7 +27,14 @@ export default function TrendingSidebar({ trending }: { trending: Article[] }) {
         {trending.map((art, i) => (
           <li key={art.id} className="border-b border-border last:border-0 py-4">
             <Link to={`/article/${art.slug}`} className="group flex gap-4 press">
-              <span className="font-display text-3xl font-bold text-primary/30 group-hover:text-primary transition-colors leading-none w-8 shrink-0">
+              {/* Serial position: the first three ranks carry the maroon weight,
+                  the tail fades back so the top of the list reads first. */}
+              <span
+                className={cn(
+                  "font-display text-3xl font-bold leading-none w-8 shrink-0 transition-colors group-hover:text-primary",
+                  i < 3 ? "text-primary" : "text-muted-foreground/40"
+                )}
+              >
                 {String(i + 1).padStart(2, '0')}
               </span>
               <div className="flex-1 min-w-0">

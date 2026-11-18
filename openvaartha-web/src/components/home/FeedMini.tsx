@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight } from '@/components/animate-ui/icons/chevron-right';
 import { useDispatches } from '@/lib/api-hooks';
 import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import SectionLink from './SectionLink';
 
 export default function FeedMini() {
   const { data: dispatches = [] } = useDispatches(5);
@@ -11,7 +11,7 @@ export default function FeedMini() {
 
   return (
     <div className="border-t border-border">
-      <div className="px-4 sm:px-6 lg:px-6 py-4 border-b border-border flex items-center justify-between">
+      <div className="px-4 sm:px-6 lg:px-6 py-3 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2.5 w-2.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
@@ -19,9 +19,7 @@ export default function FeedMini() {
           </span>
           <h3 className="font-display text-sm font-bold uppercase tracking-wide">Feed</h3>
         </div>
-        <Link to="/feed" className="text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
-          See all <ChevronRight className="h-3 w-3" animateOnHover />
-        </Link>
+        <SectionLink to="/feed">See all</SectionLink>
       </div>
       <ul className="divide-y divide-border">
         {dispatches.map((u) => {

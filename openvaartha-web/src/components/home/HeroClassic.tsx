@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Bookmark, BookmarkCheck, Zap, Flame, ArrowUpRight } from 'lucide-react';
+import { Bookmark, BookmarkCheck, Flame, ArrowUpRight } from 'lucide-react';
 import { AnimatedIcon } from '@/components/ui/animated-icon';
 import { Clock } from '@/components/animate-ui/icons/clock';
 import { getArticleImage, handleImageFallback, relativeTime } from '@/lib/utils';
@@ -48,8 +48,9 @@ export default function HeroClassic({ articles }: { articles: Article[] }) {
 
               <button
                 onClick={(e) => { e.preventDefault(); toggleSave(hero); }}
-                className="absolute top-4 right-4 h-10 w-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-primary transition-colors press"
-                aria-label="Save article"
+                className="absolute top-4 right-4 h-11 w-11 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-primary transition-colors press"
+                aria-label={isSaved(hero.id) ? "Remove from reading list" : "Save article"}
+                aria-pressed={isSaved(hero.id)}
               >
                 <AnimatedIcon animationType="scale">
                   {isSaved(hero.id)
@@ -59,14 +60,18 @@ export default function HeroClassic({ articles }: { articles: Article[] }) {
               </button>
 
               <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 lg:p-10">
-                <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <span className="chip">{hero.category}</span>
-                  <span className="chip-primary">
-                    <Zap className="h-3 w-3 fill-current" /> {hero.readTime}
+                {/* One loud chip, one quiet metadata line: the section is the only
+                    maroon element on the lead story, so the eye has one anchor. */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-4">
+                  <span className="chip-primary">{hero.category}</span>
+                  <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-white/70">
+                    <Clock className="h-3 w-3" /> {hero.readTime}
                   </span>
-                  <span className="font-display text-[11px] font-bold uppercase tracking-wide text-white/80">{relativeTime(hero.publishedAt)}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-white/50">
+                    {relativeTime(hero.publishedAt)}
+                  </span>
                   {hero.isTrending && (
-                    <span className="chip-primary">
+                    <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-secondary">
                       <Flame className="h-3 w-3 fill-current" /> Trending
                     </span>
                   )}
@@ -77,10 +82,8 @@ export default function HeroClassic({ articles }: { articles: Article[] }) {
                 <p className="text-white/80 text-sm sm:text-base mt-3 line-clamp-2 max-w-2xl leading-relaxed">
                   {hero.summary}
                 </p>
-                <div className="flex items-center gap-4 mt-5">
-                  <span className="flex items-center gap-1.5 text-white/70 text-xs font-medium">
-                    <Clock className="h-3 w-3" /> {hero.readTime} read
-                  </span>
+                <div className="flex items-center justify-between gap-4 mt-5">
+                  <span className="text-white/60 text-xs font-medium truncate">{hero.author}</span>
                   <span className="text-white text-xs font-semibold uppercase tracking-[0.18em] flex items-center gap-1.5 group-hover:text-secondary transition-colors">
                     Continue reading
                     <AnimatedIcon animationType="arrowUpRight">

@@ -83,7 +83,7 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
               <div className="absolute inset-0 flex flex-col justify-end p-6 pb-8 sm:p-10 sm:pb-12 lg:p-14 lg:pb-16">
                 <div className="max-w-3xl space-y-3 sm:space-y-4">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                    <span className="rounded-full bg-secondary px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-secondary-foreground shadow-sm">
+                    <span className="rounded-full bg-primary px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-primary-foreground shadow-sm">
                       {article?.category}
                     </span>
                     <span className="flex items-center gap-1.5 text-[10px] font-medium text-white/60">
@@ -118,26 +118,31 @@ const HeroCarousel = ({ articles }: HeroCarouselProps) => {
     </div>
   </div>
 
-      <div className="absolute bottom-6 sm:bottom-12 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+      {/* 44px hit areas around 8px dots: a thumb can hit the slide control. */}
+      <div className="absolute bottom-1 sm:bottom-7 left-1/2 -translate-x-1/2 flex z-10">
         {articles.slice(0, 5).map((_, i) => (
           <motion.button
             key={i}
-            layout
-            initial={false}
-            className="rounded-full bg-white press"
-            animate={{
-              width: selectedIndex === i ? 40 : 8,
-              height: 8,
-              opacity: selectedIndex === i ? 1 : 0.3,
-            }}
-            transition={transition}
+            className="h-11 min-w-11 flex items-center justify-center press"
             onClick={(e) => {
               e.preventDefault();
               emblaApi?.scrollTo(i);
             }}
             aria-label={`Go to slide ${i + 1}`}
             aria-current={selectedIndex === i ? "true" : "false"}
-          />
+          >
+            <motion.span
+              layout
+              initial={false}
+              className="block rounded-full bg-white"
+              animate={{
+                width: selectedIndex === i ? 32 : 8,
+                height: 8,
+                opacity: selectedIndex === i ? 1 : 0.3,
+              }}
+              transition={transition}
+            />
+          </motion.button>
         ))}
       </div>
     </section>

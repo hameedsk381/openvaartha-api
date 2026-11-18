@@ -116,6 +116,13 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
 
   const categoryNames = useMemo(() => categories.map((c) => c.name), [categories]);
 
+  // Hick's law: the header offers a fixed number of choices no matter how many
+  // sections the API returns. Anything past the cap lives behind "More", which
+  // opens the same category list the search overlay already shows.
+  const MAX_INLINE_CATEGORIES = 5;
+  const navCategories = categoryNames.slice(0, MAX_INLINE_CATEGORIES);
+  const hasMoreCategories = categoryNames.length > MAX_INLINE_CATEGORIES;
+
   return (
     <>
       {!hideHeader && (
@@ -137,18 +144,18 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
           <nav className="hidden md:flex items-center gap-2 mx-4 overflow-x-auto no-scrollbar max-w-2xl">
             <Link
               to="/digest"
-              className="shrink-0 h-9 px-4 rounded-full font-display text-xs font-bold uppercase tracking-wide transition-colors press whitespace-nowrap border-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 text-foreground border-orange-500/30 hover:border-orange-500 flex items-center justify-center gap-1.5"
+              className="shrink-0 h-10 px-4 rounded-full font-display text-xs font-bold uppercase tracking-wide transition-colors press whitespace-nowrap border-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 text-foreground border-orange-500/30 hover:border-orange-500 flex items-center justify-center gap-1.5"
             >
               <Flame className="w-4 h-4 fill-orange-500" />
               Digest
             </Link>
 
-            {(["All", ...categoryNames] as string[]).map(cat => (
+            {(["All", ...navCategories] as string[]).map(cat => (
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
                 className={cn(
-                  "shrink-0 h-9 px-4 rounded-full font-display text-xs font-bold uppercase tracking-wide transition-colors press whitespace-nowrap border-2",
+                  "shrink-0 h-10 px-4 rounded-full font-display text-xs font-bold uppercase tracking-wide transition-colors press whitespace-nowrap border-2",
                   selectedCat.toLowerCase() === cat.toLowerCase()
                     ? "bg-primary text-primary-foreground border-foreground"
                     : "bg-secondary/50 text-[hsl(var(--secondary-foreground))] border-transparent hover:border-foreground hover:bg-secondary"
@@ -157,6 +164,15 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
                 {cat}
               </button>
             ))}
+
+            {hasMoreCategories && (
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="shrink-0 h-10 px-4 rounded-full font-display text-xs font-bold uppercase tracking-wide transition-colors press whitespace-nowrap border-2 border-dashed border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+              >
+                More
+              </button>
+            )}
           </nav>
 
         <div className="flex items-center gap-0.5">
@@ -248,18 +264,18 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
           <div className="py-2 px-6 flex gap-2 overflow-x-auto no-scrollbar relative z-0">
             <Link
               to="/digest"
-              className="shrink-0 h-8 px-4 rounded-full text-xs font-bold transition-colors press whitespace-nowrap bg-gradient-to-r from-orange-500/20 to-red-500/20 text-foreground border border-orange-500/30 flex items-center justify-center gap-1"
+              className="shrink-0 h-11 px-4 rounded-full text-xs font-bold transition-colors press whitespace-nowrap bg-gradient-to-r from-orange-500/20 to-red-500/20 text-foreground border border-orange-500/30 flex items-center justify-center gap-1"
             >
               <Flame className="w-3.5 h-3.5 fill-orange-500" />
               Digest
             </Link>
             
-            {(["All", ...categoryNames] as string[]).map(cat => (
+            {(["All", ...navCategories] as string[]).map(cat => (
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
                 className={cn(
-                  "shrink-0 h-8 px-4.5 rounded-full text-xs font-bold transition-colors press whitespace-nowrap",
+                  "shrink-0 h-11 px-4.5 rounded-full text-xs font-bold transition-colors press whitespace-nowrap",
                   selectedCat.toLowerCase() === cat.toLowerCase()
                     ? "bg-primary text-primary-foreground font-bold"
                     : "bg-secondary/50 text-[hsl(var(--secondary-foreground))] hover:bg-secondary"
@@ -268,6 +284,15 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
                 {cat}
               </button>
             ))}
+
+            {hasMoreCategories && (
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="shrink-0 h-11 px-4.5 rounded-full text-xs font-bold transition-colors press whitespace-nowrap border border-dashed border-border text-muted-foreground"
+              >
+                More
+              </button>
+            )}
           </div>
           <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
         </div>

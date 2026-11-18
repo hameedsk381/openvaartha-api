@@ -1,40 +1,28 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { ArrowUpRight } from 'lucide-react';
-import { AnimatedIcon } from '@/components/ui/animated-icon';
 import { Clock } from '@/components/animate-ui/icons/clock';
 import { getArticleImage, handleImageFallback, relativeTime } from '@/lib/utils';
 import type { Article } from '@/lib/types';
-
-const MotionLink = motion.create(Link);
+import SectionLink from './SectionLink';
 
 export default function EditorPicks({ picks }: { picks: Article[] }) {
   // Always render the section to reserve vertical space and prevent CLS.
   const skeletonCount = 3;
 
   return (
-    <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-8 sm:py-12">
-      <div className="flex items-baseline justify-between mb-6 sm:mb-8">
+    <section className="border-b border-border bg-[hsl(var(--surface))] px-4 sm:px-6 lg:px-10 py-8 sm:py-12">
+      <div className="flex items-center justify-between gap-4 mb-6">
         <div>
           <span className="overline text-primary">Editor's picks</span>
           <h3 className="font-display text-2xl sm:text-3xl font-bold tracking-tight mt-1">
             Worth your time
           </h3>
         </div>
-        <MotionLink
-          to="/trending"
-          className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground hover:text-primary transition-colors group"
-          initial="initial"
-          whileHover="hover"
-        >
-          View all 
-          <AnimatedIcon animationType="arrowUpRight">
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </AnimatedIcon>
-        </MotionLink>
+        <SectionLink to="/trending">
+          View all
+        </SectionLink>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {(picks.length > 0 ? picks : Array.from({ length: skeletonCount })).map((art: any, idx: number) => (
           art ? (
             <Link
