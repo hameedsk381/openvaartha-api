@@ -20,48 +20,47 @@ export default function HeroClassic({ articles }: { articles: Article[] }) {
   return (
       <section aria-label="Top stories" className="border-b border-border">
         <div className="grid grid-cols-1 lg:grid-cols-12">
-          <div className="relative lg:col-span-8 lg:border-r lg:border-border">
+          <div className="relative bg-card lg:col-span-8 lg:border-r lg:border-border">
             <MotionLink
               to={`/article/${hero.slug}`}
-              className="block group press relative"
+              className="group relative block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary lg:grid lg:grid-cols-[1.15fr_1fr]"
               initial="initial"
               whileHover="hover"
             >
-              <div className="relative overflow-hidden aspect-[16/9] lg:aspect-[16/10] bg-[hsl(var(--surface-2))] border-b border-border">
+              <div className="relative aspect-[16/9] overflow-hidden border-b border-border bg-muted lg:order-last lg:aspect-auto lg:min-h-[340px] lg:border-b-0">
                 <img
                   src={getArticleImage(hero.thumbnailUrl)}
                   alt=""
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.02]"
                   loading="eager"
                   onError={handleImageFallback}
                 />
-                <div className="absolute inset-0 hidden bg-gradient-to-t from-black/90 via-black/35 to-transparent lg:block" />
               </div>
 
-              <div className="border-l-4 border-primary bg-card p-4 sm:p-6 lg:absolute lg:inset-x-0 lg:bottom-0 lg:border-0 lg:bg-transparent lg:p-10">
+              <div className="min-w-0 border-l-4 border-primary p-4 sm:p-6 lg:flex lg:flex-col lg:justify-center lg:border-0 lg:px-8 lg:py-7 xl:px-10">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-4">
                   <span className="chip-primary">{hero.category}</span>
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground lg:text-white/80">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
                     <Clock className="h-3 w-3" /> {hero.readTime}
                   </span>
-                  <span className="text-xs font-semibold text-muted-foreground lg:text-white/70">
+                  <span className="text-xs font-semibold text-muted-foreground">
                     {relativeTime(hero.publishedAt)}
                   </span>
                   {hero.isTrending && (
-                    <span className="flex items-center gap-1 text-xs font-semibold text-primary lg:text-white">
+                    <span className="flex items-center gap-1 text-xs font-semibold text-primary">
                       <Flame className="h-3 w-3 fill-current" /> Trending
                     </span>
                   )}
                 </div>
-                <h2 className="poster text-foreground text-3xl sm:text-4xl lg:text-5xl lg:text-white max-w-3xl">
+                <h2 className="poster break-words text-3xl leading-[1.07] text-foreground sm:text-4xl lg:text-[clamp(1.75rem,2.9vw,2.75rem)]">
                   {hero.title}
                 </h2>
-                <p className="text-muted-foreground lg:text-white/85 text-sm sm:text-base mt-3 line-clamp-2 max-w-2xl leading-relaxed">
+                <p className="mt-3 line-clamp-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
                   {hero.summary}
                 </p>
                 <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
-                  <span className="text-muted-foreground lg:text-white/75 text-xs font-medium">{hero.author}</span>
-                  <span className="text-primary lg:text-white text-xs font-semibold flex items-center gap-1.5 group-hover:underline transition-colors">
+                  <span className="text-xs font-medium text-muted-foreground">{hero.author}</span>
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground group-hover:text-primary group-hover:underline">
                     Read article
                     <AnimatedIcon animationType="arrowUpRight">
                       <ArrowUpRight className="h-3.5 w-3.5" />
@@ -111,7 +110,7 @@ export default function HeroClassic({ articles }: { articles: Article[] }) {
                     <Clock className="h-3 w-3" /> {art.readTime}
                   </span>
                 </div>
-                <div className="aspect-square w-20 sm:w-24 shrink-0 overflow-hidden rounded-md bg-[hsl(var(--surface-2))]">
+                <div className="aspect-square w-16 shrink-0 overflow-hidden rounded-md bg-muted sm:w-20">
                   <img
                     src={getArticleImage(art.thumbnailUrl)}
                     alt={art.title}

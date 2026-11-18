@@ -170,7 +170,7 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
 
                 <Link
                   to="/portal/saved"
-                  className={cn(mastheadControl, "relative hidden xl:inline-flex")}
+                  className={cn(mastheadControl, "relative hidden lg:inline-flex")}
                   aria-label="Saved articles"
                 >
                   <AnimatedIcon animationType="scale">
@@ -227,11 +227,15 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
                 {navCategories.map((category) => (
                   <Link key={category} to={`/category/${categorySlug(category)}`}
                     aria-current={categoryIsCurrent(category) ? "page" : undefined}
-                    className={cn(topicLink, categoryIsCurrent(category) && currentTopic)}>
+                    className={cn(topicLink, "uppercase tracking-wide", categoryIsCurrent(category) && currentTopic)}>
                     {category}
                   </Link>
                 ))}
               </div>
+              <Link to="/feed" aria-current={location.pathname === "/feed" ? "page" : undefined}
+                className={cn(topicLink, "hidden border-l border-[#ddc8bb] dark:border-[#573e40] lg:inline-flex", location.pathname === "/feed" && currentTopic)}>
+                Feed
+              </Link>
               <Link to="/digest" aria-current={location.pathname === "/digest" ? "page" : undefined}
                 className={cn(topicLink, "border-l border-[#ddc8bb] dark:border-[#573e40]", location.pathname === "/digest" && currentTopic)}>
                 Digest
@@ -251,7 +255,7 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
                           <DialogClose asChild>
                             <Link to={`/category/${categorySlug(category)}`}
                               aria-current={categoryIsCurrent(category) ? "page" : undefined}
-                              className={cn(topicLink, "flex w-full justify-start rounded-md whitespace-normal", categoryIsCurrent(category) && currentTopic)}>
+                              className={cn(topicLink, "flex w-full justify-start rounded-md whitespace-normal uppercase tracking-wide", categoryIsCurrent(category) && currentTopic)}>
                               {category}
                             </Link>
                           </DialogClose>
@@ -267,7 +271,7 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
       )}
 
       {!hideBottomNav && (
-        <nav className="bottom-nav">
+        <nav aria-label={hideHeader ? "Primary navigation" : "Mobile navigation"} className={cn("bottom-nav", !hideHeader && "lg:hidden")}>
           <div className="flex items-center justify-around h-16 max-w-xl mx-auto px-1">
 
             <BottomNavItem icon={<AnimatedIcon animationType="scale"><Home className="h-5 w-5" /></AnimatedIcon>} label="Home" to="/" active={location.pathname === "/"} />

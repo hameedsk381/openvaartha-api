@@ -65,7 +65,7 @@ export default function Index() {
         <BreakingTicker />
       </div>
 
-      <main id="main-content" className="pb-safe pt-0">
+      <main id="main-content" className="pb-safe lg:pb-0">
         <div className="max-w-screen-2xl mx-auto">
 
           {isFiltered && (
@@ -81,11 +81,10 @@ export default function Index() {
           )}
 
 
-          {/* One-time dismissible support banner */}
-          <SupportBanner className={isFiltered ? "hidden" : undefined} />
-
           {/* Classic Hero Section */}
           <HeroClassic articles={filtered.slice(0, 5)} />
+
+          {!isFiltered && <SupportBanner />}
 
           {/* Main Feed + Trending Sidebar */}
           <section aria-label="News feed" className="grid grid-cols-1 lg:grid-cols-12 border-b border-border">

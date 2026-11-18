@@ -604,15 +604,15 @@ async def generate_fact_check(
     if not existing:
         raise HTTPException(status_code=404, detail="Article not found")
 
-    body = existing.get("content", {}).get("body", "")
+    body = (existing.get("content") or {}).get("body", "")
     if not body:
         raise HTTPException(status_code=400, detail="Article has no body content to analyze")
 
-    from app.services.gemini_service import analyze_article_facts
+    from app.services.ai_service import analyze_article_facts
     fact_check_data = await analyze_article_facts(body)
 
     if not fact_check_data:
-        raise HTTPException(status_code=500, detail="Failed to generate fact check with Gemini")
+        raise HTTPException(status_code=503, detail="Automated claim review is unavailable")
 
     fact_check_data["review_status"] = "automated_unverified"
     await db["article_content"].update_one(
@@ -872,7 +872,8 @@ async def explain_article(
     text_to_explain = "\n\n".join(part for part in (title, summary, body) if part)[:15000]
 
     if body or summary:
-        from app.services.gemini_service import explain_article_in_plain_language
+        from app.services.ai_service import explain_article_in_plain_language
+        from app.config import settings
 
         async def generate():
             explanation = await explain_article_in_plain_language(text_to_explain)
@@ -881,10 +882,10 @@ async def explain_article(
                 raise HTTPException(status_code=503, detail="Explanation unavailable")
             return explanation
 
-        digest = sha256(text_to_explain.encode()).hexdigest()
+        digest = sha256(f"{settings.GROQ_MODEL}\n{text_to_explain}".encode()).hexdigest()
         try:
             explanation = await fetch_with_cache_and_lock(
-                f"openvaartha:reader-explanation:v1:{digest}", 86400, generate,
+                f"openvaartha:reader-explanation:v2:{digest}", 86400, generate,
                 lock_timeout=20, wait_timeout=14,
             )
             return ArticleExplanation(explanation=explanation, source="ai")

@@ -1022,7 +1022,7 @@ export default function AdminArticleForm() {
             ) : (
               <div className="space-y-3">
                 <p className="text-xs text-muted-foreground">
-                  Generate a trust report using Gemini. This will analyze the article text for factual claims and potential bias.
+                  Use AI to identify factual claims, missing evidence, and potential framing issues for editorial review.
                 </p>
                 <Button 
                   type="button" 
@@ -1030,7 +1030,7 @@ export default function AdminArticleForm() {
                   className="w-full"
                   disabled={!isEditing || !form.body}
                   onClick={async () => {
-                    toast.loading("Analyzing article facts with Gemini...", { id: "fact-check" });
+                    toast.loading("Preparing automated claim review…", { id: "fact-check" });
                     try {
                       const res = await apiFetch<any>(`/articles/${articleId}/fact-check`, { method: "POST" });
                       update("factCheck", res.fact_check);

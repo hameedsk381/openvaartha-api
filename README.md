@@ -187,3 +187,11 @@ In the GA4 property, register event-scoped dimensions for `journey_landing`
 and `journey_channel`, and disable automatic page views on browser history
 changes. Use DebugView to validate one page view per route and the four
 milestone events before setting a baseline.
+
+## AI configuration
+
+Set `GROQ_API_KEY` to enable article drafting, editor assistance, automated
+claim review, digest summaries, and reader explanations. The default text
+model is `openai/gpt-oss-120b`. An explicit `GROQ_MODEL` in deployment settings
+takes precedence. For You ranks unread stories using the reader's recent
+categories and fills the remaining slots with recent unread stories.

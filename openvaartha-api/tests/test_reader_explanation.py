@@ -6,7 +6,7 @@ from httpx import ASGITransport, AsyncClient
 from app.api.v1 import articles
 from app.database import get_db
 from app.main import app
-from app.services import article_service, gemini_service
+from app.services import ai_service, article_service
 
 
 @pytest.mark.asyncio
@@ -24,7 +24,7 @@ async def test_reader_explanation(monkeypatch, article, generated, status, sourc
     get_article = AsyncMock(return_value=article)
     generate = AsyncMock(return_value=generated)
     monkeypatch.setattr(article_service, "get_article_by_id", get_article)
-    monkeypatch.setattr(gemini_service, "explain_article_in_plain_language", generate)
+    monkeypatch.setattr(ai_service, "explain_article_in_plain_language", generate)
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.get("/api/v1/articles/story-1/explain")
     assert response.status_code == status
@@ -53,7 +53,7 @@ async def test_reader_explanation_cache_follows_article_edits(monkeypatch):
     monkeypatch.setattr(articles, "fetch_with_cache_and_lock", fetch)
     monkeypatch.setattr(article_service, "get_article_by_id", AsyncMock(return_value=article))
     generate = AsyncMock(side_effect=["First explanation", "Updated explanation"])
-    monkeypatch.setattr(gemini_service, "explain_article_in_plain_language", generate)
+    monkeypatch.setattr(ai_service, "explain_article_in_plain_language", generate)
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         path = "/api/v1/articles/story-2/explain"
         assert (await client.get(path)).json()["explanation"] == "First explanation"
