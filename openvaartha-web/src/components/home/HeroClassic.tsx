@@ -20,10 +20,10 @@ export default function HeroClassic({ articles }: { articles: Article[] }) {
   return (
       <section aria-label="Top stories" className="border-b border-border">
         <div className="grid grid-cols-1 lg:grid-cols-12">
-          <div className="relative bg-card lg:col-span-8 lg:border-r lg:border-border">
+          <div className="relative bg-card lg:col-span-8 lg:flex lg:border-r lg:border-border">
             <MotionLink
               to={`/article/${hero.slug}`}
-              className="group relative block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary lg:grid lg:grid-cols-[1.15fr_1fr]"
+              className="group relative block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary lg:grid lg:w-full lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]"
               initial="initial"
               whileHover="hover"
             >
@@ -82,7 +82,7 @@ export default function HeroClassic({ articles }: { articles: Article[] }) {
           </div>
 
           {topRail.length > 0 && <aside className="lg:col-span-4 flex flex-col bg-muted/20 border-t lg:border-t-0 border-border">
-            <div className="px-4 sm:px-6 py-4 border-b border-border">
+            <div className="border-b border-border px-4 py-3 sm:px-6">
               <h3 className="font-display text-sm font-bold tracking-wide text-foreground">
                 More top stories
               </h3>
@@ -91,30 +91,30 @@ export default function HeroClassic({ articles }: { articles: Article[] }) {
               <Link
                 key={art.id}
                 to={`/article/${art.slug}`}
-                className={`group press flex gap-4 px-4 sm:px-6 py-3.5 hover:bg-muted/60 transition-colors ${
+                className={`group press flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/60 sm:px-6 lg:flex-1 lg:py-2.5 ${
                   i !== topRail.length - 1 ? 'border-b border-border' : ''
                 }`}
               >
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1.5">
+                  <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                     <span className="overline text-primary">{art.category}</span>
                     <span className="h-1 w-1 rounded-full bg-border" />
                     <span className="text-[10px] text-muted-foreground font-medium tracking-wide">
                       {relativeTime(art.publishedAt)}
                     </span>
+                    <span className="text-[10px] font-medium text-muted-foreground">
+                      {art.readTime}
+                    </span>
                   </div>
-                  <h4 className="font-display text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-3">
+                  <h4 className="line-clamp-3 font-display text-[15px] font-bold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary lg:line-clamp-2">
                     {art.title}
                   </h4>
-                  <span className="flex items-center gap-1 mt-2 text-[11px] text-muted-foreground font-medium">
-                    <Clock className="h-3 w-3" /> {art.readTime}
-                  </span>
                 </div>
-                <div className="aspect-square w-16 shrink-0 overflow-hidden rounded-md bg-muted sm:w-20">
+                <div className="size-16 shrink-0 overflow-hidden rounded-md bg-muted">
                   <img
                     src={getArticleImage(art.thumbnailUrl)}
-                    alt={art.title}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    alt=""
+                    className="h-full w-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-[1.02]"
                     loading="lazy"
                     onError={handleImageFallback}
                   />
