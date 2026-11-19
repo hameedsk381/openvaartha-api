@@ -21,6 +21,7 @@ limiter = Limiter(key_func=get_remote_address, default_limits=[])
 LOGIN_LIMIT = settings.LOGIN_RATE_LIMIT
 REFRESH_LIMIT = settings.REFRESH_RATE_LIMIT
 REGISTER_LIMIT = settings.REGISTER_RATE_LIMIT
+AI_SEARCH_LIMIT = settings.AI_SEARCH_RATE_LIMIT
 
 # Admin write path — generous but bounded to surface runaway scripts.
 MUTATION_LIMIT = settings.MUTATION_RATE_LIMIT

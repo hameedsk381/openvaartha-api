@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     # DBs and you want Celery isolated from the app cache (e.g. .../1 and .../2).
     REDIS_URL: str = "redis://localhost:6379/0"
     CACHE_TTL_SECONDS: int = 300
+    # AI search answers cost two model calls, so keep them warm a little longer
+    # than the list endpoints (the archive barely changes minute to minute).
+    AI_SEARCH_CACHE_TTL_SECONDS: int = 900
     CELERY_BROKER_URL: str = ""
     CELERY_RESULT_BACKEND: str = ""
 
@@ -42,6 +45,7 @@ class Settings(BaseSettings):
     REFRESH_RATE_LIMIT: str = "30/minute"
     REGISTER_RATE_LIMIT: str = "5/minute"
     MUTATION_RATE_LIMIT: str = "60/minute"
+    AI_SEARCH_RATE_LIMIT: str = "30/minute"
 
     # WebSocket
     WS_MAX_CONNECTIONS: int = 500

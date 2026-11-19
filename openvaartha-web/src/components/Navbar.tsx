@@ -11,9 +11,12 @@ import { ChevronRight } from "@/components/animate-ui/icons/chevron-right";
 import { LogOut } from "@/components/animate-ui/icons/log-out";
 import { MessageSquare } from "@/components/animate-ui/icons/message-square";
 import { User } from "@/components/animate-ui/icons/user";
+import { LoaderCircle } from "@/components/animate-ui/icons/loader-circle";
 import { useReadingList } from "@/hooks/use-reading-list";
 import { useStreak } from "@/hooks/use-streak";
 import { useSearch, useCategories, useBreakingArticles } from "@/lib/api-hooks";
+import { looksLikeQuestion, useAiSearch } from "@/lib/ai-search";
+import AnswerText from "@/components/search/AnswerText";
 import SignOutButton from "@/components/SignOutButton";
 import { BRAND } from "@/lib/brand";
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -56,6 +59,11 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
   const { data: searchResults = [] } = useSearch(query, 0, 7);
   const { data: categories = [] } = useCategories();
   const { data: breakingArticles = [] } = useBreakingArticles(5);
+
+  // Only questions are worth a model round-trip in the overlay; the archive
+  // page has the full Ask experience with citations.
+  const askable = looksLikeQuestion(query) && query.trim().length >= 8;
+  const { data: aiAnswer, isFetching: aiLoading } = useAiSearch(askable ? query : "", undefined, 3);
 
   const hasBreaking = breakingArticles.length > 0;
   const isMac = typeof navigator !== "undefined" && /mac/i.test(navigator.userAgent);
@@ -104,6 +112,9 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
   };
 
   const filtered = query.trim().length > 1 ? searchResults : [];
+  // When the keyword index returns nothing but the model answered, the answer's
+  // own stories are the useful list for the overlay.
+  const shownResults = filtered.length > 0 ? filtered : (aiAnswer?.answer ? aiAnswer.results : []);
 
   const categoryNames = useMemo(() => categories.map((c) => c.name), [categories]);
 
@@ -308,7 +319,7 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
               type="text"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Search articles, categories…"
+              placeholder="Ask a question, or search articles…"
               className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground text-base outline-none"
             />
             <button
@@ -344,12 +355,41 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
               </div>
             )}
 
-            {filtered.length > 0 && (
+            {askable && aiLoading && !aiAnswer?.answer && (
+              <div className="flex items-center gap-2 border-b border-border bg-[hsl(var(--surface))] px-4 py-3 text-xs text-muted-foreground">
+                <LoaderCircle className="h-3.5 w-3.5" animate />
+                Reading the archive…
+              </div>
+            )}
+
+            {aiAnswer?.answer && (
+              <div className="border-b border-border bg-[hsl(var(--surface))] px-4 py-4">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="overline text-primary">AI answer</span>
+                  <Link
+                    to={`/search?q=${encodeURIComponent(query.trim())}&mode=ask`}
+                    onClick={() => { setSearchOpen(false); setQuery(""); }}
+                    className="inline-flex min-h-11 items-center text-[11px] font-bold uppercase tracking-wider text-primary hover:underline"
+                  >
+                    Full answer
+                  </Link>
+                </div>
+                <p className="mt-1 font-serif text-sm leading-relaxed text-foreground line-clamp-4">
+                  <AnswerText answer={aiAnswer.answer} results={aiAnswer.results} />
+                </p>
+                <p className="mt-2 text-[10px] text-muted-foreground">
+                  Written from {aiAnswer.sources.length} published{" "}
+                  {aiAnswer.sources.length === 1 ? "story" : "stories"} · AI can misread a story
+                </p>
+              </div>
+            )}
+
+            {shownResults.length > 0 && (
               <div>
                 <div className="section-header px-4">
-                  <span className="overline">{filtered.length} Result{filtered.length !== 1 ? 's' : ''}</span>
+                  <span className="overline">{shownResults.length} Result{shownResults.length !== 1 ? 's' : ''}</span>
                 </div>
-                {filtered.map(article => (
+                {shownResults.map(article => (
                   <button
                     key={article.id}
                     onClick={() => { navigate(`/article/${article.slug}`); setSearchOpen(false); setQuery(""); }}
@@ -365,7 +405,7 @@ const Navbar = ({ isInsideStack, hideBottomNav, hideHeader }: NavbarProps) => {
               </div>
             )}
 
-            {query.trim().length >= 2 && filtered.length === 0 && (
+            {query.trim().length >= 2 && shownResults.length === 0 && !(askable && (aiLoading || aiAnswer?.answer)) && (
               <div className="flex flex-col items-center justify-center h-40 gap-2 text-center px-4">
                 <p className="text-sm font-semibold">No results for "{query}"</p>
                 <p className="overline">Try different keywords</p>

@@ -191,7 +191,17 @@ milestone events before setting a baseline.
 ## AI configuration
 
 Set `GROQ_API_KEY` to enable article drafting, editor assistance, automated
-claim review, digest summaries, and reader explanations. The default text
-model is `openai/gpt-oss-120b`. An explicit `GROQ_MODEL` in deployment settings
-takes precedence. For You ranks unread stories using the reader's recent
-categories and fills the remaining slots with recent unread stories.
+claim review, digest summaries, reader explanations, and archive search answers.
+The default text model is `openai/gpt-oss-120b`. An explicit `GROQ_MODEL` in
+deployment settings takes precedence. For You ranks unread stories using the
+reader's recent categories and fills the remaining slots with recent unread
+stories.
+
+AI search (`GET /api/v1/search/ai?q=…`) answers a question from published
+stories and cites each claim as `[n]`, where `results[n-1]` is the story. It
+makes two model calls per uncached question (rewrite the question into search
+phrases, then write the answer) and caches the result for
+`AI_SEARCH_CACHE_TTL_SECONDS` (default 900). Without a key, for plain keyword
+queries, or if a model call fails, it returns ordinary `$text` results with
+`mode: "results"` and no answer. Limit per client IP with
+`AI_SEARCH_RATE_LIMIT` (default `30/minute`).

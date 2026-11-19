@@ -7,11 +7,13 @@ import { Search } from '@/components/animate-ui/icons/search';
 import { X } from '@/components/animate-ui/icons/x';
 import { Clock } from '@/components/animate-ui/icons/clock';
 import { LoaderCircle } from '@/components/animate-ui/icons/loader-circle';
-import { handleImageFallback } from '@/lib/utils';
-import { BRAND } from '@/lib/brand';
+import { handleImageFallback, cn } from '@/lib/utils';
+import { BRAND, pageTitle, SITE_DESCRIPTION, SITE_TITLE } from '@/lib/brand';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import { useSearch, useCategories, useArticles } from '@/lib/api-hooks';
+import { useAiSearch } from '@/lib/ai-search';
+import AiAnswer from '@/components/search/AiAnswer';
 
 const relativeTime = (iso: string) => {
   const h = Math.round((Date.now() - new Date(iso).getTime()) / 3_600_000);
@@ -37,11 +39,17 @@ const Highlight = ({ text, q }: { text: string; q: string }) => {
 };
 
 const SearchPage = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   // Supports deep links (e.g. Google's sitelinks search box via the
   // WebSite/SearchAction schema on the homepage: /search?q=...).
   const [query, setQuery] = useState(() => searchParams.get('q') || '');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  // Ask is the default because someone who types a question expects an
+  // answer. /search?mode=search pins the plain archive list.
+  const [mode, setMode] = useState<'ask' | 'search'>(() =>
+    searchParams.get('mode') === 'search' ? 'search' : 'ask'
+  );
+  const [focused, setFocused] = useState(false);
 
   const { data: categories = [] } = useCategories();
 
@@ -55,6 +63,19 @@ const SearchPage = () => {
     setLimit(15);
   }, [query, selectedCategory]);
 
+  // Client-side title/description for in-app navigation; a first load gets the
+  // same values from meta_service._STATIC_ROUTE_META["search"].
+  useEffect(() => {
+    document.title = pageTitle('Search');
+    const metaDesc = document.querySelector('meta[name="description"]');
+    const prevDesc = metaDesc?.getAttribute('content') ?? null;
+    if (metaDesc) metaDesc.setAttribute('content', SITE_DESCRIPTION);
+    return () => {
+      document.title = SITE_TITLE;
+      if (metaDesc && prevDesc !== null) metaDesc.setAttribute('content', prevDesc);
+    };
+  }, []);
+
   const { data: allArticles = [], isFetching: allFetching } = useArticles({
     category: selectedCategoryObj?.id,
     limit
@@ -62,24 +83,44 @@ const SearchPage = () => {
 
   const { data: searchResults = [], isFetching: searchFetching } = useSearch(query, 0, limit);
 
+  const asking = mode === 'ask' && query.trim().length >= 3;
+  const ai = useAiSearch(
+    asking ? query : '',
+    selectedCategory === 'All' ? undefined : selectedCategory,
+    12
+  );
+
   const { data: suggestionsData } = useQuery({
     queryKey: ["search", "suggestions", query],
     queryFn: () => apiFetch<{ titles: Array<{ title: string; slug: string }>; tags: string[]; categories: string[] }>(`/search/suggestions?q=${encodeURIComponent(query)}`),
     enabled: query.trim().length >= 2,
   });
 
-  const isFetching = allFetching || searchFetching;
+  const isFetching = allFetching || searchFetching || (asking && ai.isFetching);
 
   const results = useMemo(() => {
+    if (asking) {
+      // While the answer is still being written, ordinary matches keep the page
+      // useful; the answer card fills in above them once the model replies.
+      return ai.data?.results ?? searchResults;
+    }
     const source = query.trim() ? searchResults : allArticles;
     if (selectedCategory.toLowerCase() === 'all') return source;
     if (query.trim()) {
       return source.filter((a) => a.category?.toLowerCase() === selectedCategory.toLowerCase());
     }
     return source;
-  }, [query, selectedCategory, searchResults, allArticles]);
+  }, [asking, ai.data, query, selectedCategory, searchResults, allArticles]);
 
   const isEmpty = !query && selectedCategory === 'All';
+
+  const changeMode = (next: 'ask' | 'search') => {
+    setMode(next);
+    const params = new URLSearchParams(searchParams);
+    if (next === 'search') params.set('mode', 'search');
+    else params.delete('mode');
+    setSearchParams(params, { replace: true });
+  };
 
   const categoryNames = useMemo(
     () => categories.map((c) => c.name),
@@ -98,16 +139,19 @@ const SearchPage = () => {
               The archive
             </h1>
             <p className="font-serif italic text-base sm:text-lg text-muted-foreground mt-3 max-w-2xl leading-relaxed">
-              Every story {BRAND.name} has filed — searchable by headline, body, or section.
+              Every story {BRAND.name} has filed, searchable by headline and summary. Ask a
+              question and an answer is written from the reporting itself.
             </p>
 
             <div className="relative mt-7 max-w-3xl">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search headlines, topics, regions…"
+                placeholder="Ask a question, or search headlines…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
                 className="w-full h-14 pl-12 pr-14 font-serif text-base sm:text-lg text-foreground placeholder:text-muted-foreground/60 bg-background border border-border rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                 autoFocus
               />
@@ -121,8 +165,11 @@ const SearchPage = () => {
                 </button>
               )}
 
-              {query.trim().length >= 2 && suggestionsData && (suggestionsData.titles?.length > 0 || suggestionsData.tags?.length > 0) && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-border">
+              {focused && query.trim().length >= 2 && suggestionsData && (suggestionsData.titles?.length > 0 || suggestionsData.tags?.length > 0) && (
+                <div
+                  className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-border"
+                  onMouseDown={(event) => event.preventDefault()}
+                >
                   {suggestionsData.titles.length > 0 && (
                     <div className="p-3">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-2">Matching Stories</span>
@@ -159,6 +206,39 @@ const SearchPage = () => {
               )}
             </div>
 
+            <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <div
+                role="group"
+                aria-label="Search mode"
+                className="inline-flex items-center gap-1 rounded-full border border-border bg-background p-1"
+              >
+                {([
+                  { id: 'ask', label: 'Ask AI' },
+                  { id: 'search', label: 'Search archive' },
+                ] as const).map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    aria-pressed={mode === option.id}
+                    onClick={() => changeMode(option.id)}
+                    className={cn(
+                      'h-11 px-4 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors press',
+                      mode === option.id
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {mode === 'ask'
+                  ? 'A written answer, sourced from published stories.'
+                  : 'Headline and summary matches, newest first.'}
+              </p>
+            </div>
+
             <div className="mt-5 flex items-center gap-2 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-1">
               <span className="overline text-muted-foreground shrink-0 pr-1">Section</span>
               {(['All', ...categoryNames] as string[]).map((cat) => (
@@ -178,6 +258,34 @@ const SearchPage = () => {
           </header>
 
           <section className="px-4 sm:px-6 lg:px-10 py-10 sm:py-14 min-h-[400px]">
+            {asking && ai.data?.answer && (
+              <AiAnswer
+                answer={ai.data.answer}
+                results={ai.data.results}
+                sources={ai.data.sources}
+                keywords={ai.data.keywords}
+              />
+            )}
+
+            {asking && ai.isFetching && !ai.data?.answer && (
+              <div
+                aria-hidden="true"
+                className="mb-8 max-w-4xl rounded-2xl border border-border bg-[hsl(var(--surface))] p-5 sm:p-7"
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="overline text-primary">Ask Open Vaartha</span>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <LoaderCircle className="h-3 w-3" animate /> Reading the archive
+                  </span>
+                </div>
+                <div className="mt-4 space-y-2.5 animate-pulse">
+                  <div className="h-4 w-full rounded bg-muted" />
+                  <div className="h-4 w-11/12 rounded bg-muted" />
+                  <div className="h-4 w-8/12 rounded bg-muted" />
+                </div>
+              </div>
+            )}
+
             {isEmpty ? (
               <div className="max-w-3xl">
                 <p className="overline text-primary mb-3">Try a topic</p>
@@ -218,30 +326,42 @@ const SearchPage = () => {
                   </div>
                 </div>
               </div>
-            ) : results.length === 0 ? (
+            ) : asking && ai.isFetching && results.length === 0 ? null : results.length === 0 ? (
               <div className="max-w-2xl py-12 text-center mx-auto">
                 <p className="overline text-muted-foreground mb-3">No matches</p>
                 <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight">
-                  Nothing in the archive for "{query || selectedCategory}".
+                  {asking
+                    ? `Nothing in the archive answers "${query}".`
+                    : `Nothing in the archive for "${query || selectedCategory}".`}
                 </h2>
                 <p className="font-serif italic text-muted-foreground mt-3">
-                  Try different keywords or remove the section filter.
+                  {asking
+                    ? 'Try a broader question, or switch to Search archive for keyword matches.'
+                    : 'Try different keywords or remove the section filter.'}
                 </p>
               </div>
             ) : (
               <>
                 <div className="flex items-end justify-between mb-8 pb-5 border-b border-border">
                   <div>
-                    <span className="overline text-primary">Results</span>
+                    <span className="overline text-primary">
+                      {asking && ai.data?.answer ? 'The reporting' : 'Results'}
+                    </span>
                     <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight mt-1">
-                      {results.length} {results.length === 1 ? 'story' : 'stories'} for "{query || selectedCategory}"
+                      {asking && ai.data?.answer
+                        ? `${results.length} related ${results.length === 1 ? 'story' : 'stories'}`
+                        : `${results.length} ${results.length === 1 ? 'story' : 'stories'} for "${query || selectedCategory}"`}
                     </h2>
                   </div>
                 </div>
 
                 <ol className="divide-y divide-border">
                   {results.map((art) => (
-                    <li key={art.id} className="group flex gap-4 sm:gap-6 py-5 sm:py-6 hover:bg-[hsl(var(--surface))] transition-colors">
+                    <li
+                      key={art.id}
+                      id={`story-${art.slug}`}
+                      className="group flex gap-4 sm:gap-6 py-5 sm:py-6 hover:bg-[hsl(var(--surface))] transition-colors scroll-mt-24"
+                    >
                       <Link to={`/article/${art.slug}`} className="flex-1 min-w-0 press">
                         <div className="flex items-center gap-2 mb-2">
                           <span className="overline text-primary">{art.category}</span>
@@ -278,8 +398,9 @@ const SearchPage = () => {
                   ))}
                 </ol>
 
-                {/* Load More Button */}
-                {results.length >= limit && (
+                {/* Load More Button — only for the plain archive list. In ask
+                    mode the cited stories are the whole result set. */}
+                {!asking && results.length >= limit && (
                   <div className="flex justify-center mt-12 p-6 border-t border-border">
                     <button
                       onClick={() => setLimit(prev => prev + 15)}
@@ -291,6 +412,18 @@ const SearchPage = () => {
                       ) : (
                         "Load more stories"
                       )}
+                    </button>
+                  </div>
+                )}
+
+                {asking && (
+                  <div className="flex justify-center mt-10">
+                    <button
+                      type="button"
+                      onClick={() => changeMode('search')}
+                      className="min-h-11 px-3 text-sm font-semibold text-primary underline-offset-4 hover:underline transition-colors"
+                    >
+                      Search the whole archive instead
                     </button>
                   </div>
                 )}
