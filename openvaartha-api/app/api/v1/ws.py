@@ -1,6 +1,7 @@
 import logging
 import time
 from typing import Dict, List
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
@@ -32,7 +33,12 @@ def _origin_allowed(websocket: WebSocket) -> bool:
         # app is served same-origin behind a proxy we allow missing origins;
         # browsers always send Origin so cross-site hijacking is still blocked.
         return True
-    return origin.rstrip("/") in settings.allowed_origins
+    site_url = urlsplit(settings.SITE_URL)
+    site_origin = f"{site_url.scheme}://{site_url.netloc}"
+    allowed = {item.rstrip("/") for item in settings.allowed_origins}
+    if site_url.scheme in ("http", "https") and site_url.netloc:
+        allowed.add(site_origin)
+    return origin.rstrip("/") in allowed
 
 
 def _rate_limited(ip: str) -> bool:

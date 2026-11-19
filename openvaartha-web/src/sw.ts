@@ -13,6 +13,22 @@ import { clientsClaim } from "workbox-core";
 
 declare const self: ServiceWorkerGlobalScope;
 
+// Brand images can still load if an active tab's precache is being replaced.
+const brandIcons = new Set(["/icon-white.png", "/icon-maroon.png"]);
+registerRoute(
+  ({ url }) => url.origin === self.location.origin && brandIcons.has(url.pathname),
+  async ({ request, url }) => {
+    const cached = await matchPrecache(url.pathname).catch(() => undefined);
+    if (cached) return cached;
+
+    const response = await fetch(request).catch(() => undefined);
+    if (response?.ok) return response;
+
+    return (await matchPrecache("/pwa-192x192.png").catch(() => undefined))
+      ?? response
+      ?? new Response(null, { status: 503 });
+  }
+);
 precacheAndRoute(self.__WB_MANIFEST);
 
 const bgSyncPlugin = new BackgroundSyncPlugin("openvaartha-mutations", {
@@ -38,21 +54,19 @@ registerRoute(
 );
 
 registerRoute(
-  ({ url }) => /^https:\/\/fonts\.googleapis\.com\//i.test(url.href),
-  async ({ request, event }) => {
-    try {
-      const strategy = new CacheFirst({
-        cacheName: "google-fonts",
-        plugins: [new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 })],
-      });
-      return await strategy.handle({ request, event });
-    } catch {
-      // Rejecting the cached/fetched promise would surface as a
-      // "FetchEvent.respondWith() rejected" error in the console and break
-      // font loading; any network hiccup just falls back to the network copy.
-      return fetch(request);
-    }
-  }
+  ({ url, request }) => url.origin === "https://fonts.googleapis.com" && request.destination === "style",
+  new CacheFirst({
+    cacheName: "google-fonts",
+    plugins: [
+      new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 }),
+      {
+        cacheWillUpdate: async ({ response }) =>
+          response.ok || response.type === "opaque" ? response : null,
+        // Let the page use its existing fallback fonts during an outage.
+        handlerDidError: async () => new Response("", { headers: { "Content-Type": "text/css" } }),
+      },
+    ],
+  })
 );
 
 // Page navigations: always try the network first — /article/* gets real

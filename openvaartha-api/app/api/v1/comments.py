@@ -10,6 +10,7 @@ from app.services import comment_service, dispatch_reaction_service
 
 router = APIRouter()
 
+@router.get("/", response_model=List[CommentSchema])
 async def list_comments(
     article_id: Optional[str] = Query(None, description="Article ID to fetch comments for"),
     dispatch_id: Optional[str] = Query(None, description="Dispatch ID to fetch comments for"),

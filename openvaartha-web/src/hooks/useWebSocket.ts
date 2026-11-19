@@ -16,16 +16,17 @@ class WebSocketService {
   }
 
   public connect() {
+    if (!this.listeners.size || this.reconnectTimeout !== null) return;
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       return;
     }
 
     const token = getStoredToken();
     const url = token ? `${this.url}?token=${encodeURIComponent(token)}` : this.url;
-    this.ws = new WebSocket(url);
+    const socket = new WebSocket(url);
+    this.ws = socket;
 
-    this.ws.onopen = () => {
-      console.log('WebSocket connected');
+    socket.onopen = () => {
       // If we are reconnecting, emit a RECONNECTED event so listeners can refetch missed data
       if (this.reconnectAttempts > 0) {
         if (this.listeners.has('RECONNECTED')) {
@@ -35,7 +36,7 @@ class WebSocketService {
       this.reconnectAttempts = 0;
     };
 
-    this.ws.onmessage = (event) => {
+    socket.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data);
         const { type, data } = payload;
@@ -48,34 +49,21 @@ class WebSocketService {
       }
     };
 
-    this.ws.onclose = () => {
-      console.log('WebSocket disconnected');
+    socket.onclose = () => {
+      if (this.ws !== socket) return;
       this.ws = null;
       this.scheduleReconnect();
-    };
-
-    this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      this.ws?.close();
     };
   }
 
   private scheduleReconnect() {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('WebSocket max reconnect attempts reached');
-      return;
-    }
+    if (!this.listeners.size || this.reconnectAttempts >= this.maxReconnectAttempts) return;
 
     const timeout = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000);
     this.reconnectAttempts++;
     
-    console.log(`Scheduling WebSocket reconnect in ${timeout}ms...`);
-    
-    if (this.reconnectTimeout) {
-      window.clearTimeout(this.reconnectTimeout);
-    }
-    
     this.reconnectTimeout = window.setTimeout(() => {
+      this.reconnectTimeout = null;
       this.connect();
     }, timeout);
   }
@@ -85,29 +73,39 @@ class WebSocketService {
       this.listeners.set(eventType, new Set());
     }
     this.listeners.get(eventType)!.add(callback);
+    this.connect();
     
     return () => this.unsubscribe(eventType, callback);
   }
 
   public unsubscribe(eventType: string, callback: WSEventCallback) {
-    if (this.listeners.has(eventType)) {
-      this.listeners.get(eventType)!.delete(callback);
-    }
+    const callbacks = this.listeners.get(eventType);
+    callbacks?.delete(callback);
+    if (callbacks?.size === 0) this.listeners.delete(eventType);
+    if (!this.listeners.size) this.disconnect();
   }
 
-  public disconnect() {
-    if (this.reconnectTimeout) {
+  private disconnect() {
+    if (this.reconnectTimeout !== null) {
       window.clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
     }
-    this.ws?.close();
+    const socket = this.ws;
+    this.ws = null;
+    this.reconnectAttempts = 0;
+    if (socket?.readyState === WebSocket.CONNECTING) {
+      // Closing an in-flight handshake produces a browser error. Close after open instead.
+      socket.onopen = () => socket.close();
+      socket.onmessage = null;
+    } else {
+      socket?.close();
+    }
   }
 }
 
 // Global instance to share connection across components
 const wsUrl = API_BASE.replace(/^http/, 'ws') + '/ws';
 const wsService = new WebSocketService(wsUrl);
-// Immediately try to connect on import (app load)
-wsService.connect();
 
 export function useWebSocket(eventType: string, callback: WSEventCallback) {
   const savedCallback = useRef(callback);
